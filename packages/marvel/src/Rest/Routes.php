@@ -485,14 +485,14 @@ Route::group(
         // Route::apiResource('notify-logs', NotifyLogsController::class, [
         //     'only' => ['index'],
         // ]);
-    
+
         // Route::post('notify-log-seen', [NotifyLogsController::class, 'readNotifyLogs']);
         // Route::post('notify-log-read-all', [NotifyLogsController::class, 'readAllNotifyLogs']);
-    
+
         // Route::apiResource('faqs', FaqsController::class, [
         //     'only' => ['store', 'update', 'destroy'],
         // ]);
-    
+
         Route::apiResource('flash-sale', FlashSaleController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
@@ -512,7 +512,7 @@ Route::group(
         ]);
         Route::get('/vendors/list', [UserController::class, 'vendors']);
         // Route::post('products-request-for-flash-sale', [FlashSaleVendorRequestController::class, 'productsRequestForFlashSale']);
-    
+
         Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
             'only' => ['index', 'show'],
         ]);
@@ -646,10 +646,12 @@ Route::group([
     Route::post('/users/{userId}/permissions', [RoleAndPermissionController::class, 'givePermission']);
     Route::put('/users/{userId}/permissions', [RoleAndPermissionController::class, 'syncPermissions']);
     Route::delete('/users/{userId}/permissions', [RoleAndPermissionController::class, 'removePermission']);
-    
+
     Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
         'only' => ['update', 'destroy'],
     ]);
 });
+
+
 
 Route::apiResource('became-seller', BecameSellerController::class);
