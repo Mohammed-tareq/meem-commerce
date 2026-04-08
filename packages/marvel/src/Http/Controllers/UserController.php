@@ -509,6 +509,7 @@ class UserController extends CoreController
             }
 
             // Start with customer permission and role
+            
             $permissions = [Permission::CUSTOMER];
             $role = Role::CUSTOMER;
 

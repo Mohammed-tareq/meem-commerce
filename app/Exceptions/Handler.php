@@ -112,7 +112,7 @@ class Handler extends ExceptionHandler
         // Handle ValidationException
         elseif ($exception instanceof ValidationException) {
             $statusCode = 422;
-            $message = 'Validation Failed';
+            $message = 'Validation Failed'. $exception->getMessage();
             $errors = $exception->validator->errors()->all();
         }
         // Handle HttpException (includes various HTTP status codes)

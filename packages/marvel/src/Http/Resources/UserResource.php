@@ -21,8 +21,10 @@ class UserResource extends Resource
             'email_verified_at' => $this->email_verified_at,
             'is_active' => $this->is_active,
             'shop_id' => $this->shop_id,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at
+            'roles' => RoleResource::collection($this->whenLoaded('roles')),
+            'permissions' => PermissionResource::collection($this->whenLoaded('permissions')),
+            // 'created_at' => $this->created_at,
+            // 'updated_at' => $this->updated_at
         ];
     }
 }

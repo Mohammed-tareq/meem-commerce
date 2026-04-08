@@ -15,6 +15,7 @@ use Marvel\Database\Models\Type;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\OrderStatus;
 use Marvel\Database\Models\Coupon;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Marvel\Enums\Permission as UserPermission;
 
@@ -31,13 +32,26 @@ class DatabaseSeeder extends Seeder
         // run your app seeder
 //        $this->call(ProductSeeder::class);
 //        $this->call(MeemProductSeeder::class);
-        User::create([
+
+        $role = Role::create([
+            'name' => 'super_admin',
+            'guard_name' => 'api',
+        ]);
+        $permission = Permission::create([
+            'name' => 'super_admin',
+            'guard_name' => 'api',
+        ]);
+        $role->givePermissionTo($permission);
+        $user = User::create([
             'name' => 'Shop Owner',
             'email' => 'admin@demo.com',
             'password' => Hash::make('password'),
             'is_active' => true,
             'shop_id' => null,
         ]);
+
+        $user->assignRole($role);
+
 
     }
 }

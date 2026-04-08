@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 use Marvel\Database\Models\Commission;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Http\Controllers\AbusiveReportController;
 use Marvel\Http\Controllers\AddressController;
 use Marvel\Http\Controllers\AiController;
@@ -35,6 +36,7 @@ use Marvel\Http\Controllers\QuestionController;
 use Marvel\Http\Controllers\RefundController;
 use Marvel\Http\Controllers\ResourceController;
 use Marvel\Http\Controllers\ReviewController;
+use Marvel\Http\Controllers\RoleAndPermissionController;
 use Marvel\Http\Controllers\SettingsController;
 use Marvel\Http\Controllers\ShippingController;
 use Marvel\Http\Controllers\ShopController;
@@ -483,14 +485,14 @@ Route::group(
         // Route::apiResource('notify-logs', NotifyLogsController::class, [
         //     'only' => ['index'],
         // ]);
-
+    
         // Route::post('notify-log-seen', [NotifyLogsController::class, 'readNotifyLogs']);
         // Route::post('notify-log-read-all', [NotifyLogsController::class, 'readAllNotifyLogs']);
-
+    
         // Route::apiResource('faqs', FaqsController::class, [
         //     'only' => ['store', 'update', 'destroy'],
         // ]);
-
+    
         Route::apiResource('flash-sale', FlashSaleController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
@@ -510,7 +512,7 @@ Route::group(
         ]);
         Route::get('/vendors/list', [UserController::class, 'vendors']);
         // Route::post('products-request-for-flash-sale', [FlashSaleVendorRequestController::class, 'productsRequestForFlashSale']);
-
+    
         Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
             'only' => ['index', 'show'],
         ]);
@@ -523,7 +525,13 @@ Route::group(
  * *****************************************
  */
 
-Route::group(['middleware' => ['permission:' . Permission::SUPER_ADMIN, 'auth:sanctum', 'email.verified']], function () {
+Route::group([
+    'middleware' => [
+        'auth:sanctum',
+        'verified',
+        'role:' . Role::SUPER_ADMIN,
+    ]
+], function () {
     // Route::get('messages/get-conversations/{shop_id}', [ConversationController::class, 'getConversationByShopId']);
     // Route::get('analytics', [AnalyticsController::class, 'analytics']);
     Route::apiResource('types', TypeController::class, [
@@ -533,7 +541,7 @@ Route::group(['middleware' => ['permission:' . Permission::SUPER_ADMIN, 'auth:sa
         'only' => ['update', 'destroy'],
     ]);
     Route::apiResource('categories', CategoryController::class);
-    Route::get('categories-parent', [CategoryController::class,'fetchOnlyParent']);
+    Route::get('categories-parent', [CategoryController::class, 'fetchOnlyParent']);
 
     Route::apiResource('delivery-times', DeliveryTimeController::class, [
         'only' => ['store', 'update', 'destroy']
@@ -603,7 +611,7 @@ Route::group(['middleware' => ['permission:' . Permission::SUPER_ADMIN, 'auth:sa
         'only' => ['destroy'],
     ]);
 
-     Route::apiResource('faqs', FaqsController::class);
+    Route::apiResource('faqs', FaqsController::class);
     Route::get('new-shops', [ShopController::class, 'newOrInActiveShops']);
     Route::post('approve-terms-and-conditions', [TermsAndConditionsController::class, 'approveTerm']);
     Route::post('disapprove-terms-and-conditions', [TermsAndConditionsController::class, 'disApproveTerm']);
@@ -624,6 +632,21 @@ Route::group(['middleware' => ['permission:' . Permission::SUPER_ADMIN, 'auth:sa
         'only' => ['update'],
     ]);
 
+
+    Route::get('/roles', [RoleAndPermissionController::class, 'getAllRoles']);
+    Route::post('/roles', [RoleAndPermissionController::class, 'addRole']);
+    Route::put('/roles/{id}', [RoleAndPermissionController::class, 'updateRole']);
+    Route::delete('/roles/{id}', [RoleAndPermissionController::class, 'destroyRole']);
+    Route::post('/users/{userId}/assign-role', [RoleAndPermissionController::class, 'assignRole']);
+    Route::post('/users/{userId}/remove-role', [RoleAndPermissionController::class, 'removeRoleFromUser']);
+
+    Route::get('/permissions', [RoleAndPermissionController::class, 'getAllPermissions']);
+    Route::post('/permissions', [RoleAndPermissionController::class, 'addPermission']);
+    Route::post('/roles/{roleId}/permissions', [RoleAndPermissionController::class, 'assignPermissionToRole']);
+    Route::post('/users/{userId}/permissions', [RoleAndPermissionController::class, 'givePermission']);
+    Route::put('/users/{userId}/permissions', [RoleAndPermissionController::class, 'syncPermissions']);
+    Route::delete('/users/{userId}/permissions', [RoleAndPermissionController::class, 'removePermission']);
+    
     Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
         'only' => ['update', 'destroy'],
     ]);
