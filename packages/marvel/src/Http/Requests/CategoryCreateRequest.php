@@ -35,7 +35,7 @@ class CategoryCreateRequest extends FormRequest
             // 'type_id'   => ['required', 'integer'],
             'icon'         => ['nullable', 'string'],
             'image'        => ['array'],
-            'banner_image' => ['array'],
+            // 'banner_image' => ['array'],
             'details'      => ['nullable', 'array'],
             'details.*'    => ['nullable', 'string', UniqueTranslationRule::for('categories')->ignore($this->id)],
 //            'language'     => ['nullable', 'string'],

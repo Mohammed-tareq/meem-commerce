@@ -235,10 +235,13 @@ abstract class BaseRepository extends Repository implements CacheableInterface
             !empty($request[$key])  => $request[$key],
             empty($request->slug)   => 'auto-generated-string',
         };
+        if (is_array($slugText)) {
+            $slugText = $slugText['en'] ?? reset($slugText);
+        }
         if (empty($key)) {
             return globalSlugify(slugText: $slugText, model: $this->model(), update: $update);
         }
-        return globalSlugify(slugText: $request[$key], model: $this->model(), key: $key, update: $update);
+        return globalSlugify(slugText: $slugText, model: $this->model(), key: $key, update: $update);
     }
 
     public function findBySlugOrId(int | string $value, string $language = DEFAULT_LANGUAGE)
