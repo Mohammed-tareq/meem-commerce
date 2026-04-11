@@ -2,16 +2,17 @@
 
 namespace Marvel\Traits;
 
-trait ApiResponse
+trait apiResponse
 {
-    public function apiresponse($message, $status, $success = true, $data = [])
+    public function apiResponse($message, $status, $success = true, $data = [])
     {
         $result = [
             'status' => $status,
             'message' => $message,
             'success' => $success,
         ];
-        if (!empty($data)) $result['data'] = $data;
+        if (!empty($data))
+            $result['data'] = $data;
         return response()->json($result, $status);
     }
 }

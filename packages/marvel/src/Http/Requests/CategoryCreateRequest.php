@@ -3,6 +3,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -27,16 +28,19 @@ class CategoryCreateRequest extends FormRequest
      */
     public function rules()
     {
+        dd('hello');
         return [
-            'name'         => ['required', 'string' , 'unique:categories,name'],
+            'name'         => ['required', 'array'],
+            'name.*'       => ['required', 'string' , UniqueTranslationRule::for('categories')->ignore($this->id)],
             'slug'         => ['nullable', 'string'],
             // 'type_id'   => ['required', 'integer'],
             'icon'         => ['nullable', 'string'],
             'image'        => ['array'],
             'banner_image' => ['array'],
-            'details'      => ['nullable', 'string'],
+            'details'      => ['nullable', 'array'],
+            'details.*'    => ['nullable', 'string', UniqueTranslationRule::for('categories')->ignore($this->id)],
 //            'language'     => ['nullable', 'string'],
-            'parent'       => ['nullable', 'integer'],
+            'parent_id'    => ['nullable', 'integer', 'exists:categories,id'],
         ];
     }
 

@@ -8,6 +8,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Repositories\CategoryRepository;
+use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\CategoryCreateRequest;
 use Marvel\Http\Requests\CategoryUpdateRequest;
@@ -94,6 +95,10 @@ class CategoryController extends CoreController
     public function __construct(CategoryRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware("permission:".Permission::VIEW_CATEGORIES, ["only"=> ["index","show"]]);
+        $this->middleware("permission:".Permission::CREATE_CATEGORY, ["only"=> ["store"]]);
+        $this->middleware("permission:".Permission::UPDATE_CATEGORY, ["only"=> ["update"]]);
+        $this->middleware("permission:".Permission::DELETE_CATEGORY, ["only"=> ["destroy"]]);
     }
 
     // /**

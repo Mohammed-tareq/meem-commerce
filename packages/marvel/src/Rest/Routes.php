@@ -78,6 +78,8 @@ Route::middleware(['throttle:auth'])->group(function () {
     Route::post('/token', [UserController::class, 'token']);
     Route::post('/social-login-token', [UserController::class, 'socialLogin']);
 });
+Route::get('me', [UserController::class, 'me'])->middleware('auth:sanctum');
+
 
 // Logout is not rate limited - users should always be able to log out
 Route::post('/logout', [UserController::class, 'logout'])->middleware('auth:sanctum');
@@ -277,7 +279,7 @@ Route::post('shop-maintenance-event', [ShopController::class, 'shopMaintenanceEv
  */
 
 Route::group(
-    ['middleware' => ['permission:' . Permission::EDITOR . '|' . Permission::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:' . Role::EDITOR . '|' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
     function () {
         Route::post('cms-pages', [CmsPageController::class, 'store']);
         Route::put('cms-pages/{id}', [CmsPageController::class, 'update']);
@@ -290,7 +292,7 @@ Route::group(
 
 Route::group(['middleware' => ['role:' . Role::CUSTOMER, 'auth:sanctum', 'email.verified']], function () {
     Route::post('/update-email', [UserController::class, 'updateUserEmail']);
-    Route::get('me', [UserController::class, 'me']);
+    // Route::get('me', [UserController::class, 'me']);
     Route::apiResource('orders', OrderController::class, [
         'only' => ['index'],
     ]);
@@ -397,7 +399,7 @@ Route::get('popular-products', 'Marvel\Http\Controllers\ProductController@popula
 
 
 Route::group(
-    ['middleware' => ['permission:' . Permission::STAFF . '|' . Permission::STORE_OWNER, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:' . Role::STAFF . '|' . Role::STORE_OWNER, 'auth:sanctum', 'email.verified']],
     function () {
         Route::apiResource('products', ProductController::class, [
             'only' => ['store', 'update', 'destroy'],
@@ -468,7 +470,7 @@ Route::group(
  */
 
 Route::group(
-    ['middleware' => ['permission:' . Permission::STORE_OWNER, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:' . Role::STORE_OWNER, 'auth:sanctum', 'email.verified']],
     function () {
         Route::apiResource('shops', ShopController::class);
         // Route::get('analytics', [AnalyticsController::class, 'analytics']);
@@ -529,7 +531,7 @@ Route::group([
     'middleware' => [
         'auth:sanctum',
         'verified',
-        'role:' . Role::SUPER_ADMIN,
+        // 'role:' . Role::SUPER_ADMIN,
     ]
 ], function () {
     // Route::get('messages/get-conversations/{shop_id}', [ConversationController::class, 'getConversationByShopId']);

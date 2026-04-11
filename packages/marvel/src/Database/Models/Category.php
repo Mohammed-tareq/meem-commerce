@@ -10,14 +10,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Marvel\Traits\TranslationTrait;
+use Spatie\Translatable\HasTranslations;
 
 class Category extends Model
 {
-    use TranslationTrait, Sluggable;
+    use HasTranslations, Sluggable;
 
 
     protected $table = 'categories';
+    public array $translatable = ['name','details'];
 
     public $guarded = [];
 

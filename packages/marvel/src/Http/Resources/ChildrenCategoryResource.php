@@ -16,10 +16,10 @@ class ChildrenCategoryResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'name'                 => $this->name,
+            'name'                 => $this->getTranslations('name',app()->getLocale()),
             'slug'                 => $this->slug,
-            'language'             => $this->language,
-            'translated_languages' => $this->translated_languages,
+            // 'language'             => $this->language,
+            // 'translated_languages' => $this->translated_languages,
             'products_count'       => $this->products_count,
             'image'                => $this->image,
         ];

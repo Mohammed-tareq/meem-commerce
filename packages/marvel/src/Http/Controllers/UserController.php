@@ -39,7 +39,7 @@ use Marvel\Http\Requests\UserUpdateRequest;
 use Marvel\Http\Resources\UserResource;
 use Marvel\Mail\ContactAdmin;
 use Marvel\Otp\Gateways\OtpGateway;
-use Marvel\Traits\ApiResponse;
+use Marvel\Traits\apiResponse;
 use Marvel\Traits\UsersTrait;
 use Marvel\Traits\WalletsTrait;
 use Spatie\Newsletter\Facades\Newsletter;
@@ -65,7 +65,7 @@ use Spatie\Newsletter\Facades\Newsletter;
  */
 class UserController extends CoreController
 {
-    use WalletsTrait, UsersTrait, ApiResponse;
+    use WalletsTrait, UsersTrait, apiResponse;
 
     public $repository;
     private bool $applicationIsValid;
@@ -375,7 +375,7 @@ class UserController extends CoreController
                     ->loadLastOrder();
                 $user->role = $user->roles->first()?->name;
                 $user->unsetRelation('roles');
-                return $user;
+                return $this->apiResponse("User profile retrieved successfully", 200, true, UserResource::make($user));
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $e) {
@@ -420,17 +420,17 @@ class UserController extends CoreController
         $user = User::where('email', $request->email)->where('is_active', true)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return $this->apiresponse("User not found", 404, false);
+            return $this->apiResponse("User not found", 404, false);
         }
         $email_verified = $user->hasVerifiedEmail();
         event(new ProcessUserData());
         $data = [
             "token" => $user->createToken('auth_token')->plainTextToken,
-            "permissions" =>$user->getAllPermissions()->pluck('name'),
+            "permissions" => $user->getAllPermissions()->pluck('name'),
             "email_verified" => $email_verified,
             "role" => $user->roles->pluck('name')
         ];
-        return $this->apiresponse("User logged in successfully", 200, true, $data);
+        return $this->apiResponse("User logged in successfully", 200, true, $data);
     }
 
     /**
@@ -459,10 +459,10 @@ class UserController extends CoreController
         $user = $request->user();
 
         if (!$user) {
-            return $this->apiresponse("User not found", 404, false);
+            return $this->apiResponse("User not found", 404, false);
         }
         $user->currentAccessToken()->delete();
-        return $this->apiresponse(USER_LOGGED_OUT_SUCCESSFULLY, 200, true);
+        return $this->apiResponse(USER_LOGGED_OUT_SUCCESSFULLY, 200, true);
     }
 
     /**
@@ -596,7 +596,7 @@ class UserController extends CoreController
                 "permissions" => $user->getAllPermissions()->pluck('name'),
                 "role" => $user->getRoleNames()->first()
             ];
-            return $this->apiresponse("User registered successfully", 200, true, $data);
+            return $this->apiResponse("User registered successfully", 200, true, $data);
 
         } catch (\Exception $e) {
             Log::error('Register: Failed', [
@@ -635,7 +635,7 @@ class UserController extends CoreController
                 $banUser->is_active = false;
                 $banUser->save();
                 $this->inactiveUserShops($banUser->id);
-                return $this->apiresponse(USER_DEACTIVATED_SUCCESSFULLY, 200);
+                return $this->apiResponse(USER_DEACTIVATED_SUCCESSFULLY, 200);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $th) {
@@ -681,7 +681,7 @@ class UserController extends CoreController
                 $activeUser = User::find($request->id);
                 $activeUser->is_active = true;
                 $activeUser->save();
-                return $this->apiresponse(USER_ACTIVATED_SUCCESSFULLY, 200);
+                return $this->apiResponse(USER_ACTIVATED_SUCCESSFULLY, 200);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $th) {
@@ -714,7 +714,7 @@ class UserController extends CoreController
     {
         $user = $this->repository->findByField('email', $request->email);
         if (count($user) < 1) {
-            return $this->apiresponse(NOT_FOUND, 404);
+            return $this->apiResponse(NOT_FOUND, 404);
         }
 
         $tokenData = DB::table('password_resets')
@@ -731,9 +731,9 @@ class UserController extends CoreController
 
 
         if ($this->repository->sendResetEmail($request->email, $tokenData->token)) {
-            return $this->apiresponse(CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 200);
+            return $this->apiResponse(CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 200);
         } else {
-            return $this->apiresponse(SOMETHING_WENT_WRONG, 500);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500);
         }
     }
 
@@ -764,13 +764,13 @@ class UserController extends CoreController
     {
         $tokenData = DB::table('password_resets')->where('token', $request->token)->first();
         if (!$tokenData) {
-            return $this->apiresponse(INVALID_TOKEN, 400 ,false);
+            return $this->apiResponse(INVALID_TOKEN, 400, false);
         }
         $user = $this->repository->findByField('email', $request->email);
         if (count($user) < 1) {
-            return $this->apiresponse(NOT_FOUND, 404 ,false);
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
-        return $this->apiresponse(TOKEN_IS_VALID, 200, true);
+        return $this->apiResponse(TOKEN_IS_VALID, 200, true);
     }
 
     /**
@@ -816,9 +816,9 @@ class UserController extends CoreController
 
             DB::table('password_resets')->where('email', $user->email)->delete();
 
-            return $this->apiresponse(PASSWORD_RESET_SUCCESSFUL, 200, true);
+            return $this->apiResponse(PASSWORD_RESET_SUCCESSFUL, 200, true);
         } catch (\Exception $th) {
-            return $this->apiresponse(SOMETHING_WENT_WRONG, 500, false);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -854,9 +854,9 @@ class UserController extends CoreController
             if (Hash::check($request->oldPassword, $user->password)) {
                 $user->password = Hash::make($request->newPassword);
                 $user->save();
-                return $this->apiresponse(PASSWORD_RESET_SUCCESSFUL, 200, true);
+                return $this->apiResponse(PASSWORD_RESET_SUCCESSFUL, 200, true);
             } else {
-                return $this->apiresponse(OLD_PASSWORD_INCORRECT, 400, false);
+                return $this->apiResponse(OLD_PASSWORD_INCORRECT, 400, false);
             }
         } catch (\Exception $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
@@ -976,10 +976,10 @@ class UserController extends CoreController
             // event(new ProcessUserData());
             $data = [
                 "token" => $userCreated->createToken('auth_token')->plainTextToken,
-               "permissions" => $userCreated->getAllPermissions()->pluck('name'),
+                "permissions" => $userCreated->getAllPermissions()->pluck('name'),
                 "role" => $userCreated->getRoleNames()->first()
             ];
-            return $this->apiresponse("User logged in successfully", 200, true, $data);
+            return $this->apiResponse("User logged in successfully", 200, true, $data);
         } catch (\Exception $e) {
             throw new MarvelException(INVALID_CREDENTIALS);
         }

@@ -175,7 +175,7 @@ class ShopServiceProvider extends ServiceProvider
     public function givePermissionToSuperAdmin()
     {
         Gate::before(function ($user, $ability) {
-            return $user->hasPermissionTo(Permission::SUPER_ADMIN) ? true : null;
+            return $user->hasRole(Role::SUPER_ADMIN) ? true : null;
         });
     }
 
