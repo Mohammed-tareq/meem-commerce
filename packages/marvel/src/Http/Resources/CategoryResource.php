@@ -17,14 +17,14 @@ class CategoryResource extends Resource
 
         return [
             'id'                   => $this->id,
-            'name'                 => $this->getTranslations('name',app()->getLocale()),
+            'name'                 => $this->getTranslation('name',app()->getLocale()),
             'slug'                 => $this->slug,
 //            'language'             => $this->language,
 //            'translated_languages' => $this->translated_languages,
-            'parent'               => ['name' => $this->parentCategory->getTranslations('name',app()->getLocale()) ?? null],
+            'parent'               => ['name' => $this->parent?->getTranslation('name',app()->getLocale())],
             'children'             => ChildrenCategoryResource::collection($this->children),
             'products_count'       => $this->products_count,
-            'details'              => $this->getTranslations('details',app()->getLocale()),
+            'details'              => $this->getTranslation('details',app()->getLocale()),
             'image'                => $this->image,
             'icon'                 => $this->icon,
             // 'type_id'              => $this->type_id,

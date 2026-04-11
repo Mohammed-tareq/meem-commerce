@@ -27,7 +27,7 @@ class Category extends Model
         'banner_image' => 'json',
     ];
 
-    protected $appends = ['parent_id', 'translated_languages'];
+    protected $appends = ['parent_id'];
 
     /**
      * Get the user's full name.

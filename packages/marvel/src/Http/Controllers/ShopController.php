@@ -84,6 +84,10 @@ class ShopController extends CoreController
     public function __construct(ShopRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware("permission:" . Permission::VIEW_SHOPS, ["only" => ["index", "show", "fetchFeaturedShops"]]);
+        $this->middleware("permission:" . Permission::CREATE_SHOP, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_SHOP, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_SHOP, ["only" => ["destroy"]]);
     }
 
     /**

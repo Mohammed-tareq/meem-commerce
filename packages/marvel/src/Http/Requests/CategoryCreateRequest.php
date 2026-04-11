@@ -28,7 +28,6 @@ class CategoryCreateRequest extends FormRequest
      */
     public function rules()
     {
-        dd('hello');
         return [
             'name'         => ['required', 'array'],
             'name.*'       => ['required', 'string' , UniqueTranslationRule::for('categories')->ignore($this->id)],
