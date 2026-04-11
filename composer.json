@@ -23,6 +23,7 @@
         "messagebird/php-rest-api": "3.1.4",
         "psr/log": "3.0.0",
         "spatie/laravel-permission": "6.0",
+        "spatie/laravel-translatable": "^6.11",
         "stevebauman/purify": "6.0.2",
         "symfony/http-client": "6.3.7",
         "symfony/mailgun-mailer": "6.3.6"

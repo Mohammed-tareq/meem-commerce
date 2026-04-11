@@ -27,10 +27,15 @@ class AddressRequest extends FormRequest
     public function rules()
     {
         return [
-            'title'       => ['required', 'string', 'max:255'],
-            'type'        => ['required', 'string', 'max:255'],
-            'default'     => ['boolean'],
-            'address'     => ['required', 'array'],
+            'title' => ['required', 'string', 'max:255'],
+            'type' => ['required', 'string', 'max:255'],
+            'default' => ['boolean'],
+            'address' => ['required', 'array'],
+            'address.zip' => ['required', 'string'],
+            'address.city' => ['required', 'string'],
+            'address.state' => ['required', 'string'],
+            'address.country' => ['required', 'string'],
+            'address.street_address' => ['required', 'string'],
             'customer_id' => ['required', 'exists:Marvel\Database\Models\User,id'],
         ];
     }

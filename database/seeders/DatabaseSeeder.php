@@ -33,25 +33,26 @@ class DatabaseSeeder extends Seeder
 //        $this->call(ProductSeeder::class);
 //        $this->call(MeemProductSeeder::class);
 
-        $role = Role::create([
-            'name' => 'super_admin',
-            'guard_name' => 'api',
-        ]);
-        $permission = Permission::create([
-            'name' => 'super_admin',
-            'guard_name' => 'api',
-        ]);
-        $role->givePermissionTo($permission);
-        $user = User::create([
-            'name' => 'Shop Owner',
+        // $role = Role::create([
+        //     'name' => 'super_admin',
+        //     'guard_name' => 'api',
+        // ]);
+        // $permission = Permission::create([
+        //     'name' => 'super_admin',
+        //     'guard_name' => 'api',
+        // ]);
+        // $role->givePermissionTo($permission);
+        $user = User::firstOrCreate([
             'email' => 'admin@demo.com',
+        ],[
+            'name' => 'Shop Owner',
             'password' => Hash::make('password'),
             'is_active' => true,
             'shop_id' => null,
         ]);
 
-        $user->assignRole($role);
+        $user->assignRole("super_admin");
 
 
-    }
+    }   
 }

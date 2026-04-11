@@ -39,6 +39,7 @@ use Marvel\Http\Requests\UserUpdateRequest;
 use Marvel\Http\Resources\UserResource;
 use Marvel\Mail\ContactAdmin;
 use Marvel\Otp\Gateways\OtpGateway;
+use Marvel\Traits\ApiResponse;
 use Marvel\Traits\UsersTrait;
 use Marvel\Traits\WalletsTrait;
 use Spatie\Newsletter\Facades\Newsletter;
@@ -64,7 +65,7 @@ use Spatie\Newsletter\Facades\Newsletter;
  */
 class UserController extends CoreController
 {
-    use WalletsTrait, UsersTrait;
+    use WalletsTrait, UsersTrait, ApiResponse;
 
     public $repository;
     private bool $applicationIsValid;
@@ -85,7 +86,7 @@ class UserController extends CoreController
     public function verifyEmail($id, $hash): RedirectResponse
     {
         $user = User::findOrFail($id);
-        if (!hash_equals((string)$hash, sha1($user->getEmailForVerification()))) {
+        if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
             abort(403);
         }
         if ($user->hasVerifiedEmail()) {
@@ -419,16 +420,17 @@ class UserController extends CoreController
         $user = User::where('email', $request->email)->where('is_active', true)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return ["token" => null, "permissions" => []];
+            return $this->apiresponse("User not found", 404, false);
         }
         $email_verified = $user->hasVerifiedEmail();
         event(new ProcessUserData());
-        return [
+        $data = [
             "token" => $user->createToken('auth_token')->plainTextToken,
-            "permissions" => $user->getPermissionNames(),
+            "permissions" =>$user->getAllPermissions()->pluck('name'),
             "email_verified" => $email_verified,
-            "role" => $user->getRoleNames()->first()
+            "role" => $user->roles->pluck('name')
         ];
+        return $this->apiresponse("User logged in successfully", 200, true, $data);
     }
 
     /**
@@ -457,9 +459,10 @@ class UserController extends CoreController
         $user = $request->user();
 
         if (!$user) {
-            return 'user not found';
+            return $this->apiresponse("User not found", 404, false);
         }
-        return $request->user()->currentAccessToken()->delete();
+        $user->currentAccessToken()->delete();
+        return $this->apiresponse(USER_LOGGED_OUT_SUCCESSFULLY, 200, true);
     }
 
     /**
@@ -497,34 +500,77 @@ class UserController extends CoreController
      */
     public function register(UserCreateRequest $request)
     {
+        // try {
+        //     Log::info('Register: Starting registration', ['email' => $request->email]);
+
+        //     // Block privileged roles from self-registration
+        //     // Only super_admin can assign these roles via user management
+        //     $notAllowedPermissions = [Permission::SUPER_ADMIN, Permission::EDITOR, Permission::STAFF];
+        //     if ((isset($request->permission->value) && in_array($request->permission->value, $notAllowedPermissions))
+        //         || (isset($request->permission) && in_array($request->permission, $notAllowedPermissions))) {
+        //         throw new AuthorizationException(NOT_AUTHORIZED);
+        //     }
+
+        //     // Start with customer permission and role
+
+        //     $permissions = [Permission::CUSTOMER];
+        //     $role = Role::CUSTOMER;
+
+        //     // If store_owner permission is explicitly requested, add it
+        //     $requestedPermission = isset($request->permission->value) ? $request->permission->value : $request->permission;
+        //     if (isset($requestedPermission) && $requestedPermission === Permission::STORE_OWNER) {
+        //         $permissions[] = Permission::STORE_OWNER;
+        //         $role = Role::STORE_OWNER;
+        //     }
+
+        //     Log::info('Register: Creating user');
+
+        //     // Mark user as verified by default on registration
+        //     $user = $this->repository->create([
+        //         'name' => $request->name,
+        //         'email' => $request->email,
+        //         'password' => Hash::make($request->password),
+        //         'email_verified_at' => now(),
+        //     ]);
+
+        //     Log::info('Register: User created', ['user_id' => $user->id]);
+
+        //     $user->givePermissionTo(array_unique($permissions));  // Ensure no duplicates
+        //     Log::info('Register: Permission assigned');
+
+        //     $user->assignRole($role);
+        //     Log::info('Register: Role assigned');
+
+        //     $user->load('roles'); // Refresh roles relation to fix null role issue
+        //     $this->giveSignupPointsToCustomer($user->id);
+        //     Log::info('Register: Signup points given');
+
+        //     event(new ProcessUserData());
+        //     Log::info('Register: Event dispatched');
+
+        //     $token = $user->createToken('auth_token')->plainTextToken;
+        //     Log::info('Register: Token created, returning response');
+
+        //     return [
+        //         "token" => $token,
+        //         "permissions" => $user->getPermissionNames(),
+        //         "role" => $user->getRoleNames()->first()
+        //     ];
+        // } catch (\Exception $e) {
+        //     Log::error('Register: Failed', [
+        //         'error' => $e->getMessage(),
+        //         'trace' => $e->getTraceAsString()
+        //     ]);
+        //     throw $e;
+        // }
         try {
             Log::info('Register: Starting registration', ['email' => $request->email]);
 
-            // Block privileged roles from self-registration
-            // Only super_admin can assign these roles via user management
-            $notAllowedPermissions = [Permission::SUPER_ADMIN, Permission::EDITOR, Permission::STAFF];
-            if ((isset($request->permission->value) && in_array($request->permission->value, $notAllowedPermissions))
-                || (isset($request->permission) && in_array($request->permission, $notAllowedPermissions))) {
-                throw new AuthorizationException(NOT_AUTHORIZED);
-            }
-
-            // Start with customer permission and role
-            
-            $permissions = [Permission::CUSTOMER];
+            // ALWAYS customer only
             $role = Role::CUSTOMER;
 
-            // If store_owner permission is explicitly requested, add it
-            $requestedPermission = isset($request->permission->value) ? $request->permission->value : $request->permission;
-            if (isset($requestedPermission) && $requestedPermission === Permission::STORE_OWNER) {
-                $permissions[] = Permission::STORE_OWNER;
-                $role = Role::STORE_OWNER;
-            }
-
-            Log::info('Register: Creating user');
-
-            // Mark user as verified by default on registration
             $user = $this->repository->create([
-                'name' => $request->name,
+                'name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'email_verified_at' => now(),
@@ -532,31 +578,29 @@ class UserController extends CoreController
 
             Log::info('Register: User created', ['user_id' => $user->id]);
 
-            $user->givePermissionTo(array_unique($permissions));  // Ensure no duplicates
-            Log::info('Register: Permission assigned');
-
+            // assign ONLY customer
             $user->assignRole($role);
-            Log::info('Register: Role assigned');
 
-            $user->load('roles'); // Refresh roles relation to fix null role issue
-            $this->giveSignupPointsToCustomer($user->id);
-            Log::info('Register: Signup points given');
+            Log::info('Register: Role & Permission assigned');
 
-            event(new ProcessUserData());
-            Log::info('Register: Event dispatched');
+            $user->load('roles');
+
+            // $this->giveSignupPointsToCustomer($user->id);
+
+            // event(new ProcessUserData());
 
             $token = $user->createToken('auth_token')->plainTextToken;
-            Log::info('Register: Token created, returning response');
 
-            return [
+            $data = [
                 "token" => $token,
-                "permissions" => $user->getPermissionNames(),
+                "permissions" => $user->getAllPermissions()->pluck('name'),
                 "role" => $user->getRoleNames()->first()
             ];
+            return $this->apiresponse("User registered successfully", 200, true, $data);
+
         } catch (\Exception $e) {
             Log::error('Register: Failed', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
             ]);
             throw $e;
         }
@@ -586,12 +630,12 @@ class UserController extends CoreController
     {
         try {
             $user = $request->user();
-            if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN) && $user->id != $request->id) {
+            if ($user && $user->hasPermissionTo(Permission::BAN_USER) && $user->id != $request->id) {
                 $banUser = User::find($request->id);
                 $banUser->is_active = false;
                 $banUser->save();
                 $this->inactiveUserShops($banUser->id);
-                return $banUser;
+                return $this->apiresponse(USER_DEACTIVATED_SUCCESSFULLY, 200);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $th) {
@@ -633,11 +677,11 @@ class UserController extends CoreController
     {
         try {
             $user = $request->user();
-            if ($user && $user->hasPermissionTo(Permission::SUPER_ADMIN) && $user->id != $request->id) {
+            if ($user && $user->hasPermissionTo(Permission::ACTIVATE_USER) && $user->id != $request->id) {
                 $activeUser = User::find($request->id);
                 $activeUser->is_active = true;
                 $activeUser->save();
-                return $activeUser;
+                return $this->apiresponse(USER_ACTIVATED_SUCCESSFULLY, 200);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $th) {
@@ -670,7 +714,7 @@ class UserController extends CoreController
     {
         $user = $this->repository->findByField('email', $request->email);
         if (count($user) < 1) {
-            return ['message' => NOT_FOUND, 'success' => false];
+            return $this->apiresponse(NOT_FOUND, 404);
         }
 
         $tokenData = DB::table('password_resets')
@@ -687,9 +731,9 @@ class UserController extends CoreController
 
 
         if ($this->repository->sendResetEmail($request->email, $tokenData->token)) {
-            return ['message' => CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 'success' => true];
+            return $this->apiresponse(CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 200);
         } else {
-            return ['message' => SOMETHING_WENT_WRONG, 'success' => false];
+            return $this->apiresponse(SOMETHING_WENT_WRONG, 500);
         }
     }
 
@@ -720,13 +764,13 @@ class UserController extends CoreController
     {
         $tokenData = DB::table('password_resets')->where('token', $request->token)->first();
         if (!$tokenData) {
-            return ['message' => INVALID_TOKEN, 'success' => false];
+            return $this->apiresponse(INVALID_TOKEN, 400 ,false);
         }
         $user = $this->repository->findByField('email', $request->email);
         if (count($user) < 1) {
-            return ['message' => NOT_FOUND, 'success' => false];
+            return $this->apiresponse(NOT_FOUND, 404 ,false);
         }
-        return ['message' => TOKEN_IS_VALID, 'success' => true];
+        return $this->apiresponse(TOKEN_IS_VALID, 200, true);
     }
 
     /**
@@ -772,9 +816,9 @@ class UserController extends CoreController
 
             DB::table('password_resets')->where('email', $user->email)->delete();
 
-            return ['message' => PASSWORD_RESET_SUCCESSFUL, 'success' => true];
+            return $this->apiresponse(PASSWORD_RESET_SUCCESSFUL, 200, true);
         } catch (\Exception $th) {
-            return ['message' => SOMETHING_WENT_WRONG, 'success' => false];
+            return $this->apiresponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -810,9 +854,9 @@ class UserController extends CoreController
             if (Hash::check($request->oldPassword, $user->password)) {
                 $user->password = Hash::make($request->newPassword);
                 $user->save();
-                return ['message' => PASSWORD_RESET_SUCCESSFUL, 'success' => true];
+                return $this->apiresponse(PASSWORD_RESET_SUCCESSFUL, 200, true);
             } else {
-                return ['message' => OLD_PASSWORD_INCORRECT, 'success' => false];
+                return $this->apiresponse(OLD_PASSWORD_INCORRECT, 400, false);
             }
         } catch (\Exception $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
@@ -922,20 +966,20 @@ class UserController extends CoreController
                 ]
             );
 
-            if (!$userCreated->hasPermissionTo(Permission::CUSTOMER)) {
-                $userCreated->givePermissionTo(Permission::CUSTOMER);
+            if (!$userCreated->hasRole(Role::CUSTOMER)) {
                 $userCreated->assignRole(Role::CUSTOMER);
             }
 
-            if (empty($userExist)) {
-                $this->giveSignupPointsToCustomer($userCreated->id);
-            }
-            event(new ProcessUserData());
-            return [
+            // if (empty($userExist)) {
+            //     $this->giveSignupPointsToCustomer($userCreated->id);
+            // }
+            // event(new ProcessUserData());
+            $data = [
                 "token" => $userCreated->createToken('auth_token')->plainTextToken,
-                "permissions" => $userCreated->getPermissionNames(),
+               "permissions" => $userCreated->getAllPermissions()->pluck('name'),
                 "role" => $userCreated->getRoleNames()->first()
             ];
+            return $this->apiresponse("User logged in successfully", 200, true, $data);
         } catch (\Exception $e) {
             throw new MarvelException(INVALID_CREDENTIALS);
         }

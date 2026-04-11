@@ -140,7 +140,7 @@ class RoleAndPermissionController extends CoreController
 
     public function getAllPermissions()
     {
-        $limit = request('limit', 10);
+        $limit = request('limit', 100);
         $search = request('search', null);
         $permissions = Permission::when($search, function ($query) use ($search) {
             $query->where('name', 'like', "%{$search}%");

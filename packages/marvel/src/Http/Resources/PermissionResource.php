@@ -14,9 +14,13 @@ class PermissionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+
+        $translation = __('permissions.' . $this->name);
+
         return [
-            "id"=> $this->id,
-            "name"=> $this->name,
+            "id" => $this->id,
+            "name" => $this->name,
+            "label" => $translation ?? null,
         ];
     }
 }

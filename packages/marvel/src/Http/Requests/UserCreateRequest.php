@@ -28,15 +28,13 @@ class UserCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'email', 'unique:users'],
+            'first_name'     => ['required', 'string', 'max:50','min:2'],
+            'last_name'     => ['required', 'string', 'max:50' ,"min:2"],
+            'email'    => ['required', 'email', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8', 'max:50', 'confirmed'],
             'password_confirmation' => ['required', 'string', 'min:8', 'max:50'],
             'policy' => ['required', 'in:1,true'],
-            'shop_id' => ['nullable', 'exists:Marvel\Database\Models\Shop,id'],
-            'profile'  => ['array'],
-            'address'  => ['array'],
-            // 'shop'  => ['array'],
+           
         ];
     }
 

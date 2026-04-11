@@ -288,7 +288,7 @@ Route::group(
     }
 );
 
-Route::group(['middleware' => ['can:' . Permission::CUSTOMER, 'auth:sanctum', 'email.verified']], function () {
+Route::group(['middleware' => ['role:' . Role::CUSTOMER, 'auth:sanctum', 'email.verified']], function () {
     Route::post('/update-email', [UserController::class, 'updateUserEmail']);
     Route::get('me', [UserController::class, 'me']);
     Route::apiResource('orders', OrderController::class, [
