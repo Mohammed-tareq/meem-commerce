@@ -9,9 +9,11 @@ use Illuminate\Http\Request;
 use Marvel\Database\Models\Faqs;
 use Marvel\Database\Repositories\FaqsRepository;
 use Marvel\Enums\Permission;
+use Marvel\Enums\Role;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\CreateFaqsRequest;
 use Marvel\Http\Requests\UpdateFaqsRequest;
+use Marvel\Traits\ApiResponse;
 use Marvel\Http\Resources\FaqResource;
 use Prettus\Validator\Exceptions\ValidatorException;
 
@@ -30,11 +32,16 @@ use Prettus\Validator\Exceptions\ValidatorException;
  */
 class FaqsController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(FaqsRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware("permission:" . Permission::VIEW_FAQS, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_FAQS, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_FAQS, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_FAQS, ["only" => ["destroy"]]);
     }
 
 
@@ -78,9 +85,9 @@ class FaqsController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 10;
-//        $language = $request->language ?? DEFAULT_LANGUAGE;
+        //        $language = $request->language ?? DEFAULT_LANGUAGE;
         $faqs = $this->fetchFAQs($request)
-//            ->where('language', $language)
+            //            ->where('language', $language)
             ->paginate($limit)->withQueryString();
         $data = FaqResource::collection($faqs)->response()->getData(true);
         return formatAPIResourcePaginate($data);
@@ -95,50 +102,50 @@ class FaqsController extends CoreController
      */
     public function fetchFAQs(Request $request)
     {
-//        $language = $request->language ?? DEFAULT_LANGUAGE;
+        //        $language = $request->language ?? DEFAULT_LANGUAGE;
         try {
             $user = $request->user();
 
             if ($user) {
                 switch ($user) {
-                    case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+                    case $user->hasRole(Role::SUPER_ADMIN):
                         return $this->repository
                             ->with('shop')
                             ->whereNotNull('id');
-//                            ->where('language', $language);
+                        //                            ->where('language', $language);
                         break;
 
-                    case $user->hasPermissionTo(Permission::STORE_OWNER):
+                    case $user->hasRole(Role::STORE_OWNER):
                         if ($this->repository->hasPermission($user, $request->shop_id)) {
                             return $this->repository
                                 ->with('shop')
                                 ->where('shop_id', '=', $request->shop_id);
-//                                ->where('language', $language);
+                            //                                ->where('language', $language);
                         } else {
                             return $this->repository
                                 ->with('shop')
                                 ->where('user_id', '=', $user->id)
-//                                ->where('language', $language)
+                                //                                ->where('language', $language)
                                 ->whereIn('shop_id', $user->shops->pluck('id'));
                         }
                         break;
 
-                    case $user->hasPermissionTo(Permission::STAFF):
+                    case $user->hasRole(Role::STAFF):
                         // if ($this->repository->hasPermission($user, $request->shop_id)) {
                         return $this->repository
                             ->with('shop')
                             ->where('shop_id', '=', $request->shop_id);
-//                            ->where(
-//                                'language',
-//                                $language
-//                            );
+                        //                            ->where(
+                        //                                'language',
+                        //                                $language
+                        //                            );
                         // }
                         break;
 
                     default:
                         return $this->repository
                             ->with('shop')
-//                            ->where('language', $language)
+                            //                            ->where('language', $language)
                             ->whereNotNull('id');
                         break;
                 }
@@ -147,12 +154,12 @@ class FaqsController extends CoreController
                     return $this->repository
                         ->with('shop')
                         ->where('shop_id', '=', $request->shop_id)
-//                        ->where('language', $language)
+                        //                        ->where('language', $language)
                         ->whereNotNull('id');
                 } else {
                     return $this->repository
                         ->with('shop')
-//                        ->where('language', $language)
+                        //                        ->where('language', $language)
                         ->whereNotNull('id');
                 }
             }
@@ -185,11 +192,11 @@ class FaqsController extends CoreController
      *     @OA\Response(response=422, description="Validation error")
      * )
      */
-    public function store(CreateFaqsRequest $request)
+    public function store(Request $request)
     {
         try {
-            return $this->repository->storeFaqs($request);
-            // return $this->repository->create($validatedData);
+            $faq = $this->repository->storeFaqs($request);
+            return $this->apiResponse(FAQ_CREATED_SUCCESSFULLY, 201, true, FaqResource::make($faq));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE, $e->getMessage());
         }
@@ -304,12 +311,9 @@ class FaqsController extends CoreController
         try {
             $id = $request->id;
             $user = $request->user();
-            if ($user && ($user->hasPermissionTo(Permission::SUPER_ADMIN) || $user->hasPermissionTo(Permission::STORE_OWNER) || $user->hasPermissionTo(Permission::STAFF))) {
-                    $this->repository->findOrFail($id)->delete();
-                return response()->json([
-                    'message' => 'FAQ deleted successfully',
-                    'status' => true
-                ]);
+            if ($user && ($user->hasPermissionTo(Permission::DELETE_FAQ))) {
+                $this->repository->findOrFail($id)->delete();
+                return $this->apiResponse(FAQ_DELETED_SUCCESSFULLY, 200, true, null);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $e) {

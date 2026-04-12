@@ -373,9 +373,9 @@ Route::group(['middleware' => ['role:' . Role::CUSTOMER, 'auth:sanctum', 'email.
     ]);
     Route::post('/set-default-card', [PaymentMethodController::class, 'setDefaultCard']);
     Route::post('/save-payment-method', [PaymentMethodController::class, 'savePaymentMethod']);
-    // Route::apiResource('faqs', FaqsController::class, [
-    //     'only' => ['index', 'show'],
-    // ]);
+    Route::apiResource('faqs', FaqsController::class, [
+        'only' => ['index', 'show'],
+    ]);
     Route::apiResource('notify-logs', NotifyLogsController::class, [
         'only' => ['index', 'show'],
     ]);
@@ -470,7 +470,7 @@ Route::group(
  */
 
 Route::group(
-    ['middleware' => ['role:' . Role::STORE_OWNER, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:' . Role::STORE_OWNER . '|' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
     function () {
         Route::apiResource('shops', ShopController::class);
         // Route::get('analytics', [AnalyticsController::class, 'analytics']);
@@ -491,9 +491,9 @@ Route::group(
         // Route::post('notify-log-seen', [NotifyLogsController::class, 'readNotifyLogs']);
         // Route::post('notify-log-read-all', [NotifyLogsController::class, 'readAllNotifyLogs']);
 
-        // Route::apiResource('faqs', FaqsController::class, [
-        //     'only' => ['store', 'update', 'destroy'],
-        // ]);
+        Route::apiResource('faqs', FaqsController::class, [
+            'only' => ['store', 'update', 'destroy'],
+        ]);
 
         Route::apiResource('flash-sale', FlashSaleController::class, [
             'only' => ['store', 'update', 'destroy'],

@@ -3,7 +3,6 @@
 namespace Marvel\Http\Resources;
 
 use Illuminate\Http\Request;
-use Marvel\Helper\ResourceHelpers;
 
 class FaqResource extends Resource
 {
@@ -13,17 +12,17 @@ class FaqResource extends Resource
      * @param  Request  $request
      * @return array
      */
-    public function toArray($request)
+    public function toArray(Request $request)
     {
         return [
             'id'              => $this->id,
-            'faq_title'       => $this->faq_title,
+            'faq_title'       => $this->getTranslation('faq_title', app()->getLocale()),
             'slug'            => $this->slug,
-            'faq_description' => $this->faq_description,
+            'faq_description' => $this->getTranslation('faq_description', app()->getLocale()),
             'faq_type'        => $this->faq_type,
             'issued_by'       => $this->issued_by,
-//            'language'        => $this->language,
-//            'translated_languages' => $this->translated_languages,
+            "shop"            => $this->whenLoaded('shop',ShopResource::make($this->shop)),
+//
         ];
     }
 }

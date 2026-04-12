@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,10 +29,10 @@ class CreateFaqsRequest extends FormRequest
     public function rules()
     {
         return [
-            'faq_title'       => ['required', 'string' , 'unique:faqs,faq_title' , 'min:3' , 'max:1000'],
-            'faq_description' => ['required', 'string', 'min:3' , 'max:1000'],
-            'slug'            => ['nullable', 'string'],
-//            'language'        => ['nullable', 'string'],
+            'faq_title'       => ['required', 'array'],
+            'faq_title.*'       => ['required', 'string', 'min:3', 'max:1000',  UniqueTranslationRule::for('faqs')],
+            'faq_description' => ['required', 'array'],
+            'faq_description.*' => ['required', 'string', 'min:3', 'max:1000', UniqueTranslationRule::for('faqs')],
             'shop_id'         => ['nullable', 'exists:shops,id'],
         ];
     }

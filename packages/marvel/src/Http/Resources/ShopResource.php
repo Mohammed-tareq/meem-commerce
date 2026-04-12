@@ -23,14 +23,14 @@ class ShopResource extends Resource
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,
-            'cover_image' => $this->cover_image,
-            'logo' => $this->logo,
-            'is_active' => $this->is_active,
+            'cover_image' => $this->getFirstMediaUrl('shop-image'),
+            'logo' => $this->getFirstMediaUrl('shop-logo'),
+            'is_active' => (bool) $this->is_active,
             'address' => $this->address,
             'settings' => $this->settings,
-            'notifications' => $this->notifications,
             'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at
+            // 'notifications' => $this->notifications,
+            
         ];
     }
 }

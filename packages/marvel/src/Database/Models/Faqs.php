@@ -6,17 +6,18 @@ use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Marvel\Database\Models\Shop;
-use Marvel\Traits\TranslationTrait;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Translatable\HasTranslations;
 
 class Faqs extends Model
 {
-    use TranslationTrait, SoftDeletes, Sluggable;
+    use HasTranslations, SoftDeletes, Sluggable;
 
     protected $table = 'faqs';
 
-    protected $appends = ['translated_languages'];
+    public array $translatable = ['faq_title', 'faq_description'];
+
 
     public $guarded = [];
 

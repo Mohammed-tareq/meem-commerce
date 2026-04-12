@@ -8,13 +8,17 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\Translatable\HasTranslations;
 
-class Shop extends Model
+class Shop extends Model implements HasMedia
 {
-    use Sluggable;
+    use Sluggable, InteractsWithMedia , HasTranslations;
 
     protected $table = 'shops';
 
+    public array $translatable = ['name', 'description'];
     public $guarded = [];
 
     protected $casts = [

@@ -5,6 +5,7 @@ namespace Marvel\Database\Repositories;
 
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Balance;
 use Marvel\Database\Models\OwnershipTransfer;
 use Marvel\Database\Models\Product;
@@ -16,12 +17,14 @@ use Marvel\Enums\ProductVisibilityStatus;
 use Marvel\Events\ProcessOwnershipTransition;
 use Marvel\Events\ShopMaintenance;
 use Marvel\Http\Requests\TransferShopOwnerShipRequest;
+use Marvel\Traits\MediaManager;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ShopRepository extends BaseRepository
 {
+    use MediaManager;
 
     /**
      * @var array
@@ -40,12 +43,12 @@ class ShopRepository extends BaseRepository
         'name',
         'slug',
         'description',
-        'cover_image',
-        'logo',
         'is_active',
         'address',
         'settings',
-        'notifications',
+        // 'cover_image',
+        // 'logo',
+        // 'notifications',
     ];
 
 
@@ -69,22 +72,35 @@ class ShopRepository extends BaseRepository
     public function storeShop($request)
     {
         try {
+            DB::beginTransaction();
             $data = $request->only($this->dataArray);
-            $data['slug'] = $this->makeSlug($request);
             $data['owner_id'] = $request->user()->id;
+            $data['slug'] = $this->makeSlug($request);
             $shop = $this->create($data);
-            if (isset($request['categories'])) {
-                $shop->categories()->attach($request['categories']);
+
+
+            if ($request->hasFile('logo')) {
+                $this->uploadSingleImage($request, 'logo', $shop, 'shop-logo', 'shops');
             }
-            if (isset($request['balance']['payment_info'])) {
-                $shop->balance()->create($request['balance']);
+            if ($request->hasFile('cover_image')) {
+                $this->uploadSingleImage($request, 'cover_image', $shop, 'shop-image', 'shops');
             }
+            // if (isset($request['categories'])) {
+            //     $shop->categories()->attach($request['categories']);
+            // }
+            // if (isset($request['balance']['payment_info'])) {
+            //     $shop->balance()->create($request['balance']);
+            // }
 
             // TODO : why this code is needed
             // $shop->categories = $shop->categories;
             // $shop->staffs = $shop->staffs;
+
+            dd($shop);
+            DB::commit();
             return $shop;
         } catch (Exception $e) {
+            DB::rollBack();
             throw new HttpException(400, COULD_NOT_CREATE_THE_RESOURCE);
         }
     }
@@ -92,24 +108,33 @@ class ShopRepository extends BaseRepository
     public function updateShop($request, $id)
     {
         try {
+            DB::beginTransaction();
             $shop = $this->findOrFail($id);
-            if (isset($request['categories'])) {
-                $shop->categories()->sync($request['categories']);
-            }
-            if (isset($request['balance'])) {
-                if (isset($request['balance']['admin_commission_rate']) && $shop->balance->admin_commission_rate !== $request['balance']['admin_commission_rate']) {
-                    if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                        $this->updateBalance($request['balance'], $id);
-                    }
-                } else {
-                    $this->updateBalance($request['balance'], $id);
-                }
-            }
+
+            // if (isset($request['categories'])) {
+            //     $shop->categories()->sync($request['categories']);
+            // }
+            // if (isset($request['balance'])) {
+            //     if (isset($request['balance']['admin_commission_rate']) && $shop->balance->admin_commission_rate !== $request['balance']['admin_commission_rate']) {
+            //         if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+            //             $this->updateBalance($request['balance'], $id);
+            //         }
+            //     } else {
+            //         $this->updateBalance($request['balance'], $id);
+            //     }
+            // }
             $data = $request->only($this->dataArray);
             if (!empty($request->slug) &&  $request->slug != $shop['slug']) {
                 $data['slug'] = $this->makeSlug($request);
             }
             $shop->update($data);
+            if ($request->hasFile('logo')) {
+                $this->updateSingleImage($request, 'logo', $shop, 'shop-logo', 'shops');
+            }
+            if ($request->hasFile('cover_image')) {
+                $this->updateSingleImage($request, 'cover_image', $shop, 'shop-image', 'shops');
+            }
+
 
             // TODO : why this code is needed
             // $shop->categories = $shop->categories;
@@ -122,16 +147,18 @@ class ShopRepository extends BaseRepository
             // 3. countdown onStart a sob product private
             // 4. countdown onComplete a sob product public
 
-            if (isset($request['settings']['isShopUnderMaintenance'])) {
-                if ($request['settings']['isShopUnderMaintenance']) {
-                    event(new ShopMaintenance($shop, 'enable'));
-                } else {
-                    event(new ShopMaintenance($shop, 'disable'));
-                }
-            }
+            // if (isset($request['settings']['isShopUnderMaintenance'])) {
+            //     if ($request['settings']['isShopUnderMaintenance']) {
+            //         event(new ShopMaintenance($shop, 'enable'));
+            //     } else {
+            //         event(new ShopMaintenance($shop, 'disable'));
+            //     }
+            // }
 
+            DB::commit();
             return $shop;
         } catch (Exception $e) {
+            DB::rollBack();
             throw new HttpException(400, COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }

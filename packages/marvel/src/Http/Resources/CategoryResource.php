@@ -13,7 +13,7 @@ class CategoryResource extends Resource
      * @param  Request  $request
      * @return array
      */
-    public function toArray($request)
+    public function toArray(Request $request)
     {
 
         return [

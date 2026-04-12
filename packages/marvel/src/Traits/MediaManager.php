@@ -8,23 +8,55 @@ trait MediaManager
 {
     public function uploadImages($request, $model, $collectionName, $disk)
     {
-        if ($request->hasFile('images')) {
+        if (!$request->hasFile('images')) {
+            return false;
+        }
+        foreach ($request->file('images') as $file) {
 
-            foreach ($request->file('images') as $file) {
-
-                $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                $model->addMedia($file)
-                    ->usingFileName($fileName)
-                    ->toMediaCollection($collectionName, $disk);
-            }
+            $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+            $model->addMedia($file)
+                ->usingFileName($fileName)
+                ->toMediaCollection($collectionName, $disk);
         }
         return true;
     }
 
+    public function uploadSingleImage($request, $nameInput, $model, $collectionName, $disk)
+    {
+        if (!$request->hasFile($nameInput)) {
+            return false;
+        }
+        $fileName = Str::uuid() . '.' . $request->file($nameInput)->getClientOriginalExtension();
+        $model->addMedia($request->file($nameInput))
+            ->usingFileName($fileName)
+            ->toMediaCollection($collectionName, $disk);
+        return true;
+    }
+
+    public function updateSingleImage($request, $nameInput, $model, $collectionName, $disk)
+    {
+        if (!$request->hasFile($nameInput)) {
+            return false;
+        }
+
+        if ($model->hasMedia($collectionName)) {
+            $model->clearMediaCollection($collectionName);
+        }
+
+        $fileName = Str::uuid() . '.' . $request->file($nameInput)->getClientOriginalExtension();
+
+        $model->addMedia($request->file($nameInput))
+            ->usingFileName($fileName)
+            ->toMediaCollection($collectionName, $disk);
+
+        return true;
+    }
 
     public function updateImages($request, $model, $collectionName, $disk)
     {
-        $model->clearMediaCollection($collectionName);
+        if ($model->hasMedia($collectionName)) {
+            $model->clearMediaCollection($collectionName);
+        }
         $this->uploadImages($request, $model, $collectionName, $disk);
     }
 

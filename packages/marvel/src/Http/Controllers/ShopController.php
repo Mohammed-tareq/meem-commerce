@@ -22,6 +22,8 @@ use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Repositories\ShopRepository;
 use Marvel\Enums\Role;
+use Marvel\Http\Resources\ShopResource;
+use Marvel\Traits\ApiResponse;
 use Marvel\Traits\OrderStatusManagerWithPaymentTrait;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -77,7 +79,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class ShopController extends CoreController
 {
-    use OrderStatusManagerWithPaymentTrait;
+    use OrderStatusManagerWithPaymentTrait, ApiResponse;
 
     public $repository;
 
@@ -105,7 +107,8 @@ class ShopController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
-        return $this->fetchShops($request)->paginate($limit)->withQueryString();
+        $shops = $this->fetchShops($request)->paginate($limit)->withQueryString();
+        return $this->apiResponse('Shops retrieved successfully', 200, true, ShopResource::collection($shops));
     }
 
     public function fetchShops(Request $request)
@@ -142,8 +145,9 @@ class ShopController extends CoreController
     public function store(ShopCreateRequest $request)
     {
         try {
-            if ($request->user()->hasPermissionTo(Permission::STORE_OWNER)) {
-                return $this->repository->storeShop($request);
+            if ($request->user()->hasPermissionTo(Permission::CREATE_SHOP)) {
+                $shop = $this->repository->storeShop($request);
+                return $this->apiResponse('Shop created successfully', 201, true,  ShopResource::make($shop));
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $th) {
@@ -171,43 +175,39 @@ class ShopController extends CoreController
 
         $user = $request->user();
 
-        if ($user && (
-                $user->hasPermissionTo(Permission::SUPER_ADMIN) ||
-                $user->shops()->where('slug', $slug)->exists()
-            )) {
-            $query->with('balance');
-        }
+        // if ($user && (
+        //         $user->hasRole(Role::SUPER_ADMIN) ||
+        //         $user->shops()->where('slug', $slug)->exists()
+        //     )) {
+        //     $query->with('balance');
+        // }
 
         $shop = is_numeric($slug)
             ? $query->where('id', $slug)->first()
             : $query->where('slug', $slug)->first();
 
-        if (!$shop)
-        {
-            return response()->json([
-                'message' => NOT_FOUND,
-                'status' => false
-            ]);
+        if (!$shop) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
-        return $shop;
+        return $this->apiResponse('Shop retrieved successfully', 200, true,  ShopResource::make($shop));
 
-//        $shop = $this->repository
-//            ->with(['categories', 'owner', 'ownership_history'])
-//            ->withCount(['orders', 'products']);
-//        if ($request->user() && ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || $request->user()->shops->contains('slug', $slug))) {
-//            $shop = $shop->with('balance');
-//        }
-//        if (!$shop) {
-//            return response()->json([
-//                'message' => NOT_FOUND,
-//                'status' => false
-//            ]);
-//        }
-//
-//        return match (true) {
-//            is_numeric($slug) => $shop->where('id', $slug)->firstOrFail(),
-//            is_string($slug) => $shop->where('slug', $slug)->firstOrFail(),
-//        };
+        //        $shop = $this->repository
+        //            ->with(['categories', 'owner', 'ownership_history'])
+        //            ->withCount(['orders', 'products']);
+        //        if ($request->user() && ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || $request->user()->shops->contains('slug', $slug))) {
+        //            $shop = $shop->with('balance');
+        //        }
+        //        if (!$shop) {
+        //            return response()->json([
+        //                'message' => NOT_FOUND,
+        //                'status' => false
+        //            ]);
+        //        }
+        //
+        //        return match (true) {
+        //            is_numeric($slug) => $shop->where('id', $slug)->firstOrFail(),
+        //            is_string($slug) => $shop->where('slug', $slug)->firstOrFail(),
+        //        };
 
     }
 
@@ -238,7 +238,9 @@ class ShopController extends CoreController
     {
         try {
             $request->id = $id;
-            return $this->updateShop($request);
+
+            $shop = $this->updateShop($request);
+            return $this->apiResponse('Shop updated successfully', 200, true, ShopResource::make($shop));
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
@@ -247,7 +249,7 @@ class ShopController extends CoreController
     public function updateShop(Request $request)
     {
         $id = $request->id;
-        if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || ($request->user()->hasPermissionTo(Permission::STORE_OWNER) && ($request->user()->shops->contains($id)))) {
+        if ($request->user()->hasPermissionTo(Permission::UPDATE_SHOP)  && ($request->user()->shops->contains($id))) {
             return $this->repository->updateShop($request, $id);
         }
         throw new AuthorizationException(NOT_AUTHORIZED);
@@ -291,17 +293,14 @@ class ShopController extends CoreController
     public function deleteShop(Request $request)
     {
         $id = $request->id;
-        if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN) || ($request->user()->hasPermissionTo(Permission::STORE_OWNER) && ($request->user()->shops->contains($id)))) {
+        if ($request->user()->shops->contains($id) && $request->user()->hasPermissionTo(Permission::DELETE_SHOP)) {
             try {
                 $shop = $this->repository->findOrFail($id);
             } catch (\Exception $e) {
                 throw new ModelNotFoundException(NOT_FOUND);
             }
             $shop->delete();
-            return response()->json([
-                'message' => 'Shop deleted successfully',
-                'status' => true
-            ]);
+            return $this->apiResponse(COULD_NOT_DELETE_THE_RESOURCE, 200, true);
         }
         throw new AuthorizationException(NOT_AUTHORIZED);
     }

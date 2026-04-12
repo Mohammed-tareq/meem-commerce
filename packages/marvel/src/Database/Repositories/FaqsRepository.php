@@ -30,7 +30,6 @@ class FaqsRepository extends BaseRepository
     protected $dataArray = [
         'faq_title',
         'faq_description',
-//        'language',
     ];
 
 
@@ -73,9 +72,8 @@ class FaqsRepository extends BaseRepository
             $faqs['shop_id']         = isset($request['shop_id']) ? $request['shop_id'] : null;
             $faqs['faq_type']        = isset($request['shop_id']) ? 'shop' : 'global';
             $faqs['issued_by']       = isset($request['shop_id']) ? $shop->name : 'Super Admin';
-//            $faqs['language']        = $request['language'] ?? DEFAULT_LANGUAGE;
 
-            $this->create($faqs);
+            $faqs = $this->create($faqs);
             return $faqs;
         } catch (Exception $th) {
             throw new Exception(SOMETHING_WENT_WRONG, $th->getMessage());

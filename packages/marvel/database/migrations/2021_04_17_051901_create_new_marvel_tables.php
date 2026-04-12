@@ -59,8 +59,8 @@ class CreateNewMarvelTables extends Migration
 
         Schema::create('shops', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('owner_id');
-            $table->foreign('owner_id')->references('id')->on('users');
+            $table->unsignedBigInteger('owner_id')->nullable();
+            $table->foreign('owner_id')->nullable()->references('id')->on('users');
             $table->string('name')->nullable();
             $table->string('slug')->nullable();
             $table->text('description')->nullable();
