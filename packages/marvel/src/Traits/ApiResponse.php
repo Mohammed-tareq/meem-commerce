@@ -2,7 +2,7 @@
 
 namespace Marvel\Traits;
 
-trait apiResponse
+trait ApiResponse
 {
     public function apiResponse($message, $status, $success = true, $data = [])
     {

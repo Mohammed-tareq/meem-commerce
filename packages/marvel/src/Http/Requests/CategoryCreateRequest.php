@@ -32,14 +32,15 @@ class CategoryCreateRequest extends FormRequest
             'name'         => ['required', 'array'],
             'name.*'       => ['required', 'string' , UniqueTranslationRule::for('categories')->ignore($this->id)],
             'slug'         => ['nullable', 'string'],
-            // 'type_id'   => ['required', 'integer'],
-            'icon'         => ['nullable', 'string'],
-            'image'        => ['array'],
-            // 'banner_image' => ['array'],
+            'images'        => ['array'],
+            'images.*'      => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             'details'      => ['nullable', 'array'],
             'details.*'    => ['nullable', 'string', UniqueTranslationRule::for('categories')->ignore($this->id)],
-//            'language'     => ['nullable', 'string'],
             'parent_id'    => ['nullable', 'integer', 'exists:categories,id'],
+            // 'banner_image' => ['array'],
+            // 'type_id'   => ['required', 'integer'],
+            // 'icon'         => ['nullable', 'string'],
+//            'language'     => ['nullable', 'string'],
         ];
     }
 
@@ -53,8 +54,8 @@ class CategoryCreateRequest extends FormRequest
         return [
             'name.required'       => 'Name field is required',
             'name.unique'         => 'Name already exists',
-            'name.string'         => 'Name is not a valid string',
-            'name.max:255'        => 'Name can not be more than 255 character',
+            'name.*.string'         => 'Name is not a valid string',
+            'name.*.max:255'        => 'Name can not be more than 255 character',
             'icon.string'         => 'Icon is not a valid string',
             'image.string'        => 'Image is not a valid image',
             'banner_image.string' => 'Banner image is not a valid image',

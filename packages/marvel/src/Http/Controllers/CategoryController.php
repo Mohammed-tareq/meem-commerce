@@ -13,7 +13,7 @@ use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\CategoryCreateRequest;
 use Marvel\Http\Requests\CategoryUpdateRequest;
 use Marvel\Http\Resources\CategoryResource;
-use Marvel\Traits\apiResponse;
+use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
 
 
@@ -91,7 +91,7 @@ use Prettus\Validator\Exceptions\ValidatorException;
  */
 class CategoryController extends CoreController
 {
-    use apiResponse;
+    use ApiResponse;
     public $repository;
 
     public function __construct(CategoryRepository $repository)
@@ -232,7 +232,7 @@ class CategoryController extends CoreController
     {
         try {
             $category = $this->repository->saveCategory($request);
-            return $this->apiResponse("Category created successfully", 200, true, CategoryResource::make($category));
+            return $this->apiResponse(CATEGORY_CREATED_SUCCESSFULLY, 200, true, CategoryResource::make($category));
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }
@@ -270,16 +270,13 @@ class CategoryController extends CoreController
      *     )
      * )
      */
-    public function show(Request $request, $params)
+    public function show(Request $request, $id)
     {
         try {
             //            $language = $request->language ?? DEFAULT_LANGUAGE;
-            if (is_numeric($params)) {
-                $params = (int) $params;
-                $category = $this->repository->with(['parentCategory', 'children'])->where('id', $params)->firstOrFail();
-                return new CategoryResource($category);
-            }
-            $category = $this->repository->with(['parentCategory', 'children'])->where('slug', $params)->firstOrFail();
+            $category = $this->repository->with(['parent', 'children'])
+                ->withCount('products')
+                ->where('id', $id)->firstOrFail();
             return new CategoryResource($category);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
@@ -326,7 +323,8 @@ class CategoryController extends CoreController
     {
         try {
             $request->merge(['id' => $id]);
-            return $this->categoryUpdate($request);
+            $category = $this->categoryUpdate($request);
+            return $this->apiResponse(CATEGORY_UPDATED_SUCCESSFULLY, 200, true, CategoryResource::make($category));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -404,9 +402,9 @@ class CategoryController extends CoreController
     {
         $limit = isset($request->limit) ? $request->limit : 3;
         //                return $this->repository->with(['products'])->take($limit)->get()->map(function ($category) {
-//                    $category->setRelation('products', $category->products->withCount('orders')->sortBy('orders_count', "desc")->take(3));
-//                    return $category;
-//                });
+        //                    $category->setRelation('products', $category->products->withCount('orders')->sortBy('orders_count', "desc")->take(3));
+        //                    return $category;
+        //                });
         $categories = $this->repository->with(['products'])
             ->withCount('products')
             ->orderByDesc('products_count')

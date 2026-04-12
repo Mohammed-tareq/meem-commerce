@@ -39,7 +39,7 @@ use Marvel\Http\Requests\UserUpdateRequest;
 use Marvel\Http\Resources\UserResource;
 use Marvel\Mail\ContactAdmin;
 use Marvel\Otp\Gateways\OtpGateway;
-use Marvel\Traits\apiResponse;
+use Marvel\Traits\ApiResponse;
 use Marvel\Traits\UsersTrait;
 use Marvel\Traits\WalletsTrait;
 use Spatie\Newsletter\Facades\Newsletter;
@@ -65,7 +65,7 @@ use Spatie\Newsletter\Facades\Newsletter;
  */
 class UserController extends CoreController
 {
-    use WalletsTrait, UsersTrait, apiResponse;
+    use WalletsTrait, UsersTrait, ApiResponse;
 
     public $repository;
     private bool $applicationIsValid;

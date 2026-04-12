@@ -11,7 +11,7 @@ use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\AddressRequest;
 use Marvel\Http\Resources\AddressResource;
-use Marvel\Traits\apiResponse;
+use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
 
 /**
@@ -32,7 +32,7 @@ use Prettus\Validator\Exceptions\ValidatorException;
  */
 class AddressController extends CoreController
 {
-    use apiResponse;
+    use ApiResponse;
     public $repository;
 
     public function __construct(AddressRepository $repository)

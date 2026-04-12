@@ -10,11 +10,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
-class Category extends Model
+class Category extends Model implements HasMedia
 {
-    use HasTranslations, Sluggable;
+    use HasTranslations, Sluggable, InteractsWithMedia;
 
 
     protected $table = 'categories';
@@ -105,8 +107,8 @@ class Category extends Model
     /**
      * @return HasOne
      */
-    public function parentCategory()
-    {
-        return $this->hasOne('Marvel\Database\Models\Category', 'id', 'parent')->with('parentCategory');
-    }
+    // public function parentCategory()
+    // {
+    //     return $this->hasOne('Marvel\Database\Models\Category', 'id', 'parent')->with('parentCategory');
+    // }
 }
