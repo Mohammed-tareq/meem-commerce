@@ -33,13 +33,13 @@ class FlashSaleRepository extends BaseRepository
         'description',
         'start_date',
         'end_date',
-//        'language',
         'slug',
-        'image',
-        'cover_image',
-        'rate',
         'type',
         'sale_status',
+//        'language',
+        // 'image',
+        // 'cover_image',
+        // 'rate',
 //        'sale_builder'
     ];
 
@@ -69,21 +69,18 @@ class FlashSaleRepository extends BaseRepository
      * @param  mixed $request
      * @return void
      */
-    public function storeFlashSale($request)
+    public function storeFlashSale($request): FlashSale
     {
         try {
             // only admin can create flash deals
-            if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
                 $data = $request->only($this->dataArray);
                 $flash_sale = $this->create($data);
-                if (isset($request['sale_builder']['product_ids'])) {
-                    $flash_sale->products()->attach($request['sale_builder']['product_ids']);
-                    $this->setProductInFlashSale($request['sale_builder']['product_ids']);
-                }
-                return FlashSaleResource::make($flash_sale);
-            }
+                // if (isset($request['sale_builder']['product_ids'])) {
+                //     $flash_sale->products()->attach($request['sale_builder']['product_ids']);
+                //     $this->setProductInFlashSale($request['sale_builder']['product_ids']);
+                // }
+                return $flash_sale;
 
-            throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (Exception $th) {
             throw new Exception(SOMETHING_WENT_WRONG, $th->getMessage());
         }
@@ -91,7 +88,7 @@ class FlashSaleRepository extends BaseRepository
 
 
     /**
-     * updateFlashSale 
+     * updateFlashSale
      *
      * @param  mixed $request
      * @param  mixed $id
@@ -101,24 +98,21 @@ class FlashSaleRepository extends BaseRepository
     {
         try {
             // only admin can update flash deals
-            if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
                 $flash_sale = $this->findOrFail($id);
 
                 $data = $request->only($this->dataArray);
-                if (isset($request['sale_builder']['product_ids'])) {
-                    $flash_sale->products()->sync($request['sale_builder']['product_ids']);
-                    $this->setProductInFlashSale($request['sale_builder']['product_ids']);
-                }
+                // if (isset($request['sale_builder']['product_ids'])) {
+                //     $flash_sale->products()->sync($request['sale_builder']['product_ids']);
+                //     $this->setProductInFlashSale($request['sale_builder']['product_ids']);
+                // }
 
 //                if ($flash_sale['sale_builder']['product_ids'] != $request['sale_builder']['product_ids']) {
 //                    $this->unsetProductFromFlashSale($flash_sale['sale_builder']['product_ids'], $request['sale_builder']['product_ids']);
 //                }
 
-                $flash_sale->update($data);
-                return FlashSaleResource::make($flash_sale);
-            }
+                return $flash_sale;
 
-            throw new AuthorizationException(NOT_AUTHORIZED);
+
         } catch (Exception $e) {
             throw new Exception(SOMETHING_WENT_WRONG, $e->getMessage());
         }

@@ -225,19 +225,11 @@ class AttributeController extends CoreController
 
     public function deleteAttribute(Request $request)
     {
-        try {
+
             $attribute = $this->repository->findOrFail($request->id);
-        } catch (\Exception $e) {
-            throw new HttpException(404, NOT_FOUND);
-        }
-        if ($this->repository->hasPermission($request->user(), $attribute->shop->id)) {
             $attribute->delete();
-            return response()->json([
-                'message' => 'Attribute deleted successfully',
-                'status' => true
-            ]);
-        }
-        throw new AuthorizationException(NOT_AUTHORIZED);
+            return $this->apiResponse(ATTRIBUTE_DELETED_SUCCESSFULLY,200);
+
     }
 
     public function exportAttributes(Request $request, $shop_id)

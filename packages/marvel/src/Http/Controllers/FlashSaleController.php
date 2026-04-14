@@ -15,6 +15,7 @@ use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\CreateFlashSaleRequest;
 use Marvel\Http\Requests\UpdateFlashSaleRequest;
 use Marvel\Http\Resources\FlashSaleResource;
+use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
 use Marvel\Database\Repositories\ProductRepository;
 
@@ -40,6 +41,7 @@ use Marvel\Database\Repositories\ProductRepository;
  */
 class FlashSaleController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public $productRepository;
@@ -48,8 +50,11 @@ class FlashSaleController extends CoreController
     {
         $this->repository = $repository;
         $this->productRepository = $productRepository;
+        $this->middleware("permission:" . Permission::VIEW_FlASH_SALE, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_FlASH_SALE, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_FlASH_SALE, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_FlASH_SALE, ["only" => ["destroy"]]);
     }
-
 
     /**
      * @OA\Get(
@@ -74,9 +79,10 @@ class FlashSaleController extends CoreController
      */
     public function index(Request $request)
     {
-        try {
+                try {
             $limit = $request->limit ? $request->limit : 10;
-            return $this->fetchFlashSales($request)->paginate($limit)->withQueryString();
+            $flashSales =  $this->fetchFlashSales($request)->paginate($limit)->withQueryString();
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true,FlashSaleResource::collection($flashSales));
             // $data = FlashSaleResource::collection($flash_sales)->response()->getData(true);
             // return formatAPIResourcePaginate($data);
         } catch (MarvelException $e) {
@@ -120,8 +126,8 @@ class FlashSaleController extends CoreController
     public function store(CreateFlashSaleRequest $request)
     {
         try {
-            return $this->repository->storeFlashSale($request);
-            // return $this->repository->create($validatedData);
+            $flashSale =  $this->repository->storeFlashSale($request);
+            return $this->apiResponse(CREATE_FLASH_SALE_SUCCESSFULLY,200,true,FlashSaleResource::make($flashSale));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE, $e->getMessage());
         }
@@ -151,9 +157,9 @@ class FlashSaleController extends CoreController
 //            $language = $request->language ?? DEFAULT_LANGUAGE;
             $flash_sale = $this->repository
                 ->where('slug', '=', $slug)
-                ->orWhere('id', '=', $request->id)->first();
-            return FlashSaleResource::make($flash_sale);
-        } catch (MarvelException $e) {
+                ->orWhere('id', '=', $slug)->first();
+                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true,FlashSaleResource::make($flash_sale));
+            } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND, $e->getMessage());
         }
     }
@@ -170,7 +176,8 @@ class FlashSaleController extends CoreController
     {
         try {
             $request->merge(['id' => $id]);
-            return $this->updateFlashSale($request);
+            $flashSale =  $this->updateFlashSale($request);
+            return $this->apiResponse(UPDATE_FLASH_SALE_SUCCESSFULLY,200,true,FlashSaleResource::make($flashSale));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE, $e->getMessage());
         }
@@ -202,22 +209,20 @@ class FlashSaleController extends CoreController
     public function destroy($id, Request $request)
     {
         $request->merge(['id' => $id]);
-        return $this->deleteFlashSale($request);
+        if($this->deleteFlashSale($request)){
+            return $this->apiResponse(DELETE_FLASH_SALE_SUCCESSFULLY,200,true);
+        }
+        return $this->apiResponse(NOT_FOUND,200,true);
+
     }
 
     public function deleteFlashSale(Request $request)
     {
         try {
             $user = $request->user();
-            if ($user && ($user->hasPermissionTo(Permission::SUPER_ADMIN) || $user->hasPermissionTo(Permission::STORE_OWNER) || $user->hasPermissionTo(Permission::STAFF))) {
                 $flashSale = $this->repository->findOrFail($request->id);
                 $flashSale->delete();
-                return response()->json([
-                    'message' => 'Flash sale deleted successfully',
-                    'status' => 'true',
-                ]);
-            }
-            throw new AuthorizationException(NOT_AUTHORIZED);
+               return true;
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND, $e->getMessage());
         }

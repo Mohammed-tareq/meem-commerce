@@ -130,5 +130,6 @@ return [
     'view-abusive-reports' => 'عرض البلاغات',
     'accept-abusive-report' => 'قبول البلاغ',
     'reject-abusive-report' => 'رفض البلاغ',
+    
 
 ];

@@ -22,6 +22,7 @@ use Marvel\Http\Requests\ProductCreateRequest;
 use Marvel\Http\Requests\ProductUpdateRequest;
 use Marvel\Database\Repositories\ProductRepository;
 use Marvel\Database\Repositories\SettingsRepository;
+use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\Tag;
@@ -30,6 +31,7 @@ use \OpenAI;
 use Marvel\Enums\Permission;
 use Marvel\Http\Resources\GetSingleProductResource;
 use Marvel\Http\Resources\ProductResource;
+
 
 /**
  * @OA\Tag(name="Products", description="Product catalog endpoints - browse, search, and manage products")
@@ -88,7 +90,8 @@ use Marvel\Http\Resources\ProductResource;
  */
 class ProductController extends CoreController
 {
-    public $repository;
+    use ApiResponse;
+     public $repository;
 
     public $settings;
 

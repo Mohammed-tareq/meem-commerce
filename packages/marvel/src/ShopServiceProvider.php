@@ -135,7 +135,7 @@ class ShopServiceProvider extends ServiceProvider
         $this->loadMiddleware();
         $this->bootConsole();
         $this->registerEnum($typeRegistry);
-        $this->givePermissionToSuperAdmin();
+        // $this->givePermissionToSuperAdmin();
         $this->loadMigrations();
         $this->loadHelpers();
         Resource::withoutWrapping();
@@ -172,12 +172,13 @@ class ShopServiceProvider extends ServiceProvider
         }
     }
 
-    public function givePermissionToSuperAdmin()
-    {
-        Gate::before(function ($user, $ability) {
-            return $user->hasRole(Role::SUPER_ADMIN) ? true : null;
-        });
-    }
+    // public function givePermissionToSuperAdmin()
+    // {
+    //     Gate::before(function ($user, $ability) {
+    //         // return $user->hasRole(Role::SUPER_ADMIN) ? true : null;
+    //         return false;
+    //     });
+    // }
 
     public function registerEnum($typeRegistry)
     {

@@ -8,16 +8,17 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Marvel\Traits\TranslationTrait;
+use Spatie\Translatable\HasTranslations;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
 
 class FlashSale extends Model
 {
-    use TranslationTrait, SoftDeletes, Sluggable;
+    use HasTranslations, SoftDeletes, Sluggable;
 
     protected $table = 'flash_sales';
 
-    protected $appends = ['translated_languages'];
-
+    public array $translatable = ["title","description"];
     public $guarded = [];
 
     protected $casts = [
@@ -40,10 +41,7 @@ class FlashSale extends Model
         ];
     }
 
-    public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
-    {
-        return $query->where('language', $model->language);
-    }
+
 
     /**
      * @return BelongsToMany
@@ -60,4 +58,22 @@ class FlashSale extends Model
     {
         return $this->hasMany(FlashSaleRequests::class);
     }
+
+    public function typeByLang()
+    {
+        $map = [
+            'ar' => [
+                'fixed_rate' => 'خصم من السعر بالقيمة',
+                'percentage' => 'خصم بالنسبة المئوية',
+            ],
+            'en' => [
+                'fixed_rate' => 'Fixed discount',
+                'percentage' => 'Percentage discount',
+            ],
+        ];
+
+        $locale = app()->getLocale();
+            return $map[$locale][$this->type] ?? $this->type;
+    }
+
 }

@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Marvel\Enums\Permission;
+// use Marvel\Enums\Role;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,7 +19,9 @@ use Marvel\Enums\Permission;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
-// Route::middleware('auth:api')->get('/test', function (Request $request) {
-//     return $request->user()->hasPermissionTo(Permission::VIEW_PROFILE);
-// });
+Route::middleware('auth:api')->get('/test', function (Request $request) {
+  $role = \Spatie\Permission\Models\Role::where("name" , "super_admin")->first();
+  $role->syncPermissions(['create-flash-sale','update-flash-sale' ,'delete-flash-sale']);
+return $role;
+});
 

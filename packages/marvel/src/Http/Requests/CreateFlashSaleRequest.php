@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -28,14 +29,17 @@ class CreateFlashSaleRequest extends FormRequest
     public function rules()
     {
         return [
-            'title'        => ['required', 'string' , 'max:255' ,'unique:flash_sales,title'],
-            'description'  => ['required', 'string', 'max:10000'],
+            'title'        => ['required', 'array'],
+            'title.*'=> ['required','string','min:3' , 'max:70',UniqueTranslationRule::for('flash_sales',"title")],
+            'description'        => ['required', 'array'],
+            'description.*'  => ['required', 'string', 'max:1000'],
             'start_date'   => ['required', 'date'],
             'end_date'     => ['required', 'date'],
             'slug'         => ['nullable', 'string'],
+            'type'=> ['required','in:percentage,fixed_rate'],
 //            'language'     => ['nullable', 'string'],
-            'image'        => ['nullable', 'array'],
-            'cover_image'  => ['nullable', 'array'],
+            // 'image'        => ['nullable', 'array'],
+            // 'cover_image'  => ['nullable', 'array'],
 //            'sale_builder' => ['nullable', 'array']
         ];
     }

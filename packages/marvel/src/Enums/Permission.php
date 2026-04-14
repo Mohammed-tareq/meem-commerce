@@ -40,6 +40,11 @@ final class Permission extends Enum
     public const VIEW_FAQS = 'view-faqs';
     public const VIEW_SETTINGS = 'view-settings';
 
+    public const VIEW_FlASH_SALE = "view-flash-sale";
+    public const CREATE_FlASH_SALE = "create-flash-sale";
+    public const UPDATE_FlASH_SALE = "update-flash-sale";
+    public const DELETE_FlASH_SALE = "delete-flash-sale";
+
     // 👤 Customer
     public const VIEW_PROFILE = 'view-profile';
     public const UPDATE_PROFILE = 'update-profile';

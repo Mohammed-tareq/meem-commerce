@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Http\FormRequest;
@@ -31,15 +32,15 @@ class UpdateFlashSaleRequest extends FormRequest
     {
         // $language = $this->language ?? DEFAULT_LANGUAGE;
 
+        $id = $this->route("flash_sale");
         $rules =  [
-            'title'       => ['required', 'string'],
-            'description' => ['required', 'string', 'max:10000'],
-            'start_date'  => ['required', 'string'],
-            'end_date'    => ['required', 'string'],
-            'slug'        => ['nullable', 'string'],
-//            'language'    => ['nullable', 'string'],
-            'image'       => ['nullable', 'array'],
-            'cover_image' => ['nullable', 'array'],
+            'title'        => ['required', 'array'],
+            'title.*'=> ['required','string','min:3' , 'max:70',UniqueTranslationRule::for('flash_sales',"title")->ignore($id)],
+            'description'        => ['required', 'array'],
+            'description.*'  => ['required', 'string', 'max:1000'],
+            'start_date'   => ['required', 'date'],
+            'end_date'     => ['required', 'date'],
+            'slug'         => ['nullable', 'string'],
         ];
         return $rules;
     }
