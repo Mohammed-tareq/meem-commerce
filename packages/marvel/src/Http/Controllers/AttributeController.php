@@ -8,12 +8,14 @@ use Illuminate\Support\Arr;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
+use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\AttributeRequest;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Marvel\Database\Repositories\AttributeRepository;
 use Marvel\Http\Resources\AttributeResource;
+use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 /**
@@ -43,11 +45,16 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class AttributeController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(AttributeRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware("permission:" . Permission::VIEW_ATTRIBUTES, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_ATTRIBUTE, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_ATTRIBUTE, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_ATTRIBUTE, ["only" => ["destroy"]]);
     }
 
 
@@ -74,7 +81,7 @@ class AttributeController extends CoreController
         $attributes = $this->repository
             ->with(['values', 'shop'])->get();
 //            ->where('language', $language)
-        return AttributeResource::collection($attributes);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true,AttributeResource::collection($attributes));
     }
 
     /**
@@ -103,12 +110,12 @@ class AttributeController extends CoreController
     public function store(AttributeRequest $request)
     {
         try {
-            if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
-                return $this->repository->storeAttribute($request);
-            }
-            throw new AuthorizationException(NOT_AUTHORIZED);
+            // if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
+            // }
+            $attribute = $this->repository->storeAttribute($request);
+            return $this->apiResponse(ATTRIBUTE_CREATED_SUCCESSFULLY, 201, true, AttributeResource::make($attribute));
         } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
+            throw new AuthorizationException(NOT_AUTHORIZED);
         }
     }
 
@@ -133,13 +140,13 @@ class AttributeController extends CoreController
             if (is_numeric($params)) {
                 $params = (int)$params;
                 $attribute = $this->repository->with('values')->where('id', $params)->firstOrFail();
-                return new AttributeResource($attribute);
+                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true,AttributeResource::make($attribute));
             }
             $attribute = $this->repository->with('values')
                 ->where('slug', $params)
 //                ->where('language', $language)
                 ->firstOrFail();
-            return new AttributeResource($attribute);
+                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true,AttributeResource::make($attribute));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -171,7 +178,8 @@ class AttributeController extends CoreController
     {
         try {
             $request->id = $id;
-            return $this->updateAttribute($request);
+            $attributeUpdates =  $this->updateAttribute($request);
+            return $this->apiResponse(ATTRIBUTE_UPDATED_SUCCESSFULLY,200, true, AttributeResource::make($attributeUpdates) );
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
         }
@@ -180,15 +188,15 @@ class AttributeController extends CoreController
     public function updateAttribute(AttributeRequest $request)
     {
 
-        if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
+        // if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
+            // }
             try {
                 $attribute = $this->repository->with('values')->findOrFail($request->id);
+                return $this->repository->updateAttribute($request, $attribute);
             } catch (\Exception $e) {
                 throw new HttpException(404, NOT_FOUND);
             }
-            return $this->repository->updateAttribute($request, $attribute);
-        }
-        throw new AuthorizationException(NOT_AUTHORIZED);
+
     }
 
     /**

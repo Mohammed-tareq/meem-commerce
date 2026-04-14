@@ -16,7 +16,7 @@ class AttributeValueResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'value'                => $this->value,
+            'value'                => $this->getTranslation('value', app()->getLocale()),
             'attribute_id'         => $this->attribute_id,
             'slug'                 => $this->slug,
             'meta'                 => $this->meta,

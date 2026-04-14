@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -26,15 +27,28 @@ class AttributeRequest extends FormRequest
      */
     public function rules()
     {
+        $id = $this->route("attribute");
         return [
-            'name'        => ['required', 'string'],
+            'name'        => ['required', 'array'],
+            'name.*'      => ['required', 'string','min:2','max:50',UniqueTranslationRule::for('attributes')->ignore($id)],
             'slug'        => ['nullable', 'string'],
-            'shop_id'     => ['required', 'exists:Marvel\Database\Models\Shop,id'],
-            'values'      => ['sometimes','array'],
-            'values.*.value' => [
+            'shop_id'     => ['sometimes', 'exists:Marvel\Database\Models\Shop,id'],
+            'values' => [
+                'sometimes',
+                'array',
+                'distinct',
+            ],
+            'values.*' => [
+                'sometimes',
+                'array',
+                'distinct',
+            ],
+            'values.*.value.*' => [
                 'sometimes',
                 'string',
-                'distinct',
+                'min:2',
+                'max:50',
+            
             ],
             //            'language'     => ['nullable', 'string'],
         ];

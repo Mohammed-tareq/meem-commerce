@@ -22,14 +22,12 @@ class AttributeRepository extends BaseRepository
     protected $fieldSearchable = [
         'name'        => 'like',
         'shop_id',
-        'language',
     ];
 
     protected $dataArray = [
         'name',
         'slug',
         'shop_id',
-        'language',
     ];
 
     public function boot()
@@ -51,13 +49,24 @@ class AttributeRepository extends BaseRepository
     public function storeAttribute($request)
     {
         try {
+            DB::beginTransaction();
             $request['slug'] = $this->makeSlug($request);
             $attribute = $this->create($request->only($this->dataArray));
             if (isset($request['values']) && count($request['values'])) {
-                $attribute->values()->createMany($request['values']);
+                foreach ($request['values'] as  $value) {
+                    $value['slug'] = $this->makeSlug($request);
+                    AttributeValue::create([
+                        'value' => $value['value'],
+                        'attribute_id' => $attribute->id,
+                        'slug' => $value['slug'],
+                    ]);
+                }
             }
-            return AttributeResource::make($attribute);
+            DB::commit();
+            return $attribute->load('values');
         } catch (\Throwable $th) {
+            DB::rollBack();
+            dd($th->getMessage());
             throw new HttpException(400, COULD_NOT_CREATE_THE_RESOURCE);
         }
     }
@@ -65,25 +74,37 @@ class AttributeRepository extends BaseRepository
     public function updateAttribute($request, $attribute)
     {
         try {
-            if (isset($request['values'])) {
-                foreach ($attribute->values as $value) {
-                    $key = array_search($value->id, array_column($request['values'], 'id'));
-                    if (!$key && $key !== 0) {
-                        AttributeValue::findOrFail($value->id)->delete();
-                    }
-                }
-                foreach ($request['values'] as $value) {
-                    if (isset($value['id'])) {
-                        AttributeValue::findOrFail($value['id'])->update($value);
-                    } else {
-                        $value['attribute_id'] = $attribute->id;
-                        AttributeValue::create($value);
-                    }
+            // if (isset($request['values'])) {
+            //     foreach ($attribute->values as $value) {
+            //         $key = array_search($value->id, array_column($request['values'], 'id'));
+            //         if (!$key && $key !== 0) {
+            //             AttributeValue::findOrFail($value->id)->delete();
+            //         }
+            //     }
+            //     foreach ($request['values'] as $value) {
+            //         if (isset($value['id'])) {
+            //             AttributeValue::findOrFail($value['id'])->update($value);
+            //         } else {
+            //             $value['attribute_id'] = $attribute->id;
+            //             AttributeValue::create($value);
+            //         }
+            //     }
+            // }
+            $attribute->update($request->only($this->dataArray));
+            if (isset($request['values']) && count($request['values'])) {
+                $attribute->values()->delete();
+                foreach ($request['values'] as  $value) {
+                    $value['slug'] = $this->makeSlug($request);
+                    AttributeValue::create([
+                        'value' => $value['value'],
+                        'attribute_id' => $attribute->id,
+                        'slug' => $value['slug'],
+                    ]);
                 }
             }
-            $attribute->update($request->only($this->dataArray));
+
               $attributeUpdated =  $this->with('values')->findOrFail($attribute->id);
-            return AttributeResource::make($attributeUpdated);
+            return $attributeUpdated;
         } catch (\Throwable $th) {
             throw new HttpException(400, COULD_NOT_UPDATE_THE_RESOURCE);
         }

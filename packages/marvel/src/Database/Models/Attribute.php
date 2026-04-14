@@ -3,22 +3,17 @@
 namespace Marvel\Database\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Cviebrock\EloquentSluggable\Sluggable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Facades\DB;
-use Marvel\Exceptions\MarvelException;
-use Marvel\Traits\TranslationTrait;
+use Spatie\Translatable\HasTranslations;
 
 class Attribute extends Model
 {
-    use Sluggable, TranslationTrait;
-
+    use Sluggable, HasTranslations;
+    public array $translatable = ['name'];
     protected $table = 'attributes';
 
-    protected $appends = ['translated_languages'];
 
     public $guarded = [];
 
@@ -36,10 +31,10 @@ class Attribute extends Model
         ];
     }
 
-    public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
-    {
-        return $query->where('language', $model->language);
-    }
+    // public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
+    // {
+    //     return $query->where('language', $model->language);
+    // }
 
 
     /**

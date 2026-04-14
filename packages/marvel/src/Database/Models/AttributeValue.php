@@ -7,23 +7,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Builder;
-use Marvel\Traits\TranslationTrait;
+use Spatie\Translatable\HasTranslations;
 
 class AttributeValue extends Model
 {
-    use TranslationTrait, Sluggable;
-
+    use HasTranslations, Sluggable;
+    public array $translatable = ['value'];
     protected $table = 'attribute_values';
 
     public $guarded = [];
 
-    protected $appends = ['translated_languages'];
 
 
-    public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
-    {
-        return $query->where('language', $model->language);
-    }
+
 
     /**
      * Return the sluggable configuration array for this model.

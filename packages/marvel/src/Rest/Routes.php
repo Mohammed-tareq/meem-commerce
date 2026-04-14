@@ -399,7 +399,7 @@ Route::get('popular-products', 'Marvel\Http\Controllers\ProductController@popula
 
 
 Route::group(
-    ['middleware' => ['role:' . Role::STAFF . '|' . Role::STORE_OWNER, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:' . Role::STAFF . '|'. Role::SUPER_ADMIN . '|' . Role::STORE_OWNER, 'auth:sanctum', 'email.verified']],
     function () {
         Route::apiResource('products', ProductController::class, [
             'only' => ['store', 'update', 'destroy'],
