@@ -25,6 +25,10 @@ return [
     'view-cms-page' => 'عرض صفحة',
     'view-faqs' => 'عرض الأسئلة الشائعة',
     'view-settings' => 'عرض الإعدادات',
+    'view-flash-sale' => 'عرض فلاش سيل',
+    'create-flash-sale' => 'إنشاء فلاش سيل',
+    'update-flash-sale' => 'تعديل فلاش سيل',
+    'delete-flash-sale' => 'حذف فلاش سيل',
 
     // 👤 Customer
     'view-profile' => 'عرض الملف الشخصي',

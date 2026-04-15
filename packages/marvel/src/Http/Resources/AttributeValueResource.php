@@ -18,8 +18,8 @@ class AttributeValueResource extends Resource
             'id'                   => $this->id,
             'value'                => $this->getTranslation('value', app()->getLocale()),
             'attribute_id'         => $this->attribute_id,
-            'slug'                 => $this->slug,
-            'meta'                 => $this->meta,
+            // 'slug'                 => $this->slug,
+            // 'meta'                 => $this->meta,
 //            'language'             => $this->language,
 //            'translated_languages' => $this->translated_languages,
  ];

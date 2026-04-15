@@ -14,38 +14,38 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Marvel\Traits\Excludable;
 use Kodeine\Metable\Metable;
-use Marvel\Exceptions\MarvelException;
-use Marvel\Traits\TranslationTrait;
+use Spatie\Translatable\HasTranslations;
+
 
 class Product extends Model
 {
-    use Sluggable, SoftDeletes, Excludable, Metable, TranslationTrait;
-
-    public $guarded = [];
+    use HasTranslations, SoftDeletes, Sluggable, Excludable;
 
     protected $table = 'products';
+    public $guarded = [];
+    public array $translatable = ['name', 'description'];
     protected $metaTable = 'products_meta'; //optional.
     // protected $disableFluentMeta = true;
     public $hideMeta = true;
 
-    protected $casts = [
-        'image' => 'json',
-        'gallery' => 'json',
-        'video' => 'json',
-    ];
+    // protected $casts = [
+    //     'image' => 'json',
+    //     'gallery' => 'json',
+    //     'video' => 'json',
+    // ];
 
     protected $appends = [
-        'ratings',
-        'total_reviews',
-        'rating_count',
-        'my_review',
-        'in_wishlist',
-        'blocked_dates',
-        'translated_languages',
-        'sold'
+        // 'ratings',
+        // 'total_reviews',
+        // 'rating_count',
+        // 'my_review',
+        // 'in_wishlist',
+        // 'blocked_dates',
+        // 'translated_languages',
+        // 'sold'
     ];
 
     /**
@@ -62,6 +62,29 @@ class Product extends Model
         ];
     }
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($product) {
+            $product->sku = 'PRD-' . Str::uuid();
+            $product->save();
+        });
+    }
+
+    public function discount(): HasOne
+    {
+        return $this->hasOne(Discount::class);
+    }
+
+    public function getFinalPriceAttribute()
+    {
+        if (!$this->has_discount) {
+            return $this->price;
+        }
+
+        return $this->discount->getPriceAfterDiscount($this);
+    }
 
     public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
     {
@@ -88,14 +111,14 @@ class Product extends Model
             $dateRange = CarbonPeriod::create($from, $to);
             $_blockedDates = $dateRange->toArray();
             unset($_blockedDates[count($_blockedDates) - 1]);
-            $_flatBlockedDates =  array_unique(array_merge($_flatBlockedDates, $_blockedDates));
+            $_flatBlockedDates = array_unique(array_merge($_flatBlockedDates, $_blockedDates));
         }
         return $_flatBlockedDates;
     }
 
     public function fetchBlockedDatesForAProduct()
     {
-        return  Availability::where('product_id', $this->id)->where('bookable_type', 'Marvel\Database\Models\Product')->whereDate('to', '>=', Carbon::now())->get();
+        return Availability::where('product_id', $this->id)->where('bookable_type', 'Marvel\Database\Models\Product')->whereDate('to', '>=', Carbon::now())->get();
     }
 
     /**
@@ -314,7 +337,7 @@ class Product extends Model
     {
         $relatedProducts = [];
         try {
-            $product    = $this->where('slug', $slug)->firstOrFail();
+            $product = $this->where('slug', $slug)->firstOrFail();
             $categories = $product->categories()->pluck('id');
 
             $relatedProducts = $this->where('language', $language)

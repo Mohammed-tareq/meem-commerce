@@ -39,6 +39,11 @@ class PermissionSeeder extends Seeder
             'view-cms-page',
             'view-faqs',
             'view-settings',
+            "view-flash-sale",
+            'create-flash-sale',
+            'update-flash-sale',
+            'delete-flash-sale',
+            "view-attributes",
 
             // 👤 Customer
             'view-profile',

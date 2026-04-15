@@ -21,7 +21,7 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 });
 Route::middleware('auth:api')->get('/test', function (Request $request) {
   $role = \Spatie\Permission\Models\Role::where("name" , "super_admin")->first();
-  $role->syncPermissions(['create-flash-sale','update-flash-sale' ,'delete-flash-sale']);
+  $role->syncPermissions(["view-flash-sale",'create-flash-sale','update-flash-sale' ,'delete-flash-sale']);
 return $role;
 });
 

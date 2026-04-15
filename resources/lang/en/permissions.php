@@ -23,6 +23,10 @@ return [
     'view-cms-page' => 'View CMS page',
     'view-faqs' => 'View FAQs',
     'view-settings' => 'View settings',
+    'view-flash-sale' => 'View flash sale',
+    'create-flash-sale' => 'Create flash sale',
+    'update-flash-sale' => 'Update flash sale',
+    'delete-flash-sale' => 'Delete flash sale',
 
     // 👤 Customer
     'view-profile' => 'View profile',
