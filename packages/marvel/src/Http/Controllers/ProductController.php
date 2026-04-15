@@ -99,6 +99,10 @@ class ProductController extends CoreController
     {
         $this->repository = $repository;
         $this->settings = $settings;
+        $this->middleware("permission:" . Permission::VIEW_PRODUCTS, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_PRODUCT, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_PRODUCT, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_PRODUCT, ["only" => ["destroy"]]);
     }
 
 
@@ -224,9 +228,7 @@ class ProductController extends CoreController
     public function fetchProducts(Request $request)
     {
         $unavailableProducts = [];
-        $language = $request->language ? $request->language : DEFAULT_LANGUAGE;
 
-        $products_query = $this->repository->where('language', $language);
 
         if (isset($request->date_range)) {
             $dateRange = explode('//', $request->date_range);
@@ -235,7 +237,7 @@ class ProductController extends CoreController
         if (in_array('variation_options.digital_files', explode(';', $request->with)) || in_array('digital_files', explode(';', $request->with))) {
             throw new AuthorizationException(NOT_AUTHORIZED);
         }
-        $products_query = $products_query->whereNotIn('id', $unavailableProducts);
+        $products_query = $this->repository->whereNotIn('id', $unavailableProducts);
 
         if ($request->flash_sale_builder) {
             $products_query = $this->repository->processFlashSaleProducts($request, $products_query);

@@ -157,10 +157,10 @@ class Product extends Model
     /**
      * @return HasMany
      */
-    public function variation_options(): HasMany
-    {
-        return $this->hasMany(Variation::class, 'product_id');
-    }
+    // public function variation_options(): HasMany
+    // {
+    //     return $this->hasMany(Variation::class, 'product_id');
+    // }
 
     /**
      * @return belongsToMany
@@ -171,11 +171,11 @@ class Product extends Model
     }
 
     /**
-     * @return BelongsToMany
+     * @return HasMany
      */
-    public function variations(): BelongsToMany
+    public function variations(): HasMany
     {
-        return $this->belongsToMany(AttributeValue::class, 'attribute_product');
+        return $this->hasMany(ProductVaraint::class, 'product_id');
     }
 
     /**

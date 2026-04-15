@@ -99,12 +99,12 @@ class CreateMarvelTables extends Migration
             $table->foreign('shipping_class_id')->references('id')->on('shipping_classes');
             $table->enum('status', ProductStatus::getValues())->default(ProductStatus::DRAFT);
             $table->enum('product_type', ProductType::getValues())->default(ProductType::SIMPLE);
-            $table->string('unit');
             $table->string('height')->nullable();
             $table->string('width')->nullable();
             $table->string('length')->nullable();
-            $table->json('image')->nullable();
-            $table->json('gallery')->nullable();
+            // $table->json('image')->nullable();
+            // $table->string('unit');
+            // $table->json('gallery')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
@@ -151,13 +151,13 @@ class CreateMarvelTables extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->string('slug');
-            $table->string('icon')->nullable();
-            $table->json('image')->nullable();
-            $table->json('banner_image')->nullable();
             $table->text('details')->nullable();
             $table->unsignedBigInteger('parent')->nullable();
             $table->foreign('parent')->references('id')->on('categories')->onDelete('cascade');
-            //            $table->unsignedBigInteger('type_id');
+            // $table->string('icon')->nullable();
+            // $table->json('image')->nullable();
+            // $table->json('banner_image')->nullable();
+            // $table->unsignedBigInteger('type_id');
 //            $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
@@ -187,14 +187,28 @@ class CreateMarvelTables extends Migration
             $table->timestamps();
         });
 
-        Schema::create('attribute_product', function (Blueprint $table) {
+         Schema::create('product_varaints', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('attribute_value_id');
-            $table->foreign('attribute_value_id')->references('id')->on('attribute_values')->onDelete('cascade');
+            $table->double('price')->nullable();
+            $table->double('sale_price')->nullable();
+            $table->integer('quantity')->default(0);
+            $table->string('height')->nullable();
+            $table->string('width')->nullable();
+            $table->string('length')->nullable();
             $table->unsignedBigInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->timestamps();
         });
+
+        Schema::create('attribute_product', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('attribute_value_id');
+            $table->foreign('attribute_value_id')->references('id')->on('attribute_values')->onDelete('cascade');
+            $table->unsignedBigInteger('product_variant_id');
+            $table->foreign('product_variant_id')->references('id')->on('product_varaints')->onDelete('cascade');
+            $table->timestamps();
+        });
+       
 
         Schema::create('tax_classes', function (Blueprint $table) {
             $table->id();
