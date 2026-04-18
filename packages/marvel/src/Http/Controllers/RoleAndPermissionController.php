@@ -121,10 +121,7 @@ class RoleAndPermissionController extends CoreController
         }
         $user->load('roles', 'permissions');
 
-        return response()->json([
-            'success' => true,
-            'data' => UserResource::make($user),
-        ]);
+        return $this->apiResponse('Role removed successfully', 200, true, UserResource::make($user));
     }
 
     // ================= PERMISSIONS =================
@@ -137,10 +134,7 @@ class RoleAndPermissionController extends CoreController
             $query->where('name', 'like', "%{$search}%");
         })->paginate($limit);
 
-        return response()->json([
-            'success' => true,
-            'data' => PermissionResource::collection($permissions),
-        ]);
+        return $this->apiResponse('Permissions fetched successfully', 200, true, PermissionResource::collection($permissions));
     }
 
 
@@ -158,65 +152,12 @@ class RoleAndPermissionController extends CoreController
 
         $role->syncPermissions($permissions)->load('permissions');
 
-        return response()->json([
-            'success' => true,
-            'data' => RoleResource::make($role),
-        ]);
+        return $this->apiResponse('Permission assigned successfully', 200, true, RoleResource::make($role));
     }
 
-    public function givePermission(Request $request, $userId)
-    {
-        $request->validate([
-            'permissions' => 'required|array',
-            'permissions.*' => ['distinct', 'string', 'max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
-        ]);
 
-        $user = User::findOrFail($userId);
 
-        $permissions = Permission::whereIn('id', $request->permissions)->get();
+   
 
-        $user->givePermissionTo($permissions)->load('permissions');
-
-        return response()->json([
-            'success' => true,
-            'data' => UserResource::make($user),
-        ]);
-    }
-
-    public function syncPermissions(Request $request, $userId)
-    {
-        $request->validate([
-            'permissions' => 'required|array',
-            'permissions.*' => ['distinct', 'string', 'max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
-        ]);
-
-        $user = User::findOrFail($userId);
-
-        $permissions = Permission::whereIn('id', $request->permissions)->get();
-
-        $user->syncPermissions($permissions)->load('permissions');
-
-        return response()->json([
-            'success' => true,
-            'data' => UserResource::make($user),
-        ]);
-    }
-
-    public function removePermission(Request $request, $userId)
-    {
-        $request->validate([
-            'permission_id' => 'required|exists:permissions,id',
-        ]);
-
-        $user = User::findOrFail($userId);
-
-        $permission = Permission::findById($request->permission_id, 'api');
-
-        $user->revokePermissionTo($permission);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Permission removed',
-        ]);
-    }
+    
 }
