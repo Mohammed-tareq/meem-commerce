@@ -643,7 +643,6 @@ Route::group([
     Route::post('/users/{userId}/remove-role', [RoleAndPermissionController::class, 'removeRoleFromUser']);
 
     Route::get('/permissions', [RoleAndPermissionController::class, 'getAllPermissions']);
-    Route::post('/permissions', [RoleAndPermissionController::class, 'addPermission']);
     Route::post('/roles/{roleId}/permissions', [RoleAndPermissionController::class, 'assignPermissionToRole']);
     Route::post('/users/{userId}/permissions', [RoleAndPermissionController::class, 'givePermission']);
     Route::put('/users/{userId}/permissions', [RoleAndPermissionController::class, 'syncPermissions']);

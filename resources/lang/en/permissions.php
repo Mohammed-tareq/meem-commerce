@@ -27,6 +27,10 @@ return [
     'create-flash-sale' => 'Create flash sale',
     'update-flash-sale' => 'Update flash sale',
     'delete-flash-sale' => 'Delete flash sale',
+    'view-roles' => 'View roles',
+    'create-roles' => 'Create roles',
+    'update-roles' => 'Update roles',
+    'delete-roles' => 'Delete roles',
 
     // 👤 Customer
     'view-profile' => 'View profile',

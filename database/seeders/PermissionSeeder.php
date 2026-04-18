@@ -149,6 +149,10 @@ class PermissionSeeder extends Seeder
             'view-abusive-reports',
             'accept-abusive-report',
             'reject-abusive-report',
+            'view-roles',
+            'create-roles',
+            'update-roles',
+            'delete-roles',
         ];
 
         $customerPermission = [
@@ -299,22 +303,42 @@ class PermissionSeeder extends Seeder
 
         $roleSuperAdmin = Role::firstOrCreate([
             'name' => 'super_admin',
+            'display_name' =>[
+                'en' => 'Super Admin',
+                'ar' => 'مدير_النظام',
+            ],
             'guard_name' => 'api',
         ]);
         $roleOwner = Role::firstOrCreate([
             'name'=> 'owner',
+            'display_name' =>[
+                'en' => 'Owner',
+                'ar' => 'مالك',
+            ],
             'guard_name' => 'api',
         ]);
         $roleStaff = Role::firstOrCreate([
             'name'=> 'staff',
+            'display_name' =>[
+                'en' => 'Staff',
+                'ar' => 'موظف',
+            ],
             'guard_name' => 'api',
         ]);
         $roleCustomer = Role::firstOrCreate([
             'name'=> 'customer',
+            'display_name' =>[
+                'en' => 'Customer',
+                'ar' => 'عميل',
+            ],
             'guard_name' => 'api',
         ]);
         $roleEditor = Role::firstOrCreate([
             'name'=> 'editor',
+            'display_name' =>[
+                'en' => 'Editor',
+                'ar' => 'محرر',
+            ],
             'guard_name' => 'api',
         ]);
         

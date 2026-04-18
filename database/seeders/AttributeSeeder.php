@@ -69,7 +69,15 @@ class AttributeSeeder extends Seeder
         ];
 
         foreach ($attributes as $attr) {
-            \Marvel\Database\Models\Attribute::create($attr);
+            $attribute = \Marvel\Database\Models\Attribute::create([
+                'name'=> $attr['name'],
+            ]);
+            foreach ($attr['values'] as $value) {
+                \Marvel\Database\Models\AttributeValue::create([
+                    'attribute_id' => $attribute->id,
+                    'value' => $value['value'],
+                ]);
+            }
         }
     }
 }

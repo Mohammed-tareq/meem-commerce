@@ -2,24 +2,26 @@
 
 namespace Marvel\Http\Controllers;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Marvel\Database\Models\User;
 use Marvel\Http\Resources\PermissionResource;
 use Marvel\Http\Resources\RoleResource;
 use Marvel\Http\Resources\UserResource;
+use Marvel\Traits\ApiResponse;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
 class RoleAndPermissionController extends CoreController
 {
+    use ApiResponse;
     public function __construct()
     {
-        $this->middleware('permission:create roles')->only('addRole');
-        $this->middleware('permission:update roles')->only('updateRole');
-        $this->middleware('permission:delete roles')->only('destroyRole');
+        $this->middleware('permission:create-roles')->only('addRole');
+        $this->middleware('permission:update-roles')->only('updateRole');
+        $this->middleware('permission:delete-roles')->only('destroyRole');
 
-        $this->middleware('permission:create permissions')->only('addPermission');
 
         $this->middleware('permission:assign role')->only('assignRole');
         $this->middleware('permission:remove role')->only('removeRoleFromUser');
@@ -35,35 +37,31 @@ class RoleAndPermissionController extends CoreController
     {
         $limit = request('limit', 10);
         $search = request('search', null);
-        $roles = Role::when($search, function ($query) use ($search) {
-            $query->where('name', 'like', "%{$search}%");
-        })->paginate($limit);
+        $roles = Role::paginate($limit);
 
-        return response()->json([
-            'success' => true,
-            'data' => RoleResource::collection($roles),
-        ]);
+        return $this->apiResponse('Roles fetched successfully', 200, true, RoleResource::collection($roles));
     }
 
     public function addRole(Request $request)
     {
         $request->validate([
-            'name' => [
+            'display_name' => 'required|array',
+            'display_name.*' => [
                 'required',
                 'string',
-                Rule::unique('roles', 'name')->where(fn($q) => $q->where('guard_name', 'api')),
+                UniqueTranslationRule::for('roles', 'display_name'),
             ],
         ]);
 
+        $name = strtolower(str_replace(' ', '_', $request->display_name['en']));
+
         $role = Role::create([
-            'name' => $request->name,
+            'name' => $name,
+            'display_name' => $request->display_name,
             'guard_name' => 'api',
         ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => RoleResource::make($role),
-        ]);
+        return $this->apiResponse('Role added successfully', 200, true, RoleResource::make($role));
     }
 
     public function updateRole(Request $request, $id)
@@ -71,21 +69,20 @@ class RoleAndPermissionController extends CoreController
         $role = Role::findById($id, 'api');
 
         $request->validate([
-            'name' => [
+            'display_name' => 'required|array',
+            'display_name.*' => [
                 'required',
                 'string',
-                Rule::unique('roles', 'name')->where(fn($q) => $q->where('id', '!=', $role->id)->where('guard_name', 'api')),
+                UniqueTranslationRule::for('roles', 'display_name')->ignore($id),
             ],
         ]);
-
+        $name = strtolower(str_replace(' ', '_', $request->display_name['en']));
         $role->update([
-            'name' => $request->name,
+            'name' => $name,
+            'display_name' => $request->display_name,
         ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => RoleResource::make($role),
-        ]);
+        return $this->apiResponse('Role updated successfully', 200, true, RoleResource::make($role));
     }
 
     public function destroyRole($id)
@@ -94,10 +91,7 @@ class RoleAndPermissionController extends CoreController
 
         $role->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Role deleted',
-        ]);
+        return $this->apiResponse('Role deleted successfully', 200, true, null);
     }
 
     public function assignRole(Request $request, $userId)
@@ -111,10 +105,7 @@ class RoleAndPermissionController extends CoreController
         $roles = Role::whereIn('id', $request->role_ids)->where('guard_name', 'api')->get();
         $user->syncRoles($roles)->load('roles', 'permissions');
 
-        return response()->json([
-            'success' => true,
-            'data' => UserResource::make($user),
-        ]);
+        return $this->apiResponse('Role assigned successfully', 200, true, UserResource::make($user));
     }
 
     public function removeRoleFromUser(Request $request, $userId)
@@ -152,34 +143,13 @@ class RoleAndPermissionController extends CoreController
         ]);
     }
 
-    public function addPermission(Request $request)
-    {
-        $permissions = $request->validate([
-            'permissions' => 'required|array',
-            'permissions.*' => ['distinct','string','max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
-        ]);
 
-
-        $data =[];
-        foreach ($permissions['permissions'] as $permission) {
-            $permission = Permission::create([
-                'name' => $permission,
-                'guard_name' => 'api',
-            ]);
-            $data[] = $permission;
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => PermissionResource::collection($data),
-        ]);
-    }
 
     public function assignPermissionToRole(Request $request, $roleId)
     {
         $request->validate([
             'permissions' => 'required|array',
-            'permissions.*' => ['distinct','string','max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
+            'permissions.*' => ['distinct', 'string', 'max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
         ]);
 
         $role = Role::findById($roleId, 'api');
@@ -198,7 +168,7 @@ class RoleAndPermissionController extends CoreController
     {
         $request->validate([
             'permissions' => 'required|array',
-            'permissions.*' => ['distinct','string','max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
+            'permissions.*' => ['distinct', 'string', 'max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
         ]);
 
         $user = User::findOrFail($userId);
@@ -217,7 +187,7 @@ class RoleAndPermissionController extends CoreController
     {
         $request->validate([
             'permissions' => 'required|array',
-            'permissions.*' => ['distinct','string','max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
+            'permissions.*' => ['distinct', 'string', 'max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
         ]);
 
         $user = User::findOrFail($userId);

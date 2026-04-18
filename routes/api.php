@@ -20,10 +20,24 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 Route::middleware('auth:api')->get('/test', function (Request $request) {
-  dd(auth()->user()->hasPermissionTo('create-faq'));
   $role = \Spatie\Permission\Models\Role::where("name" , "super_admin")->first();
-
-  $role->syncPermissions(["view-faqs",'create-faqs','update-faqs' ,'delete-faqs']);
+  $permission1 = \Spatie\Permission\Models\Permission::create([
+    "name" => "view-roles",
+    "guard_name" => "api",
+  ]);
+  $permission2 = \Spatie\Permission\Models\Permission::create([
+    "name" => "create-roles",
+    "guard_name" => "api",
+  ]);
+  $permission3 = \Spatie\Permission\Models\Permission::create([
+    "name" => "update-roles",
+    "guard_name" => "api",
+  ]);
+  $permission4 = \Spatie\Permission\Models\Permission::create([
+    "name" => "delete-roles",
+    "guard_name" => "api",
+  ]);
+  $role->syncPermissions([$permission1,$permission2,$permission3,$permission4]);
 return $role;
 });
 

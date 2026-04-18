@@ -30,7 +30,7 @@ class CategoryCreateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'array'],
-            'name.*' => ['required', 'string'],
+            'name.*' => ['required', 'string',UniqueTranslationRule::for('categories','name')],
             'image' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
             'shops_id' => ['required', 'array'],
