@@ -181,7 +181,6 @@ class CategoryController extends CoreController
 
         $categoriesQuery = $this->repository->with(['parent', 'children'])
             ->withCount(['products']);
-        //            ->where('language', $language)
 
         if ($parent) {
             $categoriesQuery->whereNull('parent');
@@ -274,10 +273,10 @@ class CategoryController extends CoreController
     {
         try {
             //            $language = $request->language ?? DEFAULT_LANGUAGE;
-            $category = $this->repository->with(['parent', 'children'])
+            $category = $this->repository->with(['parent', 'children', 'shops'])
                 ->withCount('products')
                 ->where('id', $id)->firstOrFail();
-            return new CategoryResource($category);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryResource::make($category));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }

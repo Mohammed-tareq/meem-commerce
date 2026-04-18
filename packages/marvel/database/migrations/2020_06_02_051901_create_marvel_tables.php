@@ -167,8 +167,8 @@ class CreateMarvelTables extends Migration
             $table->string('name')->unique();
             $table->string('slug');
             $table->text('details')->nullable();
-            $table->unsignedBigInteger('parent')->nullable();
-            $table->foreign('parent')->references('id')->on('categories')->onDelete('cascade');
+            $table->unsignedBigInteger('parent_id')->nullable();
+            $table->foreign('parent_id')->references('id')->on('categories')->onDelete('cascade');
             // $table->string('icon')->nullable();
             // $table->json('image')->nullable();
             // $table->json('banner_image')->nullable();

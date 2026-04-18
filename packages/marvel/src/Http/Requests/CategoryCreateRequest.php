@@ -29,14 +29,14 @@ class CategoryCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'name'         => ['required', 'array'],
-            'name.*'       => ['required', 'string' ],
-            'slug'         => ['nullable', 'string'],
-            'images'        => ['array'],
-            'images.*'      => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
-            'details'      => ['nullable', 'array'],
-            'details.*'    => ['nullable', 'string'],
-            'parent_id'    => ['nullable', 'integer', 'exists:categories,id'],
+            'name' => ['required', 'array'],
+            'name.*' => ['required', 'string'],
+            'image' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'shops_id' => ['required', 'array'],
+            'shops_id.*' => ['required', 'integer' ,"exists:shops,id"],
+            // 'details'      => ['nullable', 'array'],
+            // 'details.*'    => ['nullable', 'string'],
             // 'banner_image' => ['array'],
             // 'type_id'   => ['required', 'integer'],
             // 'icon'         => ['nullable', 'string'],
@@ -52,15 +52,15 @@ class CategoryCreateRequest extends FormRequest
     public function messages()
     {
         return [
-            'name.required'       => 'Name field is required',
-            'name.unique'         => 'Name already exists',
-            'name.*.string'         => 'Name is not a valid string',
-            'name.*.max:255'        => 'Name can not be more than 255 character',
-            'icon.string'         => 'Icon is not a valid string',
-            'image.string'        => 'Image is not a valid image',
+            'name.required' => 'Name field is required',
+            'name.unique' => 'Name already exists',
+            'name.*.string' => 'Name is not a valid string',
+            'name.*.max:255' => 'Name can not be more than 255 character',
+            'icon.string' => 'Icon is not a valid string',
+            'image.string' => 'Image is not a valid image',
             'banner_image.string' => 'Banner image is not a valid image',
-            'details.string'      => 'Details is not a valid string',
-            'parent.integer'      => 'Parent is not a valid integer',
+            'details.string' => 'Details is not a valid string',
+            'parent.integer' => 'Parent is not a valid integer',
         ];
     }
 

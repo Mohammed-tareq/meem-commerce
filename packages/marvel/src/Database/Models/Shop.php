@@ -111,7 +111,7 @@ class Shop extends Model implements HasMedia
      */
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'category_shop');
+        return $this->belongsToMany(Category::class, 'category_shop','shop_id','category_id');
     }
 
     /**

@@ -24,13 +24,13 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ShopRepository extends BaseRepository
 {
-    use MediaManager ;
+    use MediaManager;
 
     /**
      * @var array
      */
     protected $fieldSearchable = [
-        'name'        => 'like',
+        'name' => 'like',
         'is_active',
         'categories.slug',
         // 'users.name'
@@ -50,7 +50,7 @@ class ShopRepository extends BaseRepository
         // 'logo',
         // 'notifications',
     ];
-    
+
 
 
     public function boot()
@@ -82,10 +82,14 @@ class ShopRepository extends BaseRepository
 
 
             if ($request->hasFile('logo')) {
-                $this->uploadSingleImage($request, 'logo', $shop, 'shop-logo', 'shops');
+                if (!$this->uploadSingleImage($request, 'logo', $shop, 'shop-logo', 'shops')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
             }
             if ($request->hasFile('cover_image')) {
-                $this->uploadSingleImage($request, 'cover_image', $shop, 'shop-image', 'shops');
+                if (!$this->uploadSingleImage($request, 'cover_image', $shop, 'shop-image', 'shops')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
             }
             // if (isset($request['categories'])) {
             //     $shop->categories()->attach($request['categories']);
@@ -125,15 +129,19 @@ class ShopRepository extends BaseRepository
             //     }
             // }
             $data = $request->only($this->dataArray);
-            if (!empty($request->slug) &&  $request->slug != $shop['slug']) {
+            if (!empty($request->slug) && $request->slug != $shop['slug']) {
                 $data['slug'] = $this->makeSlug($request);
             }
             $shop->update($data);
             if ($request->hasFile('logo')) {
-                $this->updateSingleImage($request, 'logo', $shop, 'shop-logo', 'shops');
+                if (!$this->updateSingleImage($request, 'logo', $shop, 'shop-logo', 'shops')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
             }
             if ($request->hasFile('cover_image')) {
-                $this->updateSingleImage($request, 'cover_image', $shop, 'shop-image', 'shops');
+                if (!$this->updateSingleImage($request, 'cover_image', $shop, 'shop-image', 'shops')) {
+                    throw new HttpException(422, 'Cover image upload failed, please check the file format or size.');
+                }
             }
 
 
@@ -203,19 +211,19 @@ class ShopRepository extends BaseRepository
 
         OwnershipTransfer::updateOrCreate(
             [
-                "shop_id"    => $shopId,
+                "shop_id" => $shopId,
             ],
             [
-                "from"       => $previousOwner->id,
-                "message"    => $request?->message,
-                "to"         => $newOwnerId,
+                "from" => $previousOwner->id,
+                "message" => $request?->message,
+                "to" => $newOwnerId,
                 "created_by" => $user->id,
-                "status"     => DefaultStatusType::PENDING,
+                "status" => DefaultStatusType::PENDING,
             ]
         );
 
         $optional = [
-            'message' =>  $request?->vendorMessage,
+            'message' => $request?->vendorMessage,
         ];
 
         event(new ProcessOwnershipTransition($shop, $previousOwner, $newOwner, $optional));

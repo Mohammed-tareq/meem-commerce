@@ -19,16 +19,12 @@ class CategoryResource extends Resource
             'id'                   => $this->id,
             'name'                 => $this->getTranslation('name', app()->getLocale()),
             'slug'                 => $this->slug,
-            'parent'               => $this->whenLoaded('parent', $this->parent?->getTranslation('name', app()->getLocale())),
+            'image'                => $this->getFirstMediaUrl('categories'),
+            'parent'               => $this->whenLoaded('parent', CategoryResource::make($this->parent)),
             'products_count'       => $this->whenCounted('products'),
             'children'             => $this->whenLoaded('children', ChildrenCategoryResource::collection($this->children)),
             'details'              => $this?->getTranslation('details', app()->getLocale()),
-            'image'                => $this->getMedia('categories')?->map(function ($media) {
-                                        return [
-                                            'id' => $media->id,
-                                            'url' => $media->getUrl(),
-                                        ];
-                                    }),
+            'shops'                => $this->whenLoaded('shops', ShopResource::collection($this->shops)),
 
 
             //            'language'             => $this->language,

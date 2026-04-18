@@ -12,7 +12,6 @@ class ShopSeeder extends Seeder
     {
         for ($i = 1; $i <= 20; $i++) {
            Shop::create([
-                'owner_id'    => 1,
                 'name'        => [
                     'ar' => "المتجر رقم $i",
                     'en' => "Shop number $i",

@@ -470,7 +470,7 @@ Route::group(
  */
 
 Route::group(
-    ['middleware' => ['role:' . Role::STORE_OWNER . '|' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
     function () {
         Route::apiResource('shops', ShopController::class);
         // Route::get('analytics', [AnalyticsController::class, 'analytics']);

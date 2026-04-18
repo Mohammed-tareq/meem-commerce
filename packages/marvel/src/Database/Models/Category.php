@@ -20,14 +20,14 @@ class Category extends Model implements HasMedia
 
 
     protected $table = 'categories';
-    public array $translatable = ['name','details'];
+    public array $translatable = ['name', 'details'];
 
     public $guarded = [];
 
-    protected $casts = [
-        'image' => 'json',
-        'banner_image' => 'json',
-    ];
+    // protected $casts = [
+    //     'image' => 'json',
+    //     'banner_image' => 'json',
+    // ];
 
     // protected $appends = ['parent_id'];
 
@@ -36,12 +36,7 @@ class Category extends Model implements HasMedia
      *
      * @return string
      */
-    public function getParentIdAttribute()
-    {
-        if (isset($this->attributes['parent'])) {
-            return $this->parent;
-        }
-    }
+    
 
 
     public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
@@ -85,7 +80,7 @@ class Category extends Model implements HasMedia
      */
     public function children()
     {
-        return $this->hasMany('Marvel\Database\Models\Category', 'parent', 'id')->with('children')->withCount('products');
+        return $this->hasMany('Marvel\Database\Models\Category', 'parent_id', 'id')->with('children')->withCount('products');
     }
 
     /**
@@ -93,17 +88,21 @@ class Category extends Model implements HasMedia
      */
     public function subCategories()
     {
-        return $this->hasMany('Marvel\Database\Models\Category', 'parent', 'id')->with('subCategories', 'parent')->withCount('products');
+        return $this->hasMany('Marvel\Database\Models\Category', 'parent_id', 'id')->with('subCategories', 'parent')->withCount('products');
     }
 
     /**
-     * @return HasOne
+     * @return BelongsTo
      */
     public function parent()
     {
-        return $this->hasOne('Marvel\Database\Models\Category', 'id', 'parent');
+        return $this->belongsTo('Marvel\Database\Models\Category', 'parent_id', 'id');
     }
-    
+
+    public function shops()
+    {
+        return $this->belongsToMany(Shop::class, 'category_shop', 'category_id', 'shop_id');
+    }
     /**
      * @return HasOne
      */

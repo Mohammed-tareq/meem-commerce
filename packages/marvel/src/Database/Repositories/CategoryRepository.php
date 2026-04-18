@@ -10,6 +10,7 @@ use Marvel\Http\Requests\CategoryCreateRequest;
 use Marvel\Traits\MediaManager;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 
 
@@ -29,8 +30,9 @@ class CategoryRepository extends BaseRepository
     protected $dataArray = [
         'name',
         'slug',
-        'details',
         'parent',
+        // 'shop_id',
+        // 'details',
         //'type_id',
         // 'icon',
         // 'image',
@@ -65,9 +67,12 @@ class CategoryRepository extends BaseRepository
             $category = $this->create($data);
 
 
-            if ($request->has('images')) {
-                $this->uploadImages($request, 'images', $category, 'categories', 'categories');
+            if ($request->has('image')) {
+                if (!$this->uploadSingleImage($request, 'image', $category, 'categories', 'categories')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
             }
+            $category->shops()->sync($request->shops_id);
             DB::commit();
             return $category->load('parent');
         } catch (\Exception $e) {
@@ -85,9 +90,12 @@ class CategoryRepository extends BaseRepository
                 $data['slug'] = $this->makeSlug($request);
             }
             $category->update($data);
-            if ($request->has('images')) {
-                $this->updateImages($request, $category, 'categories', 'categories');
+            if ($request->has('image')) {
+                if (!$this->updateSingleImage($request,'image', $category, 'categories', 'categories')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
             }
+            $category->shops()->sync($request->shop_id);
             DB::commit();
             return $this->findOrFail($category->id);
         } catch (\Exception $e) {

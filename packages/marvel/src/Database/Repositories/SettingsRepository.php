@@ -6,9 +6,9 @@ namespace Marvel\Database\Repositories;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\DB;
-use Marvel\Console\MarvelVerification;
 use Marvel\Database\Models\Settings;
 use Marvel\Traits\MediaManager;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class SettingsRepository extends BaseRepository
 {
@@ -54,11 +54,14 @@ class SettingsRepository extends BaseRepository
             $setting = $this->first();
             $setting->update($data->except('logo', 'favicon'));
             if (isset($data['logo'])) {
-                $this->updateSingleImage($data, 'logo', $setting, 'logo-setting', 'settings');
-
+                if (!$this->updateSingleImage($data, 'logo', $setting, 'logo-setting', 'settings')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
             }
             if (isset($data['favicon'])) {
-                $this->updateSingleImage($data, 'favicon', $setting, 'favicon-setting', 'settings');
+                if (!$this->updateSingleImage($data, 'favicon', $setting, 'favicon-setting', 'settings')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
             }
             // if(isset($data['promotion_video_url'])){
             //     $setting->addMedia($data['promotion_video_url'])->toMediaCollection('promotion-video-setting');
@@ -68,7 +71,8 @@ class SettingsRepository extends BaseRepository
 
         } catch (Exception $e) {
             DB::rollBack();
-            throw $e;
+            throw new HttpException(500, 'Logo upload failed, please check the file format or size.');
+
         }
     }
 
