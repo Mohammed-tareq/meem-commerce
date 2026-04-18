@@ -22,7 +22,7 @@ class UserResource extends Resource
             'is_active' => $this->is_active,
             'shop_id' => $this->shop_id,
             'roles' => RoleResource::collection($this->whenLoaded('roles')),
-            'permissions' => PermissionResource::collection($this->whenLoaded('permissions')),
+            'permissions' => PermissionResource::collection($this->getPermissionsViaRoles()),
             // 'created_at' => $this->created_at,
             // 'updated_at' => $this->updated_at
         ];

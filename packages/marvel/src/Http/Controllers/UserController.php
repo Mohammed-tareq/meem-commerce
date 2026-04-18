@@ -32,6 +32,7 @@ use Marvel\Enums\Role;
 use Marvel\Events\ProcessUserData;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Exceptions\MarvelNotFoundException;
+use Marvel\Http\Requests\AdminCreateUserRequest;
 use Marvel\Http\Requests\ChangePasswordRequest;
 use Marvel\Http\Requests\LicenseRequest;
 use Marvel\Http\Requests\UserCreateRequest;
@@ -75,6 +76,9 @@ class UserController extends CoreController
     {
         $this->repository = $repository;
         $this->applicationIsValid = $this->repository->checkIfApplicationIsValid();
+        $this->middleware("permission:" . Permission::VIEW_USERS, ["only" => ["index", "show", "fetchFeaturedCategories"]]);
+        $this->middleware("permission:" . Permission::CREATE_USER, ["only" => ["adminCreateUsers"]]);
+        $this->middleware("permission:" . Permission::DELETE_USER, ["only" => ["adminDeleteUsers"]]);
     }
 
     /**
@@ -383,6 +387,31 @@ class UserController extends CoreController
         }
     }
 
+    public function adminAddUsers(AdminCreateUserRequest $request)
+    {
+        try {
+            $user = $this->repository->addUserWithRole($request);
+            $user->load(['roles', 'permissions']);
+            return $this->apiResponse("User added successfully", 200, true, UserResource::make($user));
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
+    }
+    public function adminDeleteUsers($id)
+    {
+        try {
+            $user = $this->repository->findOrFail($id);
+            if ($user->hasAnyRole(['customer', 'super_admin']) || $user->id === auth()->id()) {
+                return $this->apiResponse("User cannot be deleted", 400, false);
+            }
+            $user->delete();
+            return $this->apiResponse("User deleted successfully", 200, true);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
+    }
+
+
     /**
      * @OA\Post(
      *     path="/token",
@@ -597,7 +626,6 @@ class UserController extends CoreController
                 "role" => $user->getRoleNames()->first()
             ];
             return $this->apiResponse("User registered successfully", 200, true, $data);
-
         } catch (\Exception $e) {
             Log::error('Register: Failed', [
                 'error' => $e->getMessage(),

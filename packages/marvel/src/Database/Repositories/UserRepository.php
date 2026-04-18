@@ -18,6 +18,7 @@ use Marvel\Database\Models\Profile;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\Shop;
 use Marvel\Exceptions\MarvelException;
+use Spatie\Permission\Models\Role;
 
 class UserRepository extends BaseRepository
 {
@@ -149,5 +150,24 @@ class UserRepository extends BaseRepository
         // return $useMustVerifyLicense;
 
         return true;
+    }
+
+    public function addUserWithRole($request)
+    {
+        try {
+            $user = $this->create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'email_verified_at' => now(),
+            ]);
+            $role = Role::whereIn('id', $request->roles)->get();
+            if ($role->count() > 0) {
+                $user->assignRole($role);
+            }
+            return $user;
+        } catch (ValidatorException $e) {
+            throw new MarvelException(SOMETHING_WENT_WRONG);
+        }
     }
 }

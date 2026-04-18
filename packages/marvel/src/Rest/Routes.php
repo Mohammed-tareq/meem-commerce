@@ -618,7 +618,8 @@ Route::group([
     Route::post('approve-terms-and-conditions', [TermsAndConditionsController::class, 'approveTerm']);
     Route::post('disapprove-terms-and-conditions', [TermsAndConditionsController::class, 'disApproveTerm']);
     Route::get('/admin/list', [UserController::class, 'admins']);
-
+    Route::post('admin-users', [UserController::class,'adminAddUsers']);
+    Route::delete('admin-users/{id}', [UserController::class,'adminDeleteUsers']);
     Route::get('/customers/list', [UserController::class, 'customers']);
     Route::get('my-staffs', [UserController::class, 'myStaffs']);
     Route::get('all-staffs', [UserController::class, 'allStaffs']);
