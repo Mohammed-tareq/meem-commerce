@@ -112,7 +112,7 @@ class CreateMarvelTables extends Migration
             $table->softDeletes();
             $table->timestamps();
         });
-          Schema::create('discounts', function (Blueprint $table) {
+        Schema::create('discounts', function (Blueprint $table) {
             $table->id();
             $table->enum('discount_type', DiscountType::getValues())->default(DiscountType::FIXED_RATE);
             $table->double('amount')->default(0);
@@ -202,7 +202,7 @@ class CreateMarvelTables extends Migration
             $table->timestamps();
         });
 
-         Schema::create('product_varaints', function (Blueprint $table) {
+        Schema::create('product_varaints', function (Blueprint $table) {
             $table->id();
             $table->double('price')->nullable();
             $table->double('sale_price')->nullable();
@@ -223,7 +223,7 @@ class CreateMarvelTables extends Migration
             $table->foreign('product_variant_id')->references('id')->on('product_varaints')->onDelete('cascade');
             $table->timestamps();
         });
-       
+
 
         Schema::create('tax_classes', function (Blueprint $table) {
             $table->id();
@@ -253,7 +253,21 @@ class CreateMarvelTables extends Migration
 
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
-            $table->json('options');
+            $table->string('site_name');
+            $table->text('site_desc')->nullable();
+            $table->text('meta_desc')->nullable();
+            $table->string('site_copy_right')->nullable();
+            $table->string('logo')->nullable();
+            $table->string('favicon')->nullable();
+            $table->string('site_email')->nullable();
+            $table->string('email_support')->nullable();
+            $table->string('facebook')->nullable();
+            $table->string('instagram')->nullable();
+            $table->string('linkedin')->nullable();
+            $table->string('promotion_video_url')->nullable();
+            $table->string('youtube')->nullable();
+            $table->string('phone')->nullable();
+            $table->json('options')->nullable();
             $table->timestamps();
         });
 

@@ -584,7 +584,7 @@ Route::group([
     Route::post('abusive_reports/accept', [AbusiveReportController::class, 'accept']);
     Route::post('abusive_reports/reject', [AbusiveReportController::class, 'reject']);
     Route::apiResource('settings', SettingsController::class, [
-        'only' => ['store'],
+        'only' => ['update'],
     ]);
     Route::apiResource('users', UserController::class);
     Route::apiResource('authors', AuthorController::class, [
