@@ -39,9 +39,9 @@ class FaqsController extends CoreController
     {
         $this->repository = $repository;
         $this->middleware("permission:" . Permission::VIEW_FAQS, ["only" => ["index", "show"]]);
-        $this->middleware("permission:" . Permission::CREATE_FAQS, ["only" => ["store"]]);
-        $this->middleware("permission:" . Permission::UPDATE_FAQS, ["only" => ["update"]]);
-        $this->middleware("permission:" . Permission::DELETE_FAQS, ["only" => ["destroy"]]);
+        $this->middleware("permission:" . Permission::CREATE_FAQ, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_FAQ, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_FAQ, ["only" => ["destroy"]]);
     }
 
 
@@ -223,6 +223,7 @@ class FaqsController extends CoreController
     public function show($id)
     {
         try {
+            
             $faq = $this->repository->with('shop')->findOrFail($id);
             return new FaqResource($faq);
         } catch (MarvelException $e) {

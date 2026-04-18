@@ -78,9 +78,7 @@ final class Permission extends Enum
     public const UPDATE_ORDER_STATUS = 'update-order-status';
     public const ANSWER_QUESTION = 'answer-question';
     public const CREATE_AUTHOR = 'create-author';
-    public const CREATE_FAQS = 'create-faqs';
-    public const UPDATE_FAQS = 'update-faqs';
-    public const DELETE_FAQS = 'delete-faqs';
+   
 
     public const CREATE_MANUFACTURER = 'create-manufacturer';
     public const VIEW_ANALYTICS = 'view-analytics';

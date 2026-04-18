@@ -279,7 +279,7 @@ Route::post('shop-maintenance-event', [ShopController::class, 'shopMaintenanceEv
  */
 
 Route::group(
-    ['middleware' => ['role:' . Role::EDITOR . '|' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:'. Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
     function () {
         Route::post('cms-pages', [CmsPageController::class, 'store']);
         Route::put('cms-pages/{id}', [CmsPageController::class, 'update']);
@@ -290,7 +290,7 @@ Route::group(
     }
 );
 
-Route::group(['middleware' => ['role:' . Role::CUSTOMER, 'auth:sanctum', 'email.verified']], function () {
+Route::group(['middleware' => ['role:' . Role::CUSTOMER . '|' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']], function () {
     Route::post('/update-email', [UserController::class, 'updateUserEmail']);
     // Route::get('me', [UserController::class, 'me']);
     Route::apiResource('orders', OrderController::class, [
@@ -399,7 +399,7 @@ Route::get('popular-products', 'Marvel\Http\Controllers\ProductController@popula
 
 
 Route::group(
-    ['middleware' => ['role:' . Role::STAFF . '|'. Role::SUPER_ADMIN . '|' . Role::STORE_OWNER, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:'. Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
     function () {
         Route::apiResource('products', ProductController::class, [
             'only' => ['store', 'update', 'destroy'],

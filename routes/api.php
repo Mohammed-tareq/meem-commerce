@@ -20,8 +20,10 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 Route::middleware('auth:api')->get('/test', function (Request $request) {
+  dd(auth()->user()->hasPermissionTo('create-faq'));
   $role = \Spatie\Permission\Models\Role::where("name" , "super_admin")->first();
-  $role->syncPermissions(["view-flash-sale",'create-flash-sale','update-flash-sale' ,'delete-flash-sale']);
+
+  $role->syncPermissions(["view-faqs",'create-faqs','update-faqs' ,'delete-faqs']);
 return $role;
 });
 
