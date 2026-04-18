@@ -46,7 +46,7 @@ class Attribute extends Model
     }
 
     /**
-     * @return BelongsToMany
+     * @return BelongsTo
      */
     public function shop(): BelongsTo
     {

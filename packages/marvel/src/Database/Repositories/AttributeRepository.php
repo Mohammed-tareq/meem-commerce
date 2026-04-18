@@ -63,10 +63,9 @@ class AttributeRepository extends BaseRepository
                 }
             }
             DB::commit();
-            return $attribute->load('values');
+            return $attribute->load(['values','shop']);
         } catch (\Throwable $th) {
             DB::rollBack();
-            dd($th->getMessage());
             throw new HttpException(400, COULD_NOT_CREATE_THE_RESOURCE);
         }
     }
@@ -103,7 +102,7 @@ class AttributeRepository extends BaseRepository
                 }
             }
 
-              $attributeUpdated =  $this->with('values')->findOrFail($attribute->id);
+              $attributeUpdated =  $this->with(['values','shop'])->findOrFail($attribute->id);
             return $attributeUpdated;
         } catch (\Throwable $th) {
             throw new HttpException(400, COULD_NOT_UPDATE_THE_RESOURCE);

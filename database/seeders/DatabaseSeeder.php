@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
         PermissionSeeder::class,
         ShopSeeder::class,
         CategorySeeder::class,
+        AttributeSeeder::class,
        ]);
 //        
         $user = User::firstOrCreate([

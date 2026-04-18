@@ -31,8 +31,7 @@ class AttributeRequest extends FormRequest
         return [
             'name'        => ['required', 'array'],
             'name.*'      => ['required', 'string','min:2','max:50',UniqueTranslationRule::for('attributes')->ignore($id)],
-            'slug'        => ['nullable', 'string'],
-            'shop_id'     => ['sometimes', 'exists:Marvel\Database\Models\Shop,id'],
+            'shop_id'     => ['sometimes', 'exists:shops,id'],
             'values' => [
                 'sometimes',
                 'array',
@@ -50,7 +49,6 @@ class AttributeRequest extends FormRequest
                 'max:50',
             
             ],
-            //            'language'     => ['nullable', 'string'],
         ];
     }
 
