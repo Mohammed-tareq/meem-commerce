@@ -113,7 +113,9 @@ class ShopController extends CoreController
 
     public function fetchShops(Request $request)
     {
-        return $this->repository->withCount(['orders', 'products'])->with(['owner.profile', 'ownership_history'])->where('id', '!=', null);
+        return $this->repository->withCount(['orders', 'products']);
+        // ->where('id', '!=', null)
+        // ->with(['owner.profile', 'ownership_history']);
     }
 
     /**
@@ -249,7 +251,7 @@ class ShopController extends CoreController
     public function updateShop(Request $request)
     {
         $id = $request->id;
-        if ($request->user()->hasPermissionTo(Permission::UPDATE_SHOP)  && ($request->user()->shops->contains($id))) {
+        if ($request->user()->hasPermissionTo(Permission::UPDATE_SHOP)) {
             return $this->repository->updateShop($request, $id);
         }
         throw new AuthorizationException(NOT_AUTHORIZED);

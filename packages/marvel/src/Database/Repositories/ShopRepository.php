@@ -24,7 +24,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ShopRepository extends BaseRepository
 {
-    use MediaManager;
+    use MediaManager ;
 
     /**
      * @var array
@@ -33,7 +33,7 @@ class ShopRepository extends BaseRepository
         'name'        => 'like',
         'is_active',
         'categories.slug',
-        'users.name'
+        // 'users.name'
     ];
 
     /**
@@ -45,11 +45,12 @@ class ShopRepository extends BaseRepository
         'description',
         'is_active',
         'address',
-        'settings',
+        // 'settings',
         // 'cover_image',
         // 'logo',
         // 'notifications',
     ];
+    
 
 
     public function boot()
@@ -74,8 +75,9 @@ class ShopRepository extends BaseRepository
         try {
             DB::beginTransaction();
             $data = $request->only($this->dataArray);
-            $data['owner_id'] = $request->user()->id;
+            // $data['owner_id'] = $request->user()->id;
             $data['slug'] = $this->makeSlug($request);
+
             $shop = $this->create($data);
 
 
@@ -96,7 +98,6 @@ class ShopRepository extends BaseRepository
             // $shop->categories = $shop->categories;
             // $shop->staffs = $shop->staffs;
 
-            dd($shop);
             DB::commit();
             return $shop;
         } catch (Exception $e) {

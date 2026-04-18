@@ -18,14 +18,14 @@ class Shop extends Model implements HasMedia
 
     protected $table = 'shops';
 
-    public array $translatable = ['name', 'description'];
+    public array $translatable = ['name', 'description','address'];
     public $guarded = [];
 
     protected $casts = [
-        'logo' => 'json',
-        'cover_image' => 'json',
-        'address' => 'json',
-        'settings' => 'json',
+        // 'logo' => 'json',
+        // 'cover_image' => 'json',
+        'address' => 'array',
+        // 'settings' => 'json',
     ];
 
     /**

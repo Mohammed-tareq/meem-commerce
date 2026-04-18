@@ -30,18 +30,11 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         // run your app seeder
-//        $this->call(ProductSeeder::class);
-//        $this->call(MeemProductSeeder::class);
-
-        // $role = Role::create([
-        //     'name' => 'super_admin',
-        //     'guard_name' => 'api',
-        // ]);
-        // $permission = Permission::create([
-        //     'name' => 'super_admin',
-        //     'guard_name' => 'api',
-        // ]);
-        // $role->givePermissionTo($permission);
+       $this->call([
+        PermissionSeeder::class,
+        ShopSeeder::class,
+       ]);
+//        
         $user = User::firstOrCreate([
             'email' => 'admin@demo.com',
         ],[
