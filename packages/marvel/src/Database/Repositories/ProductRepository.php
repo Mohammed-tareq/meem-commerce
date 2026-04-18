@@ -18,6 +18,7 @@ use Marvel\Database\Models\Type;
 use Marvel\Database\Models\Variation;
 use Marvel\Enums\ProductStatus;
 use Marvel\Enums\ProductType;
+use Marvel\Traits\MediaManager;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 use Spatie\Period\Boundaries;
@@ -33,11 +34,13 @@ use Marvel\Exceptions\MarvelException;
 class ProductRepository extends BaseRepository
 {
 
+    use MediaManager;
+
     /**
      * @var array
      */
     protected $fieldSearchable = [
-        'name'        => 'like',
+        'name' => 'like',
         'shop_id',
         'status',
         'is_rental',
@@ -66,33 +69,31 @@ class ProductRepository extends BaseRepository
         'slug',
         'price',
         'sale_price',
-        'max_price',
-        'min_price',
-        'type_id',
-        'author_id',
-        'language',
-        'manufacturer_id',
         'product_type',
         'quantity',
-        'unit',
-        'is_digital',
-        'is_external',
-        'external_product_url',
-        'external_product_button_text',
         'description',
         'sku',
-        'image',
-        'gallery',
-        'video',
         'status',
         'height',
         'length',
         'width',
         'in_stock',
-        'is_taxable',
-        'shop_id',
-        'sold_quantity',
-        'visibility'
+        'has_discount',
+        'has_flash_sale',
+        // 'max_price',
+        // 'min_price',
+        // 'type_id',
+        // 'author_id',
+        // 'language',
+        // 'manufacturer_id',
+        // 'unit',
+        // 'is_digital',
+        // 'is_external',
+        // 'external_product_url',
+        // 'external_product_button_text',
+        // 'image',
+        // 'gallery',
+        // 'video',
     ];
     public function getProductDataArray(): array
     {
@@ -143,13 +144,13 @@ class ProductRepository extends BaseRepository
                             $query->select('product_id')->from('flash_sale_requests_products');
                         })
                         ->when($shop_id, function ($products_query) use ($shop_id) {
-                            return $products_query->where('shop_id', '=',  $shop_id);
+                            return $products_query->where('shop_id', '=', $shop_id);
                         })
                         ->when($author_id, function ($products_query) use ($author_id) {
-                            return $products_query->where('author_id', '=',  $author_id);
+                            return $products_query->where('author_id', '=', $author_id);
                         })
                         ->when($manufacturer_id, function ($products_query) use ($manufacturer_id) {
-                            return $products_query->where('manufacturer_id', '=',  $manufacturer_id);
+                            return $products_query->where('manufacturer_id', '=', $manufacturer_id);
                         });
                 } else {
                     $products_query = $products_query->where('in_flash_sale', '=', true)->where('shop_id', '=', $request->shop_id);
@@ -199,30 +200,35 @@ class ProductRepository extends BaseRepository
      * storeProduct
      *
      * @param  mixed $request
-     * @param  mixed $setting
      * @return void
      */
-    public function storeProduct($request, $setting)
+    public function storeProduct($request)
     {
         try {
             $data = $request->only($this->dataArray);
             $data['slug'] = $this->makeSlug($request);
 
-            if ($setting->options["isProductReview"]) {
-                if ($request->status == ProductStatus::DRAFT) {
-                    $data['status'] = ProductStatus::DRAFT;
-                } elseif ($request->status == ProductStatus::UNDER_REVIEW) {
-                    $data['status'] = ProductStatus::UNDER_REVIEW;
-                } else {
-                    throw new HttpException(406, 'The selected status is invalid.');
-                }
+            dd($data);
+            if ($request->has('images')) {
+                $this->uploadImages($request, 'images', $product, 'products', 'products');
             }
 
-            if ($request->product_type == ProductType::SIMPLE) {
-                $data['max_price'] = $data['price'];
-                $data['min_price'] = $data['price'];
-            }
+            // if ($setting->options["isProductReview"]) {
+            //     if ($request->status == ProductStatus::DRAFT) {
+            //         $data['status'] = ProductStatus::DRAFT;
+            //     } elseif ($request->status == ProductStatus::UNDER_REVIEW) {
+            //         $data['status'] = ProductStatus::UNDER_REVIEW;
+            //     } else {
+            //         throw new HttpException(406, 'The selected status is invalid.');
+            //     }
+            // }
 
+            // if ($request->product_type == ProductType::SIMPLE) {
+            //     $data['max_price'] = $data['price'];
+            //     $data['min_price'] = $data['price'];
+            // }
+
+            dd($data);
             $product = $this->create($data);
 
             if (empty($product->slug) || is_numeric($product->slug)) {
@@ -477,7 +483,7 @@ class ProductRepository extends BaseRepository
                 $data['min_price'] = $data['price'];
             }
 
-            if (!empty($request->slug) &&  $request->slug != $product->slug) {
+            if (!empty($request->slug) && $request->slug != $product->slug) {
                 $stringifySlug = $this->makeSlug($request);
                 $data['slug'] = $this->makeSlug($request);
 
@@ -496,7 +502,7 @@ class ProductRepository extends BaseRepository
             $product->save();
 
             if (TRANSLATION_ENABLED) {
-                $this->where('sku', $product->sku)->where('id', '=',  $product->id)->update([
+                $this->where('sku', $product->sku)->where('id', '=', $product->id)->update([
                     'price' => $product->price,
                     'sale_price' => $product->sale_price,
                     'max_price' => $product->max_price,
@@ -543,7 +549,7 @@ class ProductRepository extends BaseRepository
     {
         $limit = $request->limit ? $request->limit : 10;
         $language = $request->language ?? DEFAULT_LANGUAGE;
-        $range = !empty($request->range) && $request->range !== 'undefined'  ? $request->range : '';
+        $range = !empty($request->range) && $request->range !== 'undefined' ? $request->range : '';
         $type_id = $request->type_id ? $request->type_id : '';
         if (isset($request->type_slug) && empty($type_id)) {
             try {
@@ -579,7 +585,7 @@ class ProductRepository extends BaseRepository
     public function fetchRelated($slug, $limit = 10, $language = DEFAULT_LANGUAGE)
     {
         try {
-            $product    = $this->findOneByFieldOrFail('slug', $slug);
+            $product = $this->findOneByFieldOrFail('slug', $slug);
             $categories = $product->categories->pluck('id');
 
             return $this->where('language', $language)->whereHas('categories', function ($query) use ($categories) {
@@ -598,7 +604,7 @@ class ProductRepository extends BaseRepository
 
         $unavailableProducts = [];
 
-        foreach ($_blockedDates as $productId =>  $date) {
+        foreach ($_blockedDates as $productId => $date) {
             if (!$this->isProductAvailableAt($from, $to, $productId, $date)) {
                 $unavailableProducts[] = $productId;
             }
@@ -628,12 +634,12 @@ class ProductRepository extends BaseRepository
 
     public function fetchBlockedDatesForAProductInRange($from, $to, $productId)
     {
-        return  Availability::where('product_id', $productId)->whereDate('from', '>=', $from)->whereDate('to', '<=', $to)->get();
+        return Availability::where('product_id', $productId)->whereDate('from', '>=', $from)->whereDate('to', '<=', $to)->get();
     }
 
     public function fetchBlockedDatesForAVariationInRange($from, $to, $variation_id)
     {
-        return  Availability::where('bookable_id', $variation_id)->where('bookable_type', 'Marvel\Database\Models\Variation')->whereDate('from', '>=', $from)->whereDate('to', '<=', $to)->get();
+        return Availability::where('bookable_id', $variation_id)->where('bookable_type', 'Marvel\Database\Models\Variation')->whereDate('from', '>=', $from)->whereDate('to', '<=', $to)->get();
     }
 
     public function isVariationAvailableAt($from, $to, $variationId, $_blockedDates, $requestedQuantity)
@@ -689,7 +695,8 @@ class ProductRepository extends BaseRepository
         }
 
         return [
-            'totalPrice' => $price + $person_price + $deposit_price + $feature_price + $dropoff_location_price, $pickup_location_price,
+            'totalPrice' => $price + $person_price + $deposit_price + $feature_price + $dropoff_location_price,
+            $pickup_location_price,
             'personPrice' => $person_price,
             'depositPrice' => $deposit_price,
             'featurePrice' => $feature_price,
@@ -746,8 +753,8 @@ class ProductRepository extends BaseRepository
 
     public function customSlugify($text, string $divider = '-')
     {
-        $slug      = preg_replace('~[^\pL\d]+~u', $divider, $text);
-        $slugCount = Product::where('slug', $slug)->orWhere('slug', 'like',  $slug . '%')->count();
+        $slug = preg_replace('~[^\pL\d]+~u', $divider, $text);
+        $slugCount = Product::where('slug', $slug)->orWhere('slug', 'like', $slug . '%')->count();
 
         if (empty($slugCount)) {
             return $slug;

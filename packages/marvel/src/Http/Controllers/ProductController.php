@@ -320,12 +320,12 @@ class ProductController extends CoreController
     {
         try {
             // inform_purchased_customer
-            $setting = $this->settings->first();
-            if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
-                return $this->repository->storeProduct($request, $setting);
-            } else {
-                throw new AuthorizationException(NOT_AUTHORIZED);
-            }
+            // $setting = $this->settings->first();
+            // if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
+            return $this->repository->storeProduct($request);
+            // } else {
+            //     throw new AuthorizationException(NOT_AUTHORIZED);
+            // }
         } catch (MarvelException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
         }

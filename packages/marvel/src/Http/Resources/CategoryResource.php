@@ -15,12 +15,11 @@ class CategoryResource extends Resource
      */
     public function toArray(Request $request)
     {
-
         return [
             'id'                   => $this->id,
             'name'                 => $this->getTranslation('name', app()->getLocale()),
             'slug'                 => $this->slug,
-            'parent'               => $this->parent?->getTranslation('name', app()->getLocale()),
+            'parent'               => $this->whenLoaded('parent', $this->parent?->getTranslation('name', app()->getLocale())),
             'products_count'       => $this->whenCounted('products'),
             'children'             => $this->whenLoaded('children', ChildrenCategoryResource::collection($this->children)),
             'details'              => $this?->getTranslation('details', app()->getLocale()),

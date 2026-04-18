@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -44,42 +45,23 @@ class ProductCreateRequest extends FormRequest
         ];
 
         return [
-            'name'                         => ['required', 'string', 'max:255'],
-            'slug'                         => ['nullable', 'string'],
+            'name'                         => ['required', 'array'],
+            'name.*'                       => ['required', 'string', 'max:255' , UniqueTranslationRule::for('products')],
+            'description'                  => ['required', 'array'],
+            'description.*'                => ['required', 'string', 'max:10000'],
             'price'                        => ['nullable', 'numeric'],
-            'sale_price'                   => ['nullable', 'lte:price'],
-            'type_id'                      => ['required', 'exists:Marvel\Database\Models\Type,id'],
-            'shop_id'                      => ['required', 'exists:Marvel\Database\Models\Shop,id'],
-            'manufacturer_id'              => ['nullable', 'exists:Marvel\Database\Models\Manufacturer,id'],
-            'author_id'                    => ['nullable', 'exists:Marvel\Database\Models\Author,id'],
+            'sale_price'                   => ['nullable', 'numeric'],
             'product_type'                 => ['required', Rule::in($productType)],
-            'categories'                   => ['array'],
-            'tags'                         => ['array'],
-            'language'                     => ['nullable', 'string'],
-            'dropoff_locations'            => ['array'],
-            'pickup_locations'             => ['array'],
-            'digital_file'                 => ['array'],
-            'variations'                   => ['array'],
-            'variation_options'            => ['array'],
+            'categories'                   => ['array', 'required', 'exists:categories,id'],
             'quantity'                     => ['nullable', 'integer'],
-            'unit'                         => ['required', 'string'],
-            'description'                  => ['nullable', 'string', 'max:10000'],
-            'sku'                          => ['string', 'unique:variation_options,sku'],
             'image'                        => ['array'],
-            'gallery'                      => ['array'],
-            'video'                        => ['array'],
             'status'                       => ['string', Rule::in($productStatus)],
-            'height'                       => ['nullable', 'string'],
-            'length'                       => ['nullable', 'string'],
-            'width'                        => ['nullable', 'string'],
-            'external_product_url'         => ['nullable', 'string'],
-            'external_product_button_text' => ['nullable', 'string'],
-            'in_stock'                     => ['boolean'],
-            'is_taxable'                   => ['boolean'],
-            'is_digital'                   => ['boolean'],
-            'is_external'                  => ['boolean'],
-            'is_rental'                    => ['boolean'],
-            "variation_options.upsert.*.sku" => ['string', 'unique:variation_options,sku'],
+            'height'                       => ['nullable', 'numeric'],
+            'length'                       => ['nullable', 'numeric'],
+            'width'                        => ['nullable', 'numeric'],
+            'in_stock'                     => ['boolean','in:true|false'],
+            'has_discount'                 => ['boolean','in:true|false'],
+            'has_flash_sale'               => ['boolean','in:true|false'],
         ];
     }
 

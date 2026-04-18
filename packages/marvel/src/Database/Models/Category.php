@@ -29,7 +29,7 @@ class Category extends Model implements HasMedia
         'banner_image' => 'json',
     ];
 
-    protected $appends = ['parent_id'];
+    // protected $appends = ['parent_id'];
 
     /**
      * Get the user's full name.
@@ -101,7 +101,7 @@ class Category extends Model implements HasMedia
      */
     public function parent()
     {
-        return $this->hasOne('Marvel\Database\Models\Category', 'id', 'parent')->with('parent');
+        return $this->hasOne('Marvel\Database\Models\Category', 'id', 'parent');
     }
     
     /**

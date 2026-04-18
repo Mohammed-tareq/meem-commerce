@@ -31,6 +31,8 @@ class Discount extends Model
         }
 
         $finalPrice = max(0, $finalPrice);
+        $this->price_after_discount = $finalPrice;
+        $this->save();
 
         return round($finalPrice, 2);
     }

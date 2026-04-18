@@ -30,12 +30,12 @@ class CategoryCreateRequest extends FormRequest
     {
         return [
             'name'         => ['required', 'array'],
-            'name.*'       => ['required', 'string' , UniqueTranslationRule::for('categories')->ignore($this->id)],
+            'name.*'       => ['required', 'string' ],
             'slug'         => ['nullable', 'string'],
             'images'        => ['array'],
             'images.*'      => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             'details'      => ['nullable', 'array'],
-            'details.*'    => ['nullable', 'string', UniqueTranslationRule::for('categories')->ignore($this->id)],
+            'details.*'    => ['nullable', 'string'],
             'parent_id'    => ['nullable', 'integer', 'exists:categories,id'],
             // 'banner_image' => ['array'],
             // 'type_id'   => ['required', 'integer'],

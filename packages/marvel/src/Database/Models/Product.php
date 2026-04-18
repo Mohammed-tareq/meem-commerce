@@ -17,12 +17,14 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Marvel\Traits\Excludable;
 use Kodeine\Metable\Metable;
+use Spatie\MediaLibrary\HasMedia;
 use Spatie\Translatable\HasTranslations;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 
-class Product extends Model
+class Product extends Model implements HasMedia
 {
-    use HasTranslations, SoftDeletes, Sluggable, Excludable;
+    use HasTranslations, SoftDeletes, Sluggable, Excludable, InteractsWithMedia;
 
     protected $table = 'products';
     public $guarded = [];

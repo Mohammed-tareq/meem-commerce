@@ -6,19 +6,24 @@ use Illuminate\Support\Str;
 
 trait MediaManager
 {
-    public function uploadImages($request, $model, $collectionName, $disk)
+    public function uploadImages($request, $inputName, $model, $collectionName, $disk)
     {
-        if (!$request->hasFile('images')) {
-            return false;
-        }
-        foreach ($request->file('images') as $file) {
+        try {
+            if (!$request->hasFile($inputName)) {
+                return false;
+            }
+            foreach ($request->file($inputName) as $file) {
 
-            $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
-            $model->addMedia($file)
-                ->usingFileName($fileName)
-                ->toMediaCollection($collectionName, $disk);
+                $fileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
+                $model->addMedia($file)
+                    ->usingFileName($fileName)
+                    ->toMediaCollection($collectionName, $disk);
+            }
+            return true;
+        } catch (\Exception $e) {
+
+            return throw $e;
         }
-        return true;
     }
 
     public function uploadSingleImage($request, $nameInput, $model, $collectionName, $disk)

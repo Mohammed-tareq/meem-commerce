@@ -49,6 +49,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
             'is_active' => true,
             'shop_id' => null,
+            'email_verified_at'=> now(),
         ]);
 
         $user->assignRole("super_admin");

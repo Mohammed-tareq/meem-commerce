@@ -116,8 +116,8 @@ class CreateMarvelTables extends Migration
             $table->id();
             $table->enum('discount_type', DiscountType::getValues())->default(DiscountType::FIXED_RATE);
             $table->double('amount')->default(0);
-            $table->datetimes('start_date')->nullable();
-            $table->datetimes('end_date')->nullable();
+            $table->date('start_date')->nullable();
+            $table->date('end_date')->nullable();
             $table->double('price_after_discount')->nullable();
             $table->unsignedBigInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');

@@ -64,14 +64,15 @@ class CategoryRepository extends BaseRepository
             $data['slug'] = $this->makeSlug($request);
             $category = $this->create($data);
 
+
             if ($request->has('images')) {
-                $this->uploadImages($request, $category, 'categories', 'categories');
+                $this->uploadImages($request, 'images', $category, 'categories', 'categories');
             }
             DB::commit();
-            return $category;
+            return $category->load('parent');
         } catch (\Exception $e) {
             DB::rollBack();
-            return $e->getMessage();
+            throw $e;
         }
     }
 
