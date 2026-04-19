@@ -91,7 +91,7 @@ use Marvel\Http\Resources\ProductResource;
 class ProductController extends CoreController
 {
     use ApiResponse;
-     public $repository;
+    public $repository;
 
     public $settings;
 
@@ -319,13 +319,7 @@ class ProductController extends CoreController
     public function ProductStore(Request $request)
     {
         try {
-            // inform_purchased_customer
-            // $setting = $this->settings->first();
-            // if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
             return $this->repository->storeProduct($request);
-            // } else {
-            //     throw new AuthorizationException(NOT_AUTHORIZED);
-            // }
         } catch (MarvelException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
         }
@@ -1132,8 +1126,7 @@ class ProductController extends CoreController
      */
     public function fetchDraftedProducts(Request $request)
     {
-        $user = $request->user() ?? null;
-        ;
+        $user = $request->user() ?? null;;
         $language = $request->language ? $request->language : DEFAULT_LANGUAGE;
 
         $products_query = $this->repository->with(['type', 'shop'])->where('language', $language);

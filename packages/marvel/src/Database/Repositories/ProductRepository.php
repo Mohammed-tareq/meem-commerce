@@ -8,6 +8,7 @@ use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
+use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Marvel\Database\Models\Availability;
@@ -80,20 +81,20 @@ class ProductRepository extends BaseRepository
     //     'in_stock',
     //     'has_discount',
     //     'has_flash_sale',
-        // 'max_price',
-        // 'min_price',
-        // 'type_id',
-        // 'author_id',
-        // 'language',
-        // 'manufacturer_id',
-        // 'unit',
-        // 'is_digital',
-        // 'is_external',
-        // 'external_product_url',
-        // 'external_product_button_text',
-        // 'image',
-        // 'gallery',
-        // 'video',
+    // 'max_price',
+    // 'min_price',
+    // 'type_id',
+    // 'author_id',
+    // 'language',
+    // 'manufacturer_id',
+    // 'unit',
+    // 'is_digital',
+    // 'is_external',
+    // 'external_product_url',
+    // 'external_product_button_text',
+    // 'image',
+    // 'gallery',
+    // 'video',
     // ];
     // public function getProductDataArray(): array
     // {
@@ -202,99 +203,35 @@ class ProductRepository extends BaseRepository
      * @param  mixed $request
      * @return void
      */
-    public function storeProduct($request)
+    public function storeProduct(Request $request)
     {
         try {
-            $data = $request->only($this->$request);
+            $data = $request->except(['images', 'categories']);
             $data['slug'] = $this->makeSlug($request);
 
-            dd($data);
+            if ($data['discount_type'] === 'percentage') {
+                $data['price_after_discount'] = $data['price'] - ($data['price'] * ($data['amount'] / 100));
+            } elseif ($data['discount_type'] === 'fixed') {
+                $data['price_after_discount'] = $data['price'] - $data['amount'];
+            }
+
+            $product = $this->create($data);
             if ($request->has('images')) {
                 $this->uploadImages($request, 'images', $product, 'products', 'products');
             }
 
-            // if ($setting->options["isProductReview"]) {
-            //     if ($request->status == ProductStatus::DRAFT) {
-            //         $data['status'] = ProductStatus::DRAFT;
-            //     } elseif ($request->status == ProductStatus::UNDER_REVIEW) {
-            //         $data['status'] = ProductStatus::UNDER_REVIEW;
-            //     } else {
-            //         throw new HttpException(406, 'The selected status is invalid.');
-            //     }
-            // }
-
-            // if ($request->product_type == ProductType::SIMPLE) {
-            //     $data['max_price'] = $data['price'];
-            //     $data['min_price'] = $data['price'];
-            // }
-
-            dd($data);
-            $product = $this->create($data);
-
-            if (empty($product->slug) || is_numeric($product->slug)) {
-                $product->slug = $this->customSlugify($product->name);
-            }
-
-            if (isset($request['metas'])) {
-                foreach ($request['metas'] as $value) {
-                    $metas[$value['key']] = $value['value'];
-                    $product->setMeta($metas);
-                }
-            }
 
             if (isset($request['categories'])) {
                 $product->categories()->attach($request['categories']);
             }
-            if (isset($request['dropoff_locations'])) {
-                $product->dropoff_locations()->attach($request['dropoff_locations']);
-            }
-            if (isset($request['pickup_locations'])) {
-                $product->pickup_locations()->attach($request['pickup_locations']);
-            }
-            if (isset($request['persons'])) {
-                $product->persons()->attach($request['persons']);
-            }
-            if (isset($request['features'])) {
-                $product->features()->attach($request['features']);
-            }
-            if (isset($request['deposits'])) {
-                $product->deposits()->attach($request['deposits']);
-            }
-            if (isset($request['tags'])) {
-                $product->tags()->attach($request['tags']);
-            }
-            if (isset($request['variations'])) {
-                $product->variations()->attach($request['variations']);
-            }
-            if (isset($request['variation_options'])) {
 
-                foreach ($request['variation_options']['upsert'] as $variation_option) {
+            if (!empty($data['has_flash_sale']) && $data['has_flash_sale'] === true) {
+                $flashSaleId = $data['flash_sale_id'] ?? null;
 
-                    if (isset($variation_option['is_digital']) && $variation_option['is_digital']) {
-                        $file = $variation_option['digital_file'];
-                        unset($variation_option['digital_file']);
-
-                        unset($variation_option['inform_purchased_customer']);
-                        unset($variation_option['product_update_message']);
-                    }
-
-                    $new_variation_option = $product->variation_options()->create($variation_option);
-
-                    if (isset($variation_option['is_digital']) && $variation_option['is_digital']) {
-                        $digital_file = $new_variation_option->digital_file()->create($file);
-                        $new_variation_option->update([
-                            'digital_file_tracker' => $digital_file->id
-                        ]);
-                    }
+                if ($flashSaleId) {
+                    $product->flash_sales()->sync([$flashSaleId]);
                 }
             }
-
-            if (isset($request['is_digital']) && ($request['is_digital'] === true || $request['is_digital'] === 1) && isset($request['digital_file'])) {
-                $digitalFileArray['attachment_id'] = $request['digital_file']['attachment_id'];
-                $digitalFileArray['url'] = $request['digital_file']['url'];
-                $product->digital_file()->create($digitalFileArray);
-            }
-
             $product->save();
             return $product;
         } catch (Exception $e) {
