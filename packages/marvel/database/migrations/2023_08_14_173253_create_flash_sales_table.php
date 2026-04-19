@@ -20,11 +20,11 @@ return new class extends Migration {
             $table->dateTime('end_date');
             $table->boolean('sale_status')->default(false);
             $table->enum('type', FlashSaleType::getValues())->default(FlashSaleType::PERCENTAGE);
-            $table->integer('rate')->nullable();
-            $table->json('sale_builder')->nullable();
-            $table->json('image')->nullable();
-            $table->json('cover_image')->nullable();
-            $table->string('language')->nullable();
+            $table->double('value', 10, 2)->nullable();
+            // $table->json('sale_builder')->nullable();
+            // $table->json('image')->nullable();
+            // $table->json('cover_image')->nullable();
+            // $table->string('language')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

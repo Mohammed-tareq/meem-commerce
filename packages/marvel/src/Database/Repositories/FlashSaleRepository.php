@@ -11,6 +11,7 @@ use Prettus\Repository\Exceptions\RepositoryException;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
+use Marvel\Enums\FlashSaleType;
 use Marvel\Enums\Permission;
 
 class FlashSaleRepository extends BaseRepository
@@ -36,6 +37,7 @@ class FlashSaleRepository extends BaseRepository
         'slug',
         'type',
         'sale_status',
+        'value',
 //        'language',
         // 'image',
         // 'cover_image',
@@ -74,6 +76,7 @@ class FlashSaleRepository extends BaseRepository
         try {
             // only admin can create flash deals
                 $data = $request->only($this->dataArray);
+                
                 $flash_sale = $this->create($data);
                 // if (isset($request['sale_builder']['product_ids'])) {
                 //     $flash_sale->products()->attach($request['sale_builder']['product_ids']);
@@ -109,7 +112,7 @@ class FlashSaleRepository extends BaseRepository
 //                if ($flash_sale['sale_builder']['product_ids'] != $request['sale_builder']['product_ids']) {
 //                    $this->unsetProductFromFlashSale($flash_sale['sale_builder']['product_ids'], $request['sale_builder']['product_ids']);
 //                }
-
+                $flash_sale->update($data);
                 return $flash_sale;
 
 

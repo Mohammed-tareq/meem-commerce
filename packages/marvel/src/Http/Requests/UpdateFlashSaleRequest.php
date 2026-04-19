@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
-
+use Marvel\Enums\FlashSaleType;
 
 class UpdateFlashSaleRequest extends FormRequest
 {
@@ -34,13 +34,14 @@ class UpdateFlashSaleRequest extends FormRequest
 
         $id = $this->route("flash_sale");
         $rules =  [
-            'title'        => ['required', 'array'],
-            'title.*'=> ['required','string','min:3' , 'max:70',UniqueTranslationRule::for('flash_sales',"title")->ignore($id)],
-            'description'        => ['required', 'array'],
-            'description.*'  => ['required', 'string', 'max:1000'],
-            'start_date'   => ['required', 'date'],
+            'title'        => ['sometimes', 'array'],
+            'title.*'=> ['sometimes','string','min:3' , 'max:70',UniqueTranslationRule::for('flash_sales',"title")->ignore($id)],
+            'description'        => ['sometimes', 'array'],
+            'description.*'  => ['sometimes', 'string', 'max:1000'],
+            'start_date'   => ['sometimes', 'date'],
             'end_date'     => ['required', 'date'],
-            'slug'         => ['nullable', 'string'],
+            'type'=> ['sometimes',Rule::in(FlashSaleType::getValues())],
+            'value'=> ['sometimes','numeric','min:0'],
         ];
         return $rules;
     }

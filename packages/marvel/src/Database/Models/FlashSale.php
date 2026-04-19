@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Casts\Attribute;
-
+use Marvel\Enums\FlashSaleType;
 
 class FlashSale extends Model
 {
@@ -21,11 +21,11 @@ class FlashSale extends Model
     public array $translatable = ["title","description"];
     public $guarded = [];
 
-    protected $casts = [
-        'cover_image'  => 'json',
-        'sale_builder' => 'json',
-        'image'        => 'json'
-    ];
+    // protected $casts = [
+    //     'cover_image'  => 'json',
+    //     'sale_builder' => 'json',
+    //     'image'        => 'json'
+    // ];
 
     /**
      * Return the sluggable configuration array for this model.
@@ -65,15 +65,34 @@ class FlashSale extends Model
             'ar' => [
                 'fixed_rate' => 'خصم من السعر بالقيمة',
                 'percentage' => 'خصم بالنسبة المئوية',
+                'free_shipping'=> 'شحن مجاني',
+
             ],
             'en' => [
                 'fixed_rate' => 'Fixed discount',
                 'percentage' => 'Percentage discount',
+                'free_shipping'=> 'Free shipping',
             ],
         ];
 
         $locale = app()->getLocale();
             return $map[$locale][$this->type] ?? $this->type;
+    }
+
+    public function calcPrice($price)
+    {
+        if($this->type == FlashSaleType::PERCENTAGE)
+        {
+            return $price - ($price * ($this->value / 100));
+        }
+        elseif($this->type == FlashSaleType::FIXED_RATE)
+        {
+            return $price - $this->value;
+        }
+        else
+        {
+            return $price;
+        }
     }
 
 }

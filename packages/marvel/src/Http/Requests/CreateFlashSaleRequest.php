@@ -8,6 +8,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
 use Marvel\Database\Models\FlashSale;
+use Marvel\Enums\FlashSaleType;
 
 class CreateFlashSaleRequest extends FormRequest
 {
@@ -36,7 +37,9 @@ class CreateFlashSaleRequest extends FormRequest
             'start_date'   => ['required', 'date'],
             'end_date'     => ['required', 'date'],
             'slug'         => ['nullable', 'string'],
-            'type'=> ['required','in:percentage,fixed_rate'],
+            'type'=> ['required',Rule::in(FlashSaleType::getValues())],
+            'value'=> ['required','numeric','min:0'],
+
 //            'language'     => ['nullable', 'string'],
             // 'image'        => ['nullable', 'array'],
             // 'cover_image'  => ['nullable', 'array'],
