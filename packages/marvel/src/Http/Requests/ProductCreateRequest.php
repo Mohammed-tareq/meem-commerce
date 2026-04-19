@@ -7,6 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
+use Marvel\Enums\DiscountType;
 use Marvel\Enums\ProductStatus;
 use Marvel\Enums\ProductType;
 
@@ -39,29 +40,40 @@ class ProductCreateRequest extends FormRequest
             ProductStatus::DRAFT,
         ];
 
-        $productType = [
-            ProductType::SIMPLE,
-            ProductType::VARIABLE
-        ];
+        // $productType = [
+        //     ProductType::SIMPLE,
+        //     ProductType::VARIABLE,
+        // ];
+
+        $discountTypes = DiscountType::getValues();
 
         return [
             'name'                         => ['required', 'array'],
-            'name.*'                       => ['required', 'string', 'max:255' , UniqueTranslationRule::for('products')],
+            'name.*'                       => ['required', 'string', 'max:255', UniqueTranslationRule::for('products')],
             'description'                  => ['required', 'array'],
             'description.*'                => ['required', 'string', 'max:10000'],
-            'price'                        => ['nullable', 'numeric'],
-            'sale_price'                   => ['nullable', 'numeric'],
-            'product_type'                 => ['required', Rule::in($productType)],
-            'categories'                   => ['array', 'required', 'exists:categories,id'],
-            'quantity'                     => ['nullable', 'integer'],
-            'image'                        => ['array'],
-            'status'                       => ['string', Rule::in($productStatus)],
+            'slug'                         => ['required', 'string', 'max:255', 'unique:products,slug'],
+            'price'                        => ['nullable', 'numeric', 'min:0'],
+            // 'product_type'                 => ['required', Rule::in($productType)],
+            'categories'                   => ['required', 'array', 'exists:categories,id'],
+            'quantity'                     => ['required', 'integer', 'min:0'],
+            'image'                        => ['required', 'array'],
+            'image.*'                      => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'status'                       => ['required', 'string', Rule::in($productStatus)],
             'height'                       => ['nullable', 'numeric'],
             'length'                       => ['nullable', 'numeric'],
             'width'                        => ['nullable', 'numeric'],
-            'in_stock'                     => ['boolean','in:true|false'],
-            'has_discount'                 => ['boolean','in:true|false'],
-            'has_flash_sale'               => ['boolean','in:true|false'],
+            'weight'                       => ['nullable', 'numeric'],
+            'in_stock'                     => ["required", 'boolean'],
+            'has_discount'                 => ["required", 'boolean'],
+            'has_flash_sale'               => ["required", 'boolean'],
+            'flash_sale_id'                => ['sometimes', 'exists:flash_sales,id'],
+            'discount_type'                => ['sometimes', Rule::in($discountTypes)],
+            'amount'                       => ['sometimes', 'numeric', 'min:0'],
+            'start_date'                   => ['sometimes', 'date'],
+            'end_date'                     => ['sometimes', 'date', 'after_or_equal:start_date'],
+            'price_after_discount'         => ['sometimes', 'numeric', 'min:0'],
+            'price_after_flash_sale'       => ['sometimes', 'numeric', 'min:0'],
         ];
     }
 

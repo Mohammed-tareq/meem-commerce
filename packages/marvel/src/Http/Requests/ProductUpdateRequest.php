@@ -2,10 +2,12 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
+use Marvel\Enums\DiscountType;
 use Marvel\Enums\ProductStatus;
 use Marvel\Enums\ProductType;
 
@@ -37,43 +39,38 @@ class ProductUpdateRequest extends FormRequest
             ProductStatus::DRAFT,
         ];
 
-        $productType = [
-            ProductType::SIMPLE,
-            ProductType::VARIABLE
-        ];
+        // $productType = [
+        //     ProductType::SIMPLE,
+        //     ProductType::VARIABLE,
+        // ];
+
+        $discountTypes = DiscountType::getValues();
+
         return [
-            'name'                         => ['string', 'max:255'],
-            'price'                        => ['nullable', 'numeric'],
-            'sale_price'                   => ['nullable', 'lte:price'],
-            'type_id'                      => ['exists:Marvel\Database\Models\Type,id'],
-            'shop_id'                      => ['exists:Marvel\Database\Models\Shop,id'],
-            'manufacturer_id'              => ['nullable', 'exists:Marvel\Database\Models\Manufacturer,id'],
-            'author_id'                    => ['nullable', 'exists:Marvel\Database\Models\Author,id'],
-            'categories'                   => ['exists:Marvel\Database\Models\Category,id'],
-            'tags'                         => ['exists:Marvel\Database\Models\Tag,id'],
-            'dropoff_locations'            => ['array'],
-            'pickup_locations'             => ['array'],
-            'language'                     => ['nullable', 'string'],
-            'digital_file'                 => ['array'],
-            'product_type'                 => ['required', Rule::in($productType)],
-            'unit'                         => ['string'],
-            'description'                  => ['nullable', 'string', 'max:10000'],
-            'quantity'                     => ['nullable', 'integer'],
-            'sku'                          => ['string', Rule::unique('variation_options')->where(fn ($query) => $query->whereSku($this->sku))],
-            'image'                        => ['array'],
-            'gallery'                      => ['array'],
-            'video'                        => ['array'],
-            'status'                       => ['string', Rule::in($productStatus)],
-            'height'                       => ['nullable', 'string'],
-            'length'                       => ['nullable', 'string'],
-            'width'                        => ['nullable', 'string'],
-            'external_product_url'         => ['nullable', 'string'],
-            'external_product_button_text' => ['nullable', 'string'],
-            'in_stock'                     => ['boolean'],
-            'is_taxable'                   => ['boolean'],
-            'is_digital'                   => ['boolean'],
-            'is_external'                  => ['boolean'],
-            'is_rental'                    => ['boolean'],
+            'name'                         => ['sometimes', 'array'],
+            'name.*'                       => ['sometimes', 'string', 'max:255', UniqueTranslationRule::for('products')->ignore($this->route('product'))],
+            'description'                  => ['sometimes', 'array'],
+            'description.*'                => ['sometimes', 'string', 'max:10000'],
+            'price'                        => ['sometimes', 'numeric', 'min:0'],
+            // 'product_type'                 => ['sometimes', Rule::in($productType)],
+            'categories'                   => ['sometimes', 'array', 'exists:categories,id'],
+            'quantity'                     => ['sometimes', 'integer', 'min:0'],
+            'image'                        => ['sometimes', 'array'],
+            'status'                       => ['sometimes', 'string', Rule::in($productStatus)],
+            'height'                       => ['sometimes', 'numeric'],
+            'length'                       => ['sometimes', 'numeric'],
+            'width'                        => ['sometimes', 'numeric'],
+            'weight'                       => ['sometimes', 'numeric'],
+            'in_stock'                     => ["sometimes", 'boolean'],
+            'has_discount'                 => ["sometimes", 'boolean'],
+            'has_flash_sale'               => ["sometimes", 'boolean'],
+            'flash_sale_id'                => ['sometimes', 'exists:flash_sales,id'],
+            'discount_type'                => ['sometimes', Rule::in($discountTypes)],
+            'amount'                       => ['sometimes', 'numeric', 'min:0'],
+            'start_date'                   => ['sometimes', 'date'],
+            'end_date'                     => ['sometimes', 'date', 'after_or_equal:start_date'],
+            'price_after_discount'         => ['sometimes', 'numeric', 'min:0'],
+            'price_after_flash_sale'       => ['sometimes', 'numeric', 'min:0'],
         ];
     }
 
