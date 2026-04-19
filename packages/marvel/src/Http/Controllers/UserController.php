@@ -391,7 +391,7 @@ class UserController extends CoreController
     {
         try {
             $user = $this->repository->addUserWithRole($request);
-            $user->load(['roles', 'permissions']);
+            $user->load(['roles']);
             return $this->apiResponse("User added successfully", 200, true, UserResource::make($user));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
