@@ -72,6 +72,12 @@ return [
             'url' => env('APP_URL') . '/storage/banners',
             'visibility' => 'public',
         ],
+        'sliders' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/sliders'),
+            'url' => env('APP_URL') . '/storage/sliders',
+            'visibility' => 'public',
+        ],
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

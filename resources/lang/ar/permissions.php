@@ -29,6 +29,10 @@ return [
     'create-flash-sale' => 'إنشاء فلاش سيل',
     'update-flash-sale' => 'تعديل فلاش سيل',
     'delete-flash-sale' => 'حذف فلاش سيل',
+    'view-sliders' => 'عرض الشاشات المنزلقة',
+    'create-sliders' => 'إنشاء شاشة منزلقة',
+    'update-sliders' => 'تعديل شاشة منزلقة',
+    'delete-sliders' => 'حذف شاشة منزلقة',
 
     // 👤 Customer
     'view-profile' => 'عرض الملف الشخصي',

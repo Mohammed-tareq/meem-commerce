@@ -41,6 +41,7 @@ use Marvel\Http\Controllers\RoleAndPermissionController;
 use Marvel\Http\Controllers\SettingsController;
 use Marvel\Http\Controllers\ShippingController;
 use Marvel\Http\Controllers\ShopController;
+use Marvel\Http\Controllers\SliderController;
 use Marvel\Http\Controllers\TagController;
 use Marvel\Http\Controllers\TaxController;
 use Marvel\Http\Controllers\TypeController;
@@ -218,6 +219,9 @@ Route::apiResource('manufacturers', ManufacturerController::class, [
 ]);
 Route::apiResource('banners', BannerController::class, [
     'only' => ['index', 'show'],
+]);
+Route::apiResource('sliders', BannerController::class, [
+    'only' => ['index'],
 ]);
 Route::post('orders/checkout/verify', [CheckoutController::class, 'verify']);
 
@@ -421,6 +425,7 @@ Route::group(
             'only' => ['update', 'destroy'],
         ]);
         Route::apiResource('banners', BannerController::class);
+        Route::apiResource('sliders', SliderController::class);
 
         // Route::get('shop-notification/{id}', [ShopNotificationController::class, 'show']);
         // Route::put('shop-notification/{id}', [ShopNotificationController::class, 'update']);
@@ -492,10 +497,10 @@ Route::group(
         // Route::apiResource('notify-logs', NotifyLogsController::class, [
         //     'only' => ['index'],
         // ]);
-    
+
         // Route::post('notify-log-seen', [NotifyLogsController::class, 'readNotifyLogs']);
         // Route::post('notify-log-read-all', [NotifyLogsController::class, 'readAllNotifyLogs']);
-    
+
         Route::apiResource('faqs', FaqsController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
@@ -519,7 +524,7 @@ Route::group(
         ]);
         Route::get('/vendors/list', [UserController::class, 'vendors']);
         // Route::post('products-request-for-flash-sale', [FlashSaleVendorRequestController::class, 'productsRequestForFlashSale']);
-    
+
         Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
             'only' => ['index', 'show'],
         ]);

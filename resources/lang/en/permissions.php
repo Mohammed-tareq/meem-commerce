@@ -35,6 +35,10 @@ return [
     'create-banners' => 'Create banner',
     'update-banners' => 'Update banner',
     'delete-banners' => 'Delete banner',
+    'view-slider'=> 'View slider',
+    'create-slider' => 'Create slider',
+    'update-slider' => 'Update slider',
+    'delete-slider' => 'Delete slider',
 
     // 👤 Customer
     'view-profile' => 'View profile',

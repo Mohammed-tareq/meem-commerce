@@ -157,6 +157,10 @@ class PermissionSeeder extends Seeder
             'create-banners',
             'update-banners',
             'delete-banners',
+            'view-slider',
+            "create-slider",
+            "update-slider",
+            "delete-slider",
         ];
 
         $customerPermission = [
@@ -346,14 +350,14 @@ class PermissionSeeder extends Seeder
             ],
             'guard_name' => 'api',
         ]);
-        
+
         $roleSuperAdmin->syncPermissions($permissionsData);
         $roleOwner->syncPermissions($onwnerPermission);
         $roleStaff->syncPermissions($staffAndOnwner);
         $roleCustomer->syncPermissions($customerPermission);
         $roleEditor->syncPermissions($editorPermission);
-        
-       
+
+
 
     }
 

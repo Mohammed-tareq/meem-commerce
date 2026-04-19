@@ -22,22 +22,21 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::middleware('auth:api')->get('/test', function (Request $request) {
   $role = \Spatie\Permission\Models\Role::where("name" , "super_admin")->first();
   $permission1 = \Spatie\Permission\Models\Permission::create([
-    "name" => "view-banners",
+    "name" => "view-slider",
     "guard_name" => "api",
   ]);
   $permission2 = \Spatie\Permission\Models\Permission::create([
-    "name" => "create-banners",
+    "name" => "create-slider",
     "guard_name" => "api",
   ]);
   $permission3 = \Spatie\Permission\Models\Permission::create([
-    "name" => "update-banners",
+    "name" => "update-slider",
     "guard_name" => "api",
   ]);
   $permission4 = \Spatie\Permission\Models\Permission::create([
-    "name" => "delete-banners",
+    "name" => "delete-slider",
     "guard_name" => "api",
   ]);
   $role->syncPermissions([$permission1,$permission2,$permission3,$permission4]);
 return $role;
 });
-

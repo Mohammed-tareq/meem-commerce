@@ -92,6 +92,15 @@ class CreateMarvelTables extends Migration
             // $table->unsignedBigInteger('type_id');
             // $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
         });
+          Schema::create('sliders', function (Blueprint $table) {
+            $table->id();
+            $table->enum('type', ['slider', 'image'])->default('slider');
+            $table->boolean('is_active')->default(false);
+            $table->timestamps();
+            // $table->json('image')->nullable();
+            // $table->unsignedBigInteger('type_id');
+            // $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
+        });
 
         Schema::create('products', function (Blueprint $table) {
             $table->id();

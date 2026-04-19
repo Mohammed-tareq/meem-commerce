@@ -18,6 +18,12 @@ final class Permission extends Enum
     public const STAFF = 'staff';
     public const CUSTOMER = 'customer';
 
+    public const VIEW_SLIDER = 'view-slider';
+    public const CREATE_SLIDER = 'create-slider';
+    public const UPDATE_SLIDER = 'update-slider';
+    public const DELETE_SLIDER = 'delete-slider';
+
+
     // 🔓 Public
     public const VIEW_PRODUCTS = 'view-products';
     public const VIEW_PRODUCT = 'view-product';
@@ -83,7 +89,7 @@ final class Permission extends Enum
     public const UPDATE_ORDER_STATUS = 'update-order-status';
     public const ANSWER_QUESTION = 'answer-question';
     public const CREATE_AUTHOR = 'create-author';
-   
+
 
     public const CREATE_MANUFACTURER = 'create-manufacturer';
     public const VIEW_ANALYTICS = 'view-analytics';
