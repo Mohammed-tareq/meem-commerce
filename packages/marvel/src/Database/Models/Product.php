@@ -29,7 +29,7 @@ class Product extends Model implements HasMedia
     protected $table = 'products';
     public $guarded = [];
     public array $translatable = ['name', 'description'];
-    protected $metaTable = 'products_meta'; //optional.
+    // protected $metaTable = 'products_meta'; //optional.
     // protected $disableFluentMeta = true;
     public $hideMeta = true;
 
@@ -69,8 +69,10 @@ class Product extends Model implements HasMedia
         parent::boot();
 
         static::creating(function ($product) {
-            $product->sku = 'PRD-' . Str::uuid();
-            $product->save();
+            // Only set SKU if not already provided
+            if (empty($product->sku)) {
+                $product->sku = 'PRD-' . Str::uuid();
+            }
         });
     }
 
@@ -352,4 +354,5 @@ class Product extends Model implements HasMedia
         $this->setRelation('related_products', $relatedProducts);
         return $this;
     }
+     
 }

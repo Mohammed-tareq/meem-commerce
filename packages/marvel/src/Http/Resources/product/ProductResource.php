@@ -6,35 +6,36 @@ use Illuminate\Http\Request;
 
 class ProductResource extends Resource
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  Request  $request
-     * @return array
-     */
-    public function toArray($request)
+    public function toArray($request): array
     {
         return [
-            'id'                   => $this->id,
-            'name'                 => $this->name,
-            'slug'                 => $this->slug,
-            'type'                 => getResourceData($this->type, ['settings']), // if you need extra data then pass key in array by second parameter
-            'language'             => $this->language,
-            'translated_languages' => $this->translated_languages,
-            'product_type'         => $this->product_type,
-            'shop'                 => getResourceData($this->shop, []), // if you need extra data then pass key in array by second parameter
-            'sale_price'           => $this->sale_price,
-            'max_price'            => $this->max_price,
-            'min_price'            => $this->min_price,
-            'image'                => $this->image,
-            'status'               => $this->status,
-            'price'                => $this->price,
-            'quantity'             => $this->quantity,
-            'unit'                 => $this->unit,
-            'sku'                  => $this->sku,
-            'sold_quantity'        => $this->sold_quantity,
-            'in_flash_sale'        => $this->in_flash_sale,
-            'visibility'           => $this->visibility
+            'id'                     => $this->id,
+            'name'                   => $this->getTranslation('name', app()->getLocale()),
+            'slug'                   => $this->slug,
+            'description'            => $this->getTranslation('description', app()->getLocale()), // Array فيه en/ar
+            'price'                  => $this->price,
+            'price_after_discount'   => $this->price_after_discount,
+            'price_after_flash_sale' => $this->price_after_flash_sale,
+            'discount_type'          => $this->discount_type,
+            'amount'                 => $this->amount,
+            'start_date'             => $this->start_date ,
+            'end_date'               => $this->end_date ,
+            'sku'                    => $this->sku,
+            'quantity'               => $this->quantity,
+            'sold_quantity'          => $this->sold_quantity ?? 0,
+            'in_stock'               => $this->in_stock,
+            'status'                 => $this->status,
+            'product_type'           => $this->product_type,
+            'height'                 => $this->height,
+            'width'                  => $this->width,
+            'length'                 => $this->length,
+            'weight'                 => $this->weight,
+            'has_flash_sale'         => $this->has_flash_sale,
+            'has_discount'           => $this->has_discount,
+            'banner_id'              => $this->banner_id,
+            'shop_id'                => $this->shop_id,
+            'created_at'             => $this->created_at ? $this->created_at->toIso8601String() : null,
+            'updated_at'             => $this->updated_at ? $this->updated_at->toIso8601String() : null,
         ];
     }
 }

@@ -10,9 +10,9 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->integer('sold_quantity')->default(0);
-        });
+        // Schema::table('products', function (Blueprint $table) {
+        //     $table->integer('sold_quantity')->default(0);
+        // });
 
         Schema::table('variation_options', function (Blueprint $table) {
             $table->integer('sold_quantity')->default(0);

@@ -39,47 +39,47 @@ class ProductRepository extends BaseRepository
     /**
      * @var array
      */
-    protected $fieldSearchable = [
-        'name' => 'like',
-        'shop_id',
-        'status',
-        'is_rental',
-        'type.slug' => 'in',
-        'dropoff_locations.slug' => 'in',
-        'pickup_locations.slug' => 'in',
-        'persons.slug' => 'in',
-        'deposits.slug' => 'in',
-        'features.slug' => 'in',
-        'categories.slug' => 'in',
-        'tags.slug' => 'in',
-        'author.slug',
-        'manufacturer.slug' => 'in',
-        'min_price' => 'between',
-        'max_price' => '>=',
-        'price' => 'between',
-        'language',
-        'metas.key',
-        'metas.value',
-        'product_type',
-        'visibility'
-    ];
+    // protected $fieldSearchable = [
+    //     'name' => 'like',
+    //     'shop_id',
+    //     // 'status',
+    //     // 'is_rental',
+    //     // 'type.slug' => 'in',
+    //     // 'dropoff_locations.slug' => 'in',
+    //     // 'pickup_locations.slug' => 'in',
+    //     // 'persons.slug' => 'in',
+    //     // 'deposits.slug' => 'in',
+    //     // 'features.slug' => 'in',
+    //     // 'categories.slug' => 'in',
+    //     // 'tags.slug' => 'in',
+    //     // 'author.slug',
+    //     // 'manufacturer.slug' => 'in',
+    //     // 'min_price' => 'between',
+    //     // 'max_price' => '>=',
+    //     'price' => 'between',
+    //     // 'language',
+    //     // 'metas.key',
+    //     // 'metas.value',
+    //     // 'product_type',
+    //     // 'visibility'
+    // ];
 
-    protected $dataArray = [
-        'name',
-        'slug',
-        'price',
-        'sale_price',
-        'product_type',
-        'quantity',
-        'description',
-        'sku',
-        'status',
-        'height',
-        'length',
-        'width',
-        'in_stock',
-        'has_discount',
-        'has_flash_sale',
+    // protected $dataArray = [
+    //     'name',
+    //     'slug',
+    //     'price',
+    //     'sale_price',
+    //     'product_type',
+    //     'quantity',
+    //     'description',
+    //     'sku',
+    //     'status',
+    //     'height',
+    //     'length',
+    //     'width',
+    //     'in_stock',
+    //     'has_discount',
+    //     'has_flash_sale',
         // 'max_price',
         // 'min_price',
         // 'type_id',
@@ -94,11 +94,11 @@ class ProductRepository extends BaseRepository
         // 'image',
         // 'gallery',
         // 'video',
-    ];
-    public function getProductDataArray(): array
-    {
-        return $this->dataArray;
-    }
+    // ];
+    // public function getProductDataArray(): array
+    // {
+    //     return $this->dataArray;
+    // }
 
     public function boot()
     {
@@ -205,7 +205,7 @@ class ProductRepository extends BaseRepository
     public function storeProduct($request)
     {
         try {
-            $data = $request->only($this->dataArray);
+            $data = $request->only($this->$request);
             $data['slug'] = $this->makeSlug($request);
 
             dd($data);

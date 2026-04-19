@@ -26,9 +26,9 @@ return new class extends Migration {
             $table->index(['id', 'transaction_identifier', 'created_at']);
         });
 
-        Schema::table('products', function (Blueprint $table) {
-            $table->enum('visibility', ProductVisibilityStatus::getValues())->default(ProductVisibilityStatus::VISIBILITY_PUBLIC);
-        });
+        // Schema::table('products', function (Blueprint $table) {
+        //     $table->enum('visibility', ProductVisibilityStatus::getValues())->default(ProductVisibilityStatus::VISIBILITY_PUBLIC);
+        // });
     }
 
     /**

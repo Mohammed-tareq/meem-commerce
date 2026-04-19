@@ -10,9 +10,9 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->integer('in_flash_sale')->default(false);
-        });
+        // Schema::table('products', function (Blueprint $table) {
+        //     $table->integer('in_flash_sale')->default(false);
+        // });
     }
 
     /**

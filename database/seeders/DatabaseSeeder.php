@@ -54,6 +54,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             FaqSeeder::class,
             FlashSaleSeeder::class,
+            ProductSeeder::class,
         ]);
 
     }

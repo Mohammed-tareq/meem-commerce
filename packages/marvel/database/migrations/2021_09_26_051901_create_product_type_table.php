@@ -13,17 +13,17 @@ class CreateProductTypeTable extends Migration
      */
     public function up()
     {
-        Schema::table('products', function (Blueprint $table) {
-            $table->unsignedBigInteger('author_id')->nullable();
-            $table->foreign('author_id')->references('id')->on('authors')->onDelete('cascade');
-            $table->unsignedBigInteger('manufacturer_id')->nullable();
-            $table->foreign('manufacturer_id')->references('id')->on('manufacturers')->onDelete('cascade');
-            $table->boolean('is_digital')->default(0);
-            $table->boolean('is_external')->default(0);
-            $table->string('external_product_url')->nullable();
-            $table->string('external_product_button_text')->nullable();
-            $table->string('blocked_dates')->nullable();
-        });
+        // Schema::table('products', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('author_id')->nullable();
+        //     $table->foreign('author_id')->references('id')->on('authors')->onDelete('cascade');
+        //     $table->unsignedBigInteger('manufacturer_id')->nullable();
+        //     $table->foreign('manufacturer_id')->references('id')->on('manufacturers')->onDelete('cascade');
+        //     $table->boolean('is_digital')->default(0);
+        //     $table->boolean('is_external')->default(0);
+        //     $table->string('external_product_url')->nullable();
+        //     $table->string('external_product_button_text')->nullable();
+        //     $table->string('blocked_dates')->nullable();
+        // });
 
         Schema::create('digital_files', function (Blueprint $table) {
             $table->id();

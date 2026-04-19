@@ -108,42 +108,39 @@ class CreateMarvelTables extends Migration
             $table->string('slug');
             $table->text('description')->nullable();
             $table->double('price')->nullable();
-            $table->double('sale_price')->nullable();
             $table->string('sku')->nullable();
             $table->integer('quantity')->default(0);
             $table->boolean('in_stock')->default(true);
-            // $table->unsignedBigInteger('type_id');
-            // $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
-            // $table->boolean('is_taxable')->default(false);
-            // $table->unsignedBigInteger('shipping_class_id')->nullable();
-            // $table->foreign('shipping_class_id')->references('id')->on('shipping_classes');
             $table->enum('status', ProductStatus::getValues())->default(ProductStatus::DRAFT);
             $table->enum('product_type', ProductType::getValues())->default(ProductType::SIMPLE);
             $table->string('height')->nullable();
             $table->string('width')->nullable();
             $table->string('length')->nullable();
+            $table->string('weight')->nullable();
             $table->boolean('has_flash_sale')->default(false);
             $table->boolean('has_discount')->default(false);
             $table->unsignedBigInteger('banner_id')->nullable();
             $table->foreign('banner_id')->references('id')->on('banners')->nullOnDelete();
-
-            // $table->json('image')->nullable();
-            // $table->string('unit');
-            // $table->json('gallery')->nullable();
-            $table->softDeletes();
-            $table->timestamps();
-        });
-        Schema::create('discounts', function (Blueprint $table) {
-            $table->id();
-            $table->enum('discount_type', DiscountType::getValues())->default(DiscountType::FIXED_RATE);
+            $table->enum('discount_type', DiscountType::getValues())->default(DiscountType::PERCENTAGE);
             $table->double('amount')->default(0);
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
             $table->double('price_after_discount')->nullable();
-            $table->unsignedBigInteger('product_id');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->double('price_after_flash_sale')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
+        // Schema::create('discounts', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->enum('discount_type', DiscountType::getValues())->default(DiscountType::PERCENTAGE);
+        //     $table->double('amount')->default(0);
+        //     $table->date('start_date')->nullable();
+        //     $table->date('end_date')->nullable();
+        //     $table->double('price_after_discount')->nullable();
+        //     $table->unsignedBigInteger('product_id');
+        //     $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+        //     $table->timestamps();
+        // });
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->string('tracking_number')->unique();

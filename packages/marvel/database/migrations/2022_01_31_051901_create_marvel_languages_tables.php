@@ -35,12 +35,12 @@ class CreateMarvelLanguagesTables extends Migration
         }
 
 
-        Schema::table('products', function (Blueprint $table) {
-            $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
-        });
-        Schema::table('categories', function (Blueprint $table) {
-            $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
-        });
+        // Schema::table('products', function (Blueprint $table) {
+        //     $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
+        // });
+        // Schema::table('categories', function (Blueprint $table) {
+        //     $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
+        // });
         Schema::table('tags', function (Blueprint $table) {
             $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
         });
@@ -56,12 +56,12 @@ class CreateMarvelLanguagesTables extends Migration
         Schema::table('types', function (Blueprint $table) {
             $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
         });
-        Schema::table('attributes', function (Blueprint $table) {
-            $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
-        });
-        Schema::table('attribute_values', function (Blueprint $table) {
-            $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
-        });
+        // Schema::table('attributes', function (Blueprint $table) {
+        //     $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
+        // });
+        // Schema::table('attribute_values', function (Blueprint $table) {
+        //     $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
+        // });
         Schema::table('availabilities', function (Blueprint $table) {
             $table->string('language')->nullable()->default(DEFAULT_LANGUAGE);
         });
