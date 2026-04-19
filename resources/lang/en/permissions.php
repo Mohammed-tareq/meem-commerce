@@ -31,6 +31,10 @@ return [
     'create-roles' => 'Create roles',
     'update-roles' => 'Update roles',
     'delete-roles' => 'Delete roles',
+    'view-banners' => 'View banners',
+    'create-banners' => 'Create banner',
+    'update-banners' => 'Update banner',
+    'delete-banners' => 'Delete banner',
 
     // 👤 Customer
     'view-profile' => 'View profile',

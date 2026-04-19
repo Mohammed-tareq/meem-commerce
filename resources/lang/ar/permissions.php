@@ -138,6 +138,9 @@ return [
     'create-roles' => 'إنشاء أدوار',
     'update-roles' => 'تعديل أدوار',
     'delete-roles' => 'حذف أدوار',
-    
+    'view-banners' => 'عرض البانرات',
+    'create-banners' => 'إنشاء بانر',
+    'update-banners' => 'تعديل بانر',
+    'delete-banners' => 'حذف بانر',
 
 ];

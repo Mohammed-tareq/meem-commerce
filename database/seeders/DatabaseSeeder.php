@@ -33,10 +33,12 @@ class DatabaseSeeder extends Seeder
        $this->call([
         PermissionSeeder::class,
         ShopSeeder::class,
+        SettingSeeder::class,
         CategorySeeder::class,
         AttributeSeeder::class,
+        BannerSeeder::class,
        ]);
-//        
+//
         $user = User::firstOrCreate([
             'email' => 'admin@demo.com',
         ],[
@@ -49,6 +51,9 @@ class DatabaseSeeder extends Seeder
 
         $user->assignRole("super_admin");
 
+        $this->call([
+            FaqSeeder::class,
+        ]);
 
-    }   
+    }
 }

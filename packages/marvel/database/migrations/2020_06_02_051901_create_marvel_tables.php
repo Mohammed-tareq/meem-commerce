@@ -82,6 +82,16 @@ class CreateMarvelTables extends Migration
             $table->json('socials')->nullable();
             $table->timestamps();
         });
+        Schema::create('banners', function (Blueprint $table) {
+            $table->id();
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->boolean('is_active')->default(false);
+            $table->timestamps();
+            // $table->json('image')->nullable();
+            // $table->unsignedBigInteger('type_id');
+            // $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
+        });
 
         Schema::create('products', function (Blueprint $table) {
             $table->id();
@@ -105,6 +115,8 @@ class CreateMarvelTables extends Migration
             $table->string('length')->nullable();
             $table->boolean('has_flash_sale')->default(false);
             $table->boolean('has_discount')->default(false);
+            $table->unsignedBigInteger('banner_id')->nullable();
+            $table->foreign('banner_id')->references('id')->on('banners')->nullOnDelete();
 
             // $table->json('image')->nullable();
             // $table->string('unit');
@@ -319,5 +331,6 @@ class CreateMarvelTables extends Migration
         Schema::dropIfExists('attachments');
         Schema::dropIfExists('authors');
         Schema::dropIfExists('manufacturers');
+        Schema::dropIfExists('banners');
     }
 }

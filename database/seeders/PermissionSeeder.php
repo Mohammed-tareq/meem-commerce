@@ -153,6 +153,10 @@ class PermissionSeeder extends Seeder
             'create-roles',
             'update-roles',
             'delete-roles',
+            'view-banners',
+            'create-banners',
+            'update-banners',
+            'delete-banners',
         ];
 
         $customerPermission = [
@@ -178,6 +182,7 @@ class PermissionSeeder extends Seeder
             'view-my-questions',
             'follow-shop',
             'view-followed-shops',
+            'view-banners',
         ];
 
         $staffAndOnwner = [

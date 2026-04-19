@@ -17,9 +17,12 @@ class BannerResource extends Resource
         return [
             'id'          => $this->id,
             'title'       => $this->title,
-            'type_id'     => $this->type_id,
             'description' => $this->description,
-            'image'       => $this->image
+            'image'       => $this->getFirstMediaUrl('banners'),
+            "is_active"   => (bool)$this->is_active,
         ];
+
     }
+
+
 }

@@ -155,15 +155,7 @@ class CreateNewMarvelTables extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
         });
 
-        Schema::create('banners', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('type_id');
-            $table->text('title');
-            $table->text('description')->nullable();
-            $table->json('image')->nullable();
-            $table->timestamps();
-            $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
-        });
+        
 
         Schema::create('payment_gateways', function (Blueprint $table) {
             $table->id();

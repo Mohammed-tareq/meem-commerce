@@ -14,6 +14,7 @@ use Marvel\Http\Controllers\AttachmentController;
 use Marvel\Http\Controllers\AttributeController;
 use Marvel\Http\Controllers\AttributeValueController;
 use Marvel\Http\Controllers\AuthorController;
+use Marvel\Http\Controllers\BannerController;
 use Marvel\Http\Controllers\BecameSellerController;
 use Marvel\Http\Controllers\CategoryController;
 use Marvel\Http\Controllers\CheckoutController;
@@ -215,6 +216,9 @@ Route::apiResource('authors', AuthorController::class, [
 Route::apiResource('manufacturers', ManufacturerController::class, [
     'only' => ['index', 'show'],
 ]);
+Route::apiResource('banners', BannerController::class, [
+    'only' => ['index', 'show'],
+]);
 Route::post('orders/checkout/verify', [CheckoutController::class, 'verify']);
 
 /**
@@ -279,7 +283,7 @@ Route::post('shop-maintenance-event', [ShopController::class, 'shopMaintenanceEv
  */
 
 Route::group(
-    ['middleware' => ['role:'. Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:' . Role::SUPER_ADMIN . "|" . Role::EDITOR, 'auth:sanctum', 'email.verified']],
     function () {
         Route::post('cms-pages', [CmsPageController::class, 'store']);
         Route::put('cms-pages/{id}', [CmsPageController::class, 'update']);
@@ -290,7 +294,7 @@ Route::group(
     }
 );
 
-Route::group(['middleware' => ['role:' . Role::CUSTOMER . '|' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']], function () {
+Route::group(['middleware' => ['role:' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']], function () {
     Route::post('/update-email', [UserController::class, 'updateUserEmail']);
     // Route::get('me', [UserController::class, 'me']);
     Route::apiResource('orders', OrderController::class, [
@@ -399,7 +403,7 @@ Route::get('popular-products', 'Marvel\Http\Controllers\ProductController@popula
 
 
 Route::group(
-    ['middleware' => ['role:'. Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
+    ['middleware' => ['role:' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
     function () {
         Route::apiResource('products', ProductController::class, [
             'only' => ['store', 'update', 'destroy'],
@@ -416,6 +420,7 @@ Route::group(
         Route::apiResource('orders', OrderController::class, [
             'only' => ['update', 'destroy'],
         ]);
+        Route::apiResource('banners', BannerController::class);
 
         // Route::get('shop-notification/{id}', [ShopNotificationController::class, 'show']);
         // Route::put('shop-notification/{id}', [ShopNotificationController::class, 'update']);
@@ -487,10 +492,10 @@ Route::group(
         // Route::apiResource('notify-logs', NotifyLogsController::class, [
         //     'only' => ['index'],
         // ]);
-
+    
         // Route::post('notify-log-seen', [NotifyLogsController::class, 'readNotifyLogs']);
         // Route::post('notify-log-read-all', [NotifyLogsController::class, 'readAllNotifyLogs']);
-
+    
         Route::apiResource('faqs', FaqsController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
@@ -514,7 +519,7 @@ Route::group(
         ]);
         Route::get('/vendors/list', [UserController::class, 'vendors']);
         // Route::post('products-request-for-flash-sale', [FlashSaleVendorRequestController::class, 'productsRequestForFlashSale']);
-
+    
         Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
             'only' => ['index', 'show'],
         ]);
@@ -618,8 +623,8 @@ Route::group([
     Route::post('approve-terms-and-conditions', [TermsAndConditionsController::class, 'approveTerm']);
     Route::post('disapprove-terms-and-conditions', [TermsAndConditionsController::class, 'disApproveTerm']);
     Route::get('/admin/list', [UserController::class, 'admins']);
-    Route::post('admin-users', [UserController::class,'adminAddUsers']);
-    Route::delete('admin-users/{id}', [UserController::class,'adminDeleteUsers']);
+    Route::post('admin-users', [UserController::class, 'adminAddUsers']);
+    Route::delete('admin-users/{id}', [UserController::class, 'adminDeleteUsers']);
     Route::get('/customers/list', [UserController::class, 'customers']);
     Route::get('my-staffs', [UserController::class, 'myStaffs']);
     Route::get('all-staffs', [UserController::class, 'allStaffs']);

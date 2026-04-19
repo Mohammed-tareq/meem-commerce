@@ -77,7 +77,7 @@ class CategoryRepository extends BaseRepository
             return $category->load('parent');
         } catch (\Exception $e) {
             DB::rollBack();
-            throw $e;
+            throw new HttpException(500, $e->getMessage());
         }
     }
 
@@ -100,7 +100,7 @@ class CategoryRepository extends BaseRepository
             return $this->findOrFail($category->id);
         } catch (\Exception $e) {
             DB::rollBack();
-            return $e->getMessage();
+            throw new HttpException(500, $e->getMessage());
         }
     }
 }

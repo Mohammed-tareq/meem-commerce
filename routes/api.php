@@ -22,19 +22,19 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
 Route::middleware('auth:api')->get('/test', function (Request $request) {
   $role = \Spatie\Permission\Models\Role::where("name" , "super_admin")->first();
   $permission1 = \Spatie\Permission\Models\Permission::create([
-    "name" => "view-roles",
+    "name" => "view-banners",
     "guard_name" => "api",
   ]);
   $permission2 = \Spatie\Permission\Models\Permission::create([
-    "name" => "create-roles",
+    "name" => "create-banners",
     "guard_name" => "api",
   ]);
   $permission3 = \Spatie\Permission\Models\Permission::create([
-    "name" => "update-roles",
+    "name" => "update-banners",
     "guard_name" => "api",
   ]);
   $permission4 = \Spatie\Permission\Models\Permission::create([
-    "name" => "delete-roles",
+    "name" => "delete-banners",
     "guard_name" => "api",
   ]);
   $role->syncPermissions([$permission1,$permission2,$permission3,$permission4]);
