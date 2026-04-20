@@ -139,6 +139,8 @@ class Product extends Model implements HasMedia
             return null;
         }
 
+        $this->disableInvalidFlashSales();
+
         $now = Carbon::now();
 
         return $this->flash_sales()
@@ -147,6 +149,51 @@ class Product extends Model implements HasMedia
             ->whereDate('end_date', '>=', $now)
             ->orderBy('start_date', 'desc')
             ->first();
+    }
+
+    public function isFlashSaleValid($flashSale = null): bool
+    {
+        $flashSale = $flashSale ?? $this->flash_sales()->orderBy('start_date', 'desc')->first();
+        if (!$flashSale) {
+            return false;
+        }
+
+        if (!$flashSale->sale_status) {
+            return false;
+        }
+
+        $now = Carbon::now();
+
+        if ($flashSale->start_date && $now->lt(Carbon::parse($flashSale->start_date))) {
+            return false;
+        }
+
+        if ($flashSale->end_date && $now->gt(Carbon::parse($flashSale->end_date))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function disableInvalidFlashSales(): int
+    {
+        $count = 0;
+        $flashSales = $this->flash_sales()->get();
+
+        foreach ($flashSales as $flashSale) {
+            if (!$this->isFlashSaleValid($flashSale) && $flashSale->sale_status) {
+                $flashSale->sale_status = false;
+                $flashSale->save();
+                $count++;
+            }
+        }
+
+        if ($count > 0) {
+            $this->price_after_flash_sale = null;
+            $this->save();
+        }
+
+        return $count;
     }
 
     public function getCurrentPrice()
@@ -201,21 +248,7 @@ class Product extends Model implements HasMedia
 
         return $price;
     }
-
-    public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
-    {
-        return $query->where('language', $model->language);
-    }
-
-    /**
-     * Get the user's full name.
-     *
-     * @return string
-     */
-    public function getBlockedDatesAttribute()
-    {
-        return $this->getBlockedDates();
-    }
+    
 
     function getBlockedDates()
     {

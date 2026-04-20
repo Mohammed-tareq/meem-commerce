@@ -30,23 +30,23 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         // run your app seeder
-       $this->call([
-        PermissionSeeder::class,
-        ShopSeeder::class,
-        SettingSeeder::class,
-        CategorySeeder::class,
-        AttributeSeeder::class,
-        BannerSeeder::class,
-       ]);
-//
+        $this->call([
+            PermissionSeeder::class,
+            ShopSeeder::class,
+            SettingSeeder::class,
+            CategorySeeder::class,
+            AttributeSeeder::class,
+            BannerSeeder::class,
+        ]);
+        //
         $user = User::firstOrCreate([
             'email' => 'admin@demo.com',
-        ],[
+        ], [
             'name' => 'Shop Owner',
             'password' => Hash::make('password'),
             'is_active' => true,
             'shop_id' => null,
-            'email_verified_at'=> now(),
+            'email_verified_at' => now(),
         ]);
 
         $user->assignRole("super_admin");
@@ -55,7 +55,7 @@ class DatabaseSeeder extends Seeder
             FaqSeeder::class,
             FlashSaleSeeder::class,
             ProductSeeder::class,
+            CartSeeder::class,
         ]);
-
     }
 }

@@ -205,6 +205,22 @@ class CreateMarvelTables extends Migration
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
         });
 
+        Schema::create('carts', function (Blueprint $table) {
+            $table->id();
+            // $table->string('coupon')->nullable();
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->timestamps();
+        });
+         Schema::create('cart_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('cart_id')->constrained('carts')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->integer('quantity');
+            $table->decimal('price', 10, 2);
+            $table->decimal('total_price', 10, 2);
+            $table->timestamps();
+        });
+
         Schema::create('attributes', function (Blueprint $table) {
             $table->id();
             $table->string('slug');

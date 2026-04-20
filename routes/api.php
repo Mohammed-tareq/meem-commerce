@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Marvel\Enums\Permission;
+use Marvel\Http\Controllers\CartController;
 // use Marvel\Enums\Role;
 
 /*
@@ -20,23 +21,31 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 Route::middleware('auth:api')->get('/test', function (Request $request) {
-  $role = \Spatie\Permission\Models\Role::where("name" , "super_admin")->first();
-  $permission1 = \Spatie\Permission\Models\Permission::create([
-    "name" => "view-slider",
-    "guard_name" => "api",
-  ]);
-  $permission2 = \Spatie\Permission\Models\Permission::create([
-    "name" => "create-slider",
-    "guard_name" => "api",
-  ]);
-  $permission3 = \Spatie\Permission\Models\Permission::create([
-    "name" => "update-slider",
-    "guard_name" => "api",
-  ]);
-  $permission4 = \Spatie\Permission\Models\Permission::create([
-    "name" => "delete-slider",
-    "guard_name" => "api",
-  ]);
-  $role->syncPermissions([$permission1,$permission2,$permission3,$permission4]);
-return $role;
+    $role = \Spatie\Permission\Models\Role::where("name", "super_admin")->first();
+    $permission1 = \Spatie\Permission\Models\Permission::create([
+        "name" => "view-slider",
+        "guard_name" => "api",
+    ]);
+    $permission2 = \Spatie\Permission\Models\Permission::create([
+        "name" => "create-slider",
+        "guard_name" => "api",
+    ]);
+    $permission3 = \Spatie\Permission\Models\Permission::create([
+        "name" => "update-slider",
+        "guard_name" => "api",
+    ]);
+    $permission4 = \Spatie\Permission\Models\Permission::create([
+        "name" => "delete-slider",
+        "guard_name" => "api",
+    ]);
+    $role->syncPermissions([$permission1, $permission2, $permission3, $permission4]);
+    return $role;
+});
+
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('cart',[ CartController::class,'index']);
+    Route::post('cart',[ CartController::class,'store']);
+    Route::put('cart/update-item',[ CartController::class,'update']);
+    Route::delete('cart/delete-item/{itemId}',[ CartController::class,'deleteItemFromCart']);
+    Route::delete('cart/delete-items',[ CartController::class,'destroy']);
 });
