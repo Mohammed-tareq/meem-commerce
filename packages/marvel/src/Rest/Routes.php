@@ -16,6 +16,7 @@ use Marvel\Http\Controllers\AttributeValueController;
 use Marvel\Http\Controllers\AuthorController;
 use Marvel\Http\Controllers\BannerController;
 use Marvel\Http\Controllers\BecameSellerController;
+use Marvel\Http\Controllers\CartController;
 use Marvel\Http\Controllers\CategoryController;
 use Marvel\Http\Controllers\CheckoutController;
 use Marvel\Http\Controllers\ConversationController;
@@ -663,7 +664,13 @@ Route::group([
         'only' => ['update', 'destroy'],
     ]);
 });
-
+Route::middleware(['auth:sanctum',"throttle:cart"])->group(function () {
+ Route::get('cart',[ CartController::class,'index']);
+    Route::post('cart',[ CartController::class,'store']);
+    Route::put('cart/update-item',[ CartController::class,'update']);
+    Route::delete('cart/delete-item/{itemId}',[ CartController::class,'deleteItemFromCart']);
+    Route::delete('cart/delete-items',[ CartController::class,'destroy']);
+});
 
 
 Route::apiResource('became-seller', BecameSellerController::class);

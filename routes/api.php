@@ -42,10 +42,3 @@ Route::middleware('auth:api')->get('/test', function (Request $request) {
     return $role;
 });
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('cart',[ CartController::class,'index']);
-    Route::post('cart',[ CartController::class,'store']);
-    Route::put('cart/update-item',[ CartController::class,'update']);
-    Route::delete('cart/delete-item/{itemId}',[ CartController::class,'deleteItemFromCart']);
-    Route::delete('cart/delete-items',[ CartController::class,'destroy']);
-});
