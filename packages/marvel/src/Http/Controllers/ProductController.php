@@ -520,11 +520,8 @@ class ProductController extends CoreController
     {
         try {
             $product = $this->repository->findOrFail($request->id);
-            if ($this->repository->hasPermission($request->user(), $product->shop_id)) {
-                $product->delete();
-                return $product;
-            }
-            throw new AuthorizationException(NOT_AUTHORIZED);
+            $product->delete();
+            return $this->apiResponse(DELETE_PRODUCT_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException($e->getMessage());
         }

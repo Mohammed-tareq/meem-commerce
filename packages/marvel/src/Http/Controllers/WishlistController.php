@@ -15,6 +15,8 @@ use Illuminate\Database\Eloquent\Collection;
 use Marvel\Http\Requests\WishlistCreateRequest;
 use Marvel\Database\Repositories\WishlistRepository;
 use Marvel\Http\Requests\AbusiveReportCreateRequest;
+use Marvel\Http\Resources\ProductResource;
+use Marvel\Traits\ApiResponse;
 use Prettus\Validator\Exceptions\ValidatorException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -23,6 +25,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class WishlistController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(WishlistRepository $repository)
@@ -56,7 +59,8 @@ class WishlistController extends CoreController
     {
         $limit = $request->limit ? $request->limit : 15;
         $wishlist = $this->repository->pluck('product_id');
-        return Product::whereIn('id', $wishlist)->paginate($limit);
+        $products = Product::whereIn('id', $wishlist)->paginate($limit);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true,ProductResource::collection($products)->response()->getData(true));
     }
 
     /**
@@ -81,7 +85,9 @@ class WishlistController extends CoreController
     public function store(WishlistCreateRequest $request)
     {
         try {
-            return $this->repository->storeWishlist($request);
+            $wishlist = $this->repository->storeWishlist($request);
+            return $this->apiResponse(ADDED_TO_WISHLIST_SUCCESSFULLY,200,true,$wishlist);
+
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }
@@ -109,7 +115,8 @@ class WishlistController extends CoreController
     public function toggle(WishlistCreateRequest $request)
     {
         try {
-            return $this->repository->toggleWishlist($request);
+            $result = $this->repository->toggleWishlist($request);
+            return $this->apiResponse($result ? ADDED_TO_WISHLIST_SUCCESSFULLY : REMOVED_FROM_WISHLIST_SUCCESSFULLY, 200, true);
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }
@@ -133,7 +140,8 @@ class WishlistController extends CoreController
     {
         try {
             $request->id = $id;
-            return $this->delete($request);
+            $deletedWishlist = $this->delete($request);
+            return $this->apiResponse(REMOVED_FROM_WISHLIST_SUCCESSFULLY,200,true);
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
         }
