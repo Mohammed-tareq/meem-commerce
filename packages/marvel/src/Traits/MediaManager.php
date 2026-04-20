@@ -21,7 +21,7 @@ trait MediaManager
             }
             return true;
         } catch (\Exception $e) {
-            return throw $e;
+            throw $e;
         }
     }
 
@@ -61,7 +61,7 @@ trait MediaManager
         if ($model->hasMedia($collectionName)) {
             $model->clearMediaCollection($collectionName);
         }
-        $this->uploadImages($request, $inputName, $model, $collectionName, $disk);
+        return $this->uploadImages($request, $inputName, $model, $collectionName, $disk);
     }
 
     public function deleteFile($request, $model, $collectionName)

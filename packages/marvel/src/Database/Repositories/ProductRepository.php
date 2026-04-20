@@ -10,13 +10,16 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Marvel\Database\Models\Availability;
 use Marvel\Database\Models\DigitalFile;
+use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Resource;
 use Marvel\Database\Models\Type;
 use Marvel\Database\Models\Variation;
+use Marvel\Enums\DiscountType;
 use Marvel\Enums\ProductStatus;
 use Marvel\Enums\ProductType;
 use Marvel\Traits\MediaManager;
@@ -206,18 +209,31 @@ class ProductRepository extends BaseRepository
     public function storeProduct(Request $request)
     {
         try {
+            DB::beginTransaction();
             $data = $request->except(['images', 'categories']);
             $data['slug'] = $this->makeSlug($request);
+            $price = $data['price'] ?? null;
+            $hasDiscount = !empty($data['has_discount']);
+            $discountType = $data['discount_type'] ?? DiscountType::PERCENTAGE;
+            $amount = $data['amount'] ?? 0;
 
-            if ($data['discount_type'] === 'percentage') {
-                $data['price_after_discount'] = $data['price'] - ($data['price'] * ($data['amount'] / 100));
-            } elseif ($data['discount_type'] === 'fixed') {
-                $data['price_after_discount'] = $data['price'] - $data['amount'];
-            }
+            $data['price_after_discount'] = $hasDiscount
+                ? $this->calculateDiscountedPrice($price, $discountType, $amount)
+                : null;
+
+            $hasFlashSale = !empty($data['has_flash_sale']);
+            $flashSaleId = $data['flash_sale_id'] ?? null;
+            $flashSale = $this->resolveFlashSale($flashSaleId, null, $hasFlashSale);
+            $basePriceForFlashSale = $hasDiscount && $data['price_after_discount'] !== null
+                ? $data['price_after_discount']
+                : $price;
+            $data['price_after_flash_sale'] = $this->calculateFlashSalePrice($flashSale, $basePriceForFlashSale);
 
             $product = $this->create($data);
             if ($request->has('images')) {
-                $this->uploadImages($request, 'images', $product, 'products', 'products');
+                if (!$this->uploadImages($request, 'images', $product, 'products', 'products')) {
+                    throw new HttpException(422, 'Images Products upload failed, please check the file format or size.');
+                }
             }
 
 
@@ -232,10 +248,11 @@ class ProductRepository extends BaseRepository
                     $product->flash_sales()->sync([$flashSaleId]);
                 }
             }
-            $product->save();
+            DB::commit();
             return $product;
         } catch (Exception $e) {
-            throw $e;
+            DB::rollBack();
+            throw new HttpException(500, $e->getMessage());
         }
     }
 
@@ -288,192 +305,253 @@ class ProductRepository extends BaseRepository
      * @param  $setting
      * @return void
      */
-    public function updateProduct($request, $id, $setting)
+    // public function updateProduct($request, $id)
+    // {
+    //     try {
+    //         $product = $this->findOrFail($id);
+
+    //         if (is_array($request['metas'])) {
+    //             foreach ($request['metas'] as $key => $value) {
+    //                 $metas[$value['key']] = $value['value'];
+    //                 $product->setMeta($metas);
+    //             }
+    //         }
+
+    //         if (isset($request['categories'])) {
+    //             $product->categories()->sync($request['categories']);
+    //         }
+    //         if (isset($request['tags'])) {
+    //             $product->tags()->sync($request['tags']);
+    //         }
+    //         if (isset($request['dropoff_locations'])) {
+    //             $product->dropoff_locations()->sync($request['dropoff_locations']);
+    //         }
+    //         if (isset($request['pickup_locations'])) {
+    //             $product->pickup_locations()->sync($request['pickup_locations']);
+    //         }
+    //         if (isset($request['variations'])) {
+    //             $product->variations()->sync($request['variations']);
+    //         }
+    //         if (isset($request['persons'])) {
+    //             $product->persons()->sync($request['persons']);
+    //         }
+    //         if (isset($request['features'])) {
+    //             $product->features()->sync($request['features']);
+    //         }
+    //         if (isset($request['deposits'])) {
+    //             $product->deposits()->sync($request['deposits']);
+    //         }
+    //         if (isset($request['digital_file'])) {
+    //             $file = $request['digital_file'];
+    //             if (isset($file['id'])) {
+    //                 $product->digital_file()->where('id', $file['id'])->update($file);
+    //             } else {
+    //                 $product->digital_file()->create($file);
+    //             }
+    //         }
+    //         if (isset($request['variation_options'])) {
+    //             if (isset($request['variation_options']['upsert'])) {
+    //                 foreach ($request['variation_options']['upsert'] as $key => $variation) {
+
+    //                     $variation['sale_price'] = isset($variation['sale_price']) ? $variation['sale_price'] : null;
+
+    //                     if (isset($variation['is_digital']) && $variation['is_digital']) {
+
+    //                         $file = $variation['digital_file'];
+    //                         unset($variation['digital_file']);
+    //                         unset($variation['inform_purchased_customer']);
+    //                         unset($variation['product_update_message']);
+
+    //                         if (isset($variation['id'])) {
+    //                             $product->variation_options()->where('id', $variation['id'])->update($variation);
+
+    //                             try {
+    //                                 $updated_variation = Variation::findOrFail($variation['id']);
+    //                             } catch (Exception $e) {
+    //                                 throw new ModelNotFoundException(NOT_FOUND);
+    //                             }
+
+    //                             if (TRANSLATION_ENABLED) {
+    //                                 Variation::where('sku', $updated_variation->sku)->where('id', '=', $updated_variation->id)->update([
+    //                                     'price' => $updated_variation->price,
+    //                                     'sale_price' => $updated_variation->sale_price,
+    //                                     'quantity' => $updated_variation->quantity,
+    //                                 ]);
+    //                             }
+
+
+    //                             if (isset($updated_variation->digital_file_tracker)) {
+    //                                 if (isset($file['attachment_id'])) {
+    //                                     $updated_variation->digital_file()->where('fileable_id', $updated_variation->id)->update($file);
+    //                                     $updated_digital_file = DigitalFile::where('fileable_id', $updated_variation->id)->first();
+    //                                     $updated_variation->update([
+    //                                         'digital_file_tracker' => $updated_digital_file->id,
+    //                                     ]);
+    //                                 }
+    //                             } else {
+    //                                 $created_digital_file = $updated_variation->digital_file()->create($file);
+    //                                 $updated_variation->update([
+    //                                     'digital_file_tracker' => $created_digital_file->id,
+    //                                 ]);
+    //                             }
+    //                         } else {
+    //                             $new_variation = $product->variation_options()->create($variation);
+    //                             $digital_file = $new_variation->digital_file()->create($file);
+    //                             $new_variation->update([
+    //                                 'digital_file_tracker' => $digital_file->id
+    //                             ]);
+    //                         }
+    //                     } else {
+    //                         if (isset($variation['id'])) {
+    //                             $product->variation_options()->where('id', $variation['id'])->update($variation);
+    //                         } else {
+    //                             $product->variation_options()->create($variation);
+    //                         }
+    //                     }
+    //                 }
+    //             }
+    //             if (isset($request['variation_options']['delete'])) {
+    //                 foreach ($request['variation_options']['delete'] as $key => $id) {
+    //                     try {
+    //                         $product->variation_options()->where('id', $id)->delete();
+    //                     } catch (Exception $e) {
+    //                         //
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //         $data = $request->only($this->dataArray);
+    //         $data['sale_price'] = isset($request['sale_price']) ? $request['sale_price'] : null;
+
+    //         if ($setting->options["isProductReview"]) {
+    //             $data['status'] = $this->checkProductForPublish($request, $product);
+    //         }
+
+    //         if ($request->product_type == ProductType::VARIABLE) {
+    //             $data['price'] = NULL;
+    //             $data['sale_price'] = NULL;
+    //             $data['sku'] = NULL;
+    //         }
+    //         if ($request->product_type == ProductType::SIMPLE) {
+    //             $data['max_price'] = $data['price'];
+    //             $data['min_price'] = $data['price'];
+    //         }
+
+    //         if (!empty($request->slug) && $request->slug != $product->slug) {
+    //             $stringifySlug = $this->makeSlug($request);
+    //             $data['slug'] = $this->makeSlug($request);
+
+    //             if (TRANSLATION_ENABLED) {
+    //                 $this->where('slug', $product->slug)->where('id', '!=', $product->id)->update([
+    //                     'slug' => $stringifySlug
+    //                 ]);
+    //             }
+    //         }
+
+    //         $product->update($data);
+    //         if ($product->product_type === ProductType::SIMPLE) {
+    //             $product->variations()->delete();
+    //             $product->variation_options()->delete();
+    //         }
+    //         $product->save();
+
+    //         if (TRANSLATION_ENABLED) {
+    //             $this->where('sku', $product->sku)->where('id', '=', $product->id)->update([
+    //                 'price' => $product->price,
+    //                 'sale_price' => $product->sale_price,
+    //                 'max_price' => $product->max_price,
+    //                 'min_price' => $product->min_price,
+    //                 'unit' => $product->unit,
+    //                 'quantity' => $product->quantity,
+    //             ]);
+    //         }
+
+    //         if ($setting->options["enableEmailForDigitalProduct"]) {
+    //             if ($request->product_type == 'variable') {
+    //                 foreach ($request['variation_options']['upsert'] as $variation_data) {
+    //                     if ($variation_data['inform_purchased_customer']) {
+    //                         event(new DigitalProductUpdateEvent($product, $request->user(), [
+    //                             'inform_customer' => $variation_data['inform_purchased_customer'],
+    //                             'update_message' => $variation_data['product_update_message'] ?? ''
+    //                         ]));
+    //                     }
+    //                 }
+    //             } else {
+    //                 if ($request->inform_purchased_customer) {
+    //                     event(new DigitalProductUpdateEvent($product, $request->user(), [
+    //                         'inform_customer' => $request->inform_purchased_customer,
+    //                         'update_message' => $request->product_update_message
+    //                     ]));
+    //                 }
+    //             }
+    //         }
+
+    //         return $product;
+    //     } catch (Exception $e) {
+    //         throw $e;
+    //     }
+    // }
+
+
+    public function updateProduct(Request $request, $id)
     {
         try {
-            $product = $this->findOrFail($id);
+            DB::beginTransaction();
+            $product = Product::find($id);
 
-            if (is_array($request['metas'])) {
-                foreach ($request['metas'] as $key => $value) {
-                    $metas[$value['key']] = $value['value'];
-                    $product->setMeta($metas);
-                }
-            }
+            $data = $request->except(['images', 'categories']);
 
-            if (isset($request['categories'])) {
-                $product->categories()->sync($request['categories']);
-            }
-            if (isset($request['tags'])) {
-                $product->tags()->sync($request['tags']);
-            }
-            if (isset($request['dropoff_locations'])) {
-                $product->dropoff_locations()->sync($request['dropoff_locations']);
-            }
-            if (isset($request['pickup_locations'])) {
-                $product->pickup_locations()->sync($request['pickup_locations']);
-            }
-            if (isset($request['variations'])) {
-                $product->variations()->sync($request['variations']);
-            }
-            if (isset($request['persons'])) {
-                $product->persons()->sync($request['persons']);
-            }
-            if (isset($request['features'])) {
-                $product->features()->sync($request['features']);
-            }
-            if (isset($request['deposits'])) {
-                $product->deposits()->sync($request['deposits']);
-            }
-            if (isset($request['digital_file'])) {
-                $file = $request['digital_file'];
-                if (isset($file['id'])) {
-                    $product->digital_file()->where('id', $file['id'])->update($file);
-                } else {
-                    $product->digital_file()->create($file);
-                }
-            }
-            if (isset($request['variation_options'])) {
-                if (isset($request['variation_options']['upsert'])) {
-                    foreach ($request['variation_options']['upsert'] as $key => $variation) {
-
-                        $variation['sale_price'] = isset($variation['sale_price']) ? $variation['sale_price'] : null;
-
-                        if (isset($variation['is_digital']) && $variation['is_digital']) {
-
-                            $file = $variation['digital_file'];
-                            unset($variation['digital_file']);
-                            unset($variation['inform_purchased_customer']);
-                            unset($variation['product_update_message']);
-
-                            if (isset($variation['id'])) {
-                                $product->variation_options()->where('id', $variation['id'])->update($variation);
-
-                                try {
-                                    $updated_variation = Variation::findOrFail($variation['id']);
-                                } catch (Exception $e) {
-                                    throw new ModelNotFoundException(NOT_FOUND);
-                                }
-
-                                if (TRANSLATION_ENABLED) {
-                                    Variation::where('sku', $updated_variation->sku)->where('id', '=', $updated_variation->id)->update([
-                                        'price' => $updated_variation->price,
-                                        'sale_price' => $updated_variation->sale_price,
-                                        'quantity' => $updated_variation->quantity,
-                                    ]);
-                                }
-
-
-                                if (isset($updated_variation->digital_file_tracker)) {
-                                    if (isset($file['attachment_id'])) {
-                                        $updated_variation->digital_file()->where('fileable_id', $updated_variation->id)->update($file);
-                                        $updated_digital_file = DigitalFile::where('fileable_id', $updated_variation->id)->first();
-                                        $updated_variation->update([
-                                            'digital_file_tracker' => $updated_digital_file->id,
-                                        ]);
-                                    }
-                                } else {
-                                    $created_digital_file = $updated_variation->digital_file()->create($file);
-                                    $updated_variation->update([
-                                        'digital_file_tracker' => $created_digital_file->id,
-                                    ]);
-                                }
-                            } else {
-                                $new_variation = $product->variation_options()->create($variation);
-                                $digital_file = $new_variation->digital_file()->create($file);
-                                $new_variation->update([
-                                    'digital_file_tracker' => $digital_file->id
-                                ]);
-                            }
-                        } else {
-                            if (isset($variation['id'])) {
-                                $product->variation_options()->where('id', $variation['id'])->update($variation);
-                            } else {
-                                $product->variation_options()->create($variation);
-                            }
-                        }
-                    }
-                }
-                if (isset($request['variation_options']['delete'])) {
-                    foreach ($request['variation_options']['delete'] as $key => $id) {
-                        try {
-                            $product->variation_options()->where('id', $id)->delete();
-                        } catch (Exception $e) {
-                            //
-                        }
-                    }
-                }
-            }
-            $data = $request->only($this->dataArray);
-            $data['sale_price'] = isset($request['sale_price']) ? $request['sale_price'] : null;
-
-            if ($setting->options["isProductReview"]) {
-                $data['status'] = $this->checkProductForPublish($request, $product);
+            if ($request->has('slug')) {
+                $data['slug'] = $this->makeSlug($request, $product->id);
             }
 
-            if ($request->product_type == ProductType::VARIABLE) {
-                $data['price'] = NULL;
-                $data['sale_price'] = NULL;
-                $data['sku'] = NULL;
-            }
-            if ($request->product_type == ProductType::SIMPLE) {
-                $data['max_price'] = $data['price'];
-                $data['min_price'] = $data['price'];
-            }
+            $price = array_key_exists('price', $data) ? $data['price'] : $product->price;
+            $hasDiscount = array_key_exists('has_discount', $data) ? (bool) $data['has_discount'] : $product->has_discount;
+            $discountType = $data['discount_type'] ?? $product->discount_type ?? DiscountType::PERCENTAGE;
+            $amount = array_key_exists('amount', $data) ? $data['amount'] : $product->amount;
 
-            if (!empty($request->slug) && $request->slug != $product->slug) {
-                $stringifySlug = $this->makeSlug($request);
-                $data['slug'] = $this->makeSlug($request);
+            $data['price_after_discount'] = $hasDiscount
+                ? $this->calculateDiscountedPrice($price, $discountType, $amount)
+                : null;
 
-                if (TRANSLATION_ENABLED) {
-                    $this->where('slug', $product->slug)->where('id', '!=', $product->id)->update([
-                        'slug' => $stringifySlug
-                    ]);
-                }
-            }
+            $hasFlashSale = array_key_exists('has_flash_sale', $data) ? (bool) $data['has_flash_sale'] : $product->has_flash_sale;
+            $flashSaleId = $data['flash_sale_id'] ?? null;
+            $flashSale = $this->resolveFlashSale($flashSaleId, $product, $hasFlashSale);
+            $basePriceForFlashSale = $hasDiscount && $data['price_after_discount'] !== null
+                ? $data['price_after_discount']
+                : $price;
+            $data['price_after_flash_sale'] = $this->calculateFlashSalePrice($flashSale, $basePriceForFlashSale);
 
             $product->update($data);
-            if ($product->product_type === ProductType::SIMPLE) {
-                $product->variations()->delete();
-                $product->variation_options()->delete();
-            }
-            $product->save();
 
-            if (TRANSLATION_ENABLED) {
-                $this->where('sku', $product->sku)->where('id', '=', $product->id)->update([
-                    'price' => $product->price,
-                    'sale_price' => $product->sale_price,
-                    'max_price' => $product->max_price,
-                    'min_price' => $product->min_price,
-                    'unit' => $product->unit,
-                    'quantity' => $product->quantity,
-                ]);
-            }
-
-            if ($setting->options["enableEmailForDigitalProduct"]) {
-                if ($request->product_type == 'variable') {
-                    foreach ($request['variation_options']['upsert'] as $variation_data) {
-                        if ($variation_data['inform_purchased_customer']) {
-                            event(new DigitalProductUpdateEvent($product, $request->user(), [
-                                'inform_customer' => $variation_data['inform_purchased_customer'],
-                                'update_message' => $variation_data['product_update_message'] ?? ''
-                            ]));
-                        }
-                    }
-                } else {
-                    if ($request->inform_purchased_customer) {
-                        event(new DigitalProductUpdateEvent($product, $request->user(), [
-                            'inform_customer' => $request->inform_purchased_customer,
-                            'update_message' => $request->product_update_message
-                        ]));
-                    }
+            if ($request->has('images')) {
+                if (!$this->updateImages($request, 'images', $product, 'products', 'products')) {
+                    throw new HttpException(422, 'Images Products upload failed, please check the file format or size.');
                 }
             }
 
-            return $product;
+            if ($request->has('categories')) {
+                $product->categories()->sync($request['categories']);
+            }
+
+            if (!empty($data['has_flash_sale']) && $data['has_flash_sale'] === true) {
+                $flashSaleId = $data['flash_sale_id'] ?? null;
+
+                if ($flashSaleId) {
+                    $product->flash_sales()->sync([$flashSaleId]);
+                }
+            } else {
+                $product->flash_sales()->detach();
+            }
+            DB::commit();
+
+            return $product->fresh();
         } catch (Exception $e) {
-            throw $e;
+            DB::rollBack();
+            throw new HttpException(500, $e->getMessage());
         }
     }
+
 
     /**
      * getBestSellingProducts
@@ -519,15 +597,17 @@ class ProductRepository extends BaseRepository
         return $products_query->take($limit)->get();
     }
 
-    public function fetchRelated($slug, $limit = 10, $language = DEFAULT_LANGUAGE)
+    public function fetchRelated($id, $limit = 10)
     {
         try {
-            $product = $this->findOneByFieldOrFail('slug', $slug);
+            $product = $this->findOrFail($id);
             $categories = $product->categories->pluck('id');
 
-            return $this->where('language', $language)->whereHas('categories', function ($query) use ($categories) {
+            return $this->whereHas('categories', function ($query) use ($categories) {
                 $query->whereIn('categories.id', $categories);
-            })->with('type')->limit($limit)->get();
+            })
+                ->where('id', '!=', $id)
+                ->limit($limit)->get() ?? collect();
         } catch (Exception $e) {
             return [];
         }
@@ -698,5 +778,48 @@ class ProductRepository extends BaseRepository
         }
 
         return $slug . $divider . $slugCount;
+    }
+
+    private function calculateDiscountedPrice($price, $discountType, $amount)
+    {
+        if ($price === null) {
+            return null;
+        }
+
+        if ($discountType === DiscountType::PERCENTAGE) {
+            return $price - ($price * ($amount / 100));
+        }
+
+        if ($discountType === DiscountType::FIXED_RATE || $discountType === 'fixed') {
+            return $price - $amount;
+        }
+
+        return $price;
+    }
+
+    private function resolveFlashSale($flashSaleId, $product, $hasFlashSale)
+    {
+        if (!$hasFlashSale) {
+            return null;
+        }
+
+        if (!empty($flashSaleId)) {
+            return FlashSale::find($flashSaleId);
+        }
+
+        if ($product instanceof Product) {
+            return $product->flash_sales()->orderBy('start_date', 'desc')->first();
+        }
+
+        return null;
+    }
+
+    private function calculateFlashSalePrice($flashSale, $basePrice)
+    {
+        if (!$flashSale || $basePrice === null) {
+            return null;
+        }
+
+        return $flashSale->calcPrice($basePrice);
     }
 }

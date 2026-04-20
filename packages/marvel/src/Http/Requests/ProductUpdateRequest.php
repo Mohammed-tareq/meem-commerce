@@ -55,7 +55,8 @@ class ProductUpdateRequest extends FormRequest
             // 'product_type'                 => ['sometimes', Rule::in($productType)],
             'categories'                   => ['sometimes', 'array', 'exists:categories,id'],
             'quantity'                     => ['sometimes', 'integer', 'min:0'],
-            'image'                        => ['sometimes', 'array'],
+            // 'images'                        => ['sometimes', 'array'],
+            // 'images.*'                      => ['sometimes', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'status'                       => ['sometimes', 'string', Rule::in($productStatus)],
             'height'                       => ['sometimes', 'numeric'],
             'length'                       => ['sometimes', 'numeric'],
@@ -69,8 +70,6 @@ class ProductUpdateRequest extends FormRequest
             'amount'                       => ['sometimes', 'numeric', 'min:0'],
             'start_date'                   => ['sometimes', 'date'],
             'end_date'                     => ['sometimes', 'date', 'after_or_equal:start_date'],
-            'price_after_discount'         => ['sometimes', 'numeric', 'min:0'],
-            'price_after_flash_sale'       => ['sometimes', 'numeric', 'min:0'],
         ];
     }
 

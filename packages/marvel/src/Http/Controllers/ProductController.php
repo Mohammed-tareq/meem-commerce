@@ -305,7 +305,8 @@ class ProductController extends CoreController
      */
     public function store(ProductCreateRequest $request)
     {
-        return $this->ProductStore($request);
+        $product = $this->ProductStore($request);
+        return $this->apiResponse(CREATE_PRODUCT_SUCCESSFULLY, 201, true, ProductResource::make($product));
     }
 
 
@@ -369,12 +370,11 @@ class ProductController extends CoreController
      *     )
      * )
      */
-    public function show(Request $request, $slug)
+    public function show(Request $request, $id)
     {
-        $request->merge(['slug' => $slug]);
         try {
-            $product = $this->fetchSingleProduct($request);
-            return new GetSingleProductResource($product);
+            $product = $this->fetchSingleProduct($request, $id);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductResource::make($product));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -388,22 +388,19 @@ class ProductController extends CoreController
      * @param $slug
      * @return JsonResponse
      */
-    public function fetchSingleProduct(Request $request)
+    public function fetchSingleProduct(Request $request, $id)
     {
         try {
-            $slug = $request->slug;
-            $language = $request->language ?? DEFAULT_LANGUAGE;
-            $user = $request->user();
-            $limit = isset($request->limit) ? $request->limit : 10;
-            $product = $this->repository->where('language', $language)->where('slug', $slug)->orWhere('id', $slug)->firstOrFail();
-            if (
-                in_array('variation_options.digital_file', explode(';', $request->with)) || in_array('digital_file', explode(';', $request->with))
-            ) {
-                if (!$this->repository->hasPermission($user, $product->shop_id)) {
-                    throw new AuthorizationException(NOT_AUTHORIZED);
-                }
-            }
-            $related_products = $this->repository->fetchRelated($slug, $limit, $language);
+            $limit = $request->limit ?? 10;
+            $product = $this->repository->where('id', $id)->firstOrFail();
+            // if (
+            //     in_array('variation_options.digital_file', explode(';', $request->with)) || in_array('digital_file', explode(';', $request->with))
+            // ) {
+            //     if (!$this->repository->hasPermission($user, $product->shop_id)) {
+            //         throw new AuthorizationException(NOT_AUTHORIZED);
+            //     }
+            // }
+            $related_products = $this->repository->fetchRelated($id, $limit);
             $product->setRelation('related_products', $related_products);
 
             return $product;
@@ -456,7 +453,8 @@ class ProductController extends CoreController
     {
         try {
             $request->id = $id;
-            return $this->updateProduct($request);
+            $product =  $this->updateProduct($request);
+            return $this->apiResponse(UPDATE_PRODUCT_SUCCESSFULLY, 200, true, ProductResource::make($product));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
@@ -471,11 +469,10 @@ class ProductController extends CoreController
      */
     public function updateProduct(Request $request)
     {
-        $setting = $this->settings->first();
-        if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
+        try {
             $id = $request->id;
-            return $this->repository->updateProduct($request, $id, $setting);
-        } else {
+            return $this->repository->updateProduct($request, $id);
+        } catch (MarvelException $e) {
             throw new AuthorizationException(NOT_AUTHORIZED);
         }
     }

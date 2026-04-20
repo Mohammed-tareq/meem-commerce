@@ -110,6 +110,7 @@ class CreateMarvelTables extends Migration
             $table->double('price')->nullable();
             $table->string('sku')->nullable();
             $table->integer('quantity')->default(0);
+            $table->integer('sold_quantity')->default(0);
             $table->boolean('in_stock')->default(true);
             $table->enum('status', ProductStatus::getValues())->default(ProductStatus::DRAFT);
             // $table->enum('product_type', ProductType::getValues())->default(ProductType::SIMPLE);

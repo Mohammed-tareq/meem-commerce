@@ -39,7 +39,7 @@ class UpdateFlashSaleRequest extends FormRequest
             'description'        => ['sometimes', 'array'],
             'description.*'  => ['sometimes', 'string', 'max:1000'],
             'start_date'   => ['sometimes', 'date'],
-            'end_date'     => ['required', 'date'],
+            'end_date'     => ['sometimes', 'date'],
             'type'=> ['sometimes',Rule::in(FlashSaleType::getValues())],
             'value'=> ['sometimes','numeric','min:0'],
         ];

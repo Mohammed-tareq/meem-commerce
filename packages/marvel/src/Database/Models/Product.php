@@ -15,8 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Marvel\Enums\DiscountType;
 use Marvel\Traits\Excludable;
-use Kodeine\Metable\Metable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\Translatable\HasTranslations;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -27,7 +27,31 @@ class Product extends Model implements HasMedia
     use HasTranslations, SoftDeletes, Sluggable, Excludable, InteractsWithMedia;
 
     protected $table = 'products';
-    public $guarded = [];
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'price',
+        'sku',
+        'quantity',
+        'sold_quantity',
+        'in_stock',
+        'status',
+        'height',
+        'width',
+        'length',
+        'weight',
+        'has_flash_sale',
+        'has_discount',
+        'banner_id',
+        'discount_type',
+        'amount',
+        'start_date',
+        'end_date',
+        'price_after_discount',
+        'price_after_flash_sale',
+        'shop_id'
+    ];
     public array $translatable = ['name', 'description'];
     // protected $metaTable = 'products_meta'; //optional.
     // protected $disableFluentMeta = true;
@@ -88,6 +112,94 @@ class Product extends Model implements HasMedia
         }
 
         return $this->discount->getPriceAfterDiscount($this);
+    }
+
+    public function isDiscountActive(): bool
+    {
+        if (!$this->has_discount) {
+            return false;
+        }
+
+        $now = Carbon::now();
+
+        if ($this->start_date && $now->lt(Carbon::parse($this->start_date))) {
+            return false;
+        }
+
+        if ($this->end_date && $now->gt(Carbon::parse($this->end_date))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public function getActiveFlashSale()
+    {
+        if (!$this->has_flash_sale) {
+            return null;
+        }
+
+        $now = Carbon::now();
+
+        return $this->flash_sales()
+            ->where('sale_status', true)
+            ->whereDate('start_date', '<=', $now)
+            ->whereDate('end_date', '>=', $now)
+            ->orderBy('start_date', 'desc')
+            ->first();
+    }
+
+    public function getCurrentPrice()
+    {
+        $discountedPrice = $this->getDiscountedPrice();
+        $basePrice = $discountedPrice ?? $this->price;
+        $flashSalePrice = $this->getFlashSalePrice($basePrice);
+
+        return $flashSalePrice ?? $basePrice;
+    }
+
+    public function getDiscountedPrice()
+    {
+        if (!$this->isDiscountActive()) {
+            return null;
+        }
+
+        return $this->calculateDiscountedPrice($this->price);
+    }
+
+    public function getFlashSalePrice($basePrice = null)
+    {
+        $flashSale = $this->getActiveFlashSale();
+        if (!$flashSale) {
+            return null;
+        }
+
+        $price = $basePrice ?? $this->price;
+        if ($price === null) {
+            return null;
+        }
+
+        return $flashSale->calcPrice($price);
+    }
+
+    private function calculateDiscountedPrice($price)
+    {
+        if ($price === null) {
+            return null;
+        }
+
+        $discountType = $this->discount_type ?? DiscountType::PERCENTAGE;
+        $amount = $this->amount ?? 0;
+
+        if ($discountType === DiscountType::PERCENTAGE) {
+            return $price - ($price * ($amount / 100));
+        }
+
+        if ($discountType === DiscountType::FIXED_RATE || $discountType === 'fixed') {
+            return $price - $amount;
+        }
+
+        return $price;
     }
 
     public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
@@ -354,5 +466,4 @@ class Product extends Model implements HasMedia
         $this->setRelation('related_products', $relatedProducts);
         return $this;
     }
-     
 }

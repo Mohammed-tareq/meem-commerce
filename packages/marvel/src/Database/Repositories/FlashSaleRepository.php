@@ -22,7 +22,7 @@ class FlashSaleRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'title' => 'like',
-//        'language',
+        //        'language',
         'slug'
     ];
 
@@ -38,11 +38,11 @@ class FlashSaleRepository extends BaseRepository
         'type',
         'sale_status',
         'value',
-//        'language',
+        //        'language',
         // 'image',
         // 'cover_image',
         // 'rate',
-//        'sale_builder'
+        //        'sale_builder'
     ];
 
 
@@ -75,15 +75,14 @@ class FlashSaleRepository extends BaseRepository
     {
         try {
             // only admin can create flash deals
-                $data = $request->only($this->dataArray);
-                
-                $flash_sale = $this->create($data);
-                // if (isset($request['sale_builder']['product_ids'])) {
-                //     $flash_sale->products()->attach($request['sale_builder']['product_ids']);
-                //     $this->setProductInFlashSale($request['sale_builder']['product_ids']);
-                // }
-                return $flash_sale;
+            $data = $request->only($this->dataArray);
 
+            $flash_sale = $this->create($data);
+            // if (isset($request['sale_builder']['product_ids'])) {
+            //     $flash_sale->products()->attach($request['sale_builder']['product_ids']);
+            //     $this->setProductInFlashSale($request['sale_builder']['product_ids']);
+            // }
+            return $flash_sale;
         } catch (Exception $th) {
             throw new Exception(SOMETHING_WENT_WRONG, $th->getMessage());
         }
@@ -101,21 +100,20 @@ class FlashSaleRepository extends BaseRepository
     {
         try {
             // only admin can update flash deals
-                $flash_sale = $this->findOrFail($id);
+            $flash_sale = $this->findOrFail($id);
 
-                $data = $request->only($this->dataArray);
-                // if (isset($request['sale_builder']['product_ids'])) {
-                //     $flash_sale->products()->sync($request['sale_builder']['product_ids']);
-                //     $this->setProductInFlashSale($request['sale_builder']['product_ids']);
-                // }
+            $data = $request->only($this->dataArray);
+            // if (isset($request['sale_builder']['product_ids'])) {
+            //     $flash_sale->products()->sync($request['sale_builder']['product_ids']);
+            //     $this->setProductInFlashSale($request['sale_builder']['product_ids']);
+            // }
 
-//                if ($flash_sale['sale_builder']['product_ids'] != $request['sale_builder']['product_ids']) {
-//                    $this->unsetProductFromFlashSale($flash_sale['sale_builder']['product_ids'], $request['sale_builder']['product_ids']);
-//                }
-                $flash_sale->update($data);
-                return $flash_sale;
-
-
+            //                if ($flash_sale['sale_builder']['product_ids'] != $request['sale_builder']['product_ids']) {
+            //                    $this->unsetProductFromFlashSale($flash_sale['sale_builder']['product_ids'], $request['sale_builder']['product_ids']);
+            //                }
+            $flash_sale->update($data);
+            $this->updateFlashSaleProductPrices($flash_sale);
+            return $flash_sale;
         } catch (Exception $e) {
             throw new Exception(SOMETHING_WENT_WRONG, $e->getMessage());
         }
@@ -154,6 +152,28 @@ class FlashSaleRepository extends BaseRepository
                 $product->in_flash_sale = false;
                 $product->save();
             }
+        }
+    }
+
+    private function updateFlashSaleProductPrices(FlashSale $flashSale)
+    {
+        $flashSale->load('products');
+        $now = now();
+        $isActive = $flashSale->sale_status
+            && $flashSale->start_date
+            && $flashSale->end_date
+            && $now->between($flashSale->start_date, $flashSale->end_date);
+
+        foreach ($flashSale->products as $product) {
+            if (!$isActive) {
+                $product->price_after_flash_sale = null;
+                $product->save();
+                continue;
+            }
+
+            $basePrice = $product->getDiscountedPrice() ?? $product->price;
+            $product->price_after_flash_sale = $flashSale->calcPrice($basePrice);
+            $product->save();
         }
     }
 }

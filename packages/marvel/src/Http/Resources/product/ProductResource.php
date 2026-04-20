@@ -18,8 +18,8 @@ class ProductResource extends Resource
             'price_after_flash_sale' => $this->price_after_flash_sale,
             'discount_type'          => $this->discount_type,
             'amount'                 => $this->amount,
-            'start_date'             => $this->start_date ,
-            'end_date'               => $this->end_date ,
+            'start_date'             => $this->start_date,
+            'end_date'               => $this->end_date,
             'sku'                    => $this->sku,
             'quantity'               => $this->quantity,
             'sold_quantity'          => $this->sold_quantity ?? 0,
@@ -35,7 +35,14 @@ class ProductResource extends Resource
             'banner_id'              => $this->banner_id,
             'shop_id'                => $this->shop_id,
             'created_at'             => $this->created_at ? $this->created_at->toIso8601String() : null,
-            'updated_at'             => $this->updated_at ? $this->updated_at->toIso8601String() : null,
+            "images"                 => $this->getmedia('products') ? $this->getmedia('products')->map(function ($media) {
+                return $media->getUrl();
+            }) : [],
+            $this->mergeWhen($this->relationLoaded('related_products'), function () {
+                return [
+                    'related_products' => ProductResource::collection($this->related_products),
+                ];
+            }),
         ];
     }
 }
