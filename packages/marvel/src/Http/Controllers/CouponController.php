@@ -13,8 +13,10 @@ use Marvel\Database\Repositories\CouponRepository;
 use Prettus\Validator\Exceptions\ValidatorException;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Marvel\Database\Models\Coupon;
 use Marvel\Enums\Permission;
 use Marvel\Http\Resources\CouponResource;
+use Marvel\Traits\ApiResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
@@ -37,6 +39,7 @@ use Throwable;
  */
 class CouponController extends CoreController
 {
+    use ApiResponse;
     public $repository;
 
     public function __construct(CouponRepository $repository)
@@ -69,48 +72,47 @@ class CouponController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ?? 15;
-        $language = $request->language ?? DEFAULT_LANGUAGE;
-        $coupons = $this->fetchCoupons($request, $language)->paginate($limit)->withQueryString();
+        $coupons = $this->repository->paginate($limit)->withQueryString();
         return formatAPIResourcePaginate(CouponResource::collection($coupons)->response()->getData(true));
     }
-    public function fetchCoupons(Request $request)
-    {
-        try {
-            $language = $request->language ?? DEFAULT_LANGUAGE;
-            $user = $request->user();
-            $query = $this->repository->whereNotNull('id')->with('shop');
-            if ($user) {
-                switch (true) {
-                    case $user->hasPermissionTo(Permission::SUPER_ADMIN):
-                        $query->where('language', $language);
-                        break;
+    // public function fetchCoupons(Request $request)
+    // {
+    //     try {
+    //         $language = $request->language ?? DEFAULT_LANGUAGE;
+    //         $user = $request->user();
+    //         $query = $this->repository->whereNotNull('id')->with('shop');
+    //         if ($user) {
+    //             switch (true) {
+    //                 case $user->hasPermissionTo(Permission::SUPER_ADMIN):
+    //                     $query->where('language', $language);
+    //                     break;
 
-                    case $user->hasPermissionTo(Permission::STORE_OWNER):
-                        $this->repository->hasPermission($user, $request->shop_id)
-                            ? $query->where('shop_id', $request->shop_id)
-                            : $query->where('user_id', $user->id)->whereIn('shop_id', $user->shops->pluck('id'));
-                        $query->where('language', $language);
-                        break;
+    //                 case $user->hasPermissionTo(Permission::STORE_OWNER):
+    //                     $this->repository->hasPermission($user, $request->shop_id)
+    //                         ? $query->where('shop_id', $request->shop_id)
+    //                         : $query->where('user_id', $user->id)->whereIn('shop_id', $user->shops->pluck('id'));
+    //                     $query->where('language', $language);
+    //                     break;
 
-                    case $user->hasPermissionTo(Permission::STAFF):
-                        $query->where('shop_id', $request->shop_id)->where('language', $language);
-                        break;
+    //                 case $user->hasPermissionTo(Permission::STAFF):
+    //                     $query->where('shop_id', $request->shop_id)->where('language', $language);
+    //                     break;
 
-                    default:
-                        $query->where('language', $language);
-                        break;
-                }
-            } else {
-                if ($request->shop_id) {
-                    $query->where('shop_id', $request->shop_id);
-                }
-                $query->where('language', $language);
-            }
-            return $query;
-        } catch (MarvelException $e) {
-            throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
-        }
-    }
+    //                 default:
+    //                     $query->where('language', $language);
+    //                     break;
+    //             }
+    //         } else {
+    //             if ($request->shop_id) {
+    //                 $query->where('shop_id', $request->shop_id);
+    //             }
+    //             $query->where('language', $language);
+    //         }
+    //         return $query;
+    //     } catch (MarvelException $e) {
+    //         throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
+    //     }
+    // }
 
     /**
      * @OA\Post(
@@ -159,22 +161,16 @@ class CouponController extends CoreController
      *     @OA\Response(response=404, description="Coupon not found")
      * )
      */
-    public function show(Request $request, $params)
+    public function show(Request $request, $id)
     {
-        try {
-            $language = $request->language ?? DEFAULT_LANGUAGE;
             try {
-                if (is_numeric($params)) {
-                    $params = (int) $params;
-                    return $this->repository->where('id', $params)->firstOrFail();
-                }
-                return $this->repository->where('code', $params)->where('language', $language)->firstOrFail();
+
+                $coupon =  $this->repository->where('code', $id)->firstOrFail();
+                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true, CouponResource::make($coupon));
             } catch (Throwable $e) {
                 throw new ModelNotFoundException(NOT_FOUND);
             }
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
-        }
+
     }
     /**
      * @OA\Post(
@@ -195,18 +191,18 @@ class CouponController extends CoreController
      *     @OA\Response(response=404, description="Coupon not found or invalid")
      * )
      */
-    public function verify(Request $request)
-    {
-        $request->validate([
-            'code' => 'required|string',
-            'sub_total' => 'required|numeric',
-        ]);
-        try {
-            return $this->repository->verifyCoupon($request);
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
-        }
-    }
+    // public function verify(Request $request)
+    // {
+    //     $request->validate([
+    //         'code' => 'required|string',
+    //         'sub_total' => 'required|numeric',
+    //     ]);
+    //     try {
+    //         return $this->repository->verifyCoupon($request);
+    //     } catch (MarvelException $e) {
+    //         throw new MarvelException(NOT_FOUND);
+    //     }
+    // }
 
     /**
      * @OA\Put(
@@ -231,8 +227,8 @@ class CouponController extends CoreController
     public function update(UpdateCouponRequest $request, $id)
     {
         try {
-            $request->id = $id;
-            return $this->updateCoupon($request);
+            $coupon= $this->repository->updateCoupon($id, $request);
+
         } catch (MarvelException $th) {
             throw new MarvelException();
         }
@@ -244,33 +240,33 @@ class CouponController extends CoreController
      * @param  $request
      * @return void
      */
-    public function updateCoupon(Request $request)
-    {
-        $id = $request->id;
-        $dataArray = $this->repository->getDataArray();
+    // public function updateCoupon(Request $request)
+    // {
+    //     $id = $request->id;
+    //     $dataArray = $this->repository->getDataArray();
 
-        try {
-            $code = $this->repository->findOrFail($id);
+    //     try {
+    //         $code = $this->repository->findOrFail($id);
 
-            if ($request->has('language') && $request['language'] === DEFAULT_LANGUAGE) {
-                $updatedCoupon = $request->only($dataArray);
-                if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                    $updatedCoupon['is_approve'] = false;
-                }
-                $nonTranslatableKeys = ['language', 'image', 'description', 'id'];
-                foreach ($nonTranslatableKeys as $key) {
-                    if (isset($updatedCoupon[$key])) {
-                        unset($updatedCoupon[$key]);
-                    }
-                }
-                $this->repository->where('code', $code->code)->update($updatedCoupon);
-            }
+    //         if ($request->has('language') && $request['language'] === DEFAULT_LANGUAGE) {
+    //             $updatedCoupon = $request->only($dataArray);
+    //             if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+    //                 $updatedCoupon['is_approve'] = false;
+    //             }
+    //             $nonTranslatableKeys = ['language', 'image', 'description', 'id'];
+    //             foreach ($nonTranslatableKeys as $key) {
+    //                 if (isset($updatedCoupon[$key])) {
+    //                     unset($updatedCoupon[$key]);
+    //                 }
+    //             }
+    //             $this->repository->where('code', $code->code)->update($updatedCoupon);
+    //         }
 
-            return $this->repository->update($request->only($dataArray), $id);
-        } catch (Exception $e) {
-            throw new HttpException(404, NOT_FOUND);
-        }
-    }
+    //         return $this->repository->update($request->only($dataArray), $id);
+    //     } catch (Exception $e) {
+    //         throw new HttpException(404, NOT_FOUND);
+    //     }
+    // }
 
 
     /**

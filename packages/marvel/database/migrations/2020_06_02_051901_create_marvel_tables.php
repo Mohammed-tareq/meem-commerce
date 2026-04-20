@@ -29,18 +29,28 @@ class CreateMarvelTables extends Migration
             $table->timestamps();
         });
         Schema::create('coupons', function (Blueprint $table) {
-            $table->id();
-            $table->string('code');
-            $table->text('description')->nullable();
-            $table->json('image')->nullable();
-            $table->enum('type', CouponType::getValues())->default(CouponType::FIXED_COUPON);
-            $table->float('amount')->default(0);
-            $table->float('minimum_cart_amount')->default(0);
-            $table->string('active_from');
-            $table->string('expire_at');
-            $table->timestamps();
-            $table->timestamp('deleted_at')->nullable();
+            //     $table->id();
+            //     $table->string('code');
+            //     $table->text('description')->nullable();
+            //     $table->json('image')->nullable();
+            //     $table->enum('type', CouponType::getValues())->default(CouponType::FIXED_COUPON);
+            //     $table->float('amount')->default(0);
+            //     $table->float('minimum_cart_amount')->default(0);
+            //     $table->string('active_from');
+            //     $table->string('expire_at');
+            //     $table->timestamps();
+            //     $table->timestamp('deleted_at')->nullable();
+            $table->string('code')->unique();
+            $table->string('name')->nullable();
+            $table->decimal('discount', 8, 3)->nullable();
+            $table->enum('discount_type', DiscountType::getValues())->nullable();
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->integer('limiter')->nullable();
+            $table->integer('used')->default(0);
+            $table->boolean('status')->default(true);
         });
+
 
         Schema::create('types', function (Blueprint $table) {
             $table->id();
@@ -92,7 +102,7 @@ class CreateMarvelTables extends Migration
             // $table->unsignedBigInteger('type_id');
             // $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
         });
-          Schema::create('sliders', function (Blueprint $table) {
+        Schema::create('sliders', function (Blueprint $table) {
             $table->id();
             $table->enum('type', ['slider', 'image'])->default('slider');
             $table->boolean('is_active')->default(false);
@@ -192,7 +202,7 @@ class CreateMarvelTables extends Migration
             // $table->json('image')->nullable();
             // $table->json('banner_image')->nullable();
             // $table->unsignedBigInteger('type_id');
-//            $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
+            //            $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
             $table->timestamps();
             $table->softDeletes();
         });
@@ -207,11 +217,11 @@ class CreateMarvelTables extends Migration
 
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            // $table->string('coupon')->nullable();
+            $table->string('coupon')->nullable();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
-         Schema::create('cart_items', function (Blueprint $table) {
+        Schema::create('cart_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cart_id')->constrained('carts')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
