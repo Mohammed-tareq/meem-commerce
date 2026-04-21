@@ -787,11 +787,11 @@ class ProductRepository extends BaseRepository
         }
 
         if ($discountType === DiscountType::PERCENTAGE) {
-            return $price - ($price * ($amount / 100));
+            return max(0, $price - ($price * ($amount / 100)));
         }
 
         if ($discountType === DiscountType::FIXED_RATE || $discountType === 'fixed') {
-            return $price - $amount;
+            return max(0, $price - $amount);
         }
 
         return $price;

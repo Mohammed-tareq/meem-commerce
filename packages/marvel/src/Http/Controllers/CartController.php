@@ -41,8 +41,13 @@ class CartController extends CoreController
 
     public function store(CartCreateRequest $request)
     {
-        $cart = $this->repository->storeCart($request);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 201, true, CartResource::make($cart));
+        try{
+                $cart = $this->repository->storeCart($request);
+                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 201, true, CartResource::make($cart));
+
+            } catch (\Exception $e) {
+                return $this->apiResponse($e->getMessage(), 400, false);
+        }
     }
 
     public function show(Request $request, $id)
@@ -59,8 +64,13 @@ class CartController extends CoreController
 
     public function update(CartUpdateRequest $request)
     {
-        $cart = $this->repository->updateCart($request);
-        return $this->apiResponse(UPDATE_CART_SUCCESSFULLY, 200, true, CartResource::make($cart));
+        try{
+                $cart = $this->repository->updateCart($request);
+                return $this->apiResponse(UPDATE_CART_SUCCESSFULLY, 200, true, CartResource::make($cart));
+
+            } catch (\Exception $e) {
+                return $this->apiResponse($e->getMessage(), 400, false);
+        }
     }
 
     public function deleteItemFromCart(Request $request, $ItemId)
@@ -68,11 +78,11 @@ class CartController extends CoreController
         $user = $request->user();
         $cart = $user->cart;
         if ($user && (int) $cart->user_id !== (int) $user->id) {
-            throw new AuthorizationException(NOT_AUTHORIZED);
+            return $this->apiResponse(DELETE_CART_ITEM_FAILED, 400, false);
         }
 
         if(!$cart->items()->where('id', $ItemId)->delete()) {
-            throw new AuthorizationException(INVALID_ITEM_DATA);
+            return $this->apiResponse(DELETE_CART_ITEM_FAILED, 400, false);
         }
         return $this->apiResponse(DELETE_CART_ITEM_SUCCESSFULLY, 200, true);
     }
@@ -83,7 +93,7 @@ class CartController extends CoreController
         $user = $request->user();
 
         if ($user && (int) $cart->user_id !== (int) $user->id) {
-            throw new AuthorizationException(NOT_AUTHORIZED);
+            return $this->apiResponse(DELETE_CART_ITEM_FAILED, 400, false);
         }
 
         $cart->items()->delete();

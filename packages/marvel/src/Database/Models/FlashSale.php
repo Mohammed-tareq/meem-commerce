@@ -83,11 +83,11 @@ class FlashSale extends Model
     {
         if($this->type == FlashSaleType::PERCENTAGE)
         {
-            return $price - ($price * ($this->value / 100));
+            return max(0, $price - ($price * ($this->value / 100)));
         }
         elseif($this->type == FlashSaleType::FIXED_RATE)
         {
-            return $price - $this->value;
+            return max(0, $price - $this->value);
         }
         else
         {
