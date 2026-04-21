@@ -41,12 +41,11 @@ class CartController extends CoreController
 
     public function store(CartCreateRequest $request)
     {
-        try{
-                $cart = $this->repository->storeCart($request);
-                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 201, true, CartResource::make($cart));
-
-            } catch (\Exception $e) {
-                return $this->apiResponse($e->getMessage(), 400, false);
+        try {
+            $cart = $this->repository->storeCart($request);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 201, true, CartResource::make($cart));
+        } catch (\Exception $e) {
+            return $this->apiResponse($e->getMessage(), 400, false);
         }
     }
 
@@ -64,12 +63,11 @@ class CartController extends CoreController
 
     public function update(CartUpdateRequest $request)
     {
-        try{
-                $cart = $this->repository->updateCart($request);
-                return $this->apiResponse(UPDATE_CART_SUCCESSFULLY, 200, true, CartResource::make($cart));
-
-            } catch (\Exception $e) {
-                return $this->apiResponse($e->getMessage(), 400, false);
+        try {
+            $cart = $this->repository->updateCart($request);
+            return $this->apiResponse(UPDATE_CART_SUCCESSFULLY, 200, true, CartResource::make($cart));
+        } catch (\Exception $e) {
+            return $this->apiResponse($e->getMessage(), 400, false);
         }
     }
 
@@ -81,9 +79,10 @@ class CartController extends CoreController
             return $this->apiResponse(DELETE_CART_ITEM_FAILED, 400, false);
         }
 
-        if(!$cart->items()->where('id', $ItemId)->delete()) {
+        if (!$cart->items()->where('id', $ItemId)->delete()) {
             return $this->apiResponse(DELETE_CART_ITEM_FAILED, 400, false);
         }
+        $cart->items()->sum('total_price');
         return $this->apiResponse(DELETE_CART_ITEM_SUCCESSFULLY, 200, true);
     }
 
