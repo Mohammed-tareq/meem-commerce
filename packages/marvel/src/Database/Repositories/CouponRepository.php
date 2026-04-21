@@ -28,19 +28,13 @@ class CouponRepository extends BaseRepository
     ];
 
     protected $dataArray = [
-        'code',
-        'language',
-        'description',
-        'image',
-        'type',
-        'amount',
-        'minimum_cart_amount',
-        'active_from',
-        'expire_at',
-        'target',
-        'is_approve',
-        'user_id',
-        'shop_id',
+        "name",
+        'discount',
+        'discount_type',
+        'start_date',
+        'end_date',
+        'limiter',
+        'used',
     ];
 
     public function getDataArray(): array
@@ -74,74 +68,47 @@ class CouponRepository extends BaseRepository
     {
         try {
             $data = $request->only($this->dataArray);
-            $data['user_id'] = $request->user()->id;
-            $data['is_approve'] = $request->user()->hasPermissionTo(Permission::SUPER_ADMIN);
             return $this->create($data);
         } catch (Exception $th) {
             throw new MarvelBadRequestException(COULD_NOT_CREATE_THE_RESOURCE);
         }
     }
-    public function verifyCoupon(Request $request)
+    public function updateCoupon($id, Request $request)
     {
-        $code = $request->code;
-        $sub_total = $request->sub_total;
-        $item = $request->item ?? null;
         try {
-            $coupon = $this->findOneByFieldOrFail('code', $code);
-            $settings = Settings::getData();
-            $is_satisfy = $sub_total >= $coupon->minimum_cart_amount;
-            $is_freeShipping = $settings['options']['freeShipping'];
-            $freeShippingAmount = $settings['options']['freeShippingAmount'];
-            $couponShopId = $coupon->shop_id;
-            $useFreeShipping = $is_freeShipping && $freeShippingAmount <= $sub_total;
-
-            if (!$coupon->is_approve || (empty($request->user()) && $coupon->target)) {
-                return ["is_valid" => false, "message" => $coupon->is_approve ? THIS_COUPON_CODE_IS_ONLY_FOR_VERIFIED_USERS : THIS_COUPON_CODE_IS_NOT_APPROVED];
+            $coupon = $this->find($id);
+            if (!$coupon) {
+                throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
             }
+            $data = $request->only($this->dataArray);
 
-            $onlyThisShopProductApplyCoupon = true;
-            if ($couponShopId && $item) {
-                $totalCartAmount = array_reduce(
-                    $item,
-                    fn ($sum, $product) => $sum + (isset($product['shop_id']) && $product['shop_id'] == $couponShopId ? $product['price'] * $product['quantity'] : 0),
-                    0
-                );
-
-                $isLessThanSubtotal = $sub_total >= $totalCartAmount;
-
-                switch ($coupon->type) {
-                    case CouponType::FIXED_COUPON:
-                        $onlyThisShopProductApplyCoupon = $isLessThanSubtotal && $totalCartAmount > $coupon->amount;
-                        break;
-                    case CouponType::PERCENTAGE_COUPON:
-                        $couponPercentageAmount = ($totalCartAmount * $coupon->amount) / 100;
-                        $onlyThisShopProductApplyCoupon = $isLessThanSubtotal && $totalCartAmount > $couponPercentageAmount;
-                        break;
-                    case CouponType::FREE_SHIPPING_COUPON:
-                        $onlyThisShopProductApplyCoupon = $isLessThanSubtotal && $useFreeShipping;
-                        break;
-                }
-            }
-
-            if (!$onlyThisShopProductApplyCoupon) {
-                return ["is_valid" => false, "message" => COUPON_CODE_IS_NOT_APPLICABLE_IN_THIS_SHOP_PRODUCT];
-            }
-
-            if (
-                $coupon->is_valid &&
-                $useFreeShipping &&
-                $coupon->type == CouponType::FREE_SHIPPING_COUPON
-            ) {
-                return ["is_valid" => false, "message" => ALREADY_FREE_SHIPPING_ACTIVATED];
-            } elseif ($coupon->is_valid && $is_satisfy && $onlyThisShopProductApplyCoupon) {
-                return ["is_valid" => true, "coupon" => $coupon];
-            } elseif ($coupon->is_valid && !$is_satisfy) {
-                return ["is_valid" => false, "message" => COUPON_CODE_IS_NOT_APPLICABLE];
-            } else {
-                return ["is_valid" => false, "message" => INVALID_COUPON_CODE];
-            }
-        } catch (\Exception $th) {
-            return ["is_valid" => false, "message" => INVALID_COUPON_CODE];
+            $coupon->update($data);
+            return $coupon;
+        } catch (Exception $th) {
+            throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
+    }
+
+    public function addCouponToCart($code)
+    {
+        $coupon = $this->where('code', $code)->first();
+        if (!$coupon || !$coupon->isValid()) {
+            throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_CART_NOT_VALID);
+        }
+
+        $cart = auth()->user()->cart->first();
+        if (!$cart || !$cart->items()->exists()) {
+            throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_EMPTY_CART);
+        }
+
+        if (!empty($cart->coupon)) {
+            $existingCoupon = $this->where('code', $cart->coupon)->first();
+            if ($existingCoupon && $existingCoupon->isValid()) {
+                throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_CART_YOU_HAVE_ALREADY_APPLIED_A_COUPON);
+            }
+
+            return  $cart->update(['coupon' => $coupon->code]);
+        }
+        return $cart->update(['coupon' => $coupon->code]);
     }
 }

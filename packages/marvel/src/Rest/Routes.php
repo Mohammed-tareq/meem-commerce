@@ -194,6 +194,7 @@ Route::apiResource('coupons', CouponController::class, [
     'only' => ['index', 'show'],
 ]);
 Route::post('coupons/verify', [CouponController::class, 'verify']);
+Route::post('coupons/add-to-cart', [CouponController::class, 'addCouponToCart']);
 Route::apiResource('attributes', AttributeController::class, [
     'only' => ['index', 'show'],
 ]);
@@ -664,12 +665,12 @@ Route::group([
         'only' => ['update', 'destroy'],
     ]);
 });
-Route::middleware(['auth:sanctum',"throttle:cart"])->group(function () {
- Route::get('cart',[ CartController::class,'index']);
-    Route::post('cart',[ CartController::class,'store']);
-    Route::put('cart/update-item',[ CartController::class,'update']);
-    Route::delete('cart/delete-item/{itemId}',[ CartController::class,'deleteItemFromCart']);
-    Route::delete('cart/delete-items',[ CartController::class,'destroy']);
+Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
+    Route::get('cart', [CartController::class, 'index']);
+    Route::post('cart', [CartController::class, 'store']);
+    Route::put('cart/update-item', [CartController::class, 'update']);
+    Route::delete('cart/delete-item/{itemId}', [CartController::class, 'deleteItemFromCart']);
+    Route::delete('cart/delete-items', [CartController::class, 'destroy']);
 });
 
 

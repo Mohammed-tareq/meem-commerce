@@ -56,6 +56,7 @@ class DatabaseSeeder extends Seeder
             FlashSaleSeeder::class,
             ProductSeeder::class,
             CartSeeder::class,
+            CouponSeeder::class,
         ]);
     }
 }
