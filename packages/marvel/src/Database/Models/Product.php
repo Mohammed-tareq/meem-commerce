@@ -100,19 +100,19 @@ class Product extends Model implements HasMedia
         });
     }
 
-    public function discount(): HasOne
-    {
-        return $this->hasOne(Discount::class);
-    }
+    // public function discount(): HasOne
+    // {
+    //     return $this->hasOne(Discount::class);
+    // }
 
-    public function getFinalPriceAttribute()
-    {
-        if (!$this->has_discount) {
-            return $this->price;
-        }
+    // public function getFinalPriceAttribute()
+    // {
+    //     if (!$this->has_discount) {
+    //         return $this->price;
+    //     }
 
-        return $this->discount->getPriceAfterDiscount($this);
-    }
+    //     return $this->discount->getPriceAfterDiscount($this);
+    // }
 
     public function isDiscountActive(): bool
     {
@@ -239,16 +239,16 @@ class Product extends Model implements HasMedia
         $amount = $this->amount ?? 0;
 
         if ($discountType === DiscountType::PERCENTAGE) {
-            return $price - ($price * ($amount / 100));
+            return max(0, $price - ($price * ($amount / 100)));
         }
 
         if ($discountType === DiscountType::FIXED_RATE || $discountType === 'fixed') {
-            return $price - $amount;
+            return max(0, $price - $amount);
         }
 
         return $price;
     }
-    
+
 
     function getBlockedDates()
     {

@@ -109,6 +109,13 @@ class CartRepository extends BaseRepository
             }
 
             $product = Product::findOrFail($productId);
+        if($product->quantity < $quantity) {
+            throw new Exception(QUANTITY_EXCEEDS_AVAILABLE_STOCK);
+        }
+        if (!$product->in_stock) {
+            throw new Exception(PRODUCT_EXCEEDS_AVAILABLE_STOCK);
+        }
+
             if ($product->has_flash_sale && $product->isFlashSaleValid()) {
                 $price = $product->price_after_flash_sale ?? $product->getCurrentPrice();
                 } else {
