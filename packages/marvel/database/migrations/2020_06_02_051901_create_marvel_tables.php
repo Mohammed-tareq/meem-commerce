@@ -153,42 +153,82 @@ class CreateMarvelTables extends Migration
         //     $table->timestamps();
         // });
         Schema::create('orders', function (Blueprint $table) {
+            // $table->id();
+            // $table->string('tracking_number')->unique();
+            // $table->unsignedBigInteger('customer_id')->nullable();
+            // $table->string('customer_contact');
+            // $table->string('customer_name')->nullable();
+            // $table->double('amount');
+            // $table->double('sales_tax')->nullable();
+            // $table->double('paid_total')->nullable();
+            // $table->double('total')->nullable();
+            // $table->unsignedBigInteger('coupon_id')->nullable();
+            // $table->double('discount')->nullable();
+            // $table->string('payment_gateway')->nullable();
+            // $table->string('altered_payment_gateway')->nullable();
+            // $table->json('shipping_address')->nullable();
+            // $table->json('billing_address')->nullable();
+            // $table->unsignedBigInteger('logistics_provider')->nullable();
+            // $table->double('delivery_fee')->nullable();
+            // $table->string('delivery_time')->nullable();
+            // $table->enum('order_status', OrderStatus::getValues())->default(OrderStatus::PENDING);
+            // $table->enum('payment_status', PaymentStatus::getValues())->default(PaymentStatus::PENDING);
+            // $table->softDeletes();
+            // $table->timestamps();
+            // $table->foreign('customer_id')->references('id')->on('users');
+
             $table->id();
-            $table->string('tracking_number')->unique();
-            $table->unsignedBigInteger('customer_id')->nullable();
-            $table->string('customer_contact');
-            $table->string('customer_name')->nullable();
-            $table->double('amount');
-            $table->double('sales_tax')->nullable();
-            $table->double('paid_total')->nullable();
-            $table->double('total')->nullable();
-            $table->unsignedBigInteger('coupon_id')->nullable();
-            $table->double('discount')->nullable();
-            $table->string('payment_gateway')->nullable();
-            $table->string('altered_payment_gateway')->nullable();
-            $table->json('shipping_address')->nullable();
-            $table->json('billing_address')->nullable();
-            $table->unsignedBigInteger('logistics_provider')->nullable();
-            $table->double('delivery_fee')->nullable();
-            $table->string('delivery_time')->nullable();
-            $table->enum('order_status', OrderStatus::getValues())->default(OrderStatus::PENDING);
-            $table->enum('payment_status', PaymentStatus::getValues())->default(PaymentStatus::PENDING);
-            $table->softDeletes();
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->string('first_name');
+            $table->string('last_name');
+            $table->string('user_phone');
+            $table->string('user_email');
+            $table->string('address');
+
+
+            $table->string('notes')->nullable();
+
+            $table->decimal('price', 8, 3);
+            $table->decimal('shipping_price', 8, 3);
+            $table->decimal('total_price', 8, 3);
+
+            $table->string('coupon')->nullable();
+            $table->decimal('coupon_discount', 10, 3)->nullable();
+
+            $table->enum('status', ['pending', 'completed', 'delivered', 'cancelled'])->default('pending');
             $table->timestamps();
-            $table->foreign('customer_id')->references('id')->on('users');
         });
 
-        Schema::create('order_product', function (Blueprint $table) {
+        Schema::create('order_products', function (Blueprint $table) {
+            // $table->id();
+            // $table->unsignedBigInteger('order_id');
+            // $table->unsignedBigInteger('product_id');
+            // $table->string('order_quantity');
+            // $table->double('unit_price');
+            // $table->double('subtotal');
+            // $table->softDeletes();
+            // $table->timestamps();
+            // $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
+            // $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+
             $table->id();
-            $table->unsignedBigInteger('order_id');
-            $table->unsignedBigInteger('product_id');
-            $table->string('order_quantity');
-            $table->double('unit_price');
-            $table->double('subtotal');
-            $table->softDeletes();
+            $table->foreignId('order_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
+
+            $table->string('product_name');
+            $table->string('product_desc');
+            $table->integer('product_quantity');
+            $table->decimal('product_price', 8, 3);
+            $table->decimal('product_discount', 10, 3)->nullable();
             $table->timestamps();
-            $table->foreign('order_id')->references('id')->on('orders')->onDelete('cascade');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+        });
+        Schema::create('transactions', function (Blueprint $table) {
+            $table->id();
+            $table->integer('invoice_id');
+            $table->bigInteger('user_id');
+            $table->string('payment_method');
+            $table->foreignId('order_id')->constrained()->cascadeOnDelete();
+            $table->timestamps();
         });
 
         Schema::create('categories', function (Blueprint $table) {
