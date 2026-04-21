@@ -14,7 +14,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Coupon extends Model
 {
-    use SoftDeletes, HasTranslations;
+    use  HasTranslations;
 
     protected $translatable = ['name'];
 
@@ -39,7 +39,7 @@ class Coupon extends Model
                 $code = strtoupper(Str::random(10));
             } while (self::where('code', $code)->exists());
 
-            $coupon->code = $coupon->name."_".$code;
+            $coupon->code = strtolower(preg_replace('/\s+/', '_', trim($coupon->name))) . "_" . $code;
         });
     }
 
@@ -99,18 +99,18 @@ class Coupon extends Model
             'ar' => [
                 'fixed_rate' => 'خصم من السعر بالقيمة',
                 'percentage' => 'خصم بالنسبة المئوية',
-                'free_shipping'=> 'شحن مجاني',
+                'free_shipping' => 'شحن مجاني',
 
             ],
             'en' => [
                 'fixed_rate' => 'Fixed discount',
                 'percentage' => 'Percentage discount',
-                'free_shipping'=> 'Free shipping',
+                'free_shipping' => 'Free shipping',
             ],
         ];
 
         $locale = app()->getLocale();
-            return $map[$locale][$this->discount_type] ?? $this->discount_type;
+        return $map[$locale][$this->discount_type] ?? $this->discount_type;
     }
 
     public function calcPrice($price): float

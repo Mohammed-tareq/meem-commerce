@@ -17,6 +17,7 @@ use Marvel\Database\Models\Coupon;
 use Marvel\Enums\Permission;
 use Marvel\Http\Resources\CouponResource;
 use Marvel\Traits\ApiResponse;
+use Svg\Tag\Rect;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
@@ -142,9 +143,10 @@ class CouponController extends CoreController
     public function store(CouponRequest $request)
     {
         try {
-            return $this->repository->storeCoupon($request);
+            $coupon =  $this->repository->storeCoupon($request);
+            return $this->apiResponse(CREATED_COUPON_SUCCESSFULLY, 201, true, CouponResource::make($coupon));
         } catch (MarvelException $e) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE, $e->getMessage());
+            return $this->apiResponse(COULD_NOT_CREATE_THE_RESOURCE, 400, false);
         }
     }
 
@@ -163,14 +165,13 @@ class CouponController extends CoreController
      */
     public function show(Request $request, $id)
     {
-            try {
+        try {
 
-                $coupon =  $this->repository->where('code', $id)->firstOrFail();
-                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true, CouponResource::make($coupon));
-            } catch (Throwable $e) {
-                throw new ModelNotFoundException(NOT_FOUND);
-            }
-
+            $coupon =  $this->repository->where('id', $id)->orWhere('code', $id)->firstOrFail();
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CouponResource::make($coupon));
+        } catch (Throwable $e) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
     }
     /**
      * @OA\Post(
@@ -227,10 +228,10 @@ class CouponController extends CoreController
     public function update(UpdateCouponRequest $request, $id)
     {
         try {
-            $coupon= $this->repository->updateCoupon($id, $request);
-
+            $coupon = $this->repository->updateCoupon($id, $request);
+            return $this->apiResponse(UPDATED_COUPON_SUCCESSFULLY, 200, true, CouponResource::make($coupon));
         } catch (MarvelException $th) {
-            throw new MarvelException();
+            return $this->apiResponse(COULD_NOT_UPDATE_THE_RESOURCE, 400, false);
         }
     }
 
@@ -284,10 +285,26 @@ class CouponController extends CoreController
     public function destroy($id)
     {
         try {
-            return $this->repository->findOrFail($id)->delete();
+            $this->repository->findOrFail($id)->delete();
+            return $this->apiResponse(DELETED_COUPON_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
+    }
+
+
+    public function addCouponToCart(Request $request)
+    {
+        try {
+            $request->validate([
+                'code' => 'required|string|exists:coupons,code',
+            ]);
+            $coupon = $this->repository->addCouponToCart($request->code);
+            return $this->apiResponse(COUPON_ADDED_TO_CART_SUCCESSFULLY, 200, true);
+        } catch (MarvelException $e) {
+            return $this->apiResponse(COULD_NOT_ADD_COUPON_TO_CART, 400, false);
+        }
+
     }
 
     /**

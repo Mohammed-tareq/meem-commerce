@@ -12,7 +12,7 @@ class CouponSeeder extends Seeder
     public function run(): void
     {
         for ($i = 1; $i <= 100; $i++) {
-            $discountType = collect(['percentage', 'fixed'])->random();
+            $discountType = collect(['percentage', 'fixed_rate'])->random();
 
             Coupon::create([
                 'code'          => strtoupper(Str::random(8)),
@@ -22,7 +22,7 @@ class CouponSeeder extends Seeder
                 ],
                 'discount'      => $discountType === 'percentage'
                                     ? rand(5, 50)
-                                    : rand(10, 200), 
+                                    : rand(10, 200),
                 'discount_type' => $discountType,
                 'start_date'    => Carbon::now()->subDays(rand(0, 5))->format('Y-m-d'),
                 'end_date'      => Carbon::now()->addDays(rand(5, 30))->format('Y-m-d'),

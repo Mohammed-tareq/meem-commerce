@@ -194,6 +194,7 @@ Route::apiResource('coupons', CouponController::class, [
     'only' => ['index', 'show'],
 ]);
 Route::post('coupons/verify', [CouponController::class, 'verify']);
+Route::post('coupons/add-to-cart', [CouponController::class, 'addCouponToCart']);
 Route::apiResource('attributes', AttributeController::class, [
     'only' => ['index', 'show'],
 ]);

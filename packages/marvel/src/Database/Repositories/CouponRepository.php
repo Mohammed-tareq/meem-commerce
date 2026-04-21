@@ -84,10 +84,31 @@ class CouponRepository extends BaseRepository
 
             $coupon->update($data);
             return $coupon;
-
         } catch (Exception $th) {
             throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }
 
+    public function addCouponToCart($code)
+    {
+        $coupon = $this->where('code', $code)->first();
+        if (!$coupon || !$coupon->isValid()) {
+            throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_CART_NOT_VALID);
+        }
+
+        $cart = auth()->user()->cart->first();
+        if (!$cart || !$cart->items()->exists()) {
+            throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_EMPTY_CART);
+        }
+
+        if (!empty($cart->coupon)) {
+            $existingCoupon = $this->where('code', $cart->coupon)->first();
+            if ($existingCoupon && $existingCoupon->isValid()) {
+                throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_CART_YOU_HAVE_ALREADY_APPLIED_A_COUPON);
+            }
+
+            return  $cart->update(['coupon' => $coupon->code]);
+        }
+        return $cart->update(['coupon' => $coupon->code]);
+    }
 }

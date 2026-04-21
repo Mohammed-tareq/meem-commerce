@@ -29,9 +29,9 @@ class CouponRequest extends FormRequest
      */
     public function rules()
     {
-        
+
         return [
-            "name"=> "sometimes|array",
+            "name"=> "required|array",
             'name.*' => ['required_with:name', UniqueTranslationRule::for('coupons','name')],
             'discount'      => 'required|numeric|min:0',
             'discount_type' => ['required', Rule::in(DiscountType::getValues())],
