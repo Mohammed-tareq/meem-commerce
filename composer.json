@@ -23,6 +23,7 @@
         "marvel/shop": "dev-main",
         "messagebird/php-rest-api": "3.1.4",
         "psr/log": "3.0.0",
+        "spatie/eloquent-sortable": "^5.0",
         "spatie/laravel-permission": "6.0",
         "spatie/laravel-translatable": "^6.11",
         "stevebauman/purify": "6.0.2",

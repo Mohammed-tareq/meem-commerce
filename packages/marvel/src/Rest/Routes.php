@@ -421,6 +421,8 @@ Route::group(
             'only' => ['update', 'destroy'],
         ]);
         Route::apiResource('banners', BannerController::class);
+        Route::post('banner/change-status', [BannerController::class,'changeStatus']);
+        Route::post('banner/reorder', [BannerController::class,'reorder']);
 
         // Route::get('shop-notification/{id}', [ShopNotificationController::class, 'show']);
         // Route::put('shop-notification/{id}', [ShopNotificationController::class, 'update']);
@@ -492,10 +494,10 @@ Route::group(
         // Route::apiResource('notify-logs', NotifyLogsController::class, [
         //     'only' => ['index'],
         // ]);
-    
+
         // Route::post('notify-log-seen', [NotifyLogsController::class, 'readNotifyLogs']);
         // Route::post('notify-log-read-all', [NotifyLogsController::class, 'readAllNotifyLogs']);
-    
+
         Route::apiResource('faqs', FaqsController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
@@ -519,7 +521,7 @@ Route::group(
         ]);
         Route::get('/vendors/list', [UserController::class, 'vendors']);
         // Route::post('products-request-for-flash-sale', [FlashSaleVendorRequestController::class, 'productsRequestForFlashSale']);
-    
+
         Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
             'only' => ['index', 'show'],
         ]);

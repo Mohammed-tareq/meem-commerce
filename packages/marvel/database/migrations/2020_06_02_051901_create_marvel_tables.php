@@ -85,6 +85,7 @@ class CreateMarvelTables extends Migration
         Schema::create('banners', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->integer('order');
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(false);
             $table->timestamps();
