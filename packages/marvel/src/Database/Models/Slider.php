@@ -5,11 +5,18 @@ namespace Marvel\Database\Models;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 
-class Slider extends Model implements HasMedia
+
+class Slider extends Model implements HasMedia , Sortable
 {
-    use InteractsWithMedia;
+    use InteractsWithMedia , SortableTrait;
     protected $table = 'sliders';
+     public $sortable = [
+        'order_column_name' => 'order',
+        'sort_when_creating' => true,
+    ];
 
     public $guarded = [];
 

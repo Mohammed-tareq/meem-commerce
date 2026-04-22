@@ -8,7 +8,7 @@ use Marvel\Http\Requests\SliderCreateRequest;
 use Marvel\Http\Requests\SliderUpdateRequest;
 use Marvel\Http\Resources\SliderResource;
 use Marvel\Traits\ApiResponse;
-
+use Illuminate\Http\Request;
 class SliderController   extends CoreController
 {
     use ApiResponse;
@@ -79,6 +79,34 @@ class SliderController   extends CoreController
             return $this->apiResponse(SLIDER_DELETED_SUCCESSFULLY,200, true);
         }catch(\Exception $e){
             return $this->apiResponse(SOMETHING_WENT_WRONG,500, false, null);
+        }
+    }
+
+     public function changeStatus(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:sliders,id',
+        ]);
+        $slider = $this->repository->changeStatus($request->id);
+        if(!$slider){
+            return $this->apiResponse(SOMETHING_WENT_WRONG,500, false);
+        }
+        return $this->apiResponse(SLIDER_STATUS_CHANGED,200, true, SliderResource::make($slider));
+    }
+
+
+    public function reorder(Request $request)
+    {
+        try {
+            $request->validate([
+                'sliders' => 'required|array',
+                'sliders.*' => 'required|exists:sliders,id',
+            ]);
+            $this->repository->reorder($request->sliders);
+
+            return $this->apiResponse(SLIDERS_REORDERED_SUCCESSFULLY, 200, true);
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 }

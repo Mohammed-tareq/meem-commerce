@@ -95,6 +95,7 @@ class CreateMarvelTables extends Migration
           Schema::create('sliders', function (Blueprint $table) {
             $table->id();
             $table->enum('type', ['slider', 'image'])->default('slider');
+            $table->integer('order');
             $table->boolean('is_active')->default(false);
             $table->timestamps();
             // $table->json('image')->nullable();
