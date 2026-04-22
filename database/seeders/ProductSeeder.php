@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Faker\Factory as Faker;
 use Marvel\Database\Models\Product;
@@ -25,6 +26,9 @@ class ProductSeeder extends Seeder
             $productTypes = ProductType::getValues();
             $discountTypes = DiscountType::getValues();
 
+            $productImages = collect(File::files(public_path('images/products')));
+            $productImagesCount = $productImages->count();
+
             // Get existing shop
             $shop = Shop::first();
             if (!$shop) {
@@ -35,7 +39,7 @@ class ProductSeeder extends Seeder
             for ($i = 1; $i <= 500; $i++) {
                 $productName = $fakerEn->words(3, true);
 
-                Product::create([
+                $product = Product::create([
                     'name' => [
                         'en' => $productName,
                         'ar' => $fakerAr->words(3, true),
@@ -67,6 +71,15 @@ class ProductSeeder extends Seeder
                     'price_after_flash_sale' => $faker->optional(0.5)->randomFloat(2, 20, 1500),
                     'shop_id' => $shop->id,
                 ]);
+
+                if ($productImagesCount > 0) {
+                    $image = $productImages[($i - 1) % $productImagesCount];
+                    $product
+                        ->addMedia($image->getPathname())
+                        ->preservingOriginal()
+                        ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                        ->toMediaCollection('products', 'products');
+                }
             }
 
             $this->command->info('✅ ProductSeeder completed successfully! Created 10 products.');

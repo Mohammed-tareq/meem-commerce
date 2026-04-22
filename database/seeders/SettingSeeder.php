@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Marvel\Database\Models\Settings;
 
 class SettingSeeder extends Seeder
@@ -12,8 +14,9 @@ class SettingSeeder extends Seeder
      */
     public function run(): void
     {
-        Settings::firstOr(function () {
-            Settings::create([
+        $setting = Settings::first();
+        if (!$setting) {
+            $setting = Settings::create([
                 "site_name" => [
                     'ar' => 'اسم الموقع',
                     'en' => 'Site Name',
@@ -41,6 +44,26 @@ class SettingSeeder extends Seeder
                 'youtube' => 'https://www.youtube.com/channel/example',
                 'phone' => '+2011111111111'
             ]);
-        });
+        }
+
+        $settingImages = collect(File::files(public_path('images/shops')));
+        $settingImagesCount = $settingImages->count();
+
+        if ($settingImagesCount > 0) {
+            $logoImage = $settingImages[0];
+            $faviconImage = $settingImages[$settingImagesCount > 1 ? 1 : 0];
+
+            $setting
+                ->addMedia($logoImage->getPathname())
+                ->preservingOriginal()
+                ->usingFileName(Str::uuid() . '.' . $logoImage->getExtension())
+                ->toMediaCollection('logo', 'settings');
+
+            $setting
+                ->addMedia($faviconImage->getPathname())
+                ->preservingOriginal()
+                ->usingFileName(Str::uuid() . '.' . $faviconImage->getExtension())
+                ->toMediaCollection('favicon', 'settings');
+        }
     }
 }

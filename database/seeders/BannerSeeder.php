@@ -3,12 +3,17 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Marvel\Database\Models\Banner;
 
 class BannerSeeder extends Seeder
 {
     public function run(): void
     {
+        $bannerImages = collect(File::files(public_path('images/banners')));
+        $bannerImagesCount = $bannerImages->count();
+
         $banners = [
             [
                 'title' => ['en' => 'Summer Sale', 'ar' => 'تخفيضات الصيف'],
@@ -62,8 +67,17 @@ class BannerSeeder extends Seeder
             ],
         ];
 
-        foreach ($banners as $banner) {
-            Banner::create($banner);
+        foreach ($banners as $index => $banner) {
+            $bannerModel = Banner::create($banner);
+
+            if ($bannerImagesCount > 0) {
+                $image = $bannerImages[$index % $bannerImagesCount];
+                $bannerModel
+                    ->addMedia($image->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                    ->toMediaCollection('banners', 'banners');
+            }
         }
     }
 }
