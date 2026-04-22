@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Controllers;
 
+use Illuminate\Http\Request;
 use Marvel\Database\Repositories\BannerRepository;
 use Marvel\Enums\Permission;
 use Marvel\Http\Requests\BannerCreateRequest;
@@ -79,6 +80,34 @@ class BannerController extends CoreController
             return $this->apiResponse(BANNER_DELETED_SUCCESSFULLY,200, true);
         }catch(\Exception $e){
             return $this->apiResponse(SOMETHING_WENT_WRONG,500, false, null);
+        }
+    }
+
+    public function changeStatus(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:banners,id',
+        ]);
+        $banner = $this->repository->changeStatus($request->id);
+        if(!$banner){
+            return $this->apiResponse(SOMETHING_WENT_WRONG,500, false);
+        }
+        return $this->apiResponse(BANNER_STATUS_CHANGED,200, true, BannerResource::make($banner));
+    }
+
+
+    public function reorder(Request $request)
+    {
+        try {
+            $request->validate([
+                'banners' => 'required|array',
+                'banners.*' => 'required|exists:banners,id',
+            ]);
+            $this->repository->reorder($request->banners);
+
+            return $this->apiResponse(BANNERS_REORDERED_SUCCESSFULLY, 200, true);
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 }

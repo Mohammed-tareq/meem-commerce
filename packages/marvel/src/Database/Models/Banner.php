@@ -6,11 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 
-class Banner extends Model implements HasMedia
+class Banner extends Model implements HasMedia, Sortable
 {
-    use InteractsWithMedia, HasTranslations;
+    use InteractsWithMedia, HasTranslations, SortableTrait;
     protected $table = 'banners';
+    public $sortable = [
+        'order_column_name' => 'order',
+        'sort_when_creating' => true,
+    ];
 
     public $guarded = [];
     public $translatable = ['title', 'description'];

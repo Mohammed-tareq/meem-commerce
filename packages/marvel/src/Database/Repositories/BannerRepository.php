@@ -9,6 +9,7 @@ use Marvel\Database\Models\Banner;
 use Marvel\Traits\MediaManager;
 use Illuminate\Http\Request;
 
+use const Dom\NOT_FOUND_ERR;
 
 class BannerRepository extends BaseRepository
 {
@@ -24,13 +25,13 @@ class BannerRepository extends BaseRepository
     {
         $limit = request()->limit ?? 15;
         $active = request()->active ?? false;
-        $banners = Banner::with('products')->when($active, fn($query) => $query->active())->paginate($limit);
+        $banners = Banner::with('products')->when($active, fn($query) => $query->active())->ordered()->paginate($limit);
         return $banners;
     }
 
     public function createBanner(Request $request)
     {
-        try{
+        try {
 
             DB::beginTransaction();
             $banner = $this->create($request->except('image'));
@@ -41,15 +42,15 @@ class BannerRepository extends BaseRepository
             }
             DB::commit();
             return $banner;
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
         }
     }
 
-    public function updateBanner(Request $request , $id)
+    public function updateBanner(Request $request, $id)
     {
-         try{
+        try {
             DB::beginTransaction();
             $banner = $this->find($id);
             $banner->update($request->except('image'));
@@ -60,8 +61,29 @@ class BannerRepository extends BaseRepository
             }
             DB::commit();
             return $banner;
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
+            throw new HttpException(500, $e->getMessage());
+        }
+    }
+
+
+    public function changeStatus($id)
+    {
+        try {
+            $banner = $this->find($id);
+            $banner->update(['is_active' => !$banner->is_active]);
+            return $banner;
+        } catch (\Exception $e) {
+            throw new HttpException(400, NOT_FOUND);
+        }
+    }
+
+    public function reorder(array $banners)
+    {
+        try {
+            $this->setNewOrder($banners);
+        } catch (\Exception $e) {
             throw new HttpException(500, $e->getMessage());
         }
     }
