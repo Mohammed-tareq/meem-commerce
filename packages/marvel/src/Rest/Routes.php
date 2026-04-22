@@ -430,6 +430,8 @@ Route::group(
         Route::apiResource('sliders', SliderController::class);
         Route::post('banner/change-status', [BannerController::class,'changeStatus']);
         Route::post('banner/reorder', [BannerController::class,'reorder']);
+        Route::post('slider/change-status', [SliderController::class,'changeStatus']);
+        Route::post('sliders/reorder', [SliderController::class,'reorder']);
 
         // Route::get('shop-notification/{id}', [ShopNotificationController::class, 'show']);
         // Route::put('shop-notification/{id}', [ShopNotificationController::class, 'update']);

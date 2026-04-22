@@ -5,7 +5,6 @@ namespace Marvel\Database\Repositories;
 
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Marvel\Database\Models\Banner;
 use Marvel\Traits\MediaManager;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Slider;
@@ -24,13 +23,13 @@ class SliderRepository extends BaseRepository
     {
         $limit = request()->limit ?? 15;
         $active = request()->active ?? false;
-        $sliders = Slider::when($active, fn($query) => $query->active())->paginate($limit);
+        $sliders = Slider::when($active, fn($query) => $query->active())->ordered()->paginate($limit);
         return $sliders;
     }
 
-    public function createSlider(Request $request) 
+    public function createSlider(Request $request)
     {
-        try{
+        try {
 
             DB::beginTransaction();
             $slider = $this->create($request->except('image'));
@@ -49,19 +48,19 @@ class SliderRepository extends BaseRepository
 
             DB::commit();
             return $slider;
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
         }
     }
 
-    public function updateSlider(Request $request , $id)
+    public function updateSlider(Request $request, $id)
     {
-         try{
+        try {
             DB::beginTransaction();
             $slider = $this->find($id);
             $slider->update($request->except('image'));
-             if ($request->has('image')) {
+            if ($request->has('image')) {
                 if ($request->type === "slider") {
                     if (!$this->updateSingleImage($request, 'image', $slider, 'slider-image', 'sliders')) {
                         throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
@@ -74,8 +73,29 @@ class SliderRepository extends BaseRepository
             }
             DB::commit();
             return $slider;
-        }catch(\Exception $e){
+        } catch (\Exception $e) {
             DB::rollBack();
+            throw new HttpException(500, $e->getMessage());
+        }
+    }
+
+    public function changeStatus($id)
+    {
+        try {
+            $slider = $this->find($id);
+            $slider->update(['is_active' => !$slider->is_active]);
+            return $slider;
+        } catch (\Exception $e) {
+            throw new HttpException(400, NOT_FOUND);
+        }
+    }
+
+    public function reorder(array $sliders)
+    {
+        try {
+            $this->setNewOrder($sliders);
+            
+        } catch (\Exception $e) {
             throw new HttpException(500, $e->getMessage());
         }
     }
