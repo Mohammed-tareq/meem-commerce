@@ -179,8 +179,7 @@ class CreateMarvelTables extends Migration
 
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('first_name');
-            $table->string('last_name');
+            $table->string('name');
             $table->string('user_phone');
             $table->string('user_email');
             $table->string('address');
@@ -194,6 +193,7 @@ class CreateMarvelTables extends Migration
 
             $table->string('coupon')->nullable();
             $table->decimal('coupon_discount', 10, 3)->nullable();
+            $table->string('coupon_discount_type')->nullable();
 
             $table->enum('status', ['pending', 'completed', 'delivered', 'cancelled'])->default('pending');
             $table->timestamps();

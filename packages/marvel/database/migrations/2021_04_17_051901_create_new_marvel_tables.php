@@ -137,8 +137,8 @@ class CreateNewMarvelTables extends Migration
         Schema::table('orders', function (Blueprint $table) {
             $table->unsignedBigInteger('shop_id')->nullable();
             $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->foreign('parent_id')->references('id')->on('orders')->onDelete('cascade');
+            // $table->unsignedBigInteger('parent_id')->nullable();
+            // $table->foreign('parent_id')->references('id')->on('orders')->onDelete('cascade');
         });
 
         Schema::table('users', function (Blueprint $table) {
