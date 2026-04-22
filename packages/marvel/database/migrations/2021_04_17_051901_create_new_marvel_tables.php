@@ -52,10 +52,10 @@ class CreateNewMarvelTables extends Migration
         //     $table->json('video')->nullable();
         // });
 
-        Schema::table('order_product', function (Blueprint $table) {
-            $table->unsignedBigInteger('variation_option_id')->nullable();
-            $table->foreign('variation_option_id')->references('id')->on('variation_options');
-        });
+        // Schema::table('order_product', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('variation_option_id')->nullable();
+        //     $table->foreign('variation_option_id')->references('id')->on('variation_options');
+        // });
 
         Schema::create('shops', function (Blueprint $table) {
             $table->id();
@@ -137,8 +137,8 @@ class CreateNewMarvelTables extends Migration
         Schema::table('orders', function (Blueprint $table) {
             $table->unsignedBigInteger('shop_id')->nullable();
             $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
-            $table->unsignedBigInteger('parent_id')->nullable();
-            $table->foreign('parent_id')->references('id')->on('orders')->onDelete('cascade');
+            // $table->unsignedBigInteger('parent_id')->nullable();
+            // $table->foreign('parent_id')->references('id')->on('orders')->onDelete('cascade');
         });
 
         Schema::table('users', function (Blueprint $table) {

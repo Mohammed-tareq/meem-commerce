@@ -11,11 +11,11 @@ class AddColumnToOrderTable extends Migration
      */
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->decimal('cancelled_tax')->default(0);
-            $table->decimal('cancelled_delivery_fee')->default(0);
-            $table->longText('note')->nullable();
-        });
+        // Schema::table('orders', function (Blueprint $table) {
+        //     $table->decimal('cancelled_tax')->default(0);
+        //     $table->decimal('cancelled_delivery_fee')->default(0);
+        //     $table->longText('note')->nullable();
+        // });
     }
 
     /**

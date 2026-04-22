@@ -24,9 +24,9 @@ class AddColumnsToTable extends Migration
             $table->unsignedBigInteger('variation_option_id')->nullable();
             $table->foreign('variation_option_id')->references('id')->on('variation_options')->onDelete('cascade');
         });
-        Schema::table('orders', function (Blueprint $table) {
-            $table->decimal('cancelled_amount')->default(0);
-        });
+        // Schema::table('orders', function (Blueprint $table) {
+        //     $table->decimal('cancelled_amount')->default(0);
+        // });
     }
 
     /**

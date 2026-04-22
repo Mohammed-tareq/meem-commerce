@@ -13,24 +13,23 @@ use Marvel\Traits\TranslationTrait;
 class Order extends Model
 {
     use SoftDeletes;
-    use TranslationTrait;
 
 
     protected $table = 'orders';
 
     public $guarded = [];
 
-    protected $casts = [
-        'shipping_address'    => 'json',
-        'billing_address'     => 'json',
-        'payment_intent_info' => 'json',
-    ];
+    // protected $casts = [
+    //     'shipping_address'    => 'json',
+    //     'billing_address'     => 'json',
+    //     'payment_intent_info' => 'json',
+    // ];
 
-    protected $hidden = [
-        //        'created_at',
-        'updated_at',
-        'deleted_at'
-    ];
+    // protected $hidden = [
+    //     //        'created_at',
+    //     'updated_at',
+    //     'deleted_at'
+    // ];
 
     protected static function boot()
     {
@@ -41,86 +40,101 @@ class Order extends Model
         });
     }
 
-    protected $with = ['customer', 'products.variation_options'];
+    // protected $with = ['customer', 'products.variation_options'];
 
     /**
      * @return belongsToMany
      */
-    public function products(): belongsToMany
-    {
-        return $this->belongsToMany(Product::class)
-            ->withPivot('order_quantity', 'unit_price', 'subtotal', 'variation_option_id')
-            ->withTimestamps();
-    }
+    // public function products(): belongsToMany
+    // {
+    //     return $this->belongsToMany(Product::class)
+    //         ->withPivot('order_quantity', 'unit_price', 'subtotal', 'variation_option_id')
+    //         ->withTimestamps();
+    // }
 
     /**
      * @return belongsTo
      */
-    public function coupon(): belongsTo
+    // public function coupon(): belongsTo
+    // {
+    //     return $this->belongsTo(Coupon::class, 'coupon_id');
+    // }
+
+    // /**
+    //  * @return belongsTo
+    //  */
+    // public function customer(): belongsTo
+    // {
+    //     return $this->belongsTo(User::class, 'customer_id');
+    // }
+
+    // /**
+    //  * @return BelongsTo
+    //  */
+    // public function shop(): BelongsTo
+    // {
+    //     return $this->belongsTo(Shop::class, 'shop_id');
+    // }
+
+    // /**
+    //  * @return HasMany
+    //  */
+    // public function children()
+    // {
+    //     return $this->hasMany('Marvel\Database\Models\Order', 'parent_id', 'id');
+    // }
+
+    // /**
+    //  * @return HasOne
+    //  */
+    // public function parent_order()
+    // {
+    //     return $this->hasOne('Marvel\Database\Models\Order', 'id', 'parent_id');
+    // }
+
+    // /**
+    //  * @return HasOne
+    //  */
+    // public function refund()
+    // {
+    //     return $this->hasOne(Refund::class, 'order_id');
+    // }
+    // /**
+    //  * @return HasOne
+    //  */
+    // public function wallet_point()
+    // {
+    //     return $this->hasOne(OrderWalletPoint::class, 'order_id');
+    // }
+
+    // /**
+    //  * @return HasMany
+    //  */
+    // public function payment_intent()
+    // {
+    //     return $this->hasMany(PaymentIntent::class);
+    // }
+
+    // /**
+    //  * @return HasMany
+    //  */
+    // public function reviews(): HasMany
+    // {
+    //     return $this->hasMany(Review::class);
+    // }
+
+    public function orderItems(): HasMany
     {
-        return $this->belongsTo(Coupon::class, 'coupon_id');
+        return $this->hasMany(OrderProduct::class);
     }
 
-    /**
-     * @return belongsTo
-     */
-    public function customer(): belongsTo
+    public function transactions(): HasMany
     {
-        return $this->belongsTo(User::class, 'customer_id');
+        return $this->hasMany(Transaction::class);
     }
 
-    /**
-     * @return BelongsTo
-     */
     public function shop(): BelongsTo
     {
-        return $this->belongsTo(Shop::class, 'shop_id');
-    }
-
-    /**
-     * @return HasMany
-     */
-    public function children()
-    {
-        return $this->hasMany('Marvel\Database\Models\Order', 'parent_id', 'id');
-    }
-
-    /**
-     * @return HasOne
-     */
-    public function parent_order()
-    {
-        return $this->hasOne('Marvel\Database\Models\Order', 'id', 'parent_id');
-    }
-
-    /**
-     * @return HasOne
-     */
-    public function refund()
-    {
-        return $this->hasOne(Refund::class, 'order_id');
-    }
-    /**
-     * @return HasOne
-     */
-    public function wallet_point()
-    {
-        return $this->hasOne(OrderWalletPoint::class, 'order_id');
-    }
-
-    /**
-     * @return HasMany
-     */
-    public function payment_intent()
-    {
-        return $this->hasMany(PaymentIntent::class);
-    }
-    
-    /**
-     * @return HasMany
-     */
-    public function reviews(): HasMany
-    {
-        return $this->hasMany(Review::class);
+        return $this->belongsTo(Shop::class);
     }
 }

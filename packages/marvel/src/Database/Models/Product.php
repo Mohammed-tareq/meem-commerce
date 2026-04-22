@@ -455,14 +455,14 @@ class Product extends Model implements HasMedia
     /**
      * @return int|mixed
      */
-    public function getSoldAttribute()
-    {
-        return DB::table('order_product')
-            ->join('orders', 'orders.id', '=', 'order_product.order_id')
-            ->where('order_product.product_id', '=', $this->id)
-            ->where('orders.parent_id', '=', null)
-            ->sum('order_quantity');
-    }
+    // public function getSoldAttribute()
+    // {
+    //     return DB::table('order_product')
+    //         ->join('orders', 'orders.id', '=', 'order_product.order_id')
+    //         ->where('order_product.product_id', '=', $this->id)
+    //         ->where('orders.parent_id', '=', null)
+    //         ->sum('order_quantity');
+    // }
 
     /**
      * @return BelongsToMany
