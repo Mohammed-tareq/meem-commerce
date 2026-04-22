@@ -52,10 +52,10 @@ class CreateNewMarvelTables extends Migration
         //     $table->json('video')->nullable();
         // });
 
-        Schema::table('order_product', function (Blueprint $table) {
-            $table->unsignedBigInteger('variation_option_id')->nullable();
-            $table->foreign('variation_option_id')->references('id')->on('variation_options');
-        });
+        // Schema::table('order_product', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('variation_option_id')->nullable();
+        //     $table->foreign('variation_option_id')->references('id')->on('variation_options');
+        // });
 
         Schema::create('shops', function (Blueprint $table) {
             $table->id();

@@ -391,7 +391,7 @@ class CreateMarvelTables extends Migration
         Schema::dropIfExists('types');
         Schema::dropIfExists('products');
         Schema::dropIfExists('orders');
-        Schema::dropIfExists('order_product');
+        Schema::dropIfExists('order_products');
         Schema::dropIfExists('categories');
         Schema::dropIfExists('category_product');
         Schema::dropIfExists('attributes');
