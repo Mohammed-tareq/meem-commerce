@@ -66,8 +66,18 @@ fi
 
 wait_for_database
 
-log "Running database migrations..."
-php artisan migrate --force --no-interaction
+if [ "${RUN_FRESH_MIGRATIONS:-false}" = "true" ]; then
+    if [ "${ALLOW_DESTRUCTIVE_MIGRATION_RESET:-false}" != "true" ]; then
+        log "ERROR: RUN_FRESH_MIGRATIONS=true requires ALLOW_DESTRUCTIVE_MIGRATION_RESET=true."
+        exit 1
+    fi
+
+    log "RUN_FRESH_MIGRATIONS=true, running destructive fresh migrations..."
+    php artisan migrate:fresh --force --no-interaction
+else
+    log "Running database migrations..."
+    php artisan migrate --force --no-interaction
+fi
 
 if [ "${RUN_SEED:-false}" = "true" ]; then
     log "RUN_SEED=true, running database seeder..."

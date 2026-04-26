@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Marvel\Database\Models\Category;
 
 class CategorySeeder extends Seeder
 {
@@ -14,19 +15,23 @@ class CategorySeeder extends Seeder
         $categoryImagesCount = $categoryImages->count();
 
         for ($i = 1; $i <= 50; $i++) {
-            $category = \Marvel\Database\Models\Category::create([
-                'name' => [
-                    'ar' => "ÙƒØ§ØªÙŠØ¬ÙˆØ±ÙŠ $i",
-                    'en' => "Category $i",
-                ],
-                'slug' => Str::slug("category-$i"),
-                'details' => [
-                    'ar' => "ØªÙØ§ØµÙŠÙ„ Ø§Ù„ØªØµÙ†ÙŠÙ Ø±Ù‚Ù… $i",
-                    'en' => "Details of category number $i",
-                ],
-            ]);
+            $slug = Str::slug("category-$i");
 
-            if ($categoryImagesCount > 0) {
+            $category = Category::updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'name' => [
+                        'ar' => "ßÇÊíÌæÑí $i",
+                        'en' => "Category $i",
+                    ],
+                    'details' => [
+                        'ar' => "ÊÝÇÕíá ÇáÊÕäíÝ ÑÞã $i",
+                        'en' => "Details of category number $i",
+                    ],
+                ]
+            );
+
+            if ($categoryImagesCount > 0 && ! $category->hasMedia('categories')) {
                 $image = $categoryImages[($i - 1) % $categoryImagesCount];
                 $category
                     ->addMedia($image->getPathname())
@@ -35,7 +40,7 @@ class CategorySeeder extends Seeder
                     ->toMediaCollection('categories', 'categories');
             }
 
-            $category->shops()->attach([1, 2]);
+            $category->shops()->syncWithoutDetaching([1, 2]);
         }
     }
 }
