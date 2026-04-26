@@ -310,47 +310,26 @@ class PermissionSeeder extends Seeder
             ]);
         }
 
-        $roleSuperAdmin = Role::firstOrCreate([
-            'name' => 'super_admin',
-            'display_name' =>[
-                'en' => 'Super Admin',
-                'ar' => 'مدير_النظام',
-            ],
-            'guard_name' => 'api',
-        ]);
-        $roleOwner = Role::firstOrCreate([
-            'name'=> 'owner',
-            'display_name' =>[
-                'en' => 'Owner',
-                'ar' => 'مالك',
-            ],
-            'guard_name' => 'api',
-        ]);
-        $roleStaff = Role::firstOrCreate([
-            'name'=> 'staff',
-            'display_name' =>[
-                'en' => 'Staff',
-                'ar' => 'موظف',
-            ],
-            'guard_name' => 'api',
-        ]);
-        $roleCustomer = Role::firstOrCreate([
-            'name'=> 'customer',
-            'display_name' =>[
-                'en' => 'Customer',
-                'ar' => 'عميل',
-            ],
-            'guard_name' => 'api',
-        ]);
-        $roleEditor = Role::firstOrCreate([
-            'name'=> 'editor',
-            'display_name' =>[
-                'en' => 'Editor',
-                'ar' => 'محرر',
-            ],
-            'guard_name' => 'api',
-        ]);
-
+        $roleSuperAdmin = Role::firstOrCreate(
+            ['name' => 'super_admin', 'guard_name' => 'api'],
+            ['display_name' => 'Super Admin']
+        );
+        $roleOwner = Role::firstOrCreate(
+            ['name' => 'owner', 'guard_name' => 'api'],
+            ['display_name' => 'Owner']
+        );
+        $roleStaff = Role::firstOrCreate(
+            ['name' => 'staff', 'guard_name' => 'api'],
+            ['display_name' => 'Staff']
+        );
+        $roleCustomer = Role::firstOrCreate(
+            ['name' => 'customer', 'guard_name' => 'api'],
+            ['display_name' => 'Customer']
+        );
+        $roleEditor = Role::firstOrCreate(
+            ['name' => 'editor', 'guard_name' => 'api'],
+            ['display_name' => 'Editor']
+        );
         $roleSuperAdmin->syncPermissions($permissionsData);
         $roleOwner->syncPermissions($onwnerPermission);
         $roleStaff->syncPermissions($staffAndOnwner);
@@ -362,3 +341,4 @@ class PermissionSeeder extends Seeder
     }
 
 }
+
