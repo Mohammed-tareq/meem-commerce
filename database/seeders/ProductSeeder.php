@@ -80,6 +80,46 @@ class ProductSeeder extends Seeder
                         ->usingFileName(Str::uuid() . '.' . $image->getExtension())
                         ->toMediaCollection('products', 'products');
                 }
+                if ($productImagesCount > 0) {
+                    $image = $productImages[($i - 1) % $productImagesCount];
+                    $product
+                        ->addMedia($image->getPathname())
+                        ->preservingOriginal()
+                        ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                        ->toMediaCollection('products', 'products');
+                }
+                if ($productImagesCount > 0) {
+                    $image = $productImages[($i - 1) % $productImagesCount];
+                    $product
+                        ->addMedia($image->getPathname())
+                        ->preservingOriginal()
+                        ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                        ->toMediaCollection('products', 'products');
+                }
+                if ($productImagesCount > 0) {
+                    $image = $productImages[($i - 1) % $productImagesCount];
+                    $product
+                        ->addMedia($image->getPathname())
+                        ->preservingOriginal()
+                        ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                        ->toMediaCollection('products', 'products');
+                }
+                if ($productImagesCount > 0) {
+                    $image = $productImages[($i - 1) % $productImagesCount];
+                    $product
+                        ->addMedia($image->getPathname())
+                        ->preservingOriginal()
+                        ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                        ->toMediaCollection('products', 'products');
+                }
+                if ($productImagesCount > 0) {
+                    $image = $productImages[($i - 1) % $productImagesCount];
+                    $product
+                        ->addMedia($image->getPathname())
+                        ->preservingOriginal()
+                        ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                        ->toMediaCollection('products', 'products');
+                }
             }
 
             $this->command->info('✅ ProductSeeder completed successfully! Created 10 products.');
