@@ -122,16 +122,17 @@ RUN mkdir -p storage/framework/cache/data \
 # Copy and configure entrypoint and release scripts
 COPY docker-entrypoint.sh /usr/local/bin/
 COPY release.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/release.sh
+RUN sed -i 's/\r$//' /usr/local/bin/docker-entrypoint.sh /usr/local/bin/release.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh /usr/local/bin/release.sh
 
 # Switch to non-root user for security
 USER www
 
 # Health check endpoint
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD curl -f http://localhost:${PORT:-8080}/api || exit 1
+    CMD curl -f http://localhost:${PORT:-8080}/ || exit 1
 
-# Expose port (Render will set PORT env var)
+# Expose port (Railway will set PORT env var)
 EXPOSE 8080
 
 # Start via entrypoint
