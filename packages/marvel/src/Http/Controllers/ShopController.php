@@ -113,7 +113,7 @@ class ShopController extends CoreController
 
     public function fetchShops(Request $request)
     {
-        return $this->repository->withCount(['orders', 'products']);
+        return $this->repository->withCount(['products']);
         // ->where('id', '!=', null)
         // ->with(['owner.profile', 'ownership_history']);
     }

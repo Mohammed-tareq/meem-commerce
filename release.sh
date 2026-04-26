@@ -1,64 +1,87 @@
 #!/bin/sh
 set -e
 
-# =============================================================================
-# Railway Release Command Script
-# This runs BEFORE the main container starts (separate from healthcheck)
-# =============================================================================
+APP_DIR="/var/www/html"
 
-echo "🚀 Running Railway Release Command..."
-echo "   Working directory: $(pwd)"
+log() {
+    echo "$1"
+}
 
-cd /var/www/html
+normalize_railway_database_env() {
+    if [ -z "${DB_CONNECTION:-}" ]; then
+        export DB_CONNECTION="mysql"
+    fi
 
-# =============================================================================
-# 1. Validate APP_KEY is set
-# =============================================================================
-if [ -z "${APP_KEY}" ]; then
-    echo "❌ ERROR: APP_KEY environment variable is not set!"
+    if [ "${DB_CONNECTION:-}" = "mysql" ] && [ -n "${MYSQLHOST:-}" ]; then
+        export DB_HOST="${DB_HOST:-$MYSQLHOST}"
+        export DB_PORT="${DB_PORT:-${MYSQLPORT:-3306}}"
+        export DB_DATABASE="${DB_DATABASE:-${MYSQLDATABASE:-}}"
+        export DB_USERNAME="${DB_USERNAME:-${MYSQLUSER:-}}"
+        export DB_PASSWORD="${DB_PASSWORD:-${MYSQLPASSWORD:-}}"
+    fi
+}
+
+wait_for_database() {
+    max_attempts="${DB_WAIT_MAX_ATTEMPTS:-30}"
+    sleep_seconds="${DB_WAIT_SLEEP_SECONDS:-2}"
+    attempt=1
+
+    while [ "$attempt" -le "$max_attempts" ]; do
+        if php -r '
+            $host = getenv("DB_HOST") ?: "127.0.0.1";
+            $port = getenv("DB_PORT") ?: "3306";
+            $db = getenv("DB_DATABASE") ?: "";
+            $user = getenv("DB_USERNAME") ?: "";
+            $pass = getenv("DB_PASSWORD") ?: "";
+            $dsn = sprintf("mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4", $host, $port, $db);
+
+            new PDO($dsn, $user, $pass, [PDO::ATTR_TIMEOUT => 5]);
+        ' >/dev/null 2>&1; then
+            return 0
+        fi
+
+        log "Database not reachable yet (attempt ${attempt}/${max_attempts}). Retrying in ${sleep_seconds}s..."
+        sleep "$sleep_seconds"
+        attempt=$((attempt + 1))
+    done
+
+    log "ERROR: Database connection failed after ${max_attempts} attempts."
+    return 1
+}
+
+log "Running Railway pre-deploy tasks..."
+cd "$APP_DIR"
+
+normalize_railway_database_env
+
+if [ "${RUN_MIGRATIONS:-true}" != "true" ]; then
+    log "RUN_MIGRATIONS is not true, skipping migrations."
+    exit 0
+fi
+
+if [ -z "${APP_KEY:-}" ]; then
+    log "ERROR: APP_KEY environment variable is not set."
     exit 1
 fi
 
-# =============================================================================
-# 2. Run migrations (if enabled)
-# =============================================================================
-echo ""
-echo "=========================================="
-echo "        MIGRATION CHECK"
-echo "=========================================="
-echo "RUN_MIGRATIONS = '${RUN_MIGRATIONS}'"
-echo ""
+wait_for_database
 
-if [ "${RUN_MIGRATIONS}" = "true" ]; then
-    echo "🔄 Running database migrations..."
-    echo "   DB_HOST: ${DB_HOST}"
-    echo "   DB_PORT: ${DB_PORT}"
-    echo "   DB_DATABASE: ${DB_DATABASE}"
-    echo ""
-    
-    # Run migrations with fresh (drops all tables first)
-    echo "🚀 Executing: php artisan migrate:fresh --force"
-    if php artisan migrate:fresh --force; then
-        echo "✅ Migrations completed successfully!"
-        
-        # Run seeding if enabled
-        if [ "${RUN_SEED}" = "true" ]; then
-            echo ""
-            echo "🌱 Running Marvel seed..."
-            if php artisan marvel:seed; then
-                echo "✅ Seeding completed successfully!"
-            else
-                echo "❌ Seeding failed! Error code: $?"
-                echo "   You may need to run 'php artisan marvel:seed' manually"
-            fi
-        fi
-    else
-        echo "❌ Migration failed! Error code: $?"
+if [ "${RUN_FRESH_MIGRATIONS:-false}" = "true" ]; then
+    if [ "${ALLOW_DESTRUCTIVE_MIGRATION_RESET:-false}" != "true" ]; then
+        log "ERROR: RUN_FRESH_MIGRATIONS=true requires ALLOW_DESTRUCTIVE_MIGRATION_RESET=true."
         exit 1
     fi
+
+    log "RUN_FRESH_MIGRATIONS=true, running destructive fresh migrations..."
+    php artisan migrate:fresh --force --no-interaction
 else
-    echo "⏭️  Skipping migrations (RUN_MIGRATIONS is not 'true')"
+    log "Running database migrations..."
+    php artisan migrate --force --no-interaction
 fi
 
-echo ""
-echo "✅ Release command completed!"
+if [ "${RUN_SEED:-false}" = "true" ]; then
+    log "RUN_SEED=true, running database seeder..."
+    php artisan db:seed --force --no-interaction
+fi
+
+log "Pre-deploy tasks completed successfully."

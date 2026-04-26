@@ -3,22 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\DB;
-use Database\Seeders\MeemProductSeeder;
 use Illuminate\Support\Facades\Hash;
-use Marvel\Database\Models\Attribute;
-use Marvel\Database\Models\AttributeValue;
-use Marvel\Database\Models\Product;
 use Marvel\Database\Models\User;
-use Marvel\Database\Models\Category;
-use Marvel\Database\Models\Type;
-use Marvel\Database\Models\Order;
-use Marvel\Database\Models\OrderStatus;
-use Marvel\Database\Models\Coupon;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
-use Marvel\Enums\Permission as UserPermission;
-
 
 class DatabaseSeeder extends Seeder
 {
@@ -29,16 +15,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        // run your app seeder
+        $seedDemoData = filter_var(
+            env('SEED_DEMO_DATA', app()->environment('local')),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        // Keep permission roles and default admin user in sync across environments.
         $this->call([
             PermissionSeeder::class,
-            ShopSeeder::class,
             SettingSeeder::class,
-            CategorySeeder::class,
-            AttributeSeeder::class,
-            BannerSeeder::class,
         ]);
-        //
+
         $user = User::firstOrCreate([
             'email' => 'admin@demo.com',
         ], [
@@ -51,7 +38,16 @@ class DatabaseSeeder extends Seeder
 
         $user->assignRole("super_admin");
 
+        if (! $seedDemoData) {
+            $this->command?->info('SEED_DEMO_DATA=false, skipping demo content seeders.');
+            return;
+        }
+
         $this->call([
+            ShopSeeder::class,
+            CategorySeeder::class,
+            AttributeSeeder::class,
+            BannerSeeder::class,
             FaqSeeder::class,
             FlashSaleSeeder::class,
             ProductSeeder::class,

@@ -53,17 +53,21 @@ class SettingSeeder extends Seeder
             $logoImage = $settingImages[0];
             $faviconImage = $settingImages[$settingImagesCount > 1 ? 1 : 0];
 
-            $setting
-                ->addMedia($logoImage->getPathname())
-                ->preservingOriginal()
-                ->usingFileName(Str::uuid() . '.' . $logoImage->getExtension())
-                ->toMediaCollection('logo', 'settings');
+            if (! $setting->hasMedia('logo')) {
+                $setting
+                    ->addMedia($logoImage->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(Str::uuid() . '.' . $logoImage->getExtension())
+                    ->toMediaCollection('logo', 'settings');
+            }
 
-            $setting
-                ->addMedia($faviconImage->getPathname())
-                ->preservingOriginal()
-                ->usingFileName(Str::uuid() . '.' . $faviconImage->getExtension())
-                ->toMediaCollection('favicon', 'settings');
+            if (! $setting->hasMedia('favicon')) {
+                $setting
+                    ->addMedia($faviconImage->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(Str::uuid() . '.' . $faviconImage->getExtension())
+                    ->toMediaCollection('favicon', 'settings');
+            }
         }
     }
 }

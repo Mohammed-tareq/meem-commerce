@@ -596,7 +596,7 @@ class UserController extends CoreController
             Log::info('Register: Starting registration', ['email' => $request->email]);
 
             // ALWAYS customer only
-            $role = Role::CUSTOMER;
+            // $role = Role::CUSTOMER;
 
             $user = $this->repository->create([
                 'name' => $request->first_name . ' ' . $request->last_name,
@@ -608,11 +608,11 @@ class UserController extends CoreController
             Log::info('Register: User created', ['user_id' => $user->id]);
 
             // assign ONLY customer
-            $user->assignRole($role);
+            // $user->assignRole($role);
 
-            Log::info('Register: Role & Permission assigned');
+            // Log::info('Register: Role & Permission assigned');
 
-            $user->load('roles');
+            // $user->load('roles');
 
             // $this->giveSignupPointsToCustomer($user->id);
 
@@ -622,15 +622,12 @@ class UserController extends CoreController
 
             $data = [
                 "token" => $token,
-                "permissions" => $user->getAllPermissions()->pluck('name'),
-                "role" => $user->getRoleNames()->first()
+                // "permissions" => $user->getAllPermissions()->pluck('name'),
+                // "role" => $user->getRoleNames()->first()
             ];
-            return $this->apiResponse("User registered successfully", 200, true, $data);
+            return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true, $data);
         } catch (\Exception $e) {
-            Log::error('Register: Failed', [
-                'error' => $e->getMessage(),
-            ]);
-            throw $e;
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
