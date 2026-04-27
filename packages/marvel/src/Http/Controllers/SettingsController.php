@@ -25,7 +25,7 @@ class SettingsController extends CoreController
     public function __construct(SettingsRepository $repository)
     {
         $this->repository = $repository;
-        $this->middleware("permission:" . Permission::VIEW_SETTINGS, ["only" => ["index", "show"]]);
+        // $this->middleware("permission:" . Permission::VIEW_SETTINGS, ["only" => ["index", "show"]]);
         $this->middleware("permission:" . Permission::UPDATE_SETTINGS, ["only" => ["store", "update"]]);
     }
 

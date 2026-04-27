@@ -10,6 +10,10 @@ use Marvel\Database\Models\User;
 use Illuminate\Http\JsonResponse;
 use Marvel\Database\Models\Balance;
 use Marvel\Database\Models\Product;
+use Marvel\Database\Models\CategoryShop;
+use Marvel\Database\Models\CouponShop;
+use Marvel\Database\Models\ProductShop;
+use Marvel\Database\Models\FlashSaleShop;
 use Illuminate\Support\Facades\Hash;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\ShopCreateRequest;
@@ -110,11 +114,11 @@ class ShopController extends CoreController
         $shops = $this->fetchShops($request)->paginate($limit)->withQueryString();
         $data = ShopResource::collection($shops)->response()->getData(true);
         return formatAPIResourcePaginate($data);
-    }   
+    }
 
     public function fetchShops(Request $request)
     {
-        return $this->repository->with('categories')->withCount(['products']);
+        return $this->repository->with('categories.products')->withCount(['products']);
         // ->where('id', '!=', null)
         // ->with(['owner.profile', 'ownership_history']);
     }
@@ -151,7 +155,7 @@ class ShopController extends CoreController
             $shop = $this->repository->storeShop($request);
             return $this->apiResponse(SHOP_CREATE_SUCCESSFULLY, 201, true, ShopResource::make($shop));
         } catch (MarvelException $th) {
-            throw new MarvelException(SOMETHING_WENT_WRONG);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -170,7 +174,7 @@ class ShopController extends CoreController
     public function show($slug, Request $request)
     {
         $query = $this->repository
-            ->with(['categories'])
+            ->with(['categories.products'])
             ->withCount('products');
 
         $user = $request->user();
@@ -237,11 +241,10 @@ class ShopController extends CoreController
     public function update(ShopUpdateRequest $request, $id)
     {
         try {
-            $request->merge(['id' => $id]);
             $shop = $this->updateShop($request);
             return $this->apiResponse('Shop updated successfully', 200, true, ShopResource::make($shop));
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -250,8 +253,10 @@ class ShopController extends CoreController
         $id = $request->id;
         if ($request->user()->hasPermissionTo(Permission::UPDATE_SHOP)) {
             return $this->repository->updateShop($request, $id);
+        } else {
+            throw new MarvelException(NOT_AUTHORIZED);
         }
-        throw new AuthorizationException(NOT_AUTHORIZED);
+
     }
 
     public function shopMaintenanceEvent(Request $request)
@@ -282,26 +287,35 @@ class ShopController extends CoreController
     public function destroy(Request $request, $id)
     {
         try {
-            $request->id = $id;
+            $request->merge(['id' => $id]);
+            $request->validate([
+                'id' => 'required|exists:shops,id'
+            ]);
             return $this->deleteShop($request);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            return $this->apiResponse(COULD_NOT_DELETE_THE_RESOURCE, 500, false);
         }
     }
 
     public function deleteShop(Request $request)
     {
         $id = $request->id;
-        if ($request->user()->shops->contains($id) && $request->user()->hasPermissionTo(Permission::DELETE_SHOP)) {
-            try {
-                $shop = $this->repository->findOrFail($id);
-            } catch (\Exception $e) {
-                throw new ModelNotFoundException(NOT_FOUND);
-            }
+
+        try {
+            $shop = $this->repository->findOrFail($id);
+
+            // Soft-delete only the pivot rows belonging to this shop,
+            // NOT the related Category / Product / Coupon / FlashSale models.
+            CategoryShop::where('shop_id', $id)->delete();
+            CouponShop::where('shop_id', $id)->delete();
+            ProductShop::where('shop_id', $id)->delete();
+            FlashSaleShop::where('shop_id', $id)->delete();
+
             $shop->delete();
-            return $this->apiResponse(COULD_NOT_DELETE_THE_RESOURCE, 200, true);
+            return $this->apiResponse('Shop deleted successfully', 200, true);
+        } catch (\Exception $e) {
+            throw new ModelNotFoundException(NOT_FOUND);
         }
-        throw new AuthorizationException(NOT_AUTHORIZED);
     }
 
     /**

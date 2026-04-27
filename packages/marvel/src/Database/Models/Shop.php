@@ -12,13 +12,17 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Marvel\Database\Models\CategoryShop;
+use Marvel\Database\Models\ProductShop;
+use Marvel\Database\Models\CouponShop;
+use Marvel\Database\Models\FlashSaleShop;
 class Shop extends Model implements HasMedia
 {
-    use Sluggable, InteractsWithMedia , HasTranslations, SoftDeletes;
+    use Sluggable, InteractsWithMedia, HasTranslations, SoftDeletes;
 
     protected $table = 'shops';
 
-    public array $translatable = ['name', 'description','address'];
+    public array $translatable = ['name', 'description', 'address'];
     public $guarded = [];
 
     protected $casts = [
@@ -74,13 +78,13 @@ class Shop extends Model implements HasMedia
         return $this->hasMany(Attribute::class, 'shop_id');
     }
 
-    
+
     // public function products(): HasMany
     // {
     //     return $this->hasMany(Product::class, 'shop_id');
     // }
 
-    
+
 
 
     /**
@@ -112,28 +116,40 @@ class Shop extends Model implements HasMedia
      */
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'category_shop','shop_id','category_id');
+        return $this->belongsToMany(Category::class, 'category_shop', 'shop_id', 'category_id')
+                    ->using(CategoryShop::class)
+                    ->withPivot(['deleted_at'])
+                    ->wherePivotNull('deleted_at');
     }
 
     public function products()
     {
-        return $this->belongsToMany(Product::class, 'product_shop');
+        return $this->belongsToMany(Product::class, 'product_shop')
+                    ->using(ProductShop::class)
+                    ->withPivot(['deleted_at'])
+                    ->wherePivotNull('deleted_at');
     }
 
     public function coupons()
     {
-        return $this->belongsToMany(Coupon::class, 'coupon_shop');
+        return $this->belongsToMany(Coupon::class, 'coupon_shop')
+                    ->using(CouponShop::class)
+                    ->withPivot(['deleted_at'])
+                    ->wherePivotNull('deleted_at');
     }
 
     public function flashSales()
     {
-        return $this->belongsToMany(FlashSale::class, 'flash_sale_shop');
+        return $this->belongsToMany(FlashSale::class, 'flash_sale_shop')
+                    ->using(FlashSaleShop::class)
+                    ->withPivot(['deleted_at'])
+                    ->wherePivotNull('deleted_at');
     }
     // public function pormotions()
     // {
-    //     return $this->belongsToMany(Pormotion::class, 'pormotion_shop');
+    //     return $this->belongsToMany(Pormotion::class, 'pormotion_shop')->using(PormotionShop::class);
     // }
-    
+
     /**
      * @return BelongsToMany
      */
