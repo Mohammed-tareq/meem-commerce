@@ -44,7 +44,7 @@ class ShopCreateRequest extends FormRequest
             'address.*.state.*' => ['required', 'string', 'max:2000',"min:3"],
             'address.*.country' => ['required', 'array'],
             'address.*.country.*' => ['required', 'string', 'max:2000',"min:3"],
-            'is_active'              => ['nullable', "in:1,true"],
+            'is_active'              => ['required', 'in:true,false'],
             // 'settings'               => ['nullable', 'array'],
             // 'admin_commission_rate'  => ['nullable', 'numeric'],
             // 'total_earnings'         => ['nullable', 'numeric'],

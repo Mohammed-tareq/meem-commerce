@@ -25,6 +25,7 @@ class CategoryResource extends Resource
             'children'             => $this->whenLoaded('children', ChildrenCategoryResource::collection($this->children)),
             'details'              => $this?->getTranslation('details', app()->getLocale()),
             'shops'                => $this->whenLoaded('shops', ShopResource::collection($this->shops)),
+            'products' => ProductResource::collection($this->whenLoaded('products')),
 
 
             //            'language'             => $this->language,
