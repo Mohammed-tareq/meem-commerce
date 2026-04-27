@@ -38,11 +38,7 @@ class DatabaseSeeder extends Seeder
 
         $user->assignRole("super_admin");
 
-        if (! $seedDemoData) {
-            $this->command?->info('SEED_DEMO_DATA=false, skipping demo content seeders.');
-            return;
-        }
-
+       
         $this->call([
             ShopSeeder::class,
             CategorySeeder::class,

@@ -231,6 +231,7 @@ class PermissionSeeder extends Seeder
             'create-coupon',
             'delete-coupon',
         ];
+        
 
         $editorPermission = [
             // ✏️ Editor
