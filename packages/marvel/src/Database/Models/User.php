@@ -41,6 +41,7 @@ class User extends Authenticatable  implements MustVerifyEmail
         'password',
         'is_active',
         'shop_id',
+        'type',
         // Allow setting verification timestamp explicitly on creation/update
         'email_verified_at',
     ];
