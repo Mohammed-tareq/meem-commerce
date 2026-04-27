@@ -103,6 +103,34 @@ class CreateNewMarvelTables extends Migration
             $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
         });
+        Schema::create('product_shop', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('shop_id');
+            $table->unsignedBigInteger('product_id');
+            $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
+            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+        });
+        Schema::create('coupon_shop', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('shop_id');
+            $table->unsignedBigInteger('coupon_id');
+            $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
+            $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
+        });
+        Schema::create('flash_sale_shop', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('shop_id');
+            $table->unsignedBigInteger('flash_sale_id');
+            $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
+            $table->foreign('flash_sale_id')->references('id')->on('flash_sales')->onDelete('cascade');
+        });
+        // Schema::create('promotion_shop', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->unsignedBigInteger('shop_id');
+        //     $table->unsignedBigInteger('promotion_id');
+        //     $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
+        //     $table->foreign('promotion_id')->references('id')->on('promotions')->onDelete('cascade');
+        // });
 
         Schema::create('withdraws', function (Blueprint $table) {
             $table->id();
