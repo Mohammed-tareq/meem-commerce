@@ -8,13 +8,14 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
 class Shop extends Model implements HasMedia
 {
-    use Sluggable, InteractsWithMedia , HasTranslations;
+    use Sluggable, InteractsWithMedia , HasTranslations , SoftDeletes;
 
     protected $table = 'shops';
 
@@ -110,7 +111,7 @@ class Shop extends Model implements HasMedia
     /**
      * @return BelongsToMany
      */
-    public function categories(): BelongsToMany
+    public function categoriesShop(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'category_shop');
     }

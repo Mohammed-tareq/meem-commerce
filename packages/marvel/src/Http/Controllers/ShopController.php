@@ -86,7 +86,7 @@ class ShopController extends CoreController
     public function __construct(ShopRepository $repository)
     {
         $this->repository = $repository;
-        $this->middleware("permission:" . Permission::VIEW_SHOPS, ["only" => ["index", "show", "fetchFeaturedShops"]]);
+        $this->middleware("permission:" . Permission::VIEW_SHOPS, ["only" => ["index", "show"]]);
         $this->middleware("permission:" . Permission::CREATE_SHOP, ["only" => ["store"]]);
         $this->middleware("permission:" . Permission::UPDATE_SHOP, ["only" => ["update"]]);
         $this->middleware("permission:" . Permission::DELETE_SHOP, ["only" => ["destroy"]]);
@@ -108,12 +108,13 @@ class ShopController extends CoreController
     {
         $limit = $request->limit ? $request->limit : 15;
         $shops = $this->fetchShops($request)->paginate($limit)->withQueryString();
-        return $this->apiResponse('Shops retrieved successfully', 200, true, ShopResource::collection($shops));
-    }
+        $data = ShopResource::collection($shops)->response()->getData(true);
+        return formatAPIResourcePaginate($data);
+    }   
 
     public function fetchShops(Request $request)
     {
-        return $this->repository->withCount(['orders', 'products']);
+        return $this->repository->with('categoriesShop')->withCount(['products']);
         // ->where('id', '!=', null)
         // ->with(['owner.profile', 'ownership_history']);
     }
@@ -147,13 +148,10 @@ class ShopController extends CoreController
     public function store(ShopCreateRequest $request)
     {
         try {
-            if ($request->user()->hasPermissionTo(Permission::CREATE_SHOP)) {
-                $shop = $this->repository->storeShop($request);
-                return $this->apiResponse('Shop created successfully', 201, true,  ShopResource::make($shop));
-            }
-            throw new AuthorizationException(NOT_AUTHORIZED);
+            $shop = $this->repository->storeShop($request);
+            return $this->apiResponse(SHOP_CREATE_SUCCESSFULLY, 201, true, ShopResource::make($shop));
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
 
@@ -172,8 +170,8 @@ class ShopController extends CoreController
     public function show($slug, Request $request)
     {
         $query = $this->repository
-            ->with(['categories', 'owner', 'ownership_history'])
-            ->withCount(['orders', 'products']);
+            ->with(['categories'])
+            ->withCount('products');
 
         $user = $request->user();
 
@@ -191,7 +189,7 @@ class ShopController extends CoreController
         if (!$shop) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
-        return $this->apiResponse('Shop retrieved successfully', 200, true,  ShopResource::make($shop));
+        return $this->apiResponse('Shop retrieved successfully', 200, true, ShopResource::make($shop));
 
         //        $shop = $this->repository
         //            ->with(['categories', 'owner', 'ownership_history'])
@@ -239,8 +237,7 @@ class ShopController extends CoreController
     public function update(ShopUpdateRequest $request, $id)
     {
         try {
-            $request->id = $id;
-
+            $request->merge(['id' => $id]);
             $shop = $this->updateShop($request);
             return $this->apiResponse('Shop updated successfully', 200, true, ShopResource::make($shop));
         } catch (MarvelException $th) {
@@ -648,7 +645,7 @@ class ShopController extends CoreController
             $userShops = User::where('id', $user->id)->with('follow_shops')->get();
             $followedShopIds = $userShops->first()->follow_shops->pluck('id')->all();
 
-            $shop_id = (int)$request->input('shop_id');
+            $shop_id = (int) $request->input('shop_id');
 
             return in_array($shop_id, $followedShopIds);
         } catch (MarvelException $e) {
@@ -690,7 +687,7 @@ class ShopController extends CoreController
             $userShops = User::where('id', $user->id)->with('follow_shops')->get();
             $followedShopIds = $userShops->first()->follow_shops->pluck('id')->all();
 
-            $shop_id = (int)$request->input('shop_id');
+            $shop_id = (int) $request->input('shop_id');
 
             if (in_array($shop_id, $followedShopIds)) {
                 $followedShopIds = array_diff($followedShopIds, [$shop_id]);
