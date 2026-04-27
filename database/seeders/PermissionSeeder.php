@@ -161,6 +161,9 @@ class PermissionSeeder extends Seeder
             "create-slider",
             "update-slider",
             "delete-slider",
+            'assign-role',
+            'remove-role',
+
         ];
 
         $customerPermission = [
@@ -312,39 +315,39 @@ class PermissionSeeder extends Seeder
 
         $roleSuperAdmin = Role::firstOrCreate([
             'name' => 'super_admin',
-            'display_name' =>[
+            'display_name' => [
                 'en' => 'Super Admin',
                 'ar' => 'مدير_النظام',
             ],
             'guard_name' => 'api',
         ]);
         $roleOwner = Role::firstOrCreate([
-            'name'=> 'owner',
-            'display_name' =>[
+            'name' => 'owner',
+            'display_name' => [
                 'en' => 'Owner',
                 'ar' => 'مالك',
             ],
             'guard_name' => 'api',
         ]);
         $roleStaff = Role::firstOrCreate([
-            'name'=> 'staff',
-            'display_name' =>[
+            'name' => 'staff',
+            'display_name' => [
                 'en' => 'Staff',
                 'ar' => 'موظف',
             ],
             'guard_name' => 'api',
         ]);
         $roleCustomer = Role::firstOrCreate([
-            'name'=> 'customer',
-            'display_name' =>[
+            'name' => 'customer',
+            'display_name' => [
                 'en' => 'Customer',
                 'ar' => 'عميل',
             ],
             'guard_name' => 'api',
         ]);
         $roleEditor = Role::firstOrCreate([
-            'name'=> 'editor',
-            'display_name' =>[
+            'name' => 'editor',
+            'display_name' => [
                 'en' => 'Editor',
                 'ar' => 'محرر',
             ],

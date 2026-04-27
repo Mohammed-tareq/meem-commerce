@@ -146,5 +146,7 @@ return [
     'create-banners' => 'إنشاء بانر',
     'update-banners' => 'تعديل بانر',
     'delete-banners' => 'حذف بانر',
+    'assign-role' => 'تعيين دور',
+    'remove-role' => 'إزالة دور',
 
 ];

@@ -12,23 +12,19 @@ use Marvel\Http\Resources\UserResource;
 use Marvel\Traits\ApiResponse;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Marvel\Enums\Permission as PermissionEnum;
 
 class RoleAndPermissionController extends CoreController
 {
     use ApiResponse;
     public function __construct()
     {
-        $this->middleware('permission:create-roles')->only('addRole');
-        $this->middleware('permission:update-roles')->only('updateRole');
-        $this->middleware('permission:delete-roles')->only('destroyRole');
+        $this->middleware('permission:' . PermissionEnum::CREATE_ROLES)->only('addRole');
+        $this->middleware('permission:' . PermissionEnum::UPDATE_ROLES)->only('updateRole');
+        $this->middleware('permission:' . PermissionEnum::DELETE_ROLES)->only('destroyRole');
 
-
-        $this->middleware('permission:assign role')->only('assignRole');
-        $this->middleware('permission:remove role')->only('removeRoleFromUser');
-
-        $this->middleware('permission:give permission')->only('givePermission');
-        $this->middleware('permission:sync permissions')->only('syncPermissions');
-        $this->middleware('permission:remove permission')->only('removePermission');
+        $this->middleware('permission:' . PermissionEnum::ASSIGN_ROLE)->only('assignRole');
+        $this->middleware('permission:' . PermissionEnum::REMOVE_ROLE)->only('removeRoleFromUser');
     }
 
     // ================= ROLES =================

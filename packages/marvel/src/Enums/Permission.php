@@ -46,6 +46,13 @@ final class Permission extends Enum
     public const VIEW_FAQS = 'view-faqs';
     public const VIEW_SETTINGS = 'view-settings';
 
+    public const CREATE_ROLES = 'create-roles';
+    public const UPDATE_ROLES = 'update-roles';
+    public const DELETE_ROLES = 'delete-roles';
+
+    public const ASSIGN_ROLE = 'assign-role';
+    public const REMOVE_ROLE = 'remove-role';
+
     public const VIEW_FlASH_SALE = "view-flash-sale";
     public const CREATE_FlASH_SALE = "create-flash-sale";
     public const UPDATE_FlASH_SALE = "update-flash-sale";
