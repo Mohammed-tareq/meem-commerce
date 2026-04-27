@@ -74,13 +74,14 @@ class Shop extends Model implements HasMedia
         return $this->hasMany(Attribute::class, 'shop_id');
     }
 
-    /**
-     * @return HasMany
-     */
-    public function products(): HasMany
-    {
-        return $this->hasMany(Product::class, 'shop_id');
-    }
+    
+    // public function products(): HasMany
+    // {
+    //     return $this->hasMany(Product::class, 'shop_id');
+    // }
+
+    
+
 
     /**
      * @return HasMany
@@ -114,6 +115,25 @@ class Shop extends Model implements HasMedia
         return $this->belongsToMany(Category::class, 'category_shop');
     }
 
+    public function products()
+    {
+        return $this->belongsToMany(Product::class, 'product_shop');
+    }
+
+    public function coupons()
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_shop');
+    }
+
+    public function flashSales()
+    {
+        return $this->belongsToMany(FlashSale::class, 'flash_sale_shop');
+    }
+    // public function pormotions()
+    // {
+    //     return $this->belongsToMany(Pormotion::class, 'pormotion_shop');
+    // }
+    
     /**
      * @return BelongsToMany
      */
@@ -154,10 +174,10 @@ class Shop extends Model implements HasMedia
      *
      * @return HasMany
      */
-    public function coupons(): HasMany
-    {
-        return $this->HasMany(Coupon::class);
-    }
+    // public function coupons(): HasMany
+    // {
+    //     return $this->HasMany(Coupon::class);
+    // }
     /**
      * ownership transfers
      *
