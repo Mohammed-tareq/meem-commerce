@@ -146,5 +146,6 @@ return [
     'reject-abusive-report' => 'Reject abusive report',
     'assign-role' => 'Assign role',
     'remove-role' => 'Remove role',
+    'edit-user' => 'Edit user',
 
 ];

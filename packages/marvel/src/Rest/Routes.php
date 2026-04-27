@@ -636,6 +636,9 @@ Route::group([
     Route::get('/admin/list', [UserController::class, 'admins']);
     Route::post('admin-users', [UserController::class, 'adminAddUsers']);
     Route::delete('admin-users/{id}', [UserController::class, 'adminDeleteUsers']);
+    Route::post('admin-users/add', [UserController::class,'adminAddUsers']);
+    Route::put('admin-users/update-activation', [UserController::class,'adminUpdateActivationUsers']);
+    Route::delete('admin-users/delete/{id}', [UserController::class,'adminDeleteUsers']);
     Route::get('/customers/list', [UserController::class, 'customers']);
     Route::get('my-staffs', [UserController::class, 'myStaffs']);
     Route::get('all-staffs', [UserController::class, 'allStaffs']);

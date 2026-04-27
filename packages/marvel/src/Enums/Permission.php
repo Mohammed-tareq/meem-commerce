@@ -62,6 +62,7 @@ final class Permission extends Enum
     public const CREATE_BANNERS = "create-banners";
     public const UPDATE_BANNERS = "update-banners";
     public const DELETE_BANNERS = "delete-banners";
+    public const EDIT_USER = 'edit-user';
 
     // 👤 Customer
     public const VIEW_PROFILE = 'view-profile';

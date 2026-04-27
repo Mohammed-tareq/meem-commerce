@@ -163,7 +163,7 @@ class PermissionSeeder extends Seeder
             "delete-slider",
             'assign-role',
             'remove-role',
-
+            'edit-user',
         ];
 
         $customerPermission = [

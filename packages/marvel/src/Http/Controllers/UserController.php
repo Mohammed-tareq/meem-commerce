@@ -79,6 +79,7 @@ class UserController extends CoreController
         $this->middleware("permission:" . Permission::VIEW_USERS, ["only" => ["index", "show", "fetchFeaturedCategories"]]);
         $this->middleware("permission:" . Permission::CREATE_USER, ["only" => ["adminCreateUsers"]]);
         $this->middleware("permission:" . Permission::DELETE_USER, ["only" => ["adminDeleteUsers"]]);
+        $this->middleware("permission:" . Permission::EDIT_USER, ["only" => ["adminUpdateActivationUsers"]]);
     }
 
     /**
@@ -401,11 +402,30 @@ class UserController extends CoreController
     {
         try {
             $user = $this->repository->findOrFail($id);
-            if ($user->hasAnyRole(['customer', 'super_admin']) || $user->id === auth()->id()) {
+            if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
                 return $this->apiResponse("User cannot be deleted", 400, false);
             }
             $user->delete();
             return $this->apiResponse("User deleted successfully", 200, true);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
+    }
+    public function adminUpdateActivationUsers(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+        ]);
+        try {
+            $user = $this->repository->findOrFail($request->user_id);
+            if ($user->hasRole('super_admin')) {
+                if ($user->id === auth()->id() || $user->is_active === false) {
+                    return $this->apiResponse("User cannot be updated", 400, false);
+                }
+            }
+            $user->is_active = !$user->is_active;
+            $user->save();
+            return $this->apiResponse("User updated successfully", 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }

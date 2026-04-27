@@ -148,5 +148,6 @@ return [
     'delete-banners' => 'حذف بانر',
     'assign-role' => 'تعيين دور',
     'remove-role' => 'إزالة دور',
-
+    'edit-user' => 'تعديل مستخدم',
+    
 ];
