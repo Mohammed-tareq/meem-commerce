@@ -153,6 +153,7 @@ class PermissionSeeder extends Seeder
             'create-roles',
             'update-roles',
             'delete-roles',
+            'edit-user',
         ];
 
         $customerPermission = [

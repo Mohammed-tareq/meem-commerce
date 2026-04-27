@@ -32,6 +32,7 @@ class AdminCreateUserRequest extends FormRequest
             "name" => "required",
             "email" => "required|email",
             "password" => "required|min:6|confirmed|max:50",
+            'is_active' => 'boolean',
         ];
     }
 

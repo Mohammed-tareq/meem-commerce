@@ -138,6 +138,7 @@ return [
     'create-roles' => 'إنشاء أدوار',
     'update-roles' => 'تعديل أدوار',
     'delete-roles' => 'حذف أدوار',
+    'edit-user' => 'تعديل مستخدم',
     
 
 ];
