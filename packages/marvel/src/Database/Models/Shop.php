@@ -18,7 +18,7 @@ use Marvel\Database\Models\CouponShop;
 use Marvel\Database\Models\FlashSaleShop;
 class Shop extends Model implements HasMedia
 {
-    use Sluggable, InteractsWithMedia, HasTranslations, SoftDeletes;
+    use Sluggable, InteractsWithMedia, HasTranslations;
 
     protected $table = 'shops';
 

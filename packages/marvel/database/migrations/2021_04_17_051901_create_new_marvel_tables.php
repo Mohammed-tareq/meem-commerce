@@ -70,7 +70,7 @@ class CreateNewMarvelTables extends Migration
             $table->json('address')->nullable();
             $table->json('settings')->nullable();
             $table->timestamps();
-            $table->softDeletes();
+            // $table->softDeletes();
         });
         Schema::create('balances', function (Blueprint $table) {
             $table->id();
