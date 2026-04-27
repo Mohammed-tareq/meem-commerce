@@ -11,10 +11,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 class Shop extends Model implements HasMedia
 {
-    use Sluggable, InteractsWithMedia , HasTranslations;
+    use Sluggable, InteractsWithMedia , HasTranslations, SoftDeletes;
 
     protected $table = 'shops';
 

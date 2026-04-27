@@ -7,6 +7,7 @@ use App\Enums\RoleType;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Builder;
@@ -26,6 +27,7 @@ class User extends Authenticatable  implements MustVerifyEmail
     use HasRoles;
     use HasApiTokens;
     use Notifiable;
+    use SoftDeletes;
 
 
     protected $guard_name = 'api';

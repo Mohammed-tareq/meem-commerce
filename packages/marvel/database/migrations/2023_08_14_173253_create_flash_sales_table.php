@@ -28,6 +28,14 @@ return new class extends Migration {
             $table->softDeletes();
             $table->timestamps();
         });
+        Schema::create('flash_sale_shop', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('shop_id');
+            $table->unsignedBigInteger('flash_sale_id');
+            $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
+            $table->foreign('flash_sale_id')->references('id')->on('flash_sales')->onDelete('cascade');
+            $table->softDeletes();
+        });
 
         Schema::create('flash_sale_requests', function (Blueprint $table) {
             $table->id();

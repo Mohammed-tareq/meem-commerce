@@ -411,6 +411,19 @@ class UserController extends CoreController
             throw new MarvelException(NOT_FOUND);
         }
     }
+    public function adminDeleteUsersForever($id)
+    {
+        try {
+            $user = $this->repository->findOrFail($id);
+            if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
+                return $this->apiResponse("User cannot be deleted", 400, false);
+            }
+            $user->forceDelete();
+            return $this->apiResponse("User deleted successfully", 200, true);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
+    }
     public function adminUpdateActivationUsers(Request $request)
     {
         $request->validate([

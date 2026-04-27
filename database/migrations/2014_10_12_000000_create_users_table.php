@@ -21,6 +21,7 @@ class CreateUsersTable extends Migration
             $table->string('password');
             $table->enum('type', ['admin', 'user']);
             $table->rememberToken();
+            $table->softDeletes();
             $table->timestamps();
 
             $table->index('type');
