@@ -24,8 +24,8 @@ class CategoryResource extends Resource
             'products_count'       => $this->whenCounted('products'),
             'children'             => $this->whenLoaded('children', ChildrenCategoryResource::collection($this->children)),
             'details'              => $this?->getTranslation('details', app()->getLocale()),
-            'shops'                => $this->whenLoaded('shops', ShopResource::collection($this->shops)),
-            'products' => ProductResource::collection($this->whenLoaded('products')),
+            'products'                 => $this->whenLoaded('products', ProductResource::collection($this->products)),
+            // 'shops'                => $this->whenLoaded('shops', ShopResource::collection($this->shops)),
 
 
             //            'language'             => $this->language,

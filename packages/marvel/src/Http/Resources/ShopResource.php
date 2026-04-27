@@ -31,7 +31,7 @@ class ShopResource extends Resource
                 ];
             }),
             'created_at' => $this->created_at,
-            'categories' => $this->whenLoaded('categoriesShop', CategoryResource::collection($this->categoriesShop)),
+            'categories' => $this->whenLoaded('categories', CategoryResource::collection($this->categories)),
             // 'owner_id' => $this->owner_id,
             // 'owner' => $this->when($this->needToInclude($request, 'shop.owner'), function () {
             //     return new UserResource($this->owner);
