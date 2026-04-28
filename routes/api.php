@@ -31,7 +31,7 @@ Route::prefix('general')->middleware(['throttle:general'])->group(function () {
     Route::get('categories', [CategoryController::class, 'index']);
     Route::get('coupons', [CouponController::class, 'index']);
     Route::get('search', [SearchController::class, 'index']);
-    Route::get('setting', [SettingController::class, 'index']);
+    Route::get('settings', [SettingController::class, 'index']);
     Route::get('sliders', [SliderController::class, 'index']);
     Route::get('banners', [BannerController::class, 'index']);
     Route::get('faqs', [FAQController::class, 'index']);
