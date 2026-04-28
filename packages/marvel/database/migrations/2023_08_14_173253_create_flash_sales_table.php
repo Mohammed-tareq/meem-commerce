@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->dateTime('start_date')->default(now());
             $table->dateTime('end_date');
-            $table->boolean('sale_status')->default(false);
+            $table->boolean('sale_status')->default(true);
             $table->enum('type', FlashSaleType::getValues())->default(FlashSaleType::PERCENTAGE);
             $table->double('value', 10, 2)->nullable();
             // $table->json('sale_builder')->nullable();
