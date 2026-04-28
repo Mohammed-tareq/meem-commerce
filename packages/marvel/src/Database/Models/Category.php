@@ -32,15 +32,15 @@ class Category extends Model implements HasMedia
      *
      * @return string
      */
-    
+
 
 
     // public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
     // {
     //     return $query->where('language', $model->language);
     // }
-   
-   
+
+
 
     /**
      * Return the sluggable configuration array for this model.
@@ -77,7 +77,7 @@ class Category extends Model implements HasMedia
         return $this->belongsToMany(Product::class, 'category_product');
     }
 
-   
+
     public function children()
     {
         return $this->hasMany('Marvel\Database\Models\Category', 'parent_id', 'id')->with('children')->withCount('products');
@@ -99,7 +99,7 @@ class Category extends Model implements HasMedia
         return $this->belongsTo('Marvel\Database\Models\Category', 'parent_id', 'id');
     }
 
-   
+
     /**
      * @return HasOne
      */
@@ -107,13 +107,13 @@ class Category extends Model implements HasMedia
     // {
     //     return $this->hasOne('Marvel\Database\Models\Category', 'id', 'parent')->with('parentCategory');
     // }
-   
+
     // public function subCategories()
     // {
     //     return $this->hasMany('Marvel\Database\Models\Category', 'parent', 'id')->with('subCategories', 'parent')->withCount('products');
     // }
 
-    
-   
-    
+
+
+
 }

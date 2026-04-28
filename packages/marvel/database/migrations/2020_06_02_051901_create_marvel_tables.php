@@ -98,6 +98,7 @@ class CreateMarvelTables extends Migration
             $table->integer('order');
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(false);
+            $table->softDeletes();
             $table->timestamps();
             // $table->json('image')->nullable();
             // $table->unsignedBigInteger('type_id');
@@ -109,6 +110,8 @@ class CreateMarvelTables extends Migration
             $table->integer('order');
             $table->boolean('is_active')->default(false);
             $table->timestamps();
+            $table->softDeletes();
+
             // $table->json('image')->nullable();
             // $table->unsignedBigInteger('type_id');
             // $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');

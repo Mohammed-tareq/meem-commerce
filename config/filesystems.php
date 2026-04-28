@@ -44,44 +44,37 @@ return [
         'categories' => [
             'driver' => 'local',
             'root' => storage_path('app/public/categories'),
-            'url' => env('APP_URL') . '/storage/categories',
+            'url' => env('APP_URL') . '/public/storage/categories',
             'visibility' => 'public',
         ],
         'shops' => [
             'driver' => 'local',
             'root' => storage_path('app/public/shops'),
-            'url' => env('APP_URL') . '/storage/shops',
+            'url' => env('APP_URL') . '/public/storage/shops',
             'visibility' => 'public',
         ],
-        'products' => [
-            'driver' => 'local',
-            'root' => storage_path('app/public/products'),
-            'url' => env('APP_URL') . '/storage/products',
-            'visibility' => 'public',
-        ],
-
         'settings' => [
             'driver' => 'local',
             'root' => storage_path('app/public/settings'),
-            'url' => env('APP_URL') . '/storage/settings',
+            'url' => env('APP_URL') . '/public/storage/settings',
             'visibility' => 'public',
         ],
         'banners' => [
             'driver' => 'local',
             'root' => storage_path('app/public/banners'),
-            'url' => env('APP_URL') . '/storage/banners',
+            'url' => env('APP_URL') . '/public/storage/banners',
             'visibility' => 'public',
         ],
         'sliders' => [
             'driver' => 'local',
             'root' => storage_path('app/public/sliders'),
-            'url' => env('APP_URL') . '/storage/sliders',
+            'url' => env('APP_URL') . '/public/storage/sliders',
             'visibility' => 'public',
         ],
         'products' => [
             'driver' => 'local',
             'root' => storage_path('app/public/products'),
-            'url' => env('APP_URL') . '/storage/products',
+            'url' => env('APP_URL') . '/public/storage/products',
             'visibility' => 'public',
         ],
         's3' => [

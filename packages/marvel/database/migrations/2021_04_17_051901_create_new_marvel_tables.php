@@ -70,7 +70,7 @@ class CreateNewMarvelTables extends Migration
             $table->json('address')->nullable();
             $table->json('settings')->nullable();
             $table->timestamps();
-            // $table->softDeletes();
+            $table->softDeletes();
         });
         Schema::create('balances', function (Blueprint $table) {
             $table->id();
@@ -89,7 +89,7 @@ class CreateNewMarvelTables extends Migration
             $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
         });
 
-        
+
 
         Schema::create('category_shop', function (Blueprint $table) {
             $table->id();

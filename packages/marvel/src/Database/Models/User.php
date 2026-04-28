@@ -27,7 +27,7 @@ class User extends Authenticatable  implements MustVerifyEmail
     use HasRoles;
     use HasApiTokens;
     use Notifiable;
-    // use SoftDeletes;
+    use SoftDeletes;
 
 
     protected $guard_name = 'api';
