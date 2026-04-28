@@ -35,10 +35,10 @@ class Faqs extends Model
         ];
     }
 
-    public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
-    {
-        return $query->where('language', $model->language);
-    }
+    // public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
+    // {
+    //     return $query->where('language', $model->language);
+    // }
     /**
      * @return BelongsTo
      */
@@ -53,5 +53,10 @@ class Faqs extends Model
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);
+    }
+
+    public function scopeActive (Builder $query): Builder
+    {
+        return $query->where('status', 1);
     }
 }

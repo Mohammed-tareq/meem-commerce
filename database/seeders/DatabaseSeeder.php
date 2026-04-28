@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Marvel\Database\Models\Slider;
 use Marvel\Database\Models\User;
 
 class DatabaseSeeder extends Seeder
@@ -38,12 +39,13 @@ class DatabaseSeeder extends Seeder
 
         $user->assignRole("super_admin");
 
-       
+
         $this->call([
             ShopSeeder::class,
             CategorySeeder::class,
             AttributeSeeder::class,
             BannerSeeder::class,
+            SliderSeeder::class,
             FaqSeeder::class,
             FlashSaleSeeder::class,
             ProductSeeder::class,

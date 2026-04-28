@@ -57,6 +57,12 @@ class Category extends Model implements HasMedia
     }
 
 
+    public  function scopeActive($query)
+    {
+        return $query->where('is_active', 1);
+    }
+
+
     /**
      * @return BelongsTo
      */
@@ -67,7 +73,7 @@ class Category extends Model implements HasMedia
 
     public function shops()
     {
-        return $this->belongsToMany(Shop::class,'category_shop');
+        return $this->belongsToMany(Shop::class, 'category_shop');
     }
     /**
      * @return BelongsToMany
@@ -112,6 +118,7 @@ class Category extends Model implements HasMedia
     // {
     //     return $this->hasMany('Marvel\Database\Models\Category', 'parent', 'id')->with('subCategories', 'parent')->withCount('products');
     // }
+
 
 
 

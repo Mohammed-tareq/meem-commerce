@@ -92,6 +92,17 @@ class Coupon extends Model
             && $this->start_date <= today()
             && $this->end_date >= today();
     }
+    public function scopeValid($query)
+    {
+        return $query
+            ->whereColumn('used', '<', 'limiter')
+            ->whereDate('start_date', '<=', today())
+            ->whereDate('end_date', '>=', today());
+    }
+    public function scopeActive($query)
+    {
+        return $query->where('status', true);
+    }
 
     public function typeByLang()
     {

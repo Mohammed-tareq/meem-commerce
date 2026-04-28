@@ -21,7 +21,7 @@ class FaqResource extends Resource
             'faq_description' => $this->getTranslation('faq_description', app()->getLocale()),
             'faq_type'        => $this->faq_type,
             'issued_by'       => $this->issued_by,
-            "shop"            => $this->whenLoaded('shop',ShopResource::make($this->shop)),
+            // "shop"            => $this->whenLoaded('shop',ShopResource::make($this->shop)),
 //
         ];
     }

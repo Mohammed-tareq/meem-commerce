@@ -2,4 +2,4 @@
 
 namespace App\Services\General;
 
-class FlashSaleService {}
+class HomeService {}

@@ -5,6 +5,8 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Marvel\Database\Models\Banner;
+use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Shop;
 use Marvel\Enums\DiscountType;
@@ -33,7 +35,7 @@ class ProductSeeder extends Seeder
             $productImages = collect(File::files(public_path('images/products')));
             $productImagesCount = $productImages->count();
 
-            $shop = Shop::first();
+            $shop = Shop::inRandomOrder()->first();
             if (! $shop) {
                 $this->command->warn('No shops found. Create a shop first.');
                 return;
@@ -65,7 +67,7 @@ class ProductSeeder extends Seeder
                     'weight' => random_int(100, 5000) . 'g',
                     'has_flash_sale' => $this->randomBool(30),
                     'has_discount' => $this->randomBool(50),
-                    'banner_id' => null,
+                    'banner_id' => Banner::inRandomOrder()->first()->id,
                     'discount_type' => $this->randomElement($discountTypes),
                     'amount' => $this->randomFloat(0, 500),
                     'start_date' => $this->maybeDate(50),
@@ -85,6 +87,7 @@ class ProductSeeder extends Seeder
                             ->toMediaCollection('products', 'products');
                     }
                 }
+                $product->flash_sales()->attach(FlashSale::inRandomOrder()->first()->id);
             }
 
             $this->command->info('ProductSeeder completed successfully. Created 500 products.');

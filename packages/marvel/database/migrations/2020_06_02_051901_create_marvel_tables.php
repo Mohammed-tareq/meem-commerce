@@ -40,7 +40,7 @@ class CreateMarvelTables extends Migration
             //     $table->timestamp('deleted_at')->nullable();
             $table->id();
             $table->string('code')->unique();
-            $table->string('name')->nullable();
+            $table->string('name')->unique();
             $table->decimal('discount', 8, 3)->nullable();
             $table->enum('discount_type', DiscountType::getValues())->nullable();
             $table->date('start_date');
@@ -106,7 +106,8 @@ class CreateMarvelTables extends Migration
         });
         Schema::create('sliders', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['slider', 'image'])->default('slider');
+            // $table->enum('type', ['slider', 'image'])->default('slider');
+            $table->string('title')->nullable();
             $table->integer('order');
             $table->boolean('is_active')->default(false);
             $table->timestamps();
@@ -248,6 +249,7 @@ class CreateMarvelTables extends Migration
             // $table->json('banner_image')->nullable();
             // $table->unsignedBigInteger('type_id');
             //            $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

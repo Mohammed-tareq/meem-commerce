@@ -1,10 +1,16 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\Api\General\BannerController;
 use Illuminate\Support\Facades\Route;
-use Marvel\Enums\Permission;
-use Marvel\Http\Controllers\CartController;
-// use Marvel\Enums\Role;
+use App\Http\Controllers\Api\General\CategoryController;
+use App\Http\Controllers\Api\General\CouponController;
+use App\Http\Controllers\Api\General\FAQController;
+use App\Http\Controllers\Api\General\FlashSaleController;
+use App\Http\Controllers\Api\General\ProductController;
+use App\Http\Controllers\Api\General\SearchController;
+use App\Http\Controllers\Api\General\SettingController;
+use App\Http\Controllers\Api\General\ShopController;
+use App\Http\Controllers\Api\General\SliderController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,28 +23,17 @@ use Marvel\Http\Controllers\CartController;
 |
 */
 
-Route::middleware('auth:api')->get('/user', function (Request $request) {
-    return $request->user();
-});
-Route::middleware('auth:api')->get('/test', function (Request $request) {
-    $role = \Spatie\Permission\Models\Role::where("name", "super_admin")->first();
-    $permission1 = \Spatie\Permission\Models\Permission::create([
-        "name" => "view-slider",
-        "guard_name" => "api",
-    ]);
-    $permission2 = \Spatie\Permission\Models\Permission::create([
-        "name" => "create-slider",
-        "guard_name" => "api",
-    ]);
-    $permission3 = \Spatie\Permission\Models\Permission::create([
-        "name" => "update-slider",
-        "guard_name" => "api",
-    ]);
-    $permission4 = \Spatie\Permission\Models\Permission::create([
-        "name" => "delete-slider",
-        "guard_name" => "api",
-    ]);
-    $role->syncPermissions([$permission1, $permission2, $permission3, $permission4]);
-    return $role;
-});
 
+
+Route::prefix('general')->middleware(['throttle:general'])->group(function () {
+    Route::get('products', [ProductController::class, 'index']);
+    Route::get('shops', [ShopController::class, 'index']);
+    Route::get('categories', [CategoryController::class, 'index']);
+    Route::get('coupons', [CouponController::class, 'index']);
+    Route::get('search', [SearchController::class, 'index']);
+    Route::get('setting', [SettingController::class, 'index']);
+    Route::get('sliders', [SliderController::class, 'index']);
+    Route::get('banners', [BannerController::class, 'index']);
+    Route::get('faqs', [FAQController::class, 'index']);
+    Route::get('flash-sales', [FlashSaleController::class, 'index']);
+});

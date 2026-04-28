@@ -46,6 +46,10 @@ class Shop extends Model implements HasMedia
         ];
     }
 
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
     /**
      * @return HasOne
      */

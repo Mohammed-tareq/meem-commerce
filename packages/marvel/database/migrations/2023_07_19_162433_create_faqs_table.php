@@ -22,7 +22,7 @@ return new class extends Migration
             $table->text('faq_description');
             $table->string('faq_type')->nullable();
             $table->string('issued_by')->nullable();
-            $table->string('language')->nullable();
+            $table->boolean('status')->default(true);
             $table->softDeletes();
             $table->timestamps();
         });
