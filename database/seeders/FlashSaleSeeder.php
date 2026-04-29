@@ -26,7 +26,7 @@ class FlashSaleSeeder extends Seeder
                 'start_date' => now(),
                 'end_date' => now()->addDays(10),
                 'slug' => Str::slug('Fashion Week Sale'),
-                'type' => 'fixed',
+                'type' => 'fixed_rate',
                 'value' => 100.0,
             ],
             [
@@ -44,7 +44,7 @@ class FlashSaleSeeder extends Seeder
                 'start_date' => now()->addDays(5),
                 'end_date' => now()->addDays(12),
                 'slug' => Str::slug('Back to School'),
-                'type' => 'fixed',
+                'type' => 'fixed_rate',
                 'value' => 50.0,
             ],
             [
@@ -71,7 +71,7 @@ class FlashSaleSeeder extends Seeder
                 'start_date' => now()->addDays(40),
                 'end_date' => now()->addDays(50),
                 'slug' => Str::slug('Winter Clearance'),
-                'type' => 'fixed',
+                'type' => 'fixed_rate',
                 'value' => 75.0,
             ],
             [
@@ -98,7 +98,7 @@ class FlashSaleSeeder extends Seeder
                 'start_date' => now()->addDays(90),
                 'end_date' => now()->addDays(100),
                 'slug' => Str::slug('Summer Sale'),
-                'type' => 'fixed',
+                'type' => 'fixed_rate',
                 'value' => 120.0,
             ],
         ];

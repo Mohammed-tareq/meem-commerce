@@ -129,7 +129,7 @@ class CreateMarvelTables extends Migration
             $table->integer('sold_quantity')->default(0);
             $table->boolean('in_stock')->default(true);
             $table->enum('status', ProductStatus::getValues())->default(ProductStatus::DRAFT);
-            // $table->enum('product_type', ProductType::getValues())->default(ProductType::SIMPLE);
+            $table->enum('product_type', ProductType::getValues())->default(ProductType::SIMPLE);
             $table->string('height')->nullable();
             $table->string('width')->nullable();
             $table->string('length')->nullable();
@@ -139,11 +139,12 @@ class CreateMarvelTables extends Migration
             $table->unsignedBigInteger('banner_id')->nullable();
             $table->foreign('banner_id')->references('id')->on('banners')->nullOnDelete();
             $table->enum('discount_type', DiscountType::getValues())->default(DiscountType::PERCENTAGE);
-            $table->double('amount')->default(0);
+            $table->double('discount_amount', 10, 2)->default(0);
+            $table->boolean('discount_status')->nullable();
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
-            $table->double('price_after_discount')->nullable();
-            $table->double('price_after_flash_sale')->nullable();
+            $table->double('price_after_discount', 10, 2)->nullable();
+            $table->double('price_after_flash_sale', 10, 2)->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
@@ -294,13 +295,14 @@ class CreateMarvelTables extends Migration
             $table->timestamps();
         });
 
-        Schema::create('product_varaints', function (Blueprint $table) {
+        Schema::create('product_variants', function (Blueprint $table) {
             $table->id();
-            $table->double('price')->nullable();
-            $table->double('sale_price')->nullable();
+            $table->double('price', 10, 2);
+            $table->double('sale_price', 10, 2)->nullable();
             $table->integer('quantity')->default(0);
             $table->string('height')->nullable();
             $table->string('width')->nullable();
+            $table->string('weight')->nullable();
             $table->string('length')->nullable();
             $table->unsignedBigInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
@@ -312,7 +314,7 @@ class CreateMarvelTables extends Migration
             $table->unsignedBigInteger('attribute_value_id');
             $table->foreign('attribute_value_id')->references('id')->on('attribute_values')->onDelete('cascade');
             $table->unsignedBigInteger('product_variant_id');
-            $table->foreign('product_variant_id')->references('id')->on('product_varaints')->onDelete('cascade');
+            $table->foreign('product_variant_id')->references('id')->on('product_variants')->onDelete('cascade');
             $table->timestamps();
         });
 
@@ -393,8 +395,8 @@ class CreateMarvelTables extends Migration
     public function down()
     {
         Schema::dropIfExists('shipping_classes');
-        Schema::dropIfExists('shipping_classes');
         Schema::dropIfExists('coupons');
+        Schema::dropIfExists('product_variants');
         Schema::dropIfExists('types');
         Schema::dropIfExists('products');
         Schema::dropIfExists('orders');

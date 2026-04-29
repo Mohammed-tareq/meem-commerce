@@ -36,9 +36,18 @@ class DatabaseSeeder extends Seeder
             'shop_id' => null,
             'email_verified_at' => now(),
         ]);
+        $userEdit = User::firstOrCreate([
+            'email' => 'editor@cms.com',
+        ], [
+            'name' => 'Shop Owner',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'shop_id' => null,
+            'email_verified_at' => now(),
+        ]);
 
         $user->assignRole("super_admin");
-
+        $userEdit->assignRole("editor");
 
         $this->call([
             ShopSeeder::class,

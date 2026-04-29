@@ -6,10 +6,10 @@ use Illuminate\Database\Eloquent\Model;
 
 
 
-class ProductVaraint extends Model
+class ProductVariant extends Model
 {
-    protected $table = 'product_varaints';
-    protected $guarded = [];
+    protected $table = 'product_variants';
+    protected $fillable = ['price','sale_price', 'quantity', 'height', 'width', 'length', 'weight','product_id'];
     public function product()
     {
         return $this->belongsTo(Product::class);

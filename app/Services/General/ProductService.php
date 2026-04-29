@@ -27,6 +27,13 @@ class ProductService
         return $query->orderByDesc('id')->paginate($limit);
     }
 
+    public function getBySlug($slug)
+    {
+        return Product::where('slug', $slug)
+            ->with(['shop:id,name', 'categories:id,name'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')->first();
+    }
     public function paginateFlashSales(Request $request)
     {
         $limit = $this->getLimit($request);

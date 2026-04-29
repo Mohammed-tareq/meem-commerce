@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\General\SliderController;
 
 Route::prefix('general')->middleware(['throttle:general'])->group(function () {
     Route::get('products', [ProductController::class, 'index']);
+    Route::get('products/{slug}', [ProductController::class, 'getProductBySlug']);
     Route::get('shops', [ShopController::class, 'index']);
     Route::get('categories', [CategoryController::class, 'index']);
     Route::get('coupons', [CouponController::class, 'index']);

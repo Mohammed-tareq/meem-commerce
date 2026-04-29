@@ -17,7 +17,7 @@ class ProductResource extends Resource
             'price_after_discount'   => $this->price_after_discount,
             'price_after_flash_sale' => $this->price_after_flash_sale,
             'discount_type'          => $this->discount_type,
-            'amount'                 => $this->amount,
+            'discount_amount'        => $this->discount_amount,
             'start_date'             => $this->start_date,
             'end_date'               => $this->end_date,
             'sku'                    => $this->sku,
@@ -42,6 +42,26 @@ class ProductResource extends Resource
                 return [
                     'related_products' => ProductResource::collection($this->related_products),
                 ];
+            }),
+            "variants"                => $this->whenLoaded('variations', function () {
+                return $this->variations->map(function ($variant) {
+                    return [
+                        'id' => $variant->id,
+                        'price' => $variant->price,
+                        'sale_price' => $variant->sale_price,
+                        'quantity' => $variant->quantity,
+                        'height' => $variant->height,
+                        'width' => $variant->width,
+                        'length' => $variant->length,
+                        'weight' => $variant->weight,
+                        'attributes' => $variant->attributeProducts->map(function ($attrProduct) {
+                            return [
+                                'attribute_name' => $attrProduct->attributeValue->attribute->name,
+                                'value' => $attrProduct->attributeValue->value,
+                            ];
+                        }),
+                    ];
+                });
             }),
         ];
     }

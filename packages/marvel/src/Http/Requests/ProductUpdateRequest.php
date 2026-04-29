@@ -31,19 +31,11 @@ class ProductUpdateRequest extends FormRequest
     public function rules()
     {
         $productStatus = [
-            ProductStatus::UNDER_REVIEW,
-            ProductStatus::APPROVED,
-            ProductStatus::REJECTED,
             ProductStatus::PUBLISH,
             ProductStatus::UNPUBLISH,
-            ProductStatus::DRAFT,
         ];
 
-        // $productType = [
-        //     ProductType::SIMPLE,
-        //     ProductType::VARIABLE,
-        // ];
-
+        $productType = ProductType::getValues();
         $discountTypes = DiscountType::getValues();
 
         return [
@@ -51,25 +43,42 @@ class ProductUpdateRequest extends FormRequest
             'name.*'                       => ['sometimes', 'string', 'max:255', UniqueTranslationRule::for('products')->ignore($this->route('product'))],
             'description'                  => ['sometimes', 'array'],
             'description.*'                => ['sometimes', 'string', 'max:10000'],
-            'price'                        => ['sometimes', 'numeric', 'min:0'],
-            // 'product_type'                 => ['sometimes', Rule::in($productType)],
-            'categories'                   => ['sometimes', 'array', 'exists:categories,id'],
-            'quantity'                     => ['sometimes', 'integer', 'min:0'],
-            // 'images'                        => ['sometimes', 'array'],
-            // 'images.*'                      => ['sometimes', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'price'                        => ['sometimes', 'numeric', 'min:0', 'required_if:product_type,' . ProductType::SIMPLE],
+            'product_type'                 => ['sometimes', Rule::in($productType)],
+            'shop_id'                      => ['sometimes', 'exists:shops,id'],
+            'categories'                   => ['sometimes', 'array'],
+            'categories.*'                 => ['integer', 'exists:categories,id'],
+            'quantity'                     => ['sometimes', 'integer', 'min:1'],
+            'images'                       => ['sometimes', 'array'],
+            'images.*'                     => ['sometimes', 'image','mimes:jpeg,png,jpg,gif',"max:2048"],
             'status'                       => ['sometimes', 'string', Rule::in($productStatus)],
-            'height'                       => ['sometimes', 'numeric'],
-            'length'                       => ['sometimes', 'numeric'],
-            'width'                        => ['sometimes', 'numeric'],
-            'weight'                       => ['sometimes', 'numeric'],
-            'in_stock'                     => ["sometimes", 'boolean'],
-            'has_discount'                 => ["sometimes", 'boolean'],
-            'has_flash_sale'               => ["sometimes", 'boolean'],
-            'flash_sale_id'                => ['sometimes', 'exists:flash_sales,id'],
-            'discount_type'                => ['sometimes', Rule::in($discountTypes)],
-            'amount'                       => ['sometimes', 'numeric', 'min:0'],
+            'height'                       => ['nullable', 'numeric'],
+            'length'                       => ['nullable', 'numeric'],
+            'width'                        => ['nullable', 'numeric'],
+            'weight'                       => ['nullable', 'numeric'],
+            'in_stock'                     => ['sometimes', 'in:true,false,1,0'],
+            'has_discount'                 => ['sometimes', 'in:true,false,1,0'],
+            'has_flash_sale'               => ['sometimes', 'in:true,false,1,0'],
+            'flash_sale_id'                => ['required_if:has_flash_sale,1', 'exists:flash_sales,id'],
+            'discount_type'                => ['required_if:has_discount,1', Rule::in($discountTypes)],
+            'discount_amount'              => ['required_if:has_discount,1', 'numeric', 'min:1'],
+            'discount_status'              => ['required_if:has_discount,1', 'in:true,false,1,0'],
             'start_date'                   => ['sometimes', 'date'],
             'end_date'                     => ['sometimes', 'date', 'after_or_equal:start_date'],
+            'banner_id'                    => ['sometimes', 'exists:banners,id'],
+
+            // variants
+            'variants'                     => ['sometimes', 'array'],
+            'variants.*.id'                => ['sometimes', 'exists:product_variants,id'], // مهم علشان نعرف أي Variant يتعدل
+            'variants.*.price'             => ['sometimes', 'numeric', 'min:0'],
+            'variants.*.sale_price'        => ['sometimes', 'numeric', 'min:0'],
+            'variants.*.quantity'          => ['sometimes', 'integer', 'min:0'],
+            'variants.*.weight'            => ['sometimes', 'numeric', 'min:0'],
+            'variants.*.length'            => ['sometimes', 'numeric', 'min:0'],
+            'variants.*.width'             => ['sometimes', 'numeric', 'min:0'],
+            'variants.*.height'            => ['sometimes', 'numeric', 'min:0'],
+            'variants.*.attribute_values'  => ['sometimes', 'array'],
+            'variants.*.attribute_values.*'=> ['integer', 'exists:attribute_values,id'],
         ];
     }
 

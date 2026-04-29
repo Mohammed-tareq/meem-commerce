@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Marvel\Enums\FlashSaleType;
+use Carbon\Carbon;
 
 class FlashSale extends Model
 {
@@ -18,7 +19,7 @@ class FlashSale extends Model
 
     protected $table = 'flash_sales';
 
-    public array $translatable = ["title","description"];
+    public array $translatable = ["title", "description"];
     public $guarded = [];
 
     // protected $casts = [
@@ -65,34 +66,66 @@ class FlashSale extends Model
             'ar' => [
                 'fixed_rate' => 'خصم من السعر بالقيمة',
                 'percentage' => 'خصم بالنسبة المئوية',
-                'free_shipping'=> 'شحن مجاني',
+                'free_shipping' => 'شحن مجاني',
 
             ],
             'en' => [
                 'fixed_rate' => 'Fixed discount',
                 'percentage' => 'Percentage discount',
-                'free_shipping'=> 'Free shipping',
+                'free_shipping' => 'Free shipping',
             ],
         ];
 
         $locale = app()->getLocale();
-            return $map[$locale][$this->type] ?? $this->type;
+        return $map[$locale][$this->type] ?? $this->type;
     }
 
     public function calcPrice($price)
     {
-        if($this->type == FlashSaleType::PERCENTAGE)
-        {
+        if ($this->type == FlashSaleType::PERCENTAGE) {
             return max(0, $price - ($price * ($this->value / 100)));
-        }
-        elseif($this->type == FlashSaleType::FIXED_RATE)
-        {
+        } elseif ($this->type == FlashSaleType::FIXED_RATE) {
             return max(0, $price - $this->value);
-        }
-        else
-        {
+        } else {
             return $price;
         }
     }
 
+    /**
+     * Determine if this flash sale is currently valid (active).
+     *
+     * @return bool
+     */
+    public function isValid(): bool
+    {
+        if (!$this->sale_status) {
+            return false;
+        }
+
+        $now = Carbon::now();
+
+        if ($this->start_date && $now->lt(Carbon::parse($this->start_date))) {
+            return false;
+        }
+
+        if ($this->end_date && $now->gt(Carbon::parse($this->end_date))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Scope a query to only active flash sales.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeActive(Builder $query)
+    {
+        $now = Carbon::now();
+        return $query->where('sale_status', true)
+            ->whereDate('start_date', '<=', $now)
+            ->whereDate('end_date', '>=', $now);
+    }
 }

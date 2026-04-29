@@ -32,6 +32,7 @@ class Product extends Model implements HasMedia
         'slug',
         'description',
         'price',
+        'product_type',
         'sku',
         'quantity',
         'sold_quantity',
@@ -45,11 +46,13 @@ class Product extends Model implements HasMedia
         'has_discount',
         'banner_id',
         'discount_type',
-        'amount',
+        'discount_amount',
+        'discount_status',
         'start_date',
         'end_date',
         'price_after_discount',
         'price_after_flash_sale',
+        'discount_status',
         'shop_id'
     ];
     public array $translatable = ['name', 'description'];
@@ -72,6 +75,12 @@ class Product extends Model implements HasMedia
         // 'blocked_dates',
         // 'translated_languages',
         // 'sold'
+    ];
+
+    protected $casts = [
+        'discount_status' => 'boolean',
+        'has_discount' => 'boolean',
+        'has_flash_sale' => 'boolean',
     ];
 
     /**
@@ -98,6 +107,63 @@ class Product extends Model implements HasMedia
                 $product->sku = 'PRD-' . Str::uuid();
             }
         });
+
+        // Recalculate stored prices whenever a product is retrieved from DB
+        static::retrieved(function ($product) {
+            try {
+                $discountPrice = $product->getDiscountedPrice();
+
+                // Determine base price for flash sale calculation
+                // $baseForFlash = $discountPrice ?? $product->price;
+
+                $flashPrice = $product->getFlashSalePrice($product->price);
+
+                $needsUpdate = false;
+                $updateData = [];
+
+                // Normalize null vs numeric
+                $currentDiscount = $product->price_after_discount;
+                $currentFlash = $product->price_after_flash_sale;
+
+                if ($discountPrice === null) {
+                    if ($currentDiscount !== null) {
+                        $updateData['price_after_discount'] = null;
+                        $needsUpdate = true;
+                    }
+                } else {
+                    // store numeric value
+                    if ($currentDiscount != $discountPrice) {
+                        $updateData['price_after_discount'] = $discountPrice;
+                        $needsUpdate = true;
+                    }
+                }
+
+                if ($flashPrice === null) {
+                    if ($currentFlash !== null) {
+                        $updateData['price_after_flash_sale'] = null;
+                        $needsUpdate = true;
+                    }
+                } else {
+                    if ($currentFlash != $flashPrice) {
+                        $updateData['price_after_flash_sale'] = $flashPrice;
+                        $needsUpdate = true;
+                    }
+                }
+
+                if ($needsUpdate && !empty($updateData)) {
+                    // Use DB query to avoid triggering model events again
+                    DB::table('products')->where('id', $product->id)->update($updateData);
+                    // Also sync current model instance so callers see updated values
+                    // foreach ($updateData as $k => $v) {
+                    //     $product->$k = $v;
+                    // }
+                    $product->refresh();
+                }
+            } catch (\Exception $e) {
+                // Fail silently to avoid breaking retrieval flow
+                logger('Product price recalculation failed: ' . $e->getMessage());
+            }
+        });
     }
 
     // public function discount(): HasOne
@@ -116,6 +182,13 @@ class Product extends Model implements HasMedia
 
     public function isDiscountActive(): bool
     {
+        // If discount_status is explicitly set, allow it to override auto behavior.
+        if (!is_null($this->discount_status)) {
+            if ($this->discount_status === false) {
+                return false;
+            }
+        }
+
         if (!$this->has_discount) {
             return false;
         }
@@ -236,14 +309,14 @@ class Product extends Model implements HasMedia
         }
 
         $discountType = $this->discount_type ?? DiscountType::PERCENTAGE;
-        $amount = $this->amount ?? 0;
+        $discount_amount = $this->discount_amount ?? 0;
 
         if ($discountType === DiscountType::PERCENTAGE) {
-            return max(0, $price - ($price * ($amount / 100)));
+            return max(0, $price - ($price * ($discount_amount / 100)));
         }
 
         if ($discountType === DiscountType::FIXED_RATE || $discountType === 'fixed') {
-            return max(0, $price - $amount);
+            return max(0, $price - $discount_amount);
         }
 
         return $price;
@@ -347,7 +420,7 @@ class Product extends Model implements HasMedia
      */
     public function variations(): HasMany
     {
-        return $this->hasMany(ProductVaraint::class, 'product_id');
+        return $this->hasMany(ProductVariant::class, 'product_id');
     }
 
     /**

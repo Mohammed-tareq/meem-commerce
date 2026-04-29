@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\General\ProductService;
 use Illuminate\Http\Request;
 use Marvel\Http\Resources\ProductCollection;
+use Marvel\Http\Resources\ProductResource;
 use Marvel\Traits\ApiResponse;
 
 class ProductController extends Controller
@@ -23,5 +24,16 @@ class ProductController extends Controller
         $products =  $this->productService->paginate($request);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, new ProductCollection($products));
+    }
+
+    public function getProductBySlug($slug)
+    {
+        $product = $this->productService->getBySlug($slug);
+
+        if (!$product) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  ProductResource::make($product));
     }
 }

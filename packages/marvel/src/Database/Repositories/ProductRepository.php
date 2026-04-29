@@ -12,10 +12,12 @@ use Illuminate\Http\Request as HttpRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Marvel\Database\Models\AttributeProduct;
 use Marvel\Database\Models\Availability;
 use Marvel\Database\Models\DigitalFile;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
+use Marvel\Database\Models\ProductVariant;
 use Marvel\Database\Models\Resource;
 use Marvel\Database\Models\Type;
 use Marvel\Database\Models\Variation;
@@ -210,26 +212,59 @@ class ProductRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
-            $data = $request->except(['images', 'categories']);
+            $data = $request->except(['images', 'categories', 'variants']);
+            if (isset($request['variants']) && !empty($request['variants'])) {
+                $request['product_type'] = ProductType::VARIABLE;
+            } else {
+                $request['product_type'] = ProductType::SIMPLE;
+            }
+            $variants = $request->input('variants', []);
+
+
             $data['slug'] = $this->makeSlug($request);
             $price = $data['price'] ?? null;
-            $hasDiscount = !empty($data['has_discount']);
+            // If discount_status is explicitly false, treat as no discount; if true/null follow has_discount
+            $hasDiscount = !empty($data['has_discount']) && (($data['discount_status'] ?? null) !== false);
             $discountType = $data['discount_type'] ?? DiscountType::PERCENTAGE;
-            $amount = $data['amount'] ?? 0;
+            $discount_amount = $data['discount_amount'] ?? 0;
 
             $data['price_after_discount'] = $hasDiscount
-                ? $this->calculateDiscountedPrice($price, $discountType, $amount)
+                ? $this->calculateDiscountedPrice($price, $discountType, $discount_amount)
                 : null;
 
             $hasFlashSale = !empty($data['has_flash_sale']);
             $flashSaleId = $data['flash_sale_id'] ?? null;
             $flashSale = $this->resolveFlashSale($flashSaleId, null, $hasFlashSale);
-            $basePriceForFlashSale = $hasDiscount && $data['price_after_discount'] !== null
-                ? $data['price_after_discount']
-                : $price;
-            $data['price_after_flash_sale'] = $this->calculateFlashSalePrice($flashSale, $basePriceForFlashSale);
+            // $basePriceForFlashSale = $hasDiscount && $data['price_after_discount'] !== null
+            //     ? $data['price_after_discount']
+            //     : $price;
+            $data['price_after_flash_sale'] = $this->calculateFlashSalePrice($flashSale, $price);
 
             $product = $this->create($data);
+
+            if (!empty($variants)) {
+                foreach ($variants as $variant) {
+                    $variant['product_id'] = $product->id;
+                    $productVariant = ProductVariant::create($variant);
+                    if (!$productVariant) {
+                        DB::rollBack();
+                        return false;
+                    }
+
+                    if (!empty($variant['attribute_values'])) {
+                        foreach ($variant['attribute_values'] as $attributeValueId) {
+                            $created = AttributeProduct::create([
+                                'product_variant_id' => $productVariant->id,
+                                'attribute_value_id' => $attributeValueId,
+                            ]);
+                            if (!$created) {
+                                DB::rollBack();
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
             if ($request->has('images')) {
                 if (!$this->uploadImages($request, 'images', $product, 'products', 'products')) {
                     throw new HttpException(422, 'Images Products upload failed, please check the file format or size.');
@@ -238,7 +273,7 @@ class ProductRepository extends BaseRepository
 
 
             if (isset($request['categories'])) {
-                $product->categories()->attach($request['categories']);
+                $product->categories()->sync($request['categories']);
             }
 
             if (!empty($data['has_flash_sale']) && $data['has_flash_sale'] === true) {
@@ -249,7 +284,7 @@ class ProductRepository extends BaseRepository
                 }
             }
             DB::commit();
-            return $product;
+            return $product->load('variations');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -499,30 +534,63 @@ class ProductRepository extends BaseRepository
             DB::beginTransaction();
             $product = Product::find($id);
 
-            $data = $request->except(['images', 'categories']);
-
+            $data = $request->except(['images', 'categories', 'variants']);
+            if (isset($request['variants']) && !empty($request['variants'])) {
+                $request['product_type'] = ProductType::VARIABLE;
+            } else {
+                $request['product_type'] = ProductType::SIMPLE;
+            }
             if ($request->has('slug')) {
                 $data['slug'] = $this->makeSlug($request, $product->id);
             }
 
             $price = array_key_exists('price', $data) ? $data['price'] : $product->price;
-            $hasDiscount = array_key_exists('has_discount', $data) ? (bool) $data['has_discount'] : $product->has_discount;
+                        $hasDiscount = !empty($data['has_discount']) && (($data['discount_status'] ?? null) !== false);
+
+            $hasDiscount = array_key_exists('has_discount', $data) && (($data['discount_status'] ?? null) !== false) ? (bool) $data['has_discount'] : $product->has_discount;
             $discountType = $data['discount_type'] ?? $product->discount_type ?? DiscountType::PERCENTAGE;
-            $amount = array_key_exists('amount', $data) ? $data['amount'] : $product->amount;
+            $discount_amount = array_key_exists('discount_amount', $data) ? $data['discount_amount'] : $product->discount_amount;
 
             $data['price_after_discount'] = $hasDiscount
-                ? $this->calculateDiscountedPrice($price, $discountType, $amount)
+                ? $this->calculateDiscountedPrice($price, $discountType, $discount_amount)
                 : null;
 
             $hasFlashSale = array_key_exists('has_flash_sale', $data) ? (bool) $data['has_flash_sale'] : $product->has_flash_sale;
             $flashSaleId = $data['flash_sale_id'] ?? null;
             $flashSale = $this->resolveFlashSale($flashSaleId, $product, $hasFlashSale);
-            $basePriceForFlashSale = $hasDiscount && $data['price_after_discount'] !== null
-                ? $data['price_after_discount']
-                : $price;
-            $data['price_after_flash_sale'] = $this->calculateFlashSalePrice($flashSale, $basePriceForFlashSale);
+            // $basePriceForFlashSale = $hasDiscount && $data['price_after_discount'] !== null
+            //     ? $data['price_after_discount']
+            //     : $price;
+            $data['price_after_flash_sale'] = $this->calculateFlashSalePrice($flashSale, $price);
 
             $product->update($data);
+
+            $variants = $request->input('variants', []);
+            if (!empty($variants)) {
+                ProductVariant::where('product_id', $product->id)->delete();
+
+                foreach ($variants as $variant) {
+                    $variant['product_id'] = $product->id;
+                    $productVariant = ProductVariant::create($variant);
+                    if (!$productVariant) {
+                        DB::rollBack();
+                        return false;
+                    }
+
+                    if (!empty($variant['attribute_values'])) {
+                        foreach ($variant['attribute_values'] as $attributeValueId) {
+                            $created = AttributeProduct::create([
+                                'product_variant_id' => $productVariant->id,
+                                'attribute_value_id' => $attributeValueId,
+                            ]);
+                            if (!$created) {
+                                DB::rollBack();
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
 
             if ($request->has('images')) {
                 if (!$this->updateImages($request, 'images', $product, 'products', 'products')) {
@@ -545,7 +613,7 @@ class ProductRepository extends BaseRepository
             }
             DB::commit();
 
-            return $product->fresh();
+            return $product->load('variations');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -785,6 +853,7 @@ class ProductRepository extends BaseRepository
         if ($price === null) {
             return null;
         }
+        
 
         if ($discountType === DiscountType::PERCENTAGE) {
             return max(0, $price - ($price * ($amount / 100)));
@@ -816,7 +885,7 @@ class ProductRepository extends BaseRepository
 
     private function calculateFlashSalePrice($flashSale, $basePrice)
     {
-        if (!$flashSale || $basePrice === null) {
+        if (!$flashSale || !$flashSale->isValid() || $basePrice === null) {
             return null;
         }
 

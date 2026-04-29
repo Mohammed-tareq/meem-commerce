@@ -69,7 +69,7 @@ class ProductSeeder extends Seeder
                     'has_discount' => $this->randomBool(50),
                     'banner_id' => Banner::inRandomOrder()->first()->id,
                     'discount_type' => $this->randomElement($discountTypes),
-                    'amount' => $this->randomFloat(0, 500),
+                    'discount_amount' => $this->randomFloat(0, 500),
                     'start_date' => $this->maybeDate(50),
                     'end_date' => $this->maybeDate(50),
                     'price_after_discount' => $this->maybeFloat(50, 20, 1500),
