@@ -149,5 +149,9 @@ return [
     'assign-role' => 'تعيين دور',
     'remove-role' => 'إزالة دور',
     'edit-user' => 'تعديل مستخدم',
-    
+    'view-promotion'=> 'عرض العروض الترويجية',
+    'update-promotion'=> 'تعديل العروض الترويجية',
+    'delete-promotion'=> 'حذف العروض الترويجية',
+    'create-promotion'=> 'إنشاء عروض ترويجية',
+
 ];

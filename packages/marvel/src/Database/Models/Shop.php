@@ -16,9 +16,10 @@ use Marvel\Database\Models\CategoryShop;
 use Marvel\Database\Models\ProductShop;
 use Marvel\Database\Models\CouponShop;
 use Marvel\Database\Models\FlashSaleShop;
+
 class Shop extends Model implements HasMedia
 {
-    use Sluggable, InteractsWithMedia, HasTranslations , SoftDeletes;
+    use Sluggable, InteractsWithMedia, HasTranslations, SoftDeletes;
 
     protected $table = 'shops';
 
@@ -121,38 +122,41 @@ class Shop extends Model implements HasMedia
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'category_shop', 'shop_id', 'category_id')
-                    ->using(CategoryShop::class)
-                    ->withPivot(['deleted_at'])
-                    ->wherePivotNull('deleted_at');
+            ->using(CategoryShop::class)
+            ->withPivot(['deleted_at'])
+            ->wherePivotNull('deleted_at');
     }
 
     public function products()
     {
         return $this->belongsToMany(Product::class, 'product_shop')
-                    ->using(ProductShop::class)
-                    ->withPivot(['deleted_at'])
-                    ->wherePivotNull('deleted_at');
+            ->using(ProductShop::class)
+            ->withPivot(['deleted_at'])
+            ->wherePivotNull('deleted_at');
     }
 
     public function coupons()
     {
         return $this->belongsToMany(Coupon::class, 'coupon_shop')
-                    ->using(CouponShop::class)
-                    ->withPivot(['deleted_at'])
-                    ->wherePivotNull('deleted_at');
+            ->using(CouponShop::class)
+            ->withPivot(['deleted_at'])
+            ->wherePivotNull('deleted_at');
     }
 
     public function flashSales()
     {
         return $this->belongsToMany(FlashSale::class, 'flash_sale_shop')
-                    ->using(FlashSaleShop::class)
-                    ->withPivot(['deleted_at'])
-                    ->wherePivotNull('deleted_at');
+            ->using(FlashSaleShop::class)
+            ->withPivot(['deleted_at'])
+            ->wherePivotNull('deleted_at');
     }
-    // public function pormotions()
-    // {
-    //     return $this->belongsToMany(Pormotion::class, 'pormotion_shop')->using(PormotionShop::class);
-    // }
+    public function promotions()
+    {
+        return $this->belongsToMany(Promotion::class, 'promotion_shop')
+            ->using(PromotionShop::class)
+            ->withPivot(['deleted_at'])
+            ->wherePivotNull('deleted_at');
+    }
 
     /**
      * @return BelongsToMany

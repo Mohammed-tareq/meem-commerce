@@ -95,6 +95,7 @@ class Coupon extends Model
     public function scopeValid($query)
     {
         return $query
+            ->where('status', true)
             ->whereColumn('used', '<', 'limiter')
             ->whereDate('start_date', '<=', today())
             ->whereDate('end_date', '>=', today());

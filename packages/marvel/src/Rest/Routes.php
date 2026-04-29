@@ -34,6 +34,7 @@ use Marvel\Http\Controllers\OrderController;
 use Marvel\Http\Controllers\PaymentIntentController;
 use Marvel\Http\Controllers\PaymentMethodController;
 use Marvel\Http\Controllers\ProductController;
+use Marvel\Http\Controllers\PromotionController;
 use Marvel\Http\Controllers\QuestionController;
 use Marvel\Http\Controllers\RefundController;
 use Marvel\Http\Controllers\ResourceController;
@@ -191,6 +192,9 @@ Route::apiResource('meem-products', MeemProductController::class, [
 Route::get('featured-categories', 'Marvel\Http\Controllers\CategoryController@fetchFeaturedCategories');
 
 Route::apiResource('coupons', CouponController::class, [
+    'only' => ['index', 'show'],
+]);
+Route::apiResource('promotions', PromotionController::class, [
     'only' => ['index', 'show'],
 ]);
 Route::post('coupons/verify', [CouponController::class, 'verify']);
@@ -428,10 +432,10 @@ Route::group(
         ]);
         Route::apiResource('banners', BannerController::class);
         Route::apiResource('sliders', SliderController::class);
-        Route::post('banner/change-status', [BannerController::class,'changeStatus']);
-        Route::post('banner/reorder', [BannerController::class,'reorder']);
-        Route::post('slider/change-status', [SliderController::class,'changeStatus']);
-        Route::post('sliders/reorder', [SliderController::class,'reorder']);
+        Route::post('banner/change-status', [BannerController::class, 'changeStatus']);
+        Route::post('banner/reorder', [BannerController::class, 'reorder']);
+        Route::post('slider/change-status', [SliderController::class, 'changeStatus']);
+        Route::post('sliders/reorder', [SliderController::class, 'reorder']);
 
         // Route::get('shop-notification/{id}', [ShopNotificationController::class, 'show']);
         // Route::put('shop-notification/{id}', [ShopNotificationController::class, 'update']);
@@ -470,6 +474,9 @@ Route::group(
         Route::apiResource('coupons', CouponController::class, [
             'only' => ['update'],
         ]);
+        Route::apiResource('promotions', PromotionController::class, [
+            'only' => ['update'],
+        ]);
         // Route::get('products-requested-for-flash-sale-by-vendor', [FlashSaleVendorRequestController::class, 'getProductsByFlashSaleVendorRequest']);
         Route::get('requested-products-for-flash-sale', [FlashSaleVendorRequestController::class, 'getRequestedProductsForFlashSale']);
         Route::apiResource('vendor-requests-for-flash-sale', FlashSaleVendorRequestController::class, [
@@ -489,6 +496,8 @@ Route::group(
     ['middleware' => ['role:' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
     function () {
         Route::apiResource('shops', ShopController::class);
+        Route::post('shops/{id}/relations/{relation}', [ShopController::class, 'syncShopRelation']);
+
         // Route::get('analytics', [AnalyticsController::class, 'analytics']);
         Route::apiResource('withdraws', WithdrawController::class, [
             'only' => ['store', 'index', 'show'],
@@ -522,6 +531,9 @@ Route::group(
         ]);
 
         Route::apiResource('coupons', CouponController::class, [
+            'only' => ['store', 'destroy'],
+        ]);
+        Route::apiResource('promotions', PromotionController::class, [
             'only' => ['store', 'destroy'],
         ]);
 
@@ -636,10 +648,10 @@ Route::group([
     Route::get('/admin/list', [UserController::class, 'admins']);
     Route::post('admin-users', [UserController::class, 'adminAddUsers']);
     Route::delete('admin-users/{id}', [UserController::class, 'adminDeleteUsers']);
-    Route::post('admin-users/add', [UserController::class,'adminAddUsers']);
-    Route::put('admin-users/update-activation', [UserController::class,'adminUpdateActivationUsers']);
-    Route::delete('admin-users/delete/{id}', [UserController::class,'adminDeleteUsers']);
-    Route::delete('admin-users/delete-forever/{id}', [UserController::class,'adminDeleteUsersForever']);
+    Route::post('admin-users/add', [UserController::class, 'adminAddUsers']);
+    Route::put('admin-users/update-activation', [UserController::class, 'adminUpdateActivationUsers']);
+    Route::delete('admin-users/delete/{id}', [UserController::class, 'adminDeleteUsers']);
+    Route::delete('admin-users/delete-forever/{id}', [UserController::class, 'adminDeleteUsersForever']);
     Route::get('/customers/list', [UserController::class, 'customers']);
     Route::get('my-staffs', [UserController::class, 'myStaffs']);
     Route::get('all-staffs', [UserController::class, 'allStaffs']);

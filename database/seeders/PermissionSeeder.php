@@ -44,6 +44,10 @@ class PermissionSeeder extends Seeder
             'update-flash-sale',
             'delete-flash-sale',
             "view-attributes",
+            "view-promotion",
+            "delete-promotion",
+            "create-promotion",
+            "update-promotion",
 
             // 👤 Customer
             'view-profile',
@@ -231,7 +235,7 @@ class PermissionSeeder extends Seeder
             'create-coupon',
             'delete-coupon',
         ];
-        
+
 
         $editorPermission = [
             // ✏️ Editor
@@ -386,4 +390,3 @@ class PermissionSeeder extends Seeder
     }
 
 }
-

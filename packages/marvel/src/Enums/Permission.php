@@ -125,6 +125,11 @@ final class Permission extends Enum
     public const CREATE_COUPON = 'create-coupon';
     public const DELETE_COUPON = 'delete-coupon';
 
+    public const VIEW_PROMOTION = 'view-promotion';
+    public const UPDATE_PROMOTION = 'update-promotion';
+    public const DELETE_PROMOTION = 'delete-promotion';
+    public const CREATE_PROMOTION = 'create-promotion';
+
     // ✏️ Editor
     public const CREATE_CMS_PAGE = 'create-cms-page';
     public const UPDATE_CMS_PAGE = 'update-cms-page';

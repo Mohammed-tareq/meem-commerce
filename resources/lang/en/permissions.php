@@ -35,7 +35,7 @@ return [
     'create-banners' => 'Create banner',
     'update-banners' => 'Update banner',
     'delete-banners' => 'Delete banner',
-    'view-slider'=> 'View slider',
+    'view-slider' => 'View slider',
     'create-slider' => 'Create slider',
     'update-slider' => 'Update slider',
     'delete-slider' => 'Delete slider',
@@ -147,5 +147,9 @@ return [
     'assign-role' => 'Assign role',
     'remove-role' => 'Remove role',
     'edit-user' => 'Edit user',
+    'view-promotion' => 'View promotion',
+    'update-promotion' => 'Update promotion',
+    'delete-promotion' => 'Delete promotion',
+    'create-promotion' => 'Create promotion',
 
 ];

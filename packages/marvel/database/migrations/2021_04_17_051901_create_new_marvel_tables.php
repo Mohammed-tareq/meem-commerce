@@ -97,8 +97,8 @@ class CreateNewMarvelTables extends Migration
             $table->unsignedBigInteger('category_id');
             $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
             $table->foreign('category_id')->references('id')->on('categories')->onDelete('cascade');
+            $table->unique(['shop_id', 'category_id']);
             $table->softDeletes();
-
         });
         Schema::create('product_shop', function (Blueprint $table) {
             $table->id();
@@ -106,8 +106,8 @@ class CreateNewMarvelTables extends Migration
             $table->unsignedBigInteger('product_id');
             $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->unique(['shop_id', 'product_id']);
             $table->softDeletes();
-
         });
         Schema::create('coupon_shop', function (Blueprint $table) {
             $table->id();
@@ -115,17 +115,19 @@ class CreateNewMarvelTables extends Migration
             $table->unsignedBigInteger('coupon_id');
             $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
             $table->foreign('coupon_id')->references('id')->on('coupons')->onDelete('cascade');
+            $table->unique(['shop_id', 'coupon_id']);
             $table->softDeletes();
-
         });
 
-        // Schema::create('promotion_shop', function (Blueprint $table) {
-        //     $table->id();
-        //     $table->unsignedBigInteger('shop_id');
-        //     $table->unsignedBigInteger('promotion_id');
-        //     $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
-        //     $table->foreign('promotion_id')->references('id')->on('promotions')->onDelete('cascade');
-        // });
+        Schema::create('promotion_shop', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('shop_id');
+            $table->unsignedBigInteger('promotion_id');
+            $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
+            $table->foreign('promotion_id')->references('id')->on('promotions')->onDelete('cascade');
+             $table->unique(['shop_id', 'promotion_id']);
+            $table->softDeletes();
+        });
 
         Schema::create('withdraws', function (Blueprint $table) {
             $table->id();

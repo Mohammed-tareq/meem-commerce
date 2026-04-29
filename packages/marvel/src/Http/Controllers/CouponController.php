@@ -46,6 +46,10 @@ class CouponController extends CoreController
     public function __construct(CouponRepository $repository)
     {
         $this->repository = $repository;
+        $this->middleware("permission:" . Permission::VIEW_COUPONS, ["only" => ["index", "show"]]);
+        $this->middleware("permission:" . Permission::CREATE_COUPON, ["only" => ["store"]]);
+        $this->middleware("permission:" . Permission::UPDATE_COUPON, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::DELETE_COUPON, ["only" => ["destroy"]]);
     }
 
     /**
@@ -304,7 +308,6 @@ class CouponController extends CoreController
         } catch (MarvelException $e) {
             return $this->apiResponse(COULD_NOT_ADD_COUPON_TO_CART, 400, false);
         }
-
     }
 
     /**

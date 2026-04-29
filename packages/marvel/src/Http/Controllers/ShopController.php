@@ -92,7 +92,12 @@ class ShopController extends CoreController
         $this->repository = $repository;
         $this->middleware("permission:" . Permission::VIEW_SHOPS, ["only" => ["index", "show"]]);
         $this->middleware("permission:" . Permission::CREATE_SHOP, ["only" => ["store"]]);
-        $this->middleware("permission:" . Permission::UPDATE_SHOP, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::UPDATE_SHOP, ["only" => [
+            "update",
+            "syncShopRelation",
+            "attachShopRelation",
+            "detachShopRelation",
+        ]]);
         $this->middleware("permission:" . Permission::DELETE_SHOP, ["only" => ["destroy"]]);
     }
 
@@ -256,7 +261,57 @@ class ShopController extends CoreController
         } else {
             throw new MarvelException(NOT_AUTHORIZED);
         }
+    }
 
+    public function syncShopRelation(Request $request, $id, $relation)
+    {
+        return $this->applyRelationAction($request, $id, $relation);
+    }
+
+
+    private function applyRelationAction(Request $request, $id, $relation)
+    {
+        $relationMap = [
+            'categories' => 'categories',
+            'products' => 'products',
+            'coupons' => 'coupons',
+            'promotions' => 'promotions',
+            'flashSales' => 'flashSales',
+        ];
+        $relationTableMap = [
+            'categories' => 'categories',
+            'products' => 'products',
+            'coupons' => 'coupons',
+            'promotions' => 'promotions',
+            'flashSales' => 'flash_sales',
+        ];
+
+        if (!array_key_exists($relation, $relationMap)) {
+            return $this->apiResponse(ACTION_NOT_VALID, 400, false);
+        }
+
+        $table = $relationTableMap[$relation];
+
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => "integer|exists:${table},id",
+        ]);
+
+
+        $shop = $this->repository->findOrFail($id);
+        $relationName = $relationMap[$relation];
+        $ids = $validated['ids'];
+
+        $shop->{$relationName}()->sync($ids);
+
+
+        $currentIds = $shop->{$relationName}()->pluck($table . '.id');
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            'shop_id' => $shop->id,
+            'relation' => $relation,
+            'ids' => $currentIds,
+        ]);
     }
 
     public function shopMaintenanceEvent(Request $request)
@@ -766,10 +821,10 @@ class ShopController extends CoreController
                 ->where('settings->location->lng', '!=', null)
                 ->select(
                     "shops.*",
-                    DB::raw("6371 * acos(cos(radians(" . $lat . ")) 
-        * cos(radians(json_unquote(json_extract(`shops`.`settings`, '$.\"location\".\"lat\"')))) 
-        * cos(radians(json_unquote(json_extract(`shops`.`settings`, '$.\"location\".\"lng\"'))) - radians(" . $lng . ")) 
-        + sin(radians(" . $lat . ")) 
+                    DB::raw("6371 * acos(cos(radians(" . $lat . "))
+        * cos(radians(json_unquote(json_extract(`shops`.`settings`, '$.\"location\".\"lat\"'))))
+        * cos(radians(json_unquote(json_extract(`shops`.`settings`, '$.\"location\".\"lng\"'))) - radians(" . $lng . "))
+        + sin(radians(" . $lat . "))
         * sin(radians(json_unquote(json_extract(`shops`.`settings`, '$.\"location\".\"lat\"'))))) AS distance")
                 )
                 ->orderBy('distance', 'ASC')
