@@ -501,10 +501,8 @@ class ProductRepository extends BaseRepository
 
             $data = $request->except(['images', 'categories']);
 
-            if ($request->has('slug')) {
                 $data['slug'] = $this->makeSlug($request, $product->id);
-            }
-
+            
             $price = array_key_exists('price', $data) ? $data['price'] : $product->price;
             $hasDiscount = array_key_exists('has_discount', $data) ? (bool) $data['has_discount'] : $product->has_discount;
             $discountType = $data['discount_type'] ?? $product->discount_type ?? DiscountType::PERCENTAGE;

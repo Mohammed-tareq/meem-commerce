@@ -27,6 +27,10 @@ class CategoryService
         return $query->orderByDesc('id')->paginate($limit);
     }
 
+    public function getById($id)
+    {
+        return Category::query()->active()->with('products')->withCount('products')->where('id', $id)->firstOrFail();
+    }
     private function applyTranslatableLike(Builder $query, string $field, string $term, string $locale): void
     {
         $query->where(function ($q) use ($field, $term, $locale) {

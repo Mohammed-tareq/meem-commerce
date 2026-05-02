@@ -129,9 +129,8 @@ class ShopRepository extends BaseRepository
             //     }
             // }
             $data = $request->only($this->dataArray);
-            if (!empty($request->slug) && $request->slug != $shop['slug']) {
-                $data['slug'] = $this->makeSlug($request);
-            }
+            $data['slug'] = $this->makeSlug($request);
+           
             $shop->update($data);
             if ($request->hasFile('logo')) {
                 if (!$this->updateSingleImage($request, 'logo', $shop, 'shop-logo', 'shops')) {
@@ -152,7 +151,7 @@ class ShopRepository extends BaseRepository
 
 
             // 1. Shop owner maintenance time set korbe.. then ekta event fire hobe jeita shop notifications (email, sms) send korbe super-admin, vendor, staff, oi specific shop er front-end a ekta notice dekhabe with countdown.
-            // 2. countDown start er 1 day ago or 6 hours ago ekta final email/sms dibe vendor, staff k 
+            // 2. countDown start er 1 day ago or 6 hours ago ekta final email/sms dibe vendor, staff k
             // 3. countdown onStart a sob product private
             // 4. countdown onComplete a sob product public
 

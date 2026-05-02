@@ -11,7 +11,7 @@ class ShopService
     public function paginate(Request $request)
     {
         $limit = $this->getLimit($request);
-        $term = trim((string) $request->get('search', ''));
+        $term = trim((string) strip_tags($request->get('search', '')));
 
         $query = Shop::query()->active()->with(['categories'])->withCount('products');
 
@@ -27,11 +27,20 @@ class ShopService
         return $query->orderByDesc('id')->paginate($limit);
     }
 
+    public function getShopById($id)
+    {
+        return Shop::query()->active()->with([
+            'categories' => function ($query) {
+                $query->withCount('products');
+            }
+        ])->withCount('products')->where('id', $id)->firstOrFail();
+    }
+    
     private function applyTranslatableLike(Builder $query, string $field, string $term, string $locale): void
     {
         $query->where(function ($q) use ($field, $term, $locale) {
-            $q->where($field . '->' . $locale, 'like', "%$term%")
-                ->orWhere($field, 'like', "%$term%");
+            $q->where($field . '->' . $locale, 'like', "$term%")
+                ->orWhere($field, 'like', "$term%");
         });
     }
 
@@ -44,4 +53,6 @@ class ShopService
 
         return min($limit, 100);
     }
+
+
 }

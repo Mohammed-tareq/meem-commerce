@@ -52,7 +52,6 @@ class ProductCreateRequest extends FormRequest
             'name.*'                       => ['required', 'string', 'max:255', UniqueTranslationRule::for('products')],
             'description'                  => ['required', 'array'],
             'description.*'                => ['required', 'string', 'max:10000'],
-            'slug'                         => ['required', 'string', 'max:255', 'unique:products,slug'],
             'price'                        => ['nullable', 'numeric', 'min:0'],
             // 'product_type'                 => ['required', Rule::in($productType)],
             'categories'                   => ['required', 'array', 'exists:categories,id'],

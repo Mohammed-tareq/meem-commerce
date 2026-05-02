@@ -118,13 +118,13 @@ class Shop extends Model implements HasMedia
     /**
      * @return BelongsToMany
      */
-    public function categories(): BelongsToMany
-    {
-        return $this->belongsToMany(Category::class, 'category_shop', 'shop_id', 'category_id')
-                    ->using(CategoryShop::class)
-                    ->withPivot(['deleted_at'])
-                    ->wherePivotNull('deleted_at');
-    }
+        public function categories(): BelongsToMany
+        {
+            return $this->belongsToMany(Category::class, 'category_shop', 'shop_id', 'category_id')
+                        ->using(CategoryShop::class)
+                        ->withPivot(['deleted_at'])
+                        ->wherePivotNull('deleted_at');
+        }
 
     public function products()
     {
