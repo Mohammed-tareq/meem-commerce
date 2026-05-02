@@ -6,15 +6,10 @@ namespace Marvel\Database\Repositories;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
-use Illuminate\Http\Request as HttpRequest;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Marvel\Database\Models\AttributeProduct;
 use Marvel\Database\Models\Availability;
-use Marvel\Database\Models\DigitalFile;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
@@ -33,7 +28,6 @@ use Spatie\Period\Precision;
 use Marvel\Enums\Permission;
 use Marvel\Events\ProductReviewApproved;
 use Marvel\Events\ProductReviewRejected;
-use Marvel\Events\DigitalProductUpdateEvent;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Marvel\Exceptions\MarvelException;
 
@@ -206,7 +200,7 @@ class ProductRepository extends BaseRepository
      * storeProduct
      *
      * @param  mixed $request
-     * @return void
+     * @return mixed
      */
     public function storeProduct(Request $request)
     {
@@ -338,7 +332,7 @@ class ProductRepository extends BaseRepository
      * @param  $request
      * @param  $id
      * @param  $setting
-     * @return void
+     * @return mixed
      */
     // public function updateProduct($request, $id)
     // {
@@ -649,6 +643,7 @@ class ProductRepository extends BaseRepository
             $products_query = $products_query->where('shop_id', "=", $request->shop_id);
         }
         if ($range) {
+            $range = (int) $range;
             $products_query = $products_query->whereDate('created_at', '>', Carbon::now()->subDays($range));
         }
         if ($type_id) {
@@ -699,13 +694,13 @@ class ProductRepository extends BaseRepository
         }
 
         foreach ($_blockedDates as $singleDate) {
-            $period = Period::make($singleDate['from'], $singleDate['to'], Precision::DAY, Boundaries::EXCLUDE_END);
-            $range = Period::make($from, $to, Precision::DAY, Boundaries::EXCLUDE_END);
+            $period = Period::make($singleDate['from'], $singleDate['to'], Precision::DAY(), Boundaries::EXCLUDE_END());
+            $range = Period::make($from, $to, Precision::DAY(), Boundaries::EXCLUDE_END());
             if ($period->overlapsWith($range)) {
                 $quantity += $singleDate->order_quantity;
             }
         }
-        return $product->quantity - $quantity > $requestedQuantity;
+        return (int) $product->quantity - (int) $quantity >= (int) $requestedQuantity;
     }
 
 
@@ -729,8 +724,8 @@ class ProductRepository extends BaseRepository
         }
 
         foreach ($_blockedDates as $singleDate) {
-            $period = Period::make($singleDate['from'], $singleDate['to'], Precision::DAY, Boundaries::EXCLUDE_END);
-            $range = Period::make($from, $to, Precision::DAY, Boundaries::EXCLUDE_END);
+            $period = Period::make($singleDate['from'], $singleDate['to'], Precision::DAY(), Boundaries::EXCLUDE_END());
+            $range = Period::make($from, $to, Precision::DAY(), Boundaries::EXCLUDE_END());
             if ($period->overlapsWith($range)) {
                 $quantity += $singleDate->order_quantity;
             }
@@ -772,8 +767,7 @@ class ProductRepository extends BaseRepository
         }
 
         return [
-            'totalPrice' => $price + $person_price + $deposit_price + $feature_price + $dropoff_location_price,
-            $pickup_location_price,
+            'totalPrice' => $price + $person_price + $deposit_price + $feature_price + $dropoff_location_price + $pickup_location_price,
             'personPrice' => $person_price,
             'depositPrice' => $deposit_price,
             'featurePrice' => $feature_price,
@@ -789,7 +783,7 @@ class ProductRepository extends BaseRepository
         } catch (\Throwable $th) {
             throw $th;
         }
-        return $product->sale_price ? $product->sale_price : $product->price;
+        return $product->sale_price !== null ? $product->sale_price : $product->price;
     }
 
     public function calculateVariationPrice($variation_id)
@@ -799,7 +793,7 @@ class ProductRepository extends BaseRepository
         } catch (\Throwable $th) {
             throw $th;
         }
-        return $variation->sale_price ? $variation->sale_price : $variation->price;
+        return $variation->sale_price !== null ? $variation->sale_price : $variation->price;
     }
 
     public function calculateLocationPrice($location_id)
@@ -821,7 +815,7 @@ class ProductRepository extends BaseRepository
             } catch (\Throwable $th) {
                 throw $th;
             }
-            if ($resource->price) {
+            if ($resource->price !== null) {
                 $price += $resource->price;
             }
         }
@@ -846,16 +840,18 @@ class ProductRepository extends BaseRepository
             return null;
         }
 
+        $price = (float) $price;
+        $amount = (float) $amount;
 
         if ($discountType === DiscountType::PERCENTAGE) {
-            return max(0, $price - ($price * ($amount / 100)));
+            return round(max(0, $price - ($price * ($amount / 100))), 2);
         }
 
         if ($discountType === DiscountType::FIXED_RATE || $discountType === 'fixed') {
-            return max(0, $price - $amount);
+            return round(max(0, $price - $amount), 2);
         }
 
-        return $price;
+        return round($price, 2);
     }
 
     private function resolveFlashSale($flashSaleId, $product, $hasFlashSale)

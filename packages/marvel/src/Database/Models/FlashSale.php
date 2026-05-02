@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 use Marvel\Enums\FlashSaleType;
 use Carbon\Carbon;
 
@@ -82,13 +81,22 @@ class FlashSale extends Model
 
     public function calcPrice($price)
     {
-        if ($this->type == FlashSaleType::PERCENTAGE) {
-            return max(0, $price - ($price * ($this->value / 100)));
-        } elseif ($this->type == FlashSaleType::FIXED_RATE) {
-            return max(0, $price - $this->value);
-        } else {
-            return $price;
+        if ($price === null) {
+            return null;
         }
+
+        $price = (float) $price;
+        $value = (float) $this->value;
+
+        if ($this->type == FlashSaleType::PERCENTAGE) {
+            return round(max(0, $price - ($price * ($value / 100))), 2);
+        } elseif ($this->type == FlashSaleType::FIXED_RATE) {
+            return round(max(0, $price - $value), 2);
+        } elseif ($this->type == FlashSaleType::VALUE) {
+            return round(max(0, $value), 2);
+        }
+
+        return round($price, 2);
     }
 
     /**

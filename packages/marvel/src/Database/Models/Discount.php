@@ -20,20 +20,21 @@ class Discount extends Model
 
     public function getPriceAfterDiscount(Product $product): float
     {
-        $price = $product->price;
+        $price = (float) $product->price;
+        $discount = (float) $this->discount;
 
         if ($this->discount_type == DiscountType::FIXED_RATE) {
-            $finalPrice = $price - $this->discount;
+            $finalPrice = $price - $discount;
         } elseif ($this->discount_type == DiscountType::PERCENTAGE) {
-            $finalPrice = $price - ($price * $this->discount / 100);
+            $finalPrice = $price - ($price * ($discount / 100));
         } else {
             $finalPrice = $price;
         }
 
-        $finalPrice = max(0, $finalPrice);
+        $finalPrice = round(max(0, $finalPrice), 2);
         $this->price_after_discount = $finalPrice;
         $this->save();
 
-        return round($finalPrice, 2);
+        return $finalPrice;
     }
 }

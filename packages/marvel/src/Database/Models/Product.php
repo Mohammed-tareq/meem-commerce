@@ -6,12 +6,10 @@ use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Exception;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -308,18 +306,19 @@ class Product extends Model implements HasMedia
             return null;
         }
 
+        $price = (float) $price;
         $discountType = $this->discount_type ?? DiscountType::PERCENTAGE;
-        $discount_amount = $this->discount_amount ?? 0;
+        $discount_amount = (float) ($this->discount_amount ?? 0);
 
         if ($discountType === DiscountType::PERCENTAGE) {
-            return max(0, $price - ($price * ($discount_amount / 100)));
+            return round(max(0, $price - ($price * ($discount_amount / 100))), 2);
         }
 
-        if ($discountType === DiscountType::FIXED_RATE || $discountType === 'fixed') {
-            return max(0, $price - $discount_amount);
+        if ($discountType === DiscountType::FIXED_RATE) {
+            return round(max(0, $price - $discount_amount), 2);
         }
 
-        return $price;
+        return round($price, 2);
     }
 
 
