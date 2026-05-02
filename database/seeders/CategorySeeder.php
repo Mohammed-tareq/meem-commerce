@@ -14,18 +14,18 @@ class CategorySeeder extends Seeder
         $categoryImages = collect(File::files(public_path('images/categories')));
         $categoryImagesCount = $categoryImages->count();
 
-        for ($i = 1; $i <= 50; $i++) {
+        for ($i = 1; $i <= 100; $i++) {
             $slug = Str::slug("category-$i");
 
             $category = Category::updateOrCreate(
                 ['slug' => $slug],
                 [
                     'name' => [
-                        'ar' => "ßÇÊíÌæÑí $i",
+                        'ar' => "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ $i",
                         'en' => "Category $i",
                     ],
                     'details' => [
-                        'ar' => "ÊÝÇÕíá ÇáÊÕäíÝ ÑÞã $i",
+                        'ar' => "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ $i",
                         'en' => "Details of category number $i",
                     ],
                 ]

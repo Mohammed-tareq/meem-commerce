@@ -11,7 +11,7 @@ class CouponSeeder extends Seeder
 {
     public function run(): void
     {
-        for ($i = 1; $i <= 100; $i++) {
+        for ($i = 1; $i <= 1000; $i++) {
             $discountType = collect(['percentage', 'fixed_rate'])->random();
 
             Coupon::create([

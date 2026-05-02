@@ -14,7 +14,7 @@ class ShopSeeder extends Seeder
         $shopImages = collect(File::files(public_path('images/shops')));
         $shopImagesCount = $shopImages->count();
 
-        for ($i = 1; $i <= 20; $i++) {
+        for ($i = 1; $i <= 200; $i++) {
             $shop = Shop::create([
                 'name'        => [
                     'ar' => "المتجر رقم $i",
