@@ -87,12 +87,19 @@ class FlashSale extends Model
 
         $price = (float) $price;
         $value = (float) $this->value;
+        $maxValue = $this->max_discount_amount ? (float) $this->max_discount_amount : null;
 
         if ($this->type == FlashSaleType::PERCENTAGE) {
-            return round(max(0, $price - ($price * ($value / 100))), 2);
+            $discount = $price * ($value / 100);
+
+            $discount = $maxValue !== null
+                ? min($discount, $maxValue)
+                : $discount;
+
+            return round(max(0, $price - $discount), 2);
         } elseif ($this->type == FlashSaleType::FIXED_RATE) {
             return round(max(0, $price - $value), 2);
-        } elseif ($this->type == FlashSaleType::VALUE) {
+        } elseif ($this->type == FlashSaleType::FINAL_PRICE) {
             return round(max(0, $value), 2);
         }
 

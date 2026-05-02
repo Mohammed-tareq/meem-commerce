@@ -125,13 +125,31 @@ class Coupon extends Model
         return $map[$locale][$this->discount_type] ?? $this->discount_type;
     }
 
-    public function calcPrice($price): float
+
+    public function calcPrice($price)
     {
-        if ($this->discount_type === DiscountType::PERCENTAGE) {
-            return max(0, $price - ($price * ($this->discount / 100)));
-        } elseif ($this->discount_type === DiscountType::FIXED_RATE) {
-            return max(0, $price - $this->discount);
+        if ($price === null) {
+            return null;
         }
-        return $price;
+
+        $price = (float) $price;
+        $discount = (float) $this->discount;
+        $maxValue = $this->max_discount_amount ? (float) $this->max_discount_amount : null;
+
+        if ($this->discount_type === DiscountType::PERCENTAGE) {
+            $discount = $price * ($discount / 100);
+
+            $discount = $maxValue !== null
+                ? min($discount, $maxValue)
+                : $discount;
+
+            return round(max(0, $price - $discount), 2);
+        } elseif ($this->discount_type == DiscountType::FIXED_RATE) {
+            return round(max(0, $price - $discount), 2);
+        } else {
+
+            return round($price, 2);
+        }
     }
+
 }

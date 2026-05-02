@@ -206,12 +206,15 @@ class ProductRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
+            $variants = $request->input('variants', []);
+
+            $request->merge([
+                'product_type' => !empty($variants)
+                    ? ProductType::VARIABLE
+                    : ProductType::SIMPLE
+            ]);
+
             $data = $request->except(['images', 'categories', 'variants']);
-            if (isset($request['variants']) && !empty($request['variants'])) {
-                $request['product_type'] = ProductType::VARIABLE;
-            } else {
-                $request['product_type'] = ProductType::SIMPLE;
-            }
             $variants = $request->input('variants', []);
 
 
@@ -527,16 +530,18 @@ class ProductRepository extends BaseRepository
         try {
             DB::beginTransaction();
             $product = Product::find($id);
+            $variants = $request->input('variants', []);
 
+
+
+            $request->merge([
+                'product_type' => !empty($variants)
+                    ? ProductType::VARIABLE
+                    : ProductType::SIMPLE
+            ]);
             $data = $request->except(['images', 'categories', 'variants']);
-            if (isset($request['variants']) && !empty($request['variants'])) {
-                $data['product_type'] = ProductType::VARIABLE;
-            } else {
-                $data['product_type'] = ProductType::SIMPLE;
-            }
 
-            $data['slug'] = $this->makeSlug($request, $product->id);
-
+            $data['slug'] = $this->makeSlug($request, 'slug',$product->id);
             $price = array_key_exists('price', $data) ? $data['price'] : $product->price;
             $hasDiscount = !empty($data['has_discount']) && (($data['discount_status'] ?? null) !== false);
 
