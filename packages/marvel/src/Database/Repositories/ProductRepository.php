@@ -536,16 +536,15 @@ class ProductRepository extends BaseRepository
 
             $data = $request->except(['images', 'categories', 'variants']);
             if (isset($request['variants']) && !empty($request['variants'])) {
-                $request['product_type'] = ProductType::VARIABLE;
+                $data['product_type'] = ProductType::VARIABLE;
             } else {
-                $request['product_type'] = ProductType::SIMPLE;
-            }
-            if ($request->has('slug')) {
-                $data['slug'] = $this->makeSlug($request, $product->id);
+                $data['product_type'] = ProductType::SIMPLE;
             }
 
+            $data['slug'] = $this->makeSlug($request, $product->id);
+
             $price = array_key_exists('price', $data) ? $data['price'] : $product->price;
-                        $hasDiscount = !empty($data['has_discount']) && (($data['discount_status'] ?? null) !== false);
+            $hasDiscount = !empty($data['has_discount']) && (($data['discount_status'] ?? null) !== false);
 
             $hasDiscount = array_key_exists('has_discount', $data) && (($data['discount_status'] ?? null) !== false) ? (bool) $data['has_discount'] : $product->has_discount;
             $discountType = $data['discount_type'] ?? $product->discount_type ?? DiscountType::PERCENTAGE;
@@ -620,13 +619,6 @@ class ProductRepository extends BaseRepository
         }
     }
 
-
-    /**
-     * getBestSellingProducts
-     *
-     * @param $request
-     * @return void
-     */
 
     public function getBestSellingProducts($request)
     {
@@ -853,7 +845,7 @@ class ProductRepository extends BaseRepository
         if ($price === null) {
             return null;
         }
-        
+
 
         if ($discountType === DiscountType::PERCENTAGE) {
             return max(0, $price - ($price * ($amount / 100)));

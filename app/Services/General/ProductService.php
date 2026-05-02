@@ -54,6 +54,16 @@ class ProductService
         return $query->orderByDesc('id')->paginate($limit);
     }
 
+    public function getProductById($id)
+    {
+        return Product::query()
+            ->with(['shop:id,name', 'categories:id,name'])
+            ->withAvg('reviews', 'rating')
+            ->withCount('reviews')
+            ->where('id', $id)
+            ->firstOrFail();
+    }
+
     private function applyProductFilters(Builder $query, Request $request): void
     {
         $priceMin = $request->get('price_min');

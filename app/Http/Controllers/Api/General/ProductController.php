@@ -26,14 +26,14 @@ class ProductController extends Controller
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, new ProductCollection($products));
     }
 
-    public function getProductBySlug($slug)
+   
+    public function getProductById(Request $request)
     {
-        $product = $this->productService->getBySlug($slug);
-
+        $id = trim($request->route('id'));
+        $product =  $this->productService->getProductById($id);
         if (!$product) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
-
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  ProductResource::make($product));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,ProductResource::make($product));
     }
 }

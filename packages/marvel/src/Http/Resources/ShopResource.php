@@ -31,14 +31,18 @@ class ShopResource extends Resource
                 ];
             }),
             'created_at' => $this->created_at,
-            'categories' => $this->whenLoaded('categories', CategoryResource::collection($this->categories)),
+            $this->mergeWhen(!request()->routeIs('general-shop-index'), [
+                'categories' => $this->whenLoaded('categories', CategoryResource::collection($this->categories)),
+                'products_count' => $this->whenCounted('products',0),
+
+            ])
             // 'owner_id' => $this->owner_id,
             // 'owner' => $this->when($this->needToInclude($request, 'shop.owner'), function () {
             //     return new UserResource($this->owner);
             // }),
             // 'settings' => $this->settings,
             // 'notifications' => $this->notifications,
-            
+
         ];
     }
 }
