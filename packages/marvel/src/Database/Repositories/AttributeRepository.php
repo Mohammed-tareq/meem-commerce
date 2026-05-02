@@ -108,4 +108,5 @@ class AttributeRepository extends BaseRepository
             throw new HttpException(400, COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }
+    
 }
