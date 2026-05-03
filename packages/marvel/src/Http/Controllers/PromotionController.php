@@ -31,7 +31,8 @@ class PromotionController extends CoreController
     {
         $limit = $request->limit ?? 15;
         $promotions = $this->repository->paginate($limit)->withQueryString();
-        return formatAPIResourcePaginate(PromotionResource::collection($promotions)->response()->getData(true));
+        $data = formatAPIResourcePaginate(PromotionResource::collection($promotions)->response()->getData(true));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
     public function store(PromotionRequest $request)
