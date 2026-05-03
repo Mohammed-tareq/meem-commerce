@@ -2,11 +2,11 @@
 
 namespace Marvel\Database\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Marvel\Enums\PromotionType;
+use Marvel\Enums\PromotionMountType;
 use Spatie\Translatable\HasTranslations;
 
 class Promotion extends Model
@@ -16,12 +16,32 @@ class Promotion extends Model
 
     protected $table = 'promotions';
 
-    public $fillable = ['name', 'type', 'value', 'max_discount_amount', 'code', 'min_order_amount', 'required_quantity', 'product_id', 'limiter', 'usage', 'start_at', 'end_at', 'status'];
+    public $fillable = [
+        'name',
+        'type',
+        'type_amount',
+        'value',
+        'max_discount_amount',
+        'code',
+        'required_quantity_type',
+        'product_id',
+        'limiter',
+        'usage',
+        'start_at',
+        'end_at',
+        'status'
+    ];
 
     protected $casts = [
         'start_at' => 'date',
         'end_at' => 'date',
         'status' => 'boolean',
+        'usage' => 'integer',
+        'limiter' => 'integer',
+        'required_quantity_type' => 'integer',
+        'value' => 'float',
+        'max_discount_amount' => 'float',
+        'product_id' => 'integer',
     ];
 
     protected static function boot()
@@ -39,18 +59,30 @@ class Promotion extends Model
         });
     }
 
+    public function products(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'promotion_product', 'promotion_id', 'product_id');
+    }
+
+
+
     public function typeByLang()
     {
         $map = [
             'ar' => [
                 'fixed_rate' => 'خصم من السعر بالقيمة',
                 'percentage' => 'خصم بالنسبة المئوية',
-                'amount' => "خصم بالكميه",
+                'quantity' => 'خصم حسب الكمية',
+                'gift' => 'هدية',
+                'price' => 'خصم من السعر',
             ],
             'en' => [
                 'fixed_rate' => 'Fixed discount',
                 'percentage' => 'Percentage discount',
                 'amount' => 'Amount discount',
+                'quantity' => 'Quantity promotion',
+                'gift' => 'Gift promotion',
+                'price' => 'Price discount',
             ],
         ];
 
@@ -70,10 +102,16 @@ class Promotion extends Model
             ->where('status', true)
             ->where(function ($query) {
                 $query->whereNull('limiter')
-                    ->orWhereColumn('used', '<', 'limiter');
+                    ->orWhereColumn('usage', '<', 'limiter');
             })
-            ->whereDate('start_date', '<=', today())
-            ->whereDate('end_date', '>=', today());
+            ->where(function ($query) {
+                $query->whereNull('start_at')
+                    ->orWhereDate('start_at', '<=', today());
+            })
+            ->where(function ($query) {
+                $query->whereNull('end_at')
+                    ->orWhereDate('end_at', '>=', today());
+            });
     }
 
 
@@ -82,59 +120,83 @@ class Promotion extends Model
         $today = today();
 
         return $this->status
-            && (!$this->start_date || $this->start_date->lte($today))
-            && (!$this->end_date || $this->end_date->gte($today))
-            && (is_null($this->limiter) || $this->used < $this->limiter);
+            && (!$this->start_at || $this->start_at->lte($today))
+            && (!$this->end_at || $this->end_at->gte($today))
+            && (is_null($this->limiter) || (int) $this->usage < (int) $this->limiter);
     }
+
+
+
+    public function isGiftPromotion(): bool
+    {
+        return $this->type_amount === PromotionMountType::GIFT;
+    }
+    public function isPercentagePromotion(): bool
+    {
+        return $this->type_amount === PromotionMountType::PERCENTAGE;
+    }
+    public function isFixedRatePromotion(): bool
+    {
+        return $this->type_amount === PromotionMountType::FIXED_RATE;
+    }
+
+    public function isRequiredQuantityTrue($qty): bool
+    {
+        return is_null($this->required_quantity_type) || $qty >= $this->required_quantity_type;
+    }
+
 
     public function discountAmount(float $price, int $qty = 1): float
     {
         if ($price === null || $price <= 0) {
             return 0.0;
         }
-
-        $price = (float) $price;
-        $value = (float) $this->value;
-        $maxValue = $this->max_discount_amount ? (float) $this->max_discount_amount : null;
-        $minOrderAmount = $this->min_order_amount ? (float) $this->min_order_amount : null;
-
-        if ($this->discount_type === PromotionType::PERCENTAGE) {
-            $discount = $price * ($value / 100);
-
-            $discount = $maxValue !== null
-                ? min($discount, $maxValue)
-                : $discount;
-
-            return round(max(0, $price - $discount), 2);
-        } elseif ($this->discount_type == PromotionType::FIXED) {
-            return round(max(0, $price - $value), 2);
-        } elseif ($this->discount_type == PromotionType::AMOUNT) {
-            if ($minOrderAmount !== null && $qty < $minOrderAmount) {
-                return round($price, 2);
-            }
-            return round(max(0, $price - $value), 2);
-        } else {
-
-            return round($price, 2);
-        }
-        if ($price <= 0) {
+        if (!$this->isRequiredQuantityTrue($qty)) {
             return 0.0;
         }
 
-        if ($this->type === PromotionType::PERCENTAGE) {
-            return max(0.0, $price * ((float) $this->value / 100));
+        $price = (float) $price;
+        $value = (float) $this->value;
+        $maxValue = $this->max_discount_amount !== null ? (float) $this->max_discount_amount : null;
+
+        if ($this->isPercentagePromotion()) {
+            $discount = $price * ($value / 100);
+
+            if ($maxValue !== null) {
+                $discount = min($discount, $maxValue);
+            }
+
+            return round(max(0.0, $discount), 2);
         }
 
-        if ($this->type === PromotionType::FIXED || $this->type === PromotionType::AMOUNT) {
-            return max(0.0, (float) $this->value);
+        if ($this->isFixedRatePromotion()) {
+            return round(max(0.0, min($price, $value)), 2);
         }
+
+        if ($this->isGiftPromotion()) {
+            return 0.0;
+        }
+
 
         return 0.0;
     }
 
 
-    public function calcPrice(float $price): float
+    public function calcPrice(float $price, int $qty = 1): float
     {
-        return max(0.0, $price - $this->discountAmount($price));
+        return round(max(0.0, $price - $this->discountAmount($price, $qty)), 2);
     }
+    public function applyGift(int $qty)
+    {
+        if (!$this->isGiftPromotion()) {
+            return;
+        }
+
+        if (!$this->isRequiredQuantityTrue($qty)) {
+            return;
+        }
+
+       return  $this->products()->get();
+    }
+
 }

@@ -14,7 +14,7 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()->active()
-            ->with(['shop:id,name', 'categories:id,name'])
+            ->with(['shops:id,name', 'categories:id,name'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
@@ -30,7 +30,7 @@ class ProductService
     public function getBySlug($slug)
     {
         return Product::where('slug', $slug)
-            ->with(['shop:id,name', 'categories:id,name'])
+            ->with(['shops:id,name', 'categories:id,name'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')->first();
     }
@@ -40,7 +40,7 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()
-            ->with(['shop:id,name', 'categories:id,name'])
+            ->with(['shops:id,name', 'categories:id,name'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
@@ -57,7 +57,7 @@ class ProductService
     public function getProductById($id)
     {
         return Product::query()->active()
-            ->with(['shop:id,name', 'categories:id,name'])
+            ->with(['shops:id,name', 'categories:id,name'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
             ->where('id', $id)
@@ -86,7 +86,7 @@ class ProductService
 
         $shopSlug = $request->get('shop_slug');
         if ($shopSlug !== null) {
-            $query->whereHas('shop', function (Builder $builder) use ($shopSlug) {
+            $query->whereHas('shops', function (Builder $builder) use ($shopSlug) {
                 $builder->where('shops.slug', $shopSlug);
             });
         }
@@ -132,7 +132,7 @@ class ProductService
                 $reviewQuery->where('comment', 'like', '%' . $term . '%');
             });
 
-            $builder->orWhereHas('shop', function (Builder $shopQuery) use ($term, $locale) {
+            $builder->orWhereHas('shops', function (Builder $shopQuery) use ($term, $locale) {
                 $this->applyTranslatableLike($shopQuery, 'name', $term, $locale);
             });
 

@@ -353,9 +353,9 @@ class Product extends Model implements HasMedia
     /**
      * @return BelongsTo
      */
-    public function shop(): BelongsTo
+   public function shops(): BelongsToMany
     {
-        return $this->belongsTo(Shop::class, 'shop_id');
+        return $this->belongsToMany(Shop::class, 'product_shop');
     }
 
     /**

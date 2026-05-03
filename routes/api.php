@@ -76,6 +76,7 @@ Route::get('/enum-types', function () {
             'coupon-type' => \Marvel\Enums\CouponType::getValues(),
             'product-type' => \Marvel\Enums\ProductType::getValues(),
             'promotion-type' => \Marvel\Enums\PromotionType::getValues(),
+            'promotion-mount-type' => \Marvel\Enums\PromotionMountType::getValues(),
             'flash-sale-type' => \Marvel\Enums\FlashSaleType::getValues(),
         ], 200);
 });

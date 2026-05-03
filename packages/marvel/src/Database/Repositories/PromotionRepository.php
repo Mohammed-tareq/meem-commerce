@@ -15,18 +15,20 @@ class PromotionRepository extends BaseRepository
         'name' => 'like',
         'type',
         'code' => 'like',
-        'is_active',
+        'status',
     ];
 
     protected $dataArray = [
         'name',
         'type',
+        'type_amount',
         'value',
         'code',
-        'min_order_amount',
+        'max_discount_amount',
+        'required_quantity_type',
         'start_at',
         'end_at',
-        'is_active',
+        'status',
     ];
 
     public function getDataArray(): array

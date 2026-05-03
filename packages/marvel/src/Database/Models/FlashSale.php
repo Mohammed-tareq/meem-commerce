@@ -145,9 +145,19 @@ class FlashSale extends Model
      */
     public function scopeValid(Builder $query)
     {
-        $now = Carbon::now();
-        return $query->where('sale_status', true)
-            ->whereDate('start_date', '<=', $now)
-            ->whereDate('end_date', '>=', $now);
+        return $query->where('status', true)
+            ->where('status', true)
+            ->where(function ($query) {
+                $query->whereNull('limiter')
+                    ->orWhereColumn('used', '<', 'limiter');
+            })
+            ->where(function ($query) {
+                $query->whereNull('start_date')
+                    ->orWhereDate('start_date', '<=', today());
+            })
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhereDate('end_date', '>=', today());
+            });
     }
 }

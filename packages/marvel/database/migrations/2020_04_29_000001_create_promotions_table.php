@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Marvel\Enums\PromotionMountType;
 use Marvel\Enums\PromotionType;
 
 class CreatePromotionsTable extends Migration
@@ -14,10 +15,10 @@ class CreatePromotionsTable extends Migration
             $table->string('name');
             $table->string('code')->unique();
             $table->enum('type', PromotionType::getValues());
+            $table->enum('type_amount', PromotionMountType::getValues());
             $table->decimal('value', 10, 2);
             $table->decimal('max_discount_amount', 10, 2)->nullable();
-            $table->integer('required_quantity')->nullable();
-            $table->unsignedBigInteger('product_id')->nullable();
+            $table->integer('required_quantity_type')->nullable();
             $table->integer('limiter')->nullable();
             $table->integer('usage')->default(0);
             $table->date('start_at')->nullable();
@@ -25,6 +26,7 @@ class CreatePromotionsTable extends Migration
             $table->boolean('status')->default(true);
             $table->timestamps();
         });
+
     }
 
     public function down()

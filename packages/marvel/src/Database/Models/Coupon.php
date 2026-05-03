@@ -84,8 +84,14 @@ class Coupon extends Model
                 $query->whereNull('limiter')
                     ->orWhereColumn('used', '<', 'limiter');
             })
-            ->whereDate('start_date', '<=', today())
-            ->whereDate('end_date', '>=', today());
+            ->where(function ($query) {
+                $query->whereNull('start_date')
+                    ->orWhereDate('start_date', '<=', today());
+            })
+            ->where(function ($query) {
+                $query->whereNull('end_date')
+                    ->orWhereDate('end_date', '>=', today());
+            });
     }
 
 
