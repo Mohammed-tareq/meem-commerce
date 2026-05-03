@@ -50,3 +50,32 @@ Route::prefix('general')->middleware(['throttle:general'])->group(function () {
     Route::get('faqs', [FAQController::class, 'index']);
     Route::get('flash-sales', [FlashSaleController::class, 'index']);
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Route::get('/enum-types', function () {
+    return response()->json(
+        [
+            'discount-type' => \Marvel\Enums\DiscountType::getValues(),
+            'coupon-type' => \Marvel\Enums\CouponType::getValues(),
+            'product-type' => \Marvel\Enums\ProductType::getValues(),
+            'promotion-type' => \Marvel\Enums\PromotionType::getValues(),
+            'flash-sale-type' => \Marvel\Enums\FlashSaleType::getValues(),
+        ], 200);
+});
