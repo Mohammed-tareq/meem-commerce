@@ -6,6 +6,7 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Marvel\Database\Models\Banner;
+use Marvel\Database\Models\Category;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Shop;
@@ -88,6 +89,8 @@ class ProductSeeder extends Seeder
                     }
                 }
                 $product->flash_sales()->attach(FlashSale::inRandomOrder()->first()->id);
+                $product->categories()->attach(Category::inRandomOrder()->first()->id);
+
             }
 
             $this->command->info('ProductSeeder completed successfully. Created 500 products.');
