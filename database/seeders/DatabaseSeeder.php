@@ -60,7 +60,7 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             CartSeeder::class,
             CouponSeeder::class,
-            PromotionSeeder::class,
+            // PromotionSeeder::class,
             ShopRelationsSeeder::class,
         ]);
     }
