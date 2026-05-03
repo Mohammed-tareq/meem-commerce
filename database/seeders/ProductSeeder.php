@@ -17,7 +17,7 @@ class ProductSeeder extends Seeder
     public function run(): void
     {
         try {
-            $statuses = ProductStatus::getValues();
+
             $discountTypes = DiscountType::getValues();
 
             $englishWords = [
@@ -41,7 +41,7 @@ class ProductSeeder extends Seeder
                 return;
             }
 
-            for ($i = 1; $i <= 10000; $i++) {
+            for ($i = 1; $i <= 1000; $i++) {
                 $productNameEn = $this->randomWords($englishWords, 3);
                 $productNameAr = $this->randomWords($arabicWords, 3);
 
@@ -60,7 +60,7 @@ class ProductSeeder extends Seeder
                     'quantity' => random_int(0, 200),
                     'sold_quantity' => random_int(0, 200),
                     'in_stock' => $this->randomBool(80),
-                    'status' => $this->randomElement($statuses),
+                    'status' => $this->randomElement([0,1]),
                     'height' => random_int(5, 50) . 'cm',
                     'width' => random_int(5, 50) . 'cm',
                     'length' => random_int(5, 50) . 'cm',

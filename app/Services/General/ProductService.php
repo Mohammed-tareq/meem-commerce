@@ -13,7 +13,7 @@ class ProductService
         $limit = $this->getLimit($request);
         $term = trim((string) $request->get('search', ''));
 
-        $query = Product::query()
+        $query = Product::query()->active()
             ->with(['shop:id,name', 'categories:id,name'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
@@ -56,7 +56,7 @@ class ProductService
 
     public function getProductById($id)
     {
-        return Product::query()
+        return Product::query()->active()
             ->with(['shop:id,name', 'categories:id,name'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')

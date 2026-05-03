@@ -571,4 +571,10 @@ class Product extends Model implements HasMedia
         $this->setRelation('related_products', $relatedProducts);
         return $this;
     }
+
+
+    public function scopeActive($query)
+    {
+        return $query->where('status', true)->where('quantity', '>', 0);
+    }
 }

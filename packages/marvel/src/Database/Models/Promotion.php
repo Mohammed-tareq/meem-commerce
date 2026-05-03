@@ -16,7 +16,7 @@ class Promotion extends Model
 
     protected $table = 'promotions';
 
-    public $fillable = ['name', 'type', 'value', 'max_discount_amount', 'code', 'min_order_amount', 'limiter', 'usage', 'start_at', 'end_at', 'status'];
+    public $fillable = ['name', 'type', 'value', 'max_discount_amount', 'code', 'min_order_amount', 'required_quantity', 'product_id', 'limiter', 'usage', 'start_at', 'end_at', 'status'];
 
     protected $casts = [
         'start_at' => 'date',
@@ -87,15 +87,16 @@ class Promotion extends Model
             && (is_null($this->limiter) || $this->used < $this->limiter);
     }
 
-    public function discountAmount(float $price): float
+    public function discountAmount(float $price, int $qty = 1): float
     {
-        if ($price === null|| $price <= 0) {
-            return null;
+        if ($price === null || $price <= 0) {
+            return 0.0;
         }
 
         $price = (float) $price;
         $value = (float) $this->value;
         $maxValue = $this->max_discount_amount ? (float) $this->max_discount_amount : null;
+        $minOrderAmount = $this->min_order_amount ? (float) $this->min_order_amount : null;
 
         if ($this->discount_type === PromotionType::PERCENTAGE) {
             $discount = $price * ($value / 100);
@@ -106,6 +107,11 @@ class Promotion extends Model
 
             return round(max(0, $price - $discount), 2);
         } elseif ($this->discount_type == PromotionType::FIXED) {
+            return round(max(0, $price - $value), 2);
+        } elseif ($this->discount_type == PromotionType::AMOUNT) {
+            if ($minOrderAmount !== null && $qty < $minOrderAmount) {
+                return round($price, 2);
+            }
             return round(max(0, $price - $value), 2);
         } else {
 

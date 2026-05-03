@@ -12,11 +12,12 @@ class CreatePromotionsTable extends Migration
         Schema::create('promotions', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('code')->unique();
             $table->enum('type', PromotionType::getValues());
             $table->decimal('value', 10, 2);
             $table->decimal('max_discount_amount', 10, 2)->nullable();
-            $table->string('code')->nullable()->unique();
-            $table->decimal('min_order_amount', 10, 2)->nullable();
+            $table->integer('required_quantity')->nullable();
+            $table->unsignedBigInteger('product_id')->nullable();
             $table->integer('limiter')->nullable();
             $table->integer('usage')->default(0);
             $table->date('start_at')->nullable();

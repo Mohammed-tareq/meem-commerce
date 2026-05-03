@@ -31,11 +31,17 @@ class PromotionSeeder extends Seeder
                 ],
                 'type' => $type,
                 'value' => $value,
+                'max_discount_amount' => $type === PromotionType::PERCENTAGE
+                    ? rand(20, 100)
+                    : null,
                 'code' => (string) Str::uuid(),
-                'min_order_amount' => rand(0, 1) ? rand(50, 300) : null,
+                'required_quantity' => $type === PromotionType::AMOUNT ? rand(2, 5) : null,
+                'product_id' => null,
+                'limiter' => rand(10, 100),
+                'usage' => rand(0, 20),
                 'start_at' => Carbon::now()->subDays(rand(0, 5)),
                 'end_at' => Carbon::now()->addDays(rand(5, 30)),
-                'is_active' => true,
+                'status' => true,
             ]);
         }
     }
