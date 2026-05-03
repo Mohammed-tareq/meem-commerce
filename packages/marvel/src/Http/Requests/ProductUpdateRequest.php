@@ -51,7 +51,7 @@ class ProductUpdateRequest extends FormRequest
             'quantity'                     => ['sometimes', 'integer', 'min:1'],
             'images'                       => ['sometimes', 'array'],
             'images.*'                     => ['sometimes', 'image','mimes:jpeg,png,jpg,gif',"max:2048"],
-            'status'                       => ['sometimes', 'string', Rule::in($productStatus)],
+            'status'                       => ['sometimes', 'in:true,1,0,false' ],
             'height'                       => ['nullable', 'numeric'],
             'length'                       => ['nullable', 'numeric'],
             'width'                        => ['nullable', 'numeric'],
