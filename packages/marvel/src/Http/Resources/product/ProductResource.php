@@ -24,7 +24,7 @@ class ProductResource extends Resource
             'quantity'               => $this->quantity,
             'sold_quantity'          => $this->sold_quantity ?? 0,
             'in_stock'               => $this->in_stock,
-            'status'                 => $this->status,
+            'status'                 => (bool)$this->status,
             'product_type'           => $this->product_type,
             'height'                 => $this->height,
             'width'                  => $this->width,
