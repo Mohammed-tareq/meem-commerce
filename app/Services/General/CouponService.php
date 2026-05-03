@@ -9,7 +9,7 @@ class CouponService
     public function getCoupons($request)
     {
         $name = $request->get("search", false);
-        $coupons = Coupon::active()->valid()->when($name, function ($query) use ($name) {
+        $coupons = Coupon::valid()->when($name, function ($query) use ($name) {
             $query->where('name', 'like', '%' . $name . '%');
         })->get();
         return $coupons;

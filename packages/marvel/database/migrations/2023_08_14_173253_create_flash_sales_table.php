@@ -20,7 +20,7 @@ return new class extends Migration {
             $table->dateTime('end_date');
             $table->boolean('sale_status')->default(true);
             $table->enum('type', FlashSaleType::getValues())->default(FlashSaleType::PERCENTAGE);
-            $table->decimal('value', 10, 2)->nullable();
+            $table->decimal('discount', 10, 2)->nullable();
             $table->decimal('max_discount_amount', 10, 2)->nullable();
             // $table->json('sale_builder')->nullable();
             // $table->json('image')->nullable();

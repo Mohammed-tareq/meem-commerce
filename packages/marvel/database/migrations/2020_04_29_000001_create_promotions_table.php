@@ -13,7 +13,8 @@ class CreatePromotionsTable extends Migration
             $table->id();
             $table->string('name');
             $table->enum('type', PromotionType::getValues());
-            $table->decimal('value', 10, 2);
+            $table->decimal('discount', 10, 2);
+            $table->decimal('max_discount_amount', 10, 2);
             $table->string('code')->nullable()->unique();
             $table->decimal('min_order_amount', 10, 2)->nullable();
             $table->timestamp('start_at')->nullable();

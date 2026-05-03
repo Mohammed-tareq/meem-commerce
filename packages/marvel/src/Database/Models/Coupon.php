@@ -20,11 +20,26 @@ class Coupon extends Model
 
     protected $table = 'coupons';
 
-    public $guarded = [];
+    public $fillable = [
+        'code',
+        'name',
+        'discount_type',
+        'discount',
+        'max_discount_amount',
+        'start_date',
+        'end_date',
+        'limiter',
+        'used',
+        'status'
+    ];
 
     // protected $appends = ['is_valid'];
 
-
+    protected $casts = [
+        'status' => 'boolean',
+        'start_date' => 'date',
+        'end_date' => 'date',
+    ];
 
     protected static function boot()
     {
@@ -51,44 +66,13 @@ class Coupon extends Model
         return $this->hasMany(Order::class, 'coupon_id');
     }
 
-    /**
-     * Get all usage records for this coupon
-     *
-     * @return HasMany
-     */
-    public function usages(): HasMany
-    {
-        return $this->hasMany(CouponUsage::class);
-    }
-
-    /**
-     * @return bool
-     */
-    public function getIsValidAttribute()
-    {
-        return Carbon::now()->between($this->active_from, $this->expire_at);
-    }
-    /**
-     * @return BelongsTo
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    /**
-     * @return BelongsTo
-     */
-    public function shop(): BelongsTo
-    {
-        return $this->belongsTo(Shop::class);
-    }
+    
 
 
     public function isValid(): bool
     {
         return (bool)$this->getRawOriginal('status') === true
-            && $this->used < $this->limiter
+            && (is_null($this->limiter) || $this->used < $this->limiter)
             && $this->start_date <= today()
             && $this->end_date >= today();
     }
@@ -96,14 +80,14 @@ class Coupon extends Model
     {
         return $query
             ->where('status', true)
-            ->whereColumn('used', '<', 'limiter')
+            ->where(function ($query) {
+                $query->whereNull('limiter')
+                    ->orWhereColumn('used', '<', 'limiter');
+            })
             ->whereDate('start_date', '<=', today())
             ->whereDate('end_date', '>=', today());
     }
-    public function scopeActive($query)
-    {
-        return $query->where('status', true);
-    }
+
 
     public function typeByLang()
     {
@@ -151,5 +135,4 @@ class Coupon extends Model
             return round($price, 2);
         }
     }
-
 }

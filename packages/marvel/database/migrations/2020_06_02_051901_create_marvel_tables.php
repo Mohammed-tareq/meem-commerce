@@ -41,8 +41,8 @@ class CreateMarvelTables extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->string('name')->unique();
-            $table->decimal('discount', 8, 3)->nullable();
             $table->enum('discount_type', DiscountType::getValues())->nullable();
+            $table->decimal('discount', 8, 3)->nullable();
             $table->decimal('max_discount_amount', 10, 2)->nullable();
             $table->date('start_date');
             $table->date('end_date');
