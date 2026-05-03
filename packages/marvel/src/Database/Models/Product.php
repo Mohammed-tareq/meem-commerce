@@ -215,7 +215,7 @@ class Product extends Model implements HasMedia
         $now = Carbon::now();
 
         return $this->flash_sales()
-            ->where('sale_status', true)
+            ->where('status', true)
             ->whereDate('start_date', '<=', $now)
             ->whereDate('end_date', '>=', $now)
             ->orderBy('start_date', 'desc')
