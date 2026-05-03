@@ -7,6 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
+use Marvel\Enums\PromotionMountType;
 use Marvel\Enums\PromotionType;
 
 class UpdatePromotionRequest extends FormRequest
@@ -18,15 +19,20 @@ class UpdatePromotionRequest extends FormRequest
 
     public function rules()
     {
-        return [
-            "name"=> "sometimes|array",
-            'name.*' => ['required_with:name', UniqueTranslationRule::for('promotions','name')->ignore($this->route('promotion'))],
+         return [
+            "name" => "sometimes|array",
+            'name.*' => ['required_with:name', UniqueTranslationRule::for('promotions', 'name')],
             'type' => ['sometimes', Rule::in(PromotionType::getValues())],
+            'type_amount' => ['sometimes', Rule::in(PromotionMountType::getValues())],
+            'product_ids' => ['required_if:type_amount,' . PromotionMountType::GIFT, 'array', 'min:1'],
+            'product_ids.*' => 'exists:products,id',
             'value' => 'sometimes|numeric|min:1',
-            'min_order_amount' => 'nullable|numeric|min:1',
-            'start_at' => 'nullable|date',
+            'max_discount_amount' => 'sometimes|numeric|min:1',
+            'required_quantity_type' => 'sometimes|numeric|min:1',
+            'limiter' => 'nullable|date',
+            'start_at' => 'nullable|date|before_or_equal:today',
             'end_at' => 'nullable|date|after_or_equal:start_at',
-            'is_active' => 'sometimes|boolean',
+            'status' => 'sometimes|in:0,1',
         ];
     }
 
