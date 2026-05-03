@@ -2,12 +2,9 @@
 
 namespace Marvel\Database\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Marvel\Enums\DiscountType;
 use Spatie\Translatable\HasTranslations;
@@ -66,15 +63,18 @@ class Coupon extends Model
         return $this->hasMany(Order::class, 'coupon_id');
     }
 
-    
+
 
 
     public function isValid(): bool
     {
-        return (bool)$this->getRawOriginal('status') === true
-            && (is_null($this->limiter) || $this->used < $this->limiter)
-            && $this->start_date <= today()
-            && $this->end_date >= today();
+
+        $today = today();
+
+        return $this->status
+            && (!$this->start_date || $this->start_date->lte($today))
+            && (!$this->end_date || $this->end_date->gte($today))
+            && (is_null($this->limiter) || $this->used < $this->limiter);
     }
     public function scopeValid($query)
     {

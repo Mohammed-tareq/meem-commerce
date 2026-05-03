@@ -16,12 +16,12 @@ class Promotion extends Model
 
     protected $table = 'promotions';
 
-    public $guarded = [];
+    public $fillable = ['name', 'type', 'value', 'max_discount_amount', 'code', 'min_order_amount', 'limiter', 'usage', 'start_at', 'end_at', 'status'];
 
     protected $casts = [
-        'start_at' => 'datetime',
-        'end_at' => 'datetime',
-        'is_active' => 'boolean',
+        'start_at' => 'date',
+        'end_at' => 'date',
+        'status' => 'boolean',
     ];
 
     protected static function boot()
@@ -39,7 +39,7 @@ class Promotion extends Model
         });
     }
 
-     public function typeByLang()
+    public function typeByLang()
     {
         $map = [
             'ar' => [
@@ -60,46 +60,57 @@ class Promotion extends Model
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', true);
     }
+
 
     public function scopeValid($query)
     {
-        $now = Carbon::now();
-
         return $query
-            ->where('is_active', true)
-            ->where(function ($inner) use ($now) {
-                $inner->whereNull('start_at')->orWhere('start_at', '<=', $now);
+            ->where('status', true)
+            ->where(function ($query) {
+                $query->whereNull('limiter')
+                    ->orWhereColumn('used', '<', 'limiter');
             })
-            ->where(function ($inner) use ($now) {
-                $inner->whereNull('end_at')->orWhere('end_at', '>=', $now);
-            });
+            ->whereDate('start_date', '<=', today())
+            ->whereDate('end_date', '>=', today());
     }
 
-    public function isValid(?float $orderAmount = null): bool
+
+    public function isValid(): bool
     {
-        if (!$this->is_active) {
-            return false;
-        }
+        $today = today();
 
-        $now = Carbon::now();
-        if ($this->start_at && $now->lt($this->start_at)) {
-            return false;
-        }
-        if ($this->end_at && $now->gt($this->end_at)) {
-            return false;
-        }
-
-        if ($orderAmount !== null && $this->min_order_amount !== null) {
-            return $orderAmount >= (float) $this->min_order_amount;
-        }
-
-        return true;
+        return $this->status
+            && (!$this->start_date || $this->start_date->lte($today))
+            && (!$this->end_date || $this->end_date->gte($today))
+            && (is_null($this->limiter) || $this->used < $this->limiter);
     }
 
     public function discountAmount(float $price): float
     {
+        if ($price === null|| $price <= 0) {
+            return null;
+        }
+
+        $price = (float) $price;
+        $value = (float) $this->value;
+        $maxValue = $this->max_discount_amount ? (float) $this->max_discount_amount : null;
+
+        if ($this->discount_type === PromotionType::PERCENTAGE) {
+            $discount = $price * ($value / 100);
+
+            $discount = $maxValue !== null
+                ? min($discount, $maxValue)
+                : $discount;
+
+            return round(max(0, $price - $discount), 2);
+        } elseif ($this->discount_type == PromotionType::FIXED) {
+            return round(max(0, $price - $value), 2);
+        } else {
+
+            return round($price, 2);
+        }
         if ($price <= 0) {
             return 0.0;
         }
@@ -114,6 +125,7 @@ class Promotion extends Model
 
         return 0.0;
     }
+
 
     public function calcPrice(float $price): float
     {

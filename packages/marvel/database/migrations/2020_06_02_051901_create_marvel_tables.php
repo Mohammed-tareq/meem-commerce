@@ -29,15 +29,6 @@ class CreateMarvelTables extends Migration
             $table->timestamps();
         });
         Schema::create('coupons', function (Blueprint $table) {
-            //     $table->text('description')->nullable();
-            //     $table->json('image')->nullable();
-            //     $table->enum('type', CouponType::getValues())->default(CouponType::FIXED_COUPON);
-            //     $table->float('amount')->default(0);
-            //     $table->string('code');
-            //     $table->float('minimum_cart_amount')->default(0);
-            //     $table->string('active_from');
-            //     $table->string('expire_at');
-            //     $table->timestamp('deleted_at')->nullable();
             $table->id();
             $table->string('code')->unique();
             $table->string('name')->unique();

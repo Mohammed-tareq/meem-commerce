@@ -30,17 +30,17 @@ Route::prefix('general')->middleware(['throttle:general'])->group(function () {
     //======================== shops=========================//
     Route::controller(ShopController::class)->group(function () {
         Route::get('shops', 'index')->name('general-shop-index');
-            Route::get('shop/{id}', 'getShopById');
+            Route::get('shops/{id}', 'getShopById');
     });
     //======================== categories=========================//
     Route::controller(CategoryController::class)->group(function () {
         Route::get('categories', 'index')->name('general-category-index');
-        Route::get('category/{id}', 'getCategoryById');
+        Route::get('categories/{id}', 'getCategoryById');
     });
     //======================== products=========================//
     Route::controller(ProductController::class)->group(function () {
         Route::get('products', 'index');
-        Route::get('product/{id}', 'getProductById');
+        Route::get('products/{id}', 'getProductById');
     });
     Route::get('coupons', [CouponController::class, 'index']);
     Route::get('search', [SearchController::class, 'index']);

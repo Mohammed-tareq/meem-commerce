@@ -18,14 +18,10 @@ return new class extends Migration {
             $table->text('description')->nullable();
             $table->dateTime('start_date')->default(now());
             $table->dateTime('end_date');
-            $table->boolean('sale_status')->default(true);
+            $table->boolean('status')->default(true);
             $table->enum('type', FlashSaleType::getValues())->default(FlashSaleType::PERCENTAGE);
             $table->decimal('discount', 10, 2)->nullable();
             $table->decimal('max_discount_amount', 10, 2)->nullable();
-            // $table->json('sale_builder')->nullable();
-            // $table->json('image')->nullable();
-            // $table->json('cover_image')->nullable();
-            // $table->string('language')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

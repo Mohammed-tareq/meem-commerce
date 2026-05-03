@@ -19,13 +19,29 @@ class FlashSale extends Model
     protected $table = 'flash_sales';
 
     public array $translatable = ["title", "description"];
-    public $guarded = [];
+    public $fillable = [
+        'title',
+        'slug',
+        'description',
+        'start_date',
+        'end_date',
+        'status',
+        'type',
+        'discount',
+        'max_discount_amount'
+    ];
 
-    // protected $casts = [
-    //     'cover_image'  => 'json',
-    //     'sale_builder' => 'json',
-    //     'image'        => 'json'
-    // ];
+    protected $casts = [
+        'status' => 'boolean',
+        'start_date' => 'date',
+        'end_date' => 'date',
+    ];
+
+    /**
+     * Scope a query to only active flash sales.
+     *
+
+
 
     /**
      * Return the sluggable configuration array for this model.
@@ -86,11 +102,11 @@ class FlashSale extends Model
         }
 
         $price = (float) $price;
-        $value = (float) $this->value;
+        $discount = (float) $this->discount;
         $maxValue = $this->max_discount_amount ? (float) $this->max_discount_amount : null;
 
         if ($this->type == FlashSaleType::PERCENTAGE) {
-            $discount = $price * ($value / 100);
+            $discount = $price * ($discount / 100);
 
             $discount = $maxValue !== null
                 ? min($discount, $maxValue)
@@ -98,9 +114,9 @@ class FlashSale extends Model
 
             return round(max(0, $price - $discount), 2);
         } elseif ($this->type == FlashSaleType::FIXED_RATE) {
-            return round(max(0, $price - $value), 2);
+            return round(max(0, $price - $discount), 2);
         } elseif ($this->type == FlashSaleType::FINAL_PRICE) {
-            return round(max(0, $value), 2);
+            return round(max(0, $discount), 2);
         }
 
         return round($price, 2);
@@ -113,21 +129,12 @@ class FlashSale extends Model
      */
     public function isValid(): bool
     {
-        if (!$this->sale_status) {
-            return false;
-        }
+        $today = today();
 
-        $now = Carbon::now();
-
-        if ($this->start_date && $now->lt(Carbon::parse($this->start_date))) {
-            return false;
-        }
-
-        if ($this->end_date && $now->gt(Carbon::parse($this->end_date))) {
-            return false;
-        }
-
-        return true;
+        return $this->status
+            && (!$this->start_date || $this->start_date->lte($today))
+            && (!$this->end_date || $this->end_date->gte($today))
+            && (is_null($this->limiter) || $this->used < $this->limiter);
     }
 
     /**
@@ -136,7 +143,7 @@ class FlashSale extends Model
      * @param \Illuminate\Database\Eloquent\Builder $query
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function scopeActive(Builder $query)
+    public function scopeValid(Builder $query)
     {
         $now = Carbon::now();
         return $query->where('sale_status', true)
