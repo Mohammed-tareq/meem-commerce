@@ -16,6 +16,7 @@ class CategorySeeder extends Seeder
 
         for ($i = 1; $i <= 100; $i++) {
             $slug = Str::slug("category-$i");
+            $parentCategory = Category::inRandomOrder()->first();
 
             $category = Category::updateOrCreate(
                 ['slug' => $slug],
@@ -28,6 +29,7 @@ class CategorySeeder extends Seeder
                         'ar' => "������ ������� ��� $i",
                         'en' => "Details of category number $i",
                     ],
+                    'parent_id' => $parentCategory?->id,
                 ]
             );
 
