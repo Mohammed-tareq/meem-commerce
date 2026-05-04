@@ -41,6 +41,7 @@ class UpdateCouponRequest extends FormRequest
                 'numeric',
                 'min:1'
             ],
+            
             'start_date'    => 'sometimes|date_format:Y-m-d',
             'end_date'      => 'sometimes|date_format:Y-m-d|after_or_equal:start_date',
             'limiter'       => 'nullable|integer|min:0',

@@ -26,6 +26,7 @@ class CouponResource extends Resource
             'limiter'       => $this->limiter,
             'used'          => $this->used,
             'status'        => (bool) $this->status,
+            'is_valid'      => $this->isValid(),
             'created_at'    => $this->created_at?->toIso8601String(),
         ];
     }

@@ -33,7 +33,7 @@ class CouponRepository extends BaseRepository
         'end_date',
         'limiter',
         'status',
-        "max_discount_amount"
+        "max_discount_amount",
     ];
 
     public function getDataArray(): array
