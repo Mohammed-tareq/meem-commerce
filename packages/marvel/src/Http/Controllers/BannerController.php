@@ -52,7 +52,7 @@ class BannerController extends CoreController
             $banner = $this->repository->findOrFail($id);
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true, BannerResource::make($banner));
         }catch(\Exception $e){
-            return $this->apiResponse(SOMETHING_WENT_WRONG,500, false);
+            return $this->apiResponse(NOT_FOUND,404, false);
         }
     }
 
@@ -65,7 +65,7 @@ class BannerController extends CoreController
             $banner = $this->repository->updateBanner($request, $id);
             return $this->apiResponse(BANNER_UPDATED_SUCCESSFULLY,200, true, BannerResource::make($banner));
         }catch(\Exception $e){
-            return $this->apiResponse(SOMETHING_WENT_WRONG,500, false);
+            return $this->apiResponse($e->getMessage(),500, false);
         }
     }
 

@@ -71,7 +71,7 @@ class BannerCreateRequest extends FormRequest
                     "max:2048",
                 ],
 
-                "is_active" => ["sometimes", "in:true,1,false,0"],
+                "status" => ["sometimes", "in:0,1"],
             ];
 
     }

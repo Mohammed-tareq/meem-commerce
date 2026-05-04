@@ -52,7 +52,7 @@ class BannerRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
-            $banner = $this->find($id);
+            $banner = $this->findOrFail($id);
             $banner->update($request->except('image'));
             if ($request->has('image')) {
                 if (!$this->updateSingleImage($request, 'image', $banner, 'banners', 'banners')) {
@@ -63,7 +63,7 @@ class BannerRepository extends BaseRepository
             return $banner;
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new HttpException(500, $e->getMessage());
+            throw new HttpException(400, NOT_FOUND);
         }
     }
 

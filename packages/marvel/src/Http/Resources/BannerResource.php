@@ -19,7 +19,7 @@ class BannerResource extends Resource
             'title'       => $this->title,
             'description' => $this->description,
             'image'       => $this->getFirstMediaUrl('banners'),
-            "is_active"   => (bool)$this->is_active,
+            "status"   => (bool)$this->status,
             "products"    => $this->whenLoaded('products', function () {
                 return ProductResource::collection($this->products);
             }),

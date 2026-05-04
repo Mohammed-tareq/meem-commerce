@@ -18,52 +18,52 @@ class SliderSeeder extends Seeder
             [
                 'title' => ['en' => 'Summer Sale', 'ar' => 'تخفيضات الصيف'],
                 'order' => 1,
-                'is_active' => true,
+                'status' => true,
             ],
             [
                 'title' => ['en' => 'New Collection', 'ar' => 'المجموعة الجديدة'],
                 'order' => 2,
-                'is_active' => true,
+                'status' => true,
             ],
             [
                 'title' => ['en' => 'Ramadan Offers', 'ar' => 'عروض رمضان'],
                 'order'=> 3,
-                'is_active' => false,
+                'status' => false,
             ],
             [
                 'title' => ['en' => 'Winter Clearance', 'ar' => 'تصفية الشتاء'],
                 'order'=> 4,
-                'is_active' => true,
+                'status' => true,
             ],
             [
                 'title' => ['en' => 'Black Friday Deals', 'ar' => 'عروض الجمعة السوداء'],
                 'order'=> 5,
-                'is_active' => true,
+                'status' => true,
             ],
             [
                 'title' => ['en' => 'Back to School', 'ar' => 'العودة إلى المدرسة'],
                 'order'=> 6,
-                'is_active' => true,
+                'status' => true,
             ],
             [
                 'title' => ['en' => 'Flash Sale', 'ar' => 'تخفيضات سريعة'],
                 'order'=> 7,
-                'is_active' => false,
+                'status' => false,
             ],
             [
                 'title' => ['en' => 'Valentine’s Day', 'ar' => 'عيد الحب'],
                 'order'=> 8,
-                'is_active' => true,
+                'status' => true,
             ],
             [
                 'title' => ['en' => 'Eid Al-Fitr Sale', 'ar' => 'تخفيضات عيد الفطر'],
                 'order'=> 9,
-                'is_active' => true,
+                'status' => true,
             ],
             [
                 'title' => ['en' => 'Cyber Monday', 'ar' => 'سايبر مانداي'],
                 'order'=> 10,
-                'is_active' => true,
+                'status' => true,
             ],
         ];
 

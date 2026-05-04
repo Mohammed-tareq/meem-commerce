@@ -36,7 +36,7 @@ class BannerUpdateRequest extends FormRequest
            "description.en"=> "nullable|string|max:500|min:10".UniqueTranslationRule::for('banners','description')->ignore($id),
            "description.ar"=> "nullable|string|max:500|min:10".UniqueTranslationRule::for('banners','description')->ignore($id),
            "image"=> "sometimes | image | mimes:jpeg,png,jpg,gif | max:2048",
-           "is_active"=> "sometimes | in:true,1,false,0",
+           "status"=> "sometimes | in:0,1",
         ];
     }
 

@@ -89,7 +89,7 @@ class CreateMarvelTables extends Migration
             $table->string('title');
             $table->integer('order');
             $table->text('description')->nullable();
-            $table->boolean('is_active')->default(false);
+            $table->boolean('status')->default(false);
             $table->softDeletes();
             $table->timestamps();
             // $table->json('image')->nullable();
@@ -101,7 +101,7 @@ class CreateMarvelTables extends Migration
             // $table->enum('type', ['slider', 'image'])->default('slider');
             $table->string('title')->nullable();
             $table->integer('order');
-            $table->boolean('is_active')->default(false);
+            $table->boolean('status')->default(false);
             $table->timestamps();
             $table->softDeletes();
 

@@ -19,7 +19,12 @@ class Banner extends Model implements HasMedia, Sortable
         'sort_when_creating' => true,
     ];
 
-    public $guarded = [];
+    public $fillable = [
+        'title',
+        'description',
+        'status',
+        'order',
+    ];
     public $translatable = ['title', 'description'];
 
     // protected $casts = [
@@ -43,6 +48,6 @@ class Banner extends Model implements HasMedia, Sortable
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', true);
     }
 }
