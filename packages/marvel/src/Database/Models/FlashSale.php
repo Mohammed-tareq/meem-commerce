@@ -14,14 +14,13 @@ use Carbon\Carbon;
 
 class FlashSale extends Model
 {
-    use HasTranslations, SoftDeletes, Sluggable;
+    use HasTranslations, SoftDeletes;
 
     protected $table = 'flash_sales';
 
     public array $translatable = ["title", "description"];
     public $fillable = [
         'title',
-        'slug',
         'description',
         'start_date',
         'end_date',
@@ -48,14 +47,14 @@ class FlashSale extends Model
      *
      * @return array
      */
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'title',
-            ]
-        ];
-    }
+    // public function sluggable(): array
+    // {
+    //     return [
+    //         'slug' => [
+    //             'source' => 'title',
+    //         ]
+    //     ];
+    // }
 
 
 
@@ -133,8 +132,7 @@ class FlashSale extends Model
 
         return $this->status
             && (!$this->start_date || $this->start_date->lte($today))
-            && (!$this->end_date || $this->end_date->gte($today))
-            && (is_null($this->limiter) || $this->used < $this->limiter);
+            && (!$this->end_date || $this->end_date->gte($today));
     }
 
     /**
@@ -146,11 +144,6 @@ class FlashSale extends Model
     public function scopeValid(Builder $query)
     {
         return $query->where('status', true)
-            ->where('status', true)
-            ->where(function ($query) {
-                $query->whereNull('limiter')
-                    ->orWhereColumn('used', '<', 'limiter');
-            })
             ->where(function ($query) {
                 $query->whereNull('start_date')
                     ->orWhereDate('start_date', '<=', today());
@@ -159,5 +152,20 @@ class FlashSale extends Model
                 $query->whereNull('end_date')
                     ->orWhereDate('end_date', '>=', today());
             });
+    }
+    public function scopeInvalid(Builder $query)
+    {
+        return $query->where(function ($query) {
+            $query->where('status', false)
+                ->orWhere(function ($query) {
+                    $query->whereNotNull('start_date')
+                        ->whereDate('start_date', '>', today());
+                })
+
+                ->orWhere(function ($query) {
+                    $query->whereNotNull('end_date')
+                        ->whereDate('end_date', '<', today());
+                });
+        });
     }
 }

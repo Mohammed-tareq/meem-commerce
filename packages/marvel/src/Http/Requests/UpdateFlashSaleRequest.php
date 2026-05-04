@@ -35,13 +35,20 @@ class UpdateFlashSaleRequest extends FormRequest
         $id = $this->route("flash_sale");
         $rules =  [
             'title'        => ['sometimes', 'array'],
-            'title.*'=> ['sometimes','string','min:3' , 'max:70',UniqueTranslationRule::for('flash_sales',"title")->ignore($id)],
+            'title.*' => ['sometimes', 'string', 'min:3', 'max:70', UniqueTranslationRule::for('flash_sales', "title")->ignore($id)],
             'description'        => ['sometimes', 'array'],
             'description.*'  => ['sometimes', 'string', 'max:1000'],
             'start_date'   => ['sometimes', 'date'],
             'end_date'     => ['sometimes', 'date'],
-            'type'=> ['sometimes',Rule::in(FlashSaleType::getValues())],
-            'value'=> ['sometimes','numeric','min:0'],
+            'type' => ['sometimes', Rule::in(FlashSaleType::getValues())],
+            'discount' => ['sometimes', 'numeric', 'min:0'],
+            'max_discount_amount' => [
+                'required_if:type,percentage',
+                'numeric',
+                'min:1'
+            ],
+            'status' => ['sometimes', 'in:1,0']
+
         ];
         return $rules;
     }

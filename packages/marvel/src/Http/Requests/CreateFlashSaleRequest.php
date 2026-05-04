@@ -31,19 +31,20 @@ class CreateFlashSaleRequest extends FormRequest
     {
         return [
             'title'        => ['required', 'array'],
-            'title.*'=> ['required','string','min:3' , 'max:70',UniqueTranslationRule::for('flash_sales',"title")],
+            'title.*' => ['required', 'string', 'min:3', 'max:70', UniqueTranslationRule::for('flash_sales', "title")],
             'description'        => ['required', 'array'],
             'description.*'  => ['required', 'string', 'max:1000'],
             'start_date'   => ['required', 'date'],
             'end_date'     => ['required', 'date'],
-            'slug'         => ['nullable', 'string'],
-            'type'=> ['required',Rule::in(FlashSaleType::getValues())],
-            'value'=> ['required','numeric','min:0'],
+            'type' => ['required', Rule::in(FlashSaleType::getValues())],
+            'discount' => ['required', 'numeric', 'min:0'],
+            'max_discount_amount' => [
+                'required_if:type,percentage',
+                'numeric',
+                'min:1'
+            ],
+            'status'=> ['required', 'in:1,0']
 
-//            'language'     => ['nullable', 'string'],
-            // 'image'        => ['nullable', 'array'],
-            // 'cover_image'  => ['nullable', 'array'],
-//            'sale_builder' => ['nullable', 'array']
         ];
     }
 

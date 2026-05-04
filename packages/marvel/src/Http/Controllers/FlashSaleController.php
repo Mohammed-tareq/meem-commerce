@@ -86,32 +86,23 @@ class FlashSaleController extends CoreController
             // $data = FlashSaleResource::collection($flash_sales)->response()->getData(true);
             // return formatAPIResourcePaginate($data);
         } catch (MarvelException $e) {
-            throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
+            return $this->apiResponse(SOMETHING_WENT_WRONG,500,false);
         }
     }
 
     public function fetchFlashSales(Request $request)
     {
-//        $language = $request->language ?? DEFAULT_LANGUAGE;
-//        event(new FlashSaleProcessed('index', $language));
+
 
         $valid = $request->query('valid', false);
         $invalid = $request->query('invalid', false);
         $flash_sales_query = $this->repository
             ->when($valid, function ($q) {
-                return $q->where('start_date', '<=', now())
-                    ->where('end_date', '>=', now());
+                return $q->valid();
             })
             ->when($invalid, function ($q) {
-                return $q->where(function ($q2) {
-                    $q2->where('start_date', '>', now())
-                        ->orWhere('end_date', '<', now());
+                return $q->invalid();
                 });
-            });
-//            ->where('language', $language)
-//            ->when($request->request_from === 'vendor', function ($flash_sales_query) {
-//                return $flash_sales_query->whereDate('start_date', '>', now()->toDateString());
-//            });
 
         return $flash_sales_query;
     }
@@ -129,7 +120,7 @@ class FlashSaleController extends CoreController
             $flashSale =  $this->repository->storeFlashSale($request);
             return $this->apiResponse(CREATE_FLASH_SALE_SUCCESSFULLY,200,true,FlashSaleResource::make($flashSale));
         } catch (MarvelException $e) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE, $e->getMessage());
+            return $this->apiResponse(SOMETHING_WENT_WRONG,500,false);
         }
     }
 
@@ -160,7 +151,7 @@ class FlashSaleController extends CoreController
                 ->orWhere('id', '=', $slug)->first();
                 return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true,FlashSaleResource::make($flash_sale));
             } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND, $e->getMessage());
+            return $this->apiResponse(NOT_FOUND,404,false);
         }
     }
 
@@ -179,7 +170,7 @@ class FlashSaleController extends CoreController
             $flashSale =  $this->updateFlashSale($request);
             return $this->apiResponse(UPDATE_FLASH_SALE_SUCCESSFULLY,200,true,FlashSaleResource::make($flashSale));
         } catch (MarvelException $e) {
-            throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE, $e->getMessage());
+            return $this->apiResponse(SOMETHING_WENT_WRONG,500,false);
         }
     }
 
