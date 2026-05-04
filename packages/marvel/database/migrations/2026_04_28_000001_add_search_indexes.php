@@ -27,7 +27,19 @@ class AddSearchIndexes extends Migration
 
         Schema::table('category_product', function (Blueprint $table) {
             $table->index(['category_id', 'product_id']);
-            $table->index(['product_id', 'category_id']);
+        });
+        Schema::table('category_shop', function (Blueprint $table) {
+
+            $table->index(['category_id','shop_id']);
+        });
+        Schema::table('coupon_shop', function (Blueprint $table) {
+            $table->index(['coupon_id', 'shop_id']);
+        });
+        Schema::table('flash_sale_shop', function (Blueprint $table) {
+            $table->index(['flash_sale_id', 'shop_id']);
+        });
+        Schema::table('product_shop', function (Blueprint $table) {
+            $table->index(['product_id', 'shop_id']);
         });
     }
 
@@ -53,6 +65,18 @@ class AddSearchIndexes extends Migration
         Schema::table('category_product', function (Blueprint $table) {
             $table->dropIndex(['category_id', 'product_id']);
             $table->dropIndex(['product_id', 'category_id']);
+        });
+        Schema::table('category_shop', function (Blueprint $table) {
+            $table->dropIndex(['category_id', 'shop_id']);
+        });
+        Schema::table('coupon_shop', function (Blueprint $table) {
+            $table->dropIndex(['coupon_id', 'shop_id']);
+        });
+        Schema::table('flash_sale_shop', function (Blueprint $table) {
+            $table->dropIndex(['flash_sale_id', 'shop_id']);
+        });
+        Schema::table('product_shop', function (Blueprint $table) {
+            $table->dropIndex(['product_id', 'shop_id']);
         });
     }
 }

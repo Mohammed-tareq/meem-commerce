@@ -22,11 +22,11 @@ class CategoryResource extends Resource
             'image'                => $this->getFirstMediaUrl('categories'),
             'products_count'       => $this->whenCounted('products'),
             'details'              => $this?->getTranslation('details', app()->getLocale()),
-            $this->mergeWhen(!request()->routeIs('general-category-index'), [
-                'parent'               => $this->whenLoaded('parent', CategoryResource::make($this->parent)),
-                'children'             => $this->whenLoaded('children', ChildrenCategoryResource::collection($this->children)),
-                'products'                 => $this->whenLoaded('products', ProductResource::collection($this->products)),
-            ]),
+            // $this->mergeWhen(!request()->routeIs('general-category-index'), [
+            //     'parent'               => $this->whenLoaded('parent', CategoryResource::make($this->parent)),
+            //     'children'             => $this->whenLoaded('children', ChildrenCategoryResource::collection($this->children)),
+            // ]),
+            // 'products'                 => $this->whenLoaded('products', ProductResource::collection($this->products)),
 
         ];
     }

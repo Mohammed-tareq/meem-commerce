@@ -64,7 +64,7 @@ class ShopSeeder extends Seeder
                     ],
                 ],
 
-                'is_active'   => 1,
+                'status'   => 1,
             ]);
 
             if ($shopImagesCount > 0) {

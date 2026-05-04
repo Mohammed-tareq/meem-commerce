@@ -24,7 +24,8 @@ class Shop extends Model implements HasMedia
     protected $table = 'shops';
 
     public array $translatable = ['name', 'description', 'address'];
-    public $guarded = [];
+    public $fillable = ['name', 'slug','description', 'logo', 'cover_image', 'address', 'is_active'];
+    public $hidden = ['deleted_at'];
 
     protected $casts = [
         // 'logo' => 'json',

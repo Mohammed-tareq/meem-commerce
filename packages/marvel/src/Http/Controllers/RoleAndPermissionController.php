@@ -5,12 +5,12 @@ namespace Marvel\Http\Controllers;
 use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Marvel\Database\Models\Role;
 use Marvel\Database\Models\User;
 use Marvel\Http\Resources\PermissionResource;
 use Marvel\Http\Resources\RoleResource;
 use Marvel\Http\Resources\UserResource;
 use Marvel\Traits\ApiResponse;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 use Marvel\Enums\Permission as PermissionEnum;
 
@@ -150,10 +150,4 @@ class RoleAndPermissionController extends CoreController
 
         return $this->apiResponse('Permission assigned successfully', 200, true, RoleResource::make($role));
     }
-
-
-
-   
-
-    
 }

@@ -21,7 +21,7 @@ class ShopResource extends Resource
             'description' => $this->description,
             'cover_image' => $this->getFirstMediaUrl('shop-image'),
             'logo' => $this->getFirstMediaUrl('shop-logo'),
-            'is_active' => (bool) $this->is_active,
+            'status' => (bool) $this->is_active,
             'address' =>  collect($this->address)->map(function ($addr) {
                 return [
                     'city'           => $addr['city'][app()->getLocale()] ?? null,
@@ -31,18 +31,14 @@ class ShopResource extends Resource
                 ];
             }),
             'created_at' => $this->created_at,
-            $this->mergeWhen(!request()->routeIs('general-shop-index'), [
-                'categories' => $this->whenLoaded('categories', CategoryResource::collection($this->categories)),
-                'products_count' => $this->whenCounted('products',0),
+            // $this->mergeWhen(
+            //     !request()->routeIs('general-shop-index') && !request()->routeIs('shops.index'),
+            //     [
+            //         'categories' => $this->whenLoaded('categories', CategoryResource::collection($this->categories)),
+            //         'products_count' => $this->whenCounted('products', 0),
 
-            ])
-            // 'owner_id' => $this->owner_id,
-            // 'owner' => $this->when($this->needToInclude($request, 'shop.owner'), function () {
-            //     return new UserResource($this->owner);
-            // }),
-            // 'settings' => $this->settings,
-            // 'notifications' => $this->notifications,
-
+            //     ]
+            // )
         ];
     }
 }

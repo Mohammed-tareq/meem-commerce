@@ -22,11 +22,11 @@ class CategorySeeder extends Seeder
                 ['slug' => $slug],
                 [
                     'name' => [
-                        'ar' => "�������� $i",
+                        'ar' => "كاتوجوري $i",
                         'en' => "Category $i",
                     ],
                     'details' => [
-                        'ar' => "������ ������� ��� $i",
+                        'ar' => "تفاصيل الكاتوجوري $i",
                         'en' => "Details of category number $i",
                     ],
                     'parent_id' => $parentCategory?->id,

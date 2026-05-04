@@ -117,13 +117,13 @@ class ShopController extends CoreController
     {
         $limit = $request->limit ? $request->limit : 15;
         $shops = $this->fetchShops($request)->paginate($limit)->withQueryString();
-        $data = ShopResource::collection($shops)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $data = formatAPIResourcePaginate(ShopResource::collection($shops)->response()->getData(true));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
     public function fetchShops(Request $request)
     {
-        return $this->repository->with('categories.products')->withCount(['products']);
+        return $this->repository->with('categories')->withCount(['products']);
         // ->where('id', '!=', null)
         // ->with(['owner.profile', 'ownership_history']);
     }
@@ -179,7 +179,7 @@ class ShopController extends CoreController
     public function show($slug, Request $request)
     {
         $query = $this->repository
-            ->with(['categories.products'])
+            ->with(['categories'])
             ->withCount('products');
 
         $user = $request->user();
@@ -246,6 +246,7 @@ class ShopController extends CoreController
     public function update(ShopUpdateRequest $request, $id)
     {
         try {
+            $request->merge(['id' => $id]);
             $shop = $this->updateShop($request);
             return $this->apiResponse('Shop updated successfully', 200, true, ShopResource::make($shop));
         } catch (MarvelException $th) {
@@ -298,7 +299,10 @@ class ShopController extends CoreController
         ]);
 
 
-        $shop = $this->repository->findOrFail($id);
+        $shop = $this->repository->find($id);
+        if(!$shop) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
         $relationName = $relationMap[$relation];
         $ids = $validated['ids'];
 

@@ -28,7 +28,6 @@ class ShopUpdateRequest extends FormRequest
     {
         $id = $this->route('shop');
         return [
-        'id'                         => ['required', 'exists:shops,id'],
         'name'                       => ['sometimes', 'array'],
         'name.*'                     => ['sometimes', 'string', 'max:50',"min:3",UniqueTranslationRule::for('shops')->ignore($id) ],
         'description'                => ['nullable', 'array'],
@@ -36,7 +35,6 @@ class ShopUpdateRequest extends FormRequest
         'logo'                       => ['sometimes', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
         'cover_image'                => ['sometimes', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
         'address'                    => ['sometimes', 'array'],
-        'address.*'                  => ['sometimes', 'array'],
         'address.*.street_address' => ['sometimes', 'array'],
         'address.*.street_address.*' => ['sometimes', 'string', 'max:2000',"min:3"],
         'address.*.city'             => ['sometimes', 'array'],
@@ -45,12 +43,7 @@ class ShopUpdateRequest extends FormRequest
         'address.*.state.*'            => ['sometimes', 'string', 'max:2000',"min:3"],
         'address.*.country'          => ['sometimes', 'array'],
         'address.*.country.*'          => ['sometimes', 'string', 'max:2000',"min:3"],
-        'is_active'                  => ['nullable', "in:1,true"],
-        'admin_commission_rate'      => ['nullable', 'numeric'],
-        'total_earnings'             => ['nullable', 'numeric'],
-        'withdrawn_amount'           => ['nullable', 'numeric'],
-        'current_balance'            => ['nullable', 'numeric'],
-        'categories'                 => ['array'],
+        'status'                  => ['nullable', "in:1,0"],
         ];
     }
 
