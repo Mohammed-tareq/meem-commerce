@@ -15,7 +15,7 @@ class AttributeValue extends Model
     public array $translatable = ['value'];
     protected $table = 'attribute_values';
 
-    public $guarded = [];
+    public $fillable = ['value', 'slug', 'attribute_id'];
 
 
 

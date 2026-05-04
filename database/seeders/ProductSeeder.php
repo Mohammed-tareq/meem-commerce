@@ -36,11 +36,11 @@ class ProductSeeder extends Seeder
             $productImages = collect(File::files(public_path('images/products')));
             $productImagesCount = $productImages->count();
 
-            $shop = Shop::inRandomOrder()->first();
-            if (! $shop) {
-                $this->command->warn('No shops found. Create a shop first.');
-                return;
-            }
+            // $shop = Shop::inRandomOrder()->first();
+            // if (! $shop) {
+            //     $this->command->warn('No shops found. Create a shop first.');
+            //     return;
+            // }
 
             for ($i = 1; $i <= 50; $i++) {
                 $productNameEn = $this->randomWords($englishWords, 3);
@@ -75,7 +75,6 @@ class ProductSeeder extends Seeder
                     'end_date' => $this->maybeDate(50),
                     'price_after_discount' => $this->maybeFloat(50, 20, 1500),
                     'price_after_flash_sale' => $this->maybeFloat(50, 20, 1500),
-                    'shop_id' => $shop->id,
                 ]);
 
                 if ($productImagesCount > 0) {

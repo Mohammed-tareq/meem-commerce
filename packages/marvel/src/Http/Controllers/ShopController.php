@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Repositories\ShopRepository;
 use Marvel\Enums\Role;
+use Marvel\Http\Resources\ShopCollection;
 use Marvel\Http\Resources\ShopResource;
 use Marvel\Traits\ApiResponse;
 use Marvel\Traits\OrderStatusManagerWithPaymentTrait;
@@ -117,7 +118,7 @@ class ShopController extends CoreController
     {
         $limit = $request->limit ? $request->limit : 15;
         $shops = $this->fetchShops($request)->paginate($limit)->withQueryString();
-        $data = formatAPIResourcePaginate(ShopResource::collection($shops)->response()->getData(true));
+        $data =   new ShopCollection($shops);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 

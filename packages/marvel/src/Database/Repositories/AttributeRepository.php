@@ -63,7 +63,7 @@ class AttributeRepository extends BaseRepository
                 }
             }
             DB::commit();
-            return $attribute->load(['values','shop']);
+            return $attribute->load(['values']);
         } catch (\Throwable $th) {
             DB::rollBack();
             throw new HttpException(400, COULD_NOT_CREATE_THE_RESOURCE);
@@ -73,22 +73,10 @@ class AttributeRepository extends BaseRepository
     public function updateAttribute($request, $attribute)
     {
         try {
-            // if (isset($request['values'])) {
-            //     foreach ($attribute->values as $value) {
-            //         $key = array_search($value->id, array_column($request['values'], 'id'));
-            //         if (!$key && $key !== 0) {
-            //             AttributeValue::findOrFail($value->id)->delete();
-            //         }
-            //     }
-            //     foreach ($request['values'] as $value) {
-            //         if (isset($value['id'])) {
-            //             AttributeValue::findOrFail($value['id'])->update($value);
-            //         } else {
-            //             $value['attribute_id'] = $attribute->id;
-            //             AttributeValue::create($value);
-            //         }
-            //     }
-            // }
+
+            $request['slug'] = $this->makeSlug($request, 'slug', $attribute->id);
+
+
             $attribute->update($request->only($this->dataArray));
             if (isset($request['values']) && count($request['values'])) {
                 $attribute->values()->delete();
@@ -102,11 +90,10 @@ class AttributeRepository extends BaseRepository
                 }
             }
 
-              $attributeUpdated =  $this->with(['values','shop'])->findOrFail($attribute->id);
+            $attributeUpdated =  $this->with(['values'])->findOrFail($attribute->id);
             return $attributeUpdated;
         } catch (\Throwable $th) {
             throw new HttpException(400, COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }
-    
 }

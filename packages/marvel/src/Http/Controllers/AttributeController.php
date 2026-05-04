@@ -77,11 +77,9 @@ class AttributeController extends CoreController
      */
     public function index(Request $request)
     {
-//        $language = $request->language ?? DEFAULT_LANGUAGE;
         $attributes = $this->repository
-            ->with(['values', 'shop'])->get();
-//            ->where('language', $language)
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true,AttributeResource::collection($attributes));
+            ->with('values')->get();
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, AttributeResource::collection($attributes));
     }
 
     /**
@@ -136,17 +134,16 @@ class AttributeController extends CoreController
     {
 
         try {
-//            $language = $request->language ?? DEFAULT_LANGUAGE;
+            //            $language = $request->language ?? DEFAULT_LANGUAGE;
             if (is_numeric($params)) {
                 $params = (int)$params;
                 $attribute = $this->repository->with('values')->where('id', $params)->firstOrFail();
-                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true,AttributeResource::make($attribute));
+                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, AttributeResource::make($attribute));
             }
             $attribute = $this->repository->with('values')
                 ->where('slug', $params)
-//                ->where('language', $language)
                 ->firstOrFail();
-                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true,AttributeResource::make($attribute));
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, AttributeResource::make($attribute));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -179,7 +176,7 @@ class AttributeController extends CoreController
         try {
             $request->id = $id;
             $attributeUpdates =  $this->updateAttribute($request);
-            return $this->apiResponse(ATTRIBUTE_UPDATED_SUCCESSFULLY,200, true, AttributeResource::make($attributeUpdates) );
+            return $this->apiResponse(ATTRIBUTE_UPDATED_SUCCESSFULLY, 200, true, AttributeResource::make($attributeUpdates));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
         }
@@ -189,14 +186,13 @@ class AttributeController extends CoreController
     {
 
         // if ($this->repository->hasPermission($request->user(), $request->shop_id)) {
-            // }
-            try {
-                $attribute = $this->repository->with('values')->findOrFail($request->id);
-                return $this->repository->updateAttribute($request, $attribute);
-            } catch (\Exception $e) {
-                throw new HttpException(404, NOT_FOUND);
-            }
-
+        // }
+        try {
+            $attribute = $this->repository->with('values')->findOrFail($request->id);
+            return $this->repository->updateAttribute($request, $attribute);
+        } catch (\Exception $e) {
+            throw new HttpException(404, NOT_FOUND);
+        }
     }
 
     /**
@@ -226,10 +222,9 @@ class AttributeController extends CoreController
     public function deleteAttribute(Request $request)
     {
 
-            $attribute = $this->repository->findOrFail($request->id);
-            $attribute->delete();
-            return $this->apiResponse(ATTRIBUTE_DELETED_SUCCESSFULLY,200);
-
+        $attribute = $this->repository->findOrFail($request->id);
+        $attribute->delete();
+        return $this->apiResponse(ATTRIBUTE_DELETED_SUCCESSFULLY, 200);
     }
 
     public function exportAttributes(Request $request, $shop_id)
@@ -246,8 +241,7 @@ class AttributeController extends CoreController
         $list = $this->repository->where('shop_id', $shop_id)->with(['values'])->get()->toArray();
 
         if (!count($list)) {
-            return response()->stream(function () {
-            }, 200, $headers);
+            return response()->stream(function () {}, 200, $headers);
         }
         # add headers for each column in the CSV download
         array_unshift($list, array_keys($list[0]));

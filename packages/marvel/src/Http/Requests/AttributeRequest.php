@@ -27,11 +27,11 @@ class AttributeRequest extends FormRequest
      */
     public function rules()
     {
-        $id = $this->route("attribute");
         return [
-            'name'        => ['required', 'array'],
-            'name.*'      => ['required', 'string','min:2','max:50',UniqueTranslationRule::for('attributes')->ignore($id)],
-            'shop_id'     => ['sometimes', 'exists:shops,id'],
+            'name' => ['required', 'array'],
+            'name.en' => ['required', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('attributes')->ignore($this->route('attribute'))],
+            'name.ar' => ['required', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('attributes')->ignore($this->route('attribute'))],
+
             'values' => [
                 'sometimes',
                 'array',
@@ -47,7 +47,7 @@ class AttributeRequest extends FormRequest
                 'string',
                 'min:2',
                 'max:50',
-            
+
             ],
         ];
     }

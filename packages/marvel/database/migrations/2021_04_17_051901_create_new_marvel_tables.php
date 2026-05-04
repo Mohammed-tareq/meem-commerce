@@ -142,23 +142,23 @@ class CreateNewMarvelTables extends Migration
             $table->timestamps();
         });
 
-        Schema::table('attributes', function (Blueprint $table) {
-            $table->unsignedBigInteger('shop_id')->nullable();
-            $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
-        });
+        // Schema::table('attributes', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('shop_id')->nullable();
+        //     $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
+        // });
 
-        Schema::table('attribute_values', function (Blueprint $table) {
-            $table->string('meta')->nullable();
-        });
+        // Schema::table('attribute_values', function (Blueprint $table) {
+        //     $table->string('meta')->nullable();
+        // });
 
         Schema::table('types', function (Blueprint $table) {
             $table->json('settings')->nullable();
         });
 
-        Schema::table('products', function (Blueprint $table) {
-            $table->unsignedBigInteger('shop_id')->nullable();
-            $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
-        });
+        // Schema::table('products', function (Blueprint $table) {
+        //     $table->unsignedBigInteger('shop_id')->nullable();
+        //     $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
+        // });
         Schema::table('orders', function (Blueprint $table) {
             $table->unsignedBigInteger('shop_id')->nullable();
             $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');

@@ -129,8 +129,9 @@ class ShopRepository extends BaseRepository
             //     }
             // }
             $data = $request->only($this->dataArray);
-            $data['slug'] = $this->makeSlug($request);
-           
+            $data['slug'] = $this->makeSlug($request, 'slug', $shop->id);
+
+
             $shop->update($data);
             if ($request->hasFile('logo')) {
                 if (!$this->updateSingleImage($request, 'logo', $shop, 'shop-logo', 'shops')) {

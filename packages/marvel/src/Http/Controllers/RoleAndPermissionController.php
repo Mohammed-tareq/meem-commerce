@@ -31,123 +31,151 @@ class RoleAndPermissionController extends CoreController
 
     public function getAllRoles()
     {
-        $limit = request('limit', 10);
-        $search = request('search', null);
-        $roles = Role::paginate($limit);
-
-        return $this->apiResponse('Roles fetched successfully', 200, true, RoleResource::collection($roles));
+        try {
+            $limit = request('limit', 10);
+            $search = request('search', null);
+            $roles = Role::paginate($limit);
+            return $this->apiResponse('Roles fetched successfully', 200, true, RoleResource::collection($roles));
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
     }
 
     public function addRole(Request $request)
     {
-        $request->validate([
-            'display_name' => 'required|array',
-            'display_name.*' => [
-                'required',
-                'string',
-                UniqueTranslationRule::for('roles', 'display_name'),
-            ],
-        ]);
+        try {
+            $request->validate([
+                'display_name' => 'required|array',
+                'display_name.*' => [
+                    'required',
+                    'string',
+                    UniqueTranslationRule::for('roles', 'display_name'),
+                ],
+            ]);
 
-        $name = strtolower(str_replace(' ', '_', $request->display_name['en']));
+            $name = strtolower(str_replace(' ', '_', $request->display_name['en']));
 
-        $role = Role::create([
-            'name' => $name,
-            'display_name' => $request->display_name,
-            'guard_name' => 'api',
-        ]);
+            $role = Role::create([
+                'name' => $name,
+                'display_name' => $request->display_name,
+                'guard_name' => 'api',
+            ]);
 
-        return $this->apiResponse('Role added successfully', 200, true, RoleResource::make($role));
+            return $this->apiResponse('Role added successfully', 200, true, RoleResource::make($role));
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
     }
 
     public function updateRole(Request $request, $id)
     {
-        $role = Role::findById($id, 'api');
+        try {
+            $role = Role::findById($id, 'api');
 
-        $request->validate([
-            'display_name' => 'required|array',
-            'display_name.*' => [
-                'required',
-                'string',
-                UniqueTranslationRule::for('roles', 'display_name')->ignore($id),
-            ],
-        ]);
-        $name = strtolower(str_replace(' ', '_', $request->display_name['en']));
-        $role->update([
-            'name' => $name,
-            'display_name' => $request->display_name,
-        ]);
+            $request->validate([
+                'display_name' => 'required|array',
+                'display_name.*' => [
+                    'required',
+                    'string',
+                    UniqueTranslationRule::for('roles', 'display_name')->ignore($id),
+                ],
+            ]);
+            $name = strtolower(str_replace(' ', '_', $request->display_name['en']));
+            $role->update([
+                'name' => $name,
+                'display_name' => $request->display_name,
+            ]);
 
-        return $this->apiResponse('Role updated successfully', 200, true, RoleResource::make($role));
+            return $this->apiResponse('Role updated successfully', 200, true, RoleResource::make($role));
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
     }
 
     public function destroyRole($id)
     {
-        $role = Role::findById($id, 'api');
-
-        $role->delete();
-
-        return $this->apiResponse('Role deleted successfully', 200, true, null);
+        try {
+            $role = Role::findById($id, 'api');
+            $role->delete();
+            return $this->apiResponse('Role deleted successfully', 200, true, null);
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
     }
 
     public function assignRole(Request $request, $userId)
     {
-        $request->validate([
-            'role_ids' => 'required|array',
-            'role_ids.*' => Rule::exists('roles', 'id')->where(fn($q) => $q->where('guard_name', 'api')),
-        ]);
+        try {
+            $request->validate([
+                'role_ids' => 'required|array',
+                'role_ids.*' => Rule::exists('roles', 'id')->where(fn($q) => $q->where('guard_name', 'api')),
+            ]);
 
-        $user = User::findOrFail($userId);
-        $roles = Role::whereIn('id', $request->role_ids)->where('guard_name', 'api')->get();
-        $user->syncRoles($roles)->load('roles', 'permissions');
+            $user = User::findOrFail($userId);
+            $roles = Role::whereIn('id', $request->role_ids)->where('guard_name', 'api')->get();
+            $user->syncRoles($roles)->load('roles', 'permissions');
 
-        return $this->apiResponse('Role assigned successfully', 200, true, UserResource::make($user));
+            return $this->apiResponse('Role assigned successfully', 200, true, UserResource::make($user));
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
     }
 
     public function removeRoleFromUser(Request $request, $userId)
     {
-        $request->validate([
-            'role_ids' => 'required|array',
-            'role_ids.*' => Rule::exists('roles', 'id')->where(fn($q) => $q->where('guard_name', 'api')),
-        ]);
-        $user = User::findOrFail($userId);
-        $roles = Role::whereIn('id', $request->role_ids)->where('guard_name', 'api')->get();
-        foreach ($roles as $role) {
-            $user->removeRole($role);
-        }
-        $user->load('roles', 'permissions');
+        try {
+            $request->validate([
+                'role_ids' => 'required|array',
+                'role_ids.*' => Rule::exists('roles', 'id')->where(fn($q) => $q->where('guard_name', 'api')),
+            ]);
+            $user = User::findOrFail($userId);
+            $roles = Role::whereIn('id', $request->role_ids)->where('guard_name', 'api')->get();
+            foreach ($roles as $role) {
+                $user->removeRole($role);
+            }
+            $user->load('roles', 'permissions');
 
-        return $this->apiResponse('Role removed successfully', 200, true, UserResource::make($user));
+            return $this->apiResponse('Role removed successfully', 200, true);
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
     }
 
     // ================= PERMISSIONS =================
 
     public function getAllPermissions()
     {
-        $limit = request('limit', 100);
-        $search = request('search', null);
-        $permissions = Permission::when($search, function ($query) use ($search) {
-            $query->where('name', 'like', "%{$search}%");
-        })->paginate($limit);
-
-        return $this->apiResponse('Permissions fetched successfully', 200, true, PermissionResource::collection($permissions));
+        try {
+            $limit = request('limit', 100);
+            $search = request('search', null);
+            $permissions = Permission::when($search, function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%");
+            })->paginate($limit);
+            return $this->apiResponse('Permissions fetched successfully', 200, true, PermissionResource::collection($permissions));
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
     }
 
 
 
     public function assignPermissionToRole(Request $request, $roleId)
     {
-        $request->validate([
-            'permissions' => 'required|array',
-            'permissions.*' => ['distinct', 'string', 'max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
-        ]);
+        try {
+            $request->validate([
+                'permissions' => 'required|array',
+                'permissions.*' => ['distinct', 'string', 'max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
+            ]);
 
-        $role = Role::findById($roleId, 'api');
+            $role = Role::findById($roleId, 'api');
 
-        $permissions = Permission::whereIn('id', $request->permissions)->get();
+            $permissions = Permission::whereIn('id', $request->permissions)->get();
 
-        $role->syncPermissions($permissions)->load('permissions');
+            $role->syncPermissions($permissions)->load('permissions');
 
-        return $this->apiResponse('Permission assigned successfully', 200, true, RoleResource::make($role));
+            return $this->apiResponse('Permission assigned successfully', 200, true, RoleResource::make($role));
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
     }
 }

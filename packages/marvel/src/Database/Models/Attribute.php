@@ -15,7 +15,7 @@ class Attribute extends Model
     protected $table = 'attributes';
 
 
-    public $guarded = [];
+    public $fillable = ['name', 'slug'];
 
     /**
      * Return the sluggable configuration array for this model.
@@ -48,8 +48,8 @@ class Attribute extends Model
     /**
      * @return BelongsTo
      */
-    public function shop(): BelongsTo
-    {
-        return $this->belongsTo(Shop::class, 'shop_id');
-    }
+    // public function shop(): BelongsTo
+    // {
+    //     return $this->belongsTo(Shop::class, 'shop_id');
+    // }
 }
