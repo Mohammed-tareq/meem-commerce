@@ -22,8 +22,6 @@ class CouponRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'code'        => 'like',
-        'shop_id',
-        'language',
 
     ];
 
@@ -34,7 +32,8 @@ class CouponRepository extends BaseRepository
         'start_date',
         'end_date',
         'limiter',
-        'used',
+        'status',
+        "max_discount_amount"
     ];
 
     public function getDataArray(): array

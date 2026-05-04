@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Controllers;
 
+use Database\Seeders\FlashSaleSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\JsonResponse;
@@ -198,7 +199,7 @@ class FaqsController extends CoreController
             $faq = $this->repository->storeFaqs($request);
             return $this->apiResponse(FAQ_CREATED_SUCCESSFULLY, 201, true, FaqResource::make($faq));
         } catch (MarvelException $e) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE, $e->getMessage());
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -223,11 +224,11 @@ class FaqsController extends CoreController
     public function show($id)
     {
         try {
-            
-            $faq = $this->repository->with('shop')->findOrFail($id);
+
+            $faq = $this->repository->findOrFail($id);
             return new FaqResource($faq);
         } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND, $e->getMessage());
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
     }
 
@@ -264,9 +265,11 @@ class FaqsController extends CoreController
     {
         try {
             $request["id"] = $id;
-            return $this->updateFaqs($request);
+
+            $faq = $this->updateFaqs($request);
+            return $this->apiResponse(FAQ_UPDATED_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
-            throw new MarvelException(COULD_NOT_UPDATE_THE_RESOURCE, $e->getMessage());
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -280,7 +283,7 @@ class FaqsController extends CoreController
     {
         $faqs = $this->repository->findOrFail($request['id']);
         $faqsUpdate = $this->repository->updateFaqs($request, $faqs);
-        return new FaqResource($faqsUpdate);
+        return $faqsUpdate;
     }
 
     /**
@@ -318,7 +321,7 @@ class FaqsController extends CoreController
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND, $e->getMessage());
+                throw new MarvelException(NOT_FOUND, $e->getMessage());
         }
     }
 }

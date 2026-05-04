@@ -17,7 +17,6 @@ class FaqResource extends Resource
         return [
             'id'              => $this->id,
             'faq_title'       => $this->getTranslation('faq_title', app()->getLocale()),
-            'slug'            => $this->slug,
             'faq_description' => $this->getTranslation('faq_description', app()->getLocale()),
             'faq_type'        => $this->faq_type,
             'issued_by'       => $this->issued_by,

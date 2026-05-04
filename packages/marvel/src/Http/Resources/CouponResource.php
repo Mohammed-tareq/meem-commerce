@@ -20,6 +20,7 @@ class CouponResource extends Resource
             'name'          => $this->getTranslation('name',app()->getLocale()),
             'discount'      => $this->discount,
             'discount_type' => $this->typeByLang(), // percentage أو fixed
+            'max_discount_amount' => $this->max_discount_amount,
             'start_date'    => $this->start_date ,
             'end_date'      => $this->end_date ,
             'limiter'       => $this->limiter,

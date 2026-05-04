@@ -31,14 +31,19 @@ class CouponRequest extends FormRequest
     {
 
         return [
-            "name"=> "required|array",
-            'name.*' => ['required_with:name', UniqueTranslationRule::for('coupons','name')],
+            "name" => "required|array",
+            'name.*' => ['required_with:name', UniqueTranslationRule::for('coupons', 'name')],
             'discount'      => 'required|numeric|min:0',
             'discount_type' => ['required', Rule::in(DiscountType::getValues())],
+            'max_discount_amount' => [
+                'required_if:discount_type,percentage',
+                'numeric',
+                'min:1'
+            ],
             'start_date'    => 'required|date_format:Y-m-d',
             'end_date'      => 'required|date_format:Y-m-d|after_or_equal:start_date',
             'limiter'       => 'nullable|integer|min:0',
-            'used'          => 'nullable|integer|min:0',
+            'status'        => 'sometimes|in:1,0',
         ];
     }
 

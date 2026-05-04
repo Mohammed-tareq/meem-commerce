@@ -32,14 +32,20 @@ class UpdateCouponRequest extends FormRequest
     public function rules()
     {
         return [
-            "name"=> "sometimes|array",
-            'name.*' => ['required_with:name', UniqueTranslationRule::for('coupons','name')->ignore($this->route('coupon'))],
+            "name" => "sometimes|array",
+            'name.*' => ['required_with:name', UniqueTranslationRule::for('coupons', 'name')->ignore($this->route('coupon'))],
             'discount'      => 'sometimes|numeric|min:0',
             'discount_type' => ['sometimes', Rule::in(DiscountType::getValues())],
+            'max_discount_amount' => [
+                'required_if:discount_type,percentage',
+                'numeric',
+                'min:1'
+            ],
             'start_date'    => 'sometimes|date_format:Y-m-d',
             'end_date'      => 'sometimes|date_format:Y-m-d|after_or_equal:start_date',
             'limiter'       => 'nullable|integer|min:0',
-            'used'          => 'nullable|integer|min:0',
+            'status'        => 'sometimes|in:1,0',
+
         ];
     }
 

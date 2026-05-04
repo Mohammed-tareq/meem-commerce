@@ -22,12 +22,16 @@ class Slider extends Model implements HasMedia , Sortable
         'sort_when_creating' => true,
     ];
 
-    public $guarded = [];
+    public $fillable = [
+        'title',
+        'order',
+        'status'
+    ];
 
 
 
     public function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', true);
     }
 }

@@ -101,13 +101,11 @@ class Coupon extends Model
             'ar' => [
                 'fixed_rate' => 'خصم من السعر بالقيمة',
                 'percentage' => 'خصم بالنسبة المئوية',
-                'free_shipping' => 'شحن مجاني',
 
             ],
             'en' => [
                 'fixed_rate' => 'Fixed discount',
                 'percentage' => 'Percentage discount',
-                'free_shipping' => 'Free shipping',
             ],
         ];
 

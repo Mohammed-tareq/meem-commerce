@@ -19,7 +19,7 @@ class SliderResource extends Resource
         return [
             "id" => $this->id,
             "title" => $this->getTranslation('title', app()->getLocale()),
-            "is_active" => (bool)$this->is_active,
+            "status" => (bool)$this->is_active,
             "image" => $this->type === 'image' ? $this->getFirstMediaUrl('sliders-images-secondary') : $this->getFirstMediaUrl('slider-image')
         ];
     }

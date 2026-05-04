@@ -9,6 +9,9 @@ use Marvel\Http\Requests\SliderUpdateRequest;
 use Marvel\Http\Resources\SliderResource;
 use Marvel\Traits\ApiResponse;
 use Illuminate\Http\Request;
+
+use const Dom\NOT_FOUND_ERR;
+
 class SliderController   extends CoreController
 {
     use ApiResponse;
@@ -51,7 +54,7 @@ class SliderController   extends CoreController
             $slider = $this->repository->findOrFail($id);
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true, SliderResource::make($slider));
         }catch(\Exception $e){
-            return $this->apiResponse(SOMETHING_WENT_WRONG,500, false);
+            return $this->apiResponse(NOT_FOUND,404, false);
         }
     }
 
@@ -64,7 +67,7 @@ class SliderController   extends CoreController
             $slider = $this->repository->updateSlider($request, $id);
             return $this->apiResponse(SLIDER_UPDATED_SUCCESSFULLY,200, true, SliderResource::make($slider));
         }catch(\Exception $e){
-            return $this->apiResponse(SOMETHING_WENT_WRONG,500, false);
+            return $this->apiResponse(NOT_FOUND,404, false);
         }
     }
 
@@ -78,7 +81,7 @@ class SliderController   extends CoreController
             $slider->delete();
             return $this->apiResponse(SLIDER_DELETED_SUCCESSFULLY,200, true);
         }catch(\Exception $e){
-            return $this->apiResponse(SOMETHING_WENT_WRONG,500, false, null);
+            return $this->apiResponse(NOT_FOUND,404, false, null);
         }
     }
 

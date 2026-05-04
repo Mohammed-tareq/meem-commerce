@@ -58,7 +58,7 @@ class SliderRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
-            $slider = $this->find($id);
+            $slider = $this->findOrFail($id);
             $slider->update($request->except('image'));
             if ($request->has('image')) {
                 if ($request->type === "slider") {
@@ -75,14 +75,14 @@ class SliderRepository extends BaseRepository
             return $slider;
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new HttpException(500, $e->getMessage());
+            throw new HttpException(400, NOT_FOUND);
         }
     }
 
     public function changeStatus($id)
     {
         try {
-            $slider = $this->find($id);
+            $slider = $this->findOrFail($id);
             $slider->update(['is_active' => !$slider->is_active]);
             return $slider;
         } catch (\Exception $e) {
@@ -94,7 +94,7 @@ class SliderRepository extends BaseRepository
     {
         try {
             $this->setNewOrder($sliders);
-            
+
         } catch (\Exception $e) {
             throw new HttpException(500, $e->getMessage());
         }
