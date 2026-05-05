@@ -14,6 +14,12 @@ class ShopResource extends Resource
      */
     public function toArray($request)
     {
+         $excludedRoutes = [
+            'general-shop-index',
+            'shops.index',
+            'shops.update',
+            'shops.store',
+        ];
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -31,14 +37,14 @@ class ShopResource extends Resource
                 ];
             }),
             'created_at' => $this->created_at,
-            // $this->mergeWhen(
-            //     !request()->routeIs('general-shop-index') && !request()->routeIs('shops.index'),
-            //     [
-            //         'categories' => $this->whenLoaded('categories', CategoryResource::collection($this->categories)),
-            //         'products_count' => $this->whenCounted('products', 0),
+            $this->mergeWhen(
+                !request()->routeIs($excludedRoutes),
+                [
+                    'categories' => $this->whenLoaded('categories', CategoryResource::collection($this->categories)),
+                    'products_count' => $this->whenCounted('products'),
 
-            //     ]
-            // )
+                ]
+            )
         ];
     }
 }

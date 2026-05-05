@@ -15,12 +15,7 @@ class CategoryResource extends Resource
      */
     public function toArray(Request $request)
     {
-        $excludedRoutes = [
-            'general-category-index',
-            'categories.index',
-            'categories.update',
-            'categories.store',
-        ];
+       
         return [
             'id'                   => $this->id,
             'name'                 => $this->getTranslation('name', app()->getLocale()),

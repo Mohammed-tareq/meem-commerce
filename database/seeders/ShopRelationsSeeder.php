@@ -24,7 +24,7 @@ class ShopRelationsSeeder extends Seeder
 
         foreach ($shops as $shop) {
             $this->syncRandom($shop->categories(), $categoryIds, 2, 6);
-            $this->syncRandom($shop->products(), $productIds, 3, 12);
+            $this->syncRandom($shop->products(), $productIds, 3, 50);
             $this->syncRandom($shop->coupons(), $couponIds, 1, 5);
             $this->syncRandom($shop->promotions(), $promotionIds, 1, 5);
             $this->syncRandom($shop->flashSales(), $flashSaleIds, 1, 3);

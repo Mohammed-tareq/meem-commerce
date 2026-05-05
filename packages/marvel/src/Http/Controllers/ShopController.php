@@ -128,7 +128,7 @@ class ShopController extends CoreController
         $active = $request->active ?? null;
         $Inactive = $request->inactive ?? null;
         $search = $request->search ?? null;
-        $query = $this->repository->withCount(['categories']);
+        $query = $this->repository->withCount(['categories', 'products']);
         if ($active) {
             $query->active();
         }
