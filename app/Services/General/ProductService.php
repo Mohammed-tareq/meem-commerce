@@ -14,12 +14,11 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()->active()
-            ->with(['shops:id,name', 'categories:id,name'])
+            ->with(['shops', 'categories','variations'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
         $this->applyProductFilters($query, $request);
-
         if ($term !== '') {
             $this->applyProductSearch($query, $term, app()->getLocale());
         }
@@ -40,7 +39,7 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()
-            ->with(['shops:id,name', 'categories:id,name'])
+            ->with(['shops', 'categories'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
@@ -77,18 +76,41 @@ class ProductService
             $query->where('price', '<=', $priceMax);
         }
 
-        $categorySlug = $request->get('category_slug');
-        if ($categorySlug !== null) {
-            $query->whereHas('categories', function (Builder $builder) use ($categorySlug) {
-                $builder->where('categories.slug', $categorySlug);
+        $categoryId = $request->get('category');
+        if ($categoryId !== null) {
+            $query->whereHas('categories', function (Builder $builder) use ($categoryId) {
+                $builder->where('categories.id', $categoryId);
             });
         }
 
-        $shopSlug = $request->get('shop_slug');
-        if ($shopSlug !== null) {
-            $query->whereHas('shops', function (Builder $builder) use ($shopSlug) {
-                $builder->where('shops.slug', $shopSlug);
+        $shopId = $request->get('shop');
+        if ($shopId !== null) {
+            $query->whereHas('shops', function (Builder $builder) use ($shopId) {
+                $builder->where('shops.id', $shopId);
             });
+        }
+
+        $filters = $request->get('filters');
+        // الشكل المتوقع:
+        // [
+        //   attribute_id => [value_id1, value_id2],
+        //   attribute_id2 => [value_id3]
+        // ]
+
+        if (!empty($filters) && is_array($filters)) {
+            foreach ($filters as $attributeId => $valueIds) {
+
+                if (empty($valueIds)) {
+                    continue;
+                }
+
+                $query->whereHas('variations.attributeProducts', function ($q) use ($attributeId, $valueIds) {
+                    $q->whereIn('attribute_value_id', $valueIds)
+                        ->whereHas('attributeValue', function ($q2) use ($attributeId) {
+                            $q2->where('attribute_id', $attributeId);
+                        });
+                });
+            }
         }
 
         $ratingMin = $request->get('rating_min');

@@ -51,7 +51,6 @@ class Product extends Model implements HasMedia
         'price_after_discount',
         'price_after_flash_sale',
         'discount_status',
-        'shop_id'
     ];
     public array $translatable = ['name', 'description'];
     // protected $metaTable = 'products_meta'; //optional.
@@ -152,10 +151,9 @@ class Product extends Model implements HasMedia
                     // Use DB query to avoid triggering model events again
                     DB::table('products')->where('id', $product->id)->update($updateData);
                     // Also sync current model instance so callers see updated values
-                    // foreach ($updateData as $k => $v) {
-                    //     $product->$k = $v;
-                    // }
-                    $product->refresh();
+                    foreach ($updateData as $k => $v) {
+                        $product->$k = $v;
+                    }
                 }
             } catch (\Exception $e) {
                 // Fail silently to avoid breaking retrieval flow

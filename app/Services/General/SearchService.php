@@ -40,56 +40,14 @@ class SearchService
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
-        $this->applyProductFilters($query, $request);
-
-        if ($term !== '') {
-            $this->applyProductSearch($query, $term, $locale);
-        }
+        $query = $this->applyProductSearch($query, $term, app()->getLocale());
 
         return $query->orderByDesc('id');
     }
 
-    private function applyProductFilters(Builder $query, Request $request): void
+    private function applyProductSearch(Builder $query, string $term, string $locale)
     {
-        $priceMin = $request->get('price_min');
-        $priceMax = $request->get('price_max');
-
-        if ($priceMin !== null && $priceMax !== null) {
-            $query->whereBetween('price', [$priceMin, $priceMax]);
-        } elseif ($priceMin !== null) {
-            $query->where('price', '>=', $priceMin);
-        } elseif ($priceMax !== null) {
-            $query->where('price', '<=', $priceMax);
-        }
-
-        $categorySlug = $request->get('category_slug');
-        if ($categorySlug !== null) {
-            $query->whereHas('categories', function (Builder $builder) use ($categorySlug) {
-                $builder->where('categories.slug', $categorySlug);
-            });
-        }
-
-        $shopSlug = $request->get('shop_slug');
-        if ($shopSlug !== null) {
-            $query->whereHas('shop', function (Builder $builder) use ($shopSlug) {
-                $builder->where('shops.slug', $shopSlug);
-            });
-        }
-
-        $ratingMin = $request->get('rating_min');
-        $ratingMax = $request->get('rating_max');
-        if ($ratingMin !== null || $ratingMax !== null) {
-            $min = $ratingMin ?? 0;
-            $max = $ratingMax ?? 5;
-            $query->whereHas('reviews', function (Builder $builder) use ($min, $max) {
-                $builder->whereBetween('rating', [$min, $max]);
-            });
-        }
-    }
-
-    private function applyProductSearch(Builder $query, string $term, string $locale): void
-    {
-        $query->where(function (Builder $builder) use ($term, $locale) {
+        return $query->where(function (Builder $builder) use ($term, $locale) {
             $this->applyTranslatableLike($builder, 'name', $term, $locale);
 
             $builder->orWhere(function (Builder $sub) use ($term, $locale) {
@@ -117,7 +75,7 @@ class SearchService
 
     private function buildShopQuery(string $term, string $locale): Builder
     {
-        $query = Shop::query()->with(['categories'])->withCount('products');
+        $query = Shop::query()->withCount('categories');
 
         if ($term !== '') {
             $query->where(function (Builder $builder) use ($term, $locale) {
@@ -133,7 +91,7 @@ class SearchService
 
     private function buildCategoryQuery(string $term, string $locale): Builder
     {
-        $query = Category::query()->with(['parent', 'products'])->withCount('products');
+        $query = Category::query()->withCount('products');
 
         if ($term !== '') {
             $query->where(function (Builder $builder) use ($term, $locale) {
