@@ -62,17 +62,17 @@ class Category extends Model implements HasMedia
     }
 
 
-    public function children()
-    {
-        return $this->hasMany('Marvel\Database\Models\Category', 'parent_id', 'id')->with('children')->withCount('products');
-    }
+    // public function children()
+    // {
+    //     return $this->hasMany('Marvel\Database\Models\Category', 'parent_id', 'id')->with('children')->withCount('products');
+    // }
 
 
-    /**
-     * @return BelongsTo
-     */
-    public function parent()
-    {
-        return $this->belongsTo('Marvel\Database\Models\Category', 'parent_id', 'id');
-    }
+    // /**
+    //  * @return BelongsTo
+    //  */
+    // public function parent()
+    // {
+    //     return $this->belongsTo('Marvel\Database\Models\Category', 'parent_id', 'id');
+    // }
 }

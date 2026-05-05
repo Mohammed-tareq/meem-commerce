@@ -2,7 +2,9 @@
 
 namespace Marvel\Http\Resources;
 
-class ProductResource extends Resource
+use Illuminate\Http\Request;
+
+class WishlistResource extends Resource
 {
     public function toArray($request): array
     {
@@ -10,37 +12,15 @@ class ProductResource extends Resource
             'id'                     => $this->id,
             'name'                   => $this->getTranslation('name', app()->getLocale()),
             'slug'                   => $this->slug,
-            'description'            => $this->getTranslation('description', app()->getLocale()), // Array فيه en/ar
-            'price'                  => $this->price,
+            'price'                 => $this->product_type === 'simple'
+                                        ? $this->price
+                                        : $this->variations[0]->sale_price ?? $this->variations[0]->price ?? null,
             'price_after_discount'   => $this->price_after_discount,
             'price_after_flash_sale' => $this->price_after_flash_sale,
-            'discount_type'          => $this->discount_type,
-            'discount_amount'        => $this->discount_amount,
-            'start_date'             => $this->start_date,
-            'end_date'               => $this->end_date,
-            'sku'                    => $this->sku,
-            'quantity'               => $this->quantity,
-            'sold_quantity'          => $this->sold_quantity ?? 0,
             'in_stock'               => $this->in_stock,
-            'status'                 => (bool)$this->status,
-            'product_type'           => $this->product_type,
-            'height'                 => $this->height,
-            'width'                  => $this->width,
-            'length'                 => $this->length,
-            'weight'                 => $this->weight,
             'has_flash_sale'         => $this->has_flash_sale,
             'has_discount'           => $this->has_discount,
-            'banner_id'              => $this->banner_id,
-            'shop_id'                => $this->shop_id,
-            'created_at'             => $this->created_at ? $this->created_at->toIso8601String() : null,
-            "images"                 => $this->getmedia('products') ? $this->getmedia('products')->map(function ($media) {
-                return $media->getUrl();
-            }) : [],
-            $this->mergeWhen($this->relationLoaded('related_products'), function () {
-                return [
-                    'related_products' => ProductResource::collection($this->related_products),
-                ];
-            }),
+            "images"                 => $this->getFirstMediaUrl('products'),
             "variants"                => $this->whenLoaded('variations', function () {
                 return $this->variations->map(function ($variant) {
                     return [

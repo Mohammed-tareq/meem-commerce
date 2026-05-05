@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\ProductVariantSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Marvel\Database\Models\Slider;
 use Marvel\Database\Models\User;
 
 class DatabaseSeeder extends Seeder
@@ -46,6 +46,16 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => now(),
         ]);
 
+        $customer = User::firstOrCreate([
+            'email' => 'test@g.com',
+        ], [
+            'name' => 'Test Customer',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'shop_id' => null,
+            'email_verified_at' => now(),
+        ]);
+
         $user->assignRole("super_admin");
         $userEdit->assignRole("editor");
 
@@ -58,10 +68,12 @@ class DatabaseSeeder extends Seeder
             FaqSeeder::class,
             FlashSaleSeeder::class,
             ProductSeeder::class,
+            ProductVariantSeeder::class,
             CartSeeder::class,
             CouponSeeder::class,
             PromotionSeeder::class,
             ShopRelationsSeeder::class,
+            WishlistSeeder::class,
         ]);
     }
 }

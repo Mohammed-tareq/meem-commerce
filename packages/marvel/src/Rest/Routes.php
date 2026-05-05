@@ -304,12 +304,13 @@ Route::group(
     }
 );
 
-Route::group(['middleware' => ['role:' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']], function () {
+Route::group(['middleware' => [ 'auth:sanctum', 'email.verified']], function () {
     Route::post('/update-email', [UserController::class, 'updateUserEmail']);
     // Route::get('me', [UserController::class, 'me']);
     Route::apiResource('orders', OrderController::class, [
         'only' => ['index'],
     ]);
+// });
 
     /**
      * Content Creation Routes - Rate Limited (5/min per user)

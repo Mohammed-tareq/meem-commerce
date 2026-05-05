@@ -30,7 +30,7 @@ class WishlistRepository extends BaseRepository
     protected $dataArray = [
         'user_id',
         'product_id',
-        // 'variation_option_id'
+        'product_variant_id'
     ];
 
     /**

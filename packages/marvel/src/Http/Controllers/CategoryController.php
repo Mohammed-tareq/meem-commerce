@@ -182,7 +182,7 @@ class CategoryController extends CoreController
         $Inactive = $request->inactive ?? null;
         $search = $request->search ?? null;
         $categoriesQuery = $this->repository
-            ->withCount(['products', 'parent', 'children']);
+            ->withCount(['products']);
 
         if ($parent) {
             $categoriesQuery = $categoriesQuery->whereNull('parent_id');
