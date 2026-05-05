@@ -6,7 +6,6 @@ namespace Marvel\Database\Repositories;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Category;
-use Marvel\Http\Requests\CategoryCreateRequest;
 use Marvel\Traits\MediaManager;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
@@ -22,22 +21,14 @@ class CategoryRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'name'        => 'like',
-        'parent',
-        //        'language',
-        //        'type.slug',
     ];
 
     protected $dataArray = [
         'name',
         'slug',
         'parent',
-        // 'shop_id',
-        // 'details',
-        //'type_id',
-        // 'icon',
-        // 'image',
-        // 'banner_image',
-        //  'language',
+        'details',
+        'parent_id',
     ];
 
     public function boot()
@@ -64,6 +55,7 @@ class CategoryRepository extends BaseRepository
             DB::beginTransaction();
             $data = $request->only($this->dataArray);
             $data['slug'] = $this->makeSlug($request);
+
             $category = $this->create($data);
 
 
@@ -74,7 +66,7 @@ class CategoryRepository extends BaseRepository
             }
             $category->shops()->sync($request->shops_id);
             DB::commit();
-            return $category->load('parent');
+            return $category;
         } catch (\Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -86,12 +78,12 @@ class CategoryRepository extends BaseRepository
         try {
             DB::beginTransaction();
             $data = $request->only($this->dataArray);
-            if (!empty($request->slug) &&  $request->slug != $category['slug']) {
-                $data['slug'] = $this->makeSlug($request);
+            if (isset($data['name'])) {
+                $data['slug'] = $this->makeSlug($request, 'slug', $category->id);
             }
             $category->update($data);
             if ($request->has('image')) {
-                if (!$this->updateSingleImage($request,'image', $category, 'categories', 'categories')) {
+                if (!$this->updateSingleImage($request, 'image', $category, 'categories', 'categories')) {
                     throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
                 }
             }

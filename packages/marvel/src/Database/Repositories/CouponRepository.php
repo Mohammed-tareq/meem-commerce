@@ -22,6 +22,7 @@ class CouponRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'code'        => 'like',
+        'name'        => 'like',
 
     ];
 
@@ -55,6 +56,10 @@ class CouponRepository extends BaseRepository
     public function model()
     {
         return Coupon::class;
+    }
+    public function modelQuery()
+    {
+        return Coupon::query();
     }
 
     /**

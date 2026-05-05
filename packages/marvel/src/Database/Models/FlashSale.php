@@ -168,4 +168,11 @@ class FlashSale extends Model
                 });
         });
     }
+    public function scopeSearch($query, $field, $term, $locale)
+    {
+        return  $query->where(function ($q) use ($field, $term, $locale) {
+            $q->where($field . '->' . $locale, 'like', "%$term%")
+                ->orWhere($field, 'like', "%$term%");
+        });
+    }
 }

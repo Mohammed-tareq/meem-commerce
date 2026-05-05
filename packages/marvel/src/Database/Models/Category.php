@@ -18,35 +18,10 @@ class Category extends Model implements HasMedia
     protected $table = 'categories';
     public array $translatable = ['name', 'details'];
 
-    public $guarded = [];
-
-    // protected $casts = [
-    //     'image' => 'json',
-    //     'banner_image' => 'json',
-    // ];
-
-    // protected $appends = ['parent_id'];
-
-    /**
-     * Get the user's full name.
-     *
-     * @return string
-     */
+    public $fillable = ['name', 'details', 'slug', 'parent_id', 'status'];
 
 
 
-    // public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
-    // {
-    //     return $query->where('language', $model->language);
-    // }
-
-
-
-    /**
-     * Return the sluggable configuration array for this model.
-     *
-     * @return array
-     */
     public function sluggable(): array
     {
         return [
@@ -59,16 +34,19 @@ class Category extends Model implements HasMedia
 
     public  function scopeActive($query)
     {
-        return $query->where('is_active', 1);
+        return $query->where('status', 1);
+    }
+    public  function scopeInactive($query)
+    {
+        return $query->where('status', 0);
     }
 
-
-    /**
-     * @return BelongsTo
-     */
-    public function type(): BelongsTo
+    public function scopeSearch($query, $field, $term, $locale)
     {
-        return $this->belongsTo(Type::class, 'type_id');
+       return  $query->where(function ($q) use ($field, $term, $locale) {
+            $q->where($field . '->' . $locale, 'like', "%$term%")
+                ->orWhere($field, 'like', "%$term%");
+        });
     }
 
     public function shops()
@@ -89,13 +67,6 @@ class Category extends Model implements HasMedia
         return $this->hasMany('Marvel\Database\Models\Category', 'parent_id', 'id')->with('children')->withCount('products');
     }
 
-    /**
-     * @return HasMany
-     */
-    public function subCategories()
-    {
-        return $this->hasMany('Marvel\Database\Models\Category', 'parent_id', 'id')->with('subCategories', 'parent')->withCount('products');
-    }
 
     /**
      * @return BelongsTo
@@ -104,23 +75,4 @@ class Category extends Model implements HasMedia
     {
         return $this->belongsTo('Marvel\Database\Models\Category', 'parent_id', 'id');
     }
-
-
-    /**
-     * @return HasOne
-     */
-    // public function parentCategory()
-    // {
-    //     return $this->hasOne('Marvel\Database\Models\Category', 'id', 'parent')->with('parentCategory');
-    // }
-
-    // public function subCategories()
-    // {
-    //     return $this->hasMany('Marvel\Database\Models\Category', 'parent', 'id')->with('subCategories', 'parent')->withCount('products');
-    // }
-
-
-
-
-
 }

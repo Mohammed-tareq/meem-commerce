@@ -24,7 +24,7 @@ class Shop extends Model implements HasMedia
     protected $table = 'shops';
 
     public array $translatable = ['name', 'description', 'address'];
-    public $fillable = ['name', 'slug','description', 'logo', 'cover_image', 'address', 'is_active'];
+    public $fillable = ['name', 'slug', 'description', 'logo', 'cover_image', 'address', 'status'];
     public $hidden = ['deleted_at'];
 
     protected $casts = [
@@ -48,9 +48,21 @@ class Shop extends Model implements HasMedia
         ];
     }
 
-    public function scopeActive($query)
+    public  function scopeActive($query)
     {
-        return $query->where('is_active', true);
+        return $query->where('status', 1);
+    }
+    public  function scopeInactive($query)
+    {
+        return $query->where('status', 0);
+    }
+
+    public function scopeSearch($query, $field, $term, $locale)
+    {
+        return  $query->where(function ($q) use ($field, $term, $locale) {
+            $q->where($field . '->' . $locale, 'like', "%$term%")
+                ->orWhere($field, 'like', "%$term%");
+        });
     }
     /**
      * @return HasOne
@@ -121,13 +133,13 @@ class Shop extends Model implements HasMedia
      * @return BelongsToMany
      */
 
-        public function categories(): BelongsToMany
-        {
-            return $this->belongsToMany(Category::class, 'category_shop', 'shop_id', 'category_id')
-                        ->using(CategoryShop::class)
-                        ->withPivot(['deleted_at'])
-                        ->wherePivotNull('deleted_at');
-        }
+    public function categories(): BelongsToMany
+    {
+        return $this->belongsToMany(Category::class, 'category_shop', 'shop_id', 'category_id')
+            ->using(CategoryShop::class)
+            ->withPivot(['deleted_at'])
+            ->wherePivotNull('deleted_at');
+    }
 
     public function products()
     {

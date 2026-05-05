@@ -93,6 +93,30 @@ class Coupon extends Model
                     ->orWhereDate('end_date', '>=', today());
             });
     }
+    public function scopeInvalid($query)
+    {
+        return $query
+            ->where('status', false)
+            ->orWhere(function ($query) {
+                $query->whereNotNull('limiter')
+                    ->whereColumn('used', '>=', 'limiter');
+            })
+            ->orWhere(function ($query) {
+                $query->whereNotNull('start_date')
+                    ->whereDate('start_date', '>', today());
+            })
+            ->orWhere(function ($query) {
+                $query->whereNotNull('end_date')
+                    ->whereDate('end_date', '<', today());
+            });
+    }
+    public function scopeSearch($query, $field, $term, $locale)
+    {
+        return  $query->where(function ($q) use ($field, $term, $locale) {
+            $q->where($field . '->' . $locale, 'like', "%$term%")
+                ->orWhere($field, 'like', "%$term%");
+        });
+    }
 
 
     public function typeByLang()

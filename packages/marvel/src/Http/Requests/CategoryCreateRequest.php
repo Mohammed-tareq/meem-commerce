@@ -35,12 +35,7 @@ class CategoryCreateRequest extends FormRequest
             'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
             'shops_id' => ['required', 'array'],
             'shops_id.*' => ['required', 'integer' ,"exists:shops,id"],
-            // 'details'      => ['nullable', 'array'],
-            // 'details.*'    => ['nullable', 'string'],
-            // 'banner_image' => ['array'],
-            // 'type_id'   => ['required', 'integer'],
-            // 'icon'         => ['nullable', 'string'],
-//            'language'     => ['nullable', 'string'],
+            'details'      => ['sometimes', 'string','min:3','max:2500'],
         ];
     }
 

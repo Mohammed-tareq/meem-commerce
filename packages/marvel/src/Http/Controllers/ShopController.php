@@ -117,6 +117,7 @@ class ShopController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
+
         $shops = $this->fetchShops($request)->paginate($limit)->withQueryString();
         $data =   new ShopCollection($shops);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
@@ -124,9 +125,20 @@ class ShopController extends CoreController
 
     public function fetchShops(Request $request)
     {
-        return $this->repository->with('categories')->withCount(['products']);
-        // ->where('id', '!=', null)
-        // ->with(['owner.profile', 'ownership_history']);
+        $active = $request->active ?? null;
+        $Inactive = $request->inactive ?? null;
+        $search = $request->search ?? null;
+        $query = $this->repository->withCount(['categories']);
+        if ($active) {
+            $query->active();
+        }
+        if ($Inactive) {
+            $query->inactive();
+        }
+        if ($search) {
+            $query->search('name', $search, app()->getLocale());
+        }
+        return $query;
     }
 
     /**
@@ -301,7 +313,7 @@ class ShopController extends CoreController
 
 
         $shop = $this->repository->find($id);
-        if(!$shop) {
+        if (!$shop) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
         $relationName = $relationMap[$relation];

@@ -32,17 +32,11 @@ class CategoryUpdateRequest extends FormRequest
         return [
             'name'         => ['sometimes', 'array'],
             'name.*'       => ['sometimes', 'string' , UniqueTranslationRule::for('categories')->ignore($id)],
-            'slug'         => ['nullable', 'string'],
             'image'        => ['sometimes', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             'parent_id'    => ['nullable', 'integer', 'exists:categories,id'],
             'shops_id' => ['sometimes', 'array'],
             'shops_id.*' => ['sometimes', 'integer' ,"exists:shops,id"],
-            // 'details'      => ['nullable', 'array'],
-            // 'details.*'    => ['nullable', 'string', UniqueTranslationRule::for('categories')->ignore($id)],
-            // 'banner_image' => ['array'],
-            // 'language'     => ['nullable', 'string'],
-            // 'icon'         => ['nullable', 'string'],
-            // 'type_id'   => ['integer'],
+            'details'      => ['sometimes', 'string','min:3','max:2500'],
         ];
     }
 

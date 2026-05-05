@@ -79,32 +79,33 @@ class FlashSaleController extends CoreController
      */
     public function index(Request $request)
     {
-                try {
+        try {
             $limit = $request->limit ? $request->limit : 10;
             $flashSales =  $this->fetchFlashSales($request)->paginate($limit)->withQueryString();
-            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true,FlashSaleResource::collection($flashSales));
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::collection($flashSales));
             // $data = FlashSaleResource::collection($flash_sales)->response()->getData(true);
             // return formatAPIResourcePaginate($data);
         } catch (MarvelException $e) {
-            return $this->apiResponse(SOMETHING_WENT_WRONG,500,false);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
     public function fetchFlashSales(Request $request)
     {
-
-
-        $valid = $request->query('valid', false);
-        $invalid = $request->query('invalid', false);
-        $flash_sales_query = $this->repository
-            ->when($valid, function ($q) {
-                return $q->valid();
-            })
-            ->when($invalid, function ($q) {
-                return $q->invalid();
-                });
-
-        return $flash_sales_query;
+        $active = $request->active ?? null;
+        $Inactive = $request->inactive ?? null;
+        $search = $request->search ?? null;
+        $query = $this->repository->modelQuery();
+        if ($active) {
+            $query = $query->valid();
+        }
+        if ($Inactive) {
+            $query = $query->invalid();
+        }
+        if ($search) {
+            $query = $query->search('title', $search, app()->getLocale());
+        }
+        return $query;
     }
 
     /**
@@ -118,9 +119,9 @@ class FlashSaleController extends CoreController
     {
         try {
             $flashSale =  $this->repository->storeFlashSale($request);
-            return $this->apiResponse(CREATE_FLASH_SALE_SUCCESSFULLY,200,true,FlashSaleResource::make($flashSale));
+            return $this->apiResponse(CREATE_FLASH_SALE_SUCCESSFULLY, 200, true, FlashSaleResource::make($flashSale));
         } catch (MarvelException $e) {
-            return $this->apiResponse(SOMETHING_WENT_WRONG,500,false);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -141,17 +142,17 @@ class FlashSaleController extends CoreController
      *     @OA\Response(response=404, description="Flash sale not found")
      * )
      */
-    public function show(Request $request, $slug)
+    public function show(Request $request, $id)
     {
         try {
 
-//            $language = $request->language ?? DEFAULT_LANGUAGE;
+            //            $language = $request->language ?? DEFAULT_LANGUAGE;
             $flash_sale = $this->repository
-                ->where('slug', '=', $slug)
-                ->orWhere('id', '=', $slug)->first();
-                return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200,true,FlashSaleResource::make($flash_sale));
-            } catch (MarvelException $e) {
-            return $this->apiResponse(NOT_FOUND,404,false);
+                ->where('id', '=', $id)
+                ->first();
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::make($flash_sale));
+        } catch (MarvelException $e) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
     }
 
@@ -168,9 +169,9 @@ class FlashSaleController extends CoreController
         try {
             $request->merge(['id' => $id]);
             $flashSale =  $this->updateFlashSale($request);
-            return $this->apiResponse(UPDATE_FLASH_SALE_SUCCESSFULLY,200,true,FlashSaleResource::make($flashSale));
+            return $this->apiResponse(UPDATE_FLASH_SALE_SUCCESSFULLY, 200, true, FlashSaleResource::make($flashSale));
         } catch (MarvelException $e) {
-            return $this->apiResponse(SOMETHING_WENT_WRONG,500,false);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -200,20 +201,19 @@ class FlashSaleController extends CoreController
     public function destroy($id, Request $request)
     {
         $request->merge(['id' => $id]);
-        if($this->deleteFlashSale($request)){
-            return $this->apiResponse(DELETE_FLASH_SALE_SUCCESSFULLY,200,true);
+        if ($this->deleteFlashSale($request)) {
+            return $this->apiResponse(DELETE_FLASH_SALE_SUCCESSFULLY, 200, true);
         }
-        return $this->apiResponse(NOT_FOUND,200,true);
-
+        return $this->apiResponse(NOT_FOUND, 200, true);
     }
 
     public function deleteFlashSale(Request $request)
     {
         try {
             $user = $request->user();
-                $flashSale = $this->repository->findOrFail($request->id);
-                $flashSale->delete();
-               return true;
+            $flashSale = $this->repository->findOrFail($request->id);
+            $flashSale->delete();
+            return true;
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND, $e->getMessage());
         }

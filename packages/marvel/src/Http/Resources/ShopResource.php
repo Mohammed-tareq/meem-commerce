@@ -21,7 +21,7 @@ class ShopResource extends Resource
             'description' => $this->description,
             'cover_image' => $this->getFirstMediaUrl('shop-image'),
             'logo' => $this->getFirstMediaUrl('shop-logo'),
-            'status' => (bool) $this->is_active,
+            'status' => (bool) $this->status,
             'address' =>  collect($this->address)->map(function ($addr) {
                 return [
                     'city'           => $addr['city'][app()->getLocale()] ?? null,

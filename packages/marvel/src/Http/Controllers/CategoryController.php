@@ -176,17 +176,28 @@ class CategoryController extends CoreController
     public function index(Request $request)
     {
         $parent = $request->parent ?? null;
-        $selfId = $request->self ?? null;
+        $selfId = $request->exceptSelf ?? null;
         $limit = $request->limit ?? 15;
-
-        $categoriesQuery = $this->repository->with(['parent', 'children'])
-            ->withCount(['products']);
+        $active = $request->active ?? null;
+        $Inactive = $request->inactive ?? null;
+        $search = $request->search ?? null;
+        $categoriesQuery = $this->repository
+            ->withCount(['products', 'parent', 'children']);
 
         if ($parent) {
-            $categoriesQuery->whereNull('parent');
+            $categoriesQuery = $categoriesQuery->whereNull('parent_id');
         }
         if ($selfId) {
-            $categoriesQuery->where('id', '!=', $selfId);
+            $categoriesQuery = $categoriesQuery->where('id', '!=', $selfId);
+        }
+        if ($active) {
+            $categoriesQuery = $categoriesQuery->active();
+        }
+        if ($Inactive) {
+            $categoriesQuery = $categoriesQuery->inactive();
+        }
+        if ($search) {
+            $categoriesQuery = $categoriesQuery->search('name', $search, app()->getLocale());
         }
 
         $categories = $categoriesQuery->paginate($limit);

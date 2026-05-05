@@ -77,73 +77,28 @@ class CouponController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ?? 15;
-        $coupons = $this->repository->paginate($limit)->withQueryString();
+        $query = $this->fetchCoupons($request);
+        $coupons = $query->paginate($limit)->withQueryString();
         return formatAPIResourcePaginate(CouponResource::collection($coupons)->response()->getData(true));
     }
-    // public function fetchCoupons(Request $request)
-    // {
-    //     try {
-    //         $language = $request->language ?? DEFAULT_LANGUAGE;
-    //         $user = $request->user();
-    //         $query = $this->repository->whereNotNull('id')->with('shop');
-    //         if ($user) {
-    //             switch (true) {
-    //                 case $user->hasPermissionTo(Permission::SUPER_ADMIN):
-    //                     $query->where('language', $language);
-    //                     break;
-
-    //                 case $user->hasPermissionTo(Permission::STORE_OWNER):
-    //                     $this->repository->hasPermission($user, $request->shop_id)
-    //                         ? $query->where('shop_id', $request->shop_id)
-    //                         : $query->where('user_id', $user->id)->whereIn('shop_id', $user->shops->pluck('id'));
-    //                     $query->where('language', $language);
-    //                     break;
-
-    //                 case $user->hasPermissionTo(Permission::STAFF):
-    //                     $query->where('shop_id', $request->shop_id)->where('language', $language);
-    //                     break;
-
-    //                 default:
-    //                     $query->where('language', $language);
-    //                     break;
-    //             }
-    //         } else {
-    //             if ($request->shop_id) {
-    //                 $query->where('shop_id', $request->shop_id);
-    //             }
-    //             $query->where('language', $language);
-    //         }
-    //         return $query;
-    //     } catch (MarvelException $e) {
-    //         throw new MarvelException(SOMETHING_WENT_WRONG, $e->getMessage());
-    //     }
-    // }
-
-    /**
-     * @OA\Post(
-     *     path="/coupons",
-     *     operationId="storeCoupon",
-     *     tags={"Coupons"},
-     *     summary="Create new coupon",
-     *     description="Create a new coupon for a shop. Accessible by Store Owners and Super Admins.",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"code", "type", "amount", "shop_id"},
-     *             @OA\Property(property="code", type="string", example="SUMMER24"),
-     *             @OA\Property(property="type", type="string", enum={"percentage", "fixed", "free_shipping"}),
-     *             @OA\Property(property="amount", type="number", example=20),
-     *             @OA\Property(property="shop_id", type="integer", example=1),
-     *             @OA\Property(property="minimum_cart_amount", type="number", example=100),
-     *             @OA\Property(property="active_from", type="string", format="date-time"),
-     *             @OA\Property(property="expire_at", type="string", format="date-time")
-     *         )
-     *     ),
-     *     @OA\Response(response=201, description="Coupon created", @OA\JsonContent(ref="#/components/schemas/Coupon")),
-     *     @OA\Response(response=422, description="Validation error")
-     * )
-     */
+    public function fetchCoupons(Request $request)
+    {
+        $active = $request->active ?? null;
+        $Inactive = $request->inactive ?? null;
+        $search = $request->search ?? null;
+        $query = $this->repository->modelQuery();
+        if ($active) {
+            $query = $query->valid();
+        }
+        if ($Inactive) {
+            $query = $query->invalid();
+        }
+        if ($search) {
+            $query = $query->search('name', $search, app()->getLocale())
+                ->orWhere('code', 'like', "%$search%");
+        }
+        return $query;
+    }
     public function store(CouponRequest $request)
     {
         try {

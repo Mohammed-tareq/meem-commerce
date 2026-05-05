@@ -31,8 +31,6 @@ class ShopRepository extends BaseRepository
      */
     protected $fieldSearchable = [
         'name' => 'like',
-        'is_active',
-        'categories.slug',
         // 'users.name'
     ];
 
@@ -43,12 +41,8 @@ class ShopRepository extends BaseRepository
         'name',
         'slug',
         'description',
-        'is_active',
+        'status',
         'address',
-        // 'settings',
-        // 'cover_image',
-        // 'logo',
-        // 'notifications',
     ];
 
 
@@ -69,6 +63,8 @@ class ShopRepository extends BaseRepository
     {
         return Shop::class;
     }
+
+
 
     public function storeShop($request)
     {
@@ -129,8 +125,9 @@ class ShopRepository extends BaseRepository
             //     }
             // }
             $data = $request->only($this->dataArray);
-            $data['slug'] = $this->makeSlug($request, 'slug', $shop->id);
-
+            if (isset($data['name'])) {
+                $data['slug'] = $this->makeSlug($request, 'slug', $shop->id);
+            }
 
             $shop->update($data);
             if ($request->hasFile('logo')) {

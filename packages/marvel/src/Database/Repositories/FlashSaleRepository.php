@@ -35,7 +35,6 @@ class FlashSaleRepository extends BaseRepository
         'end_date',
         'type',
         'status',
-        'type',
         'max_discount_amount',
         'discount',
     ];
@@ -58,6 +57,10 @@ class FlashSaleRepository extends BaseRepository
         return FlashSale::class;
     }
 
+    public function modelQuery()
+    {
+        return FlashSale::query();
+    }
 
 
     /**

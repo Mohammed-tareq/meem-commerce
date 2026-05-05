@@ -236,13 +236,8 @@ class CreateMarvelTables extends Migration
             $table->string('slug');
             $table->text('details')->nullable();
             $table->unsignedBigInteger('parent_id')->nullable();
-            $table->foreign('parent_id')->references('id')->on('categories')->onDelete('cascade');
-            // $table->string('icon')->nullable();
-            // $table->json('image')->nullable();
-            // $table->json('banner_image')->nullable();
-            // $table->unsignedBigInteger('type_id');
-            //            $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
-            $table->boolean('is_active')->default(true);
+            $table->foreign('parent_id')->references('id')->on('categories')->restrictOnDelete();
+            $table->boolean('status')->default(true);
             $table->timestamps();
             $table->softDeletes();
         });

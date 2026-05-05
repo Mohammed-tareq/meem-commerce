@@ -14,6 +14,9 @@ class AddSearchIndexes extends Migration
             $table->index('name');
             $table->index('slug');
         });
+        Schema::table('categories', function (Blueprint $table) {
+            $table->index('name');
+        });
 
         Schema::table('reviews', function (Blueprint $table) {
             $table->index('rating');
@@ -50,6 +53,9 @@ class AddSearchIndexes extends Migration
             $table->dropIndex(['sold_quantity']);
             $table->dropIndex(['name']);
             $table->dropIndex(['slug']);
+        });
+        Schema::table('categories', function (Blueprint $table) {
+            $table->dropIndex(['name']);
         });
 
         Schema::table('reviews', function (Blueprint $table) {
