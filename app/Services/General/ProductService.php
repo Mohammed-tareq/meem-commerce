@@ -14,7 +14,7 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()->active()
-            ->with(['shops', 'categories','variations'])
+            ->with(['shops', 'categories', 'variations'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
@@ -90,19 +90,28 @@ class ProductService
             });
         }
 
-        $filters = $request->get('filters');
-        if (!empty($filters) && is_array($filters)) {
-            foreach ($filters as $attributeId => $valueIds) {
+        $filters = $request->get('attributes', []);
 
-                if (empty($valueIds)) {
+        if (is_array($filters) && count($filters) > 0) {
+            $locale = app()->getLocale();
+            foreach ($filters as $attributeName => $valueNames) {
+                if (empty($valueNames)) {
                     continue;
                 }
-
-                $query->whereHas('variations.attributeProducts', function ($q) use ($attributeId, $valueIds) {
-                    $q->whereIn('attribute_value_id', $valueIds)
-                        ->whereHas('attributeValue', function ($q2) use ($attributeId) {
-                            $q2->where('attribute_id', $attributeId);
+                $valueNames = is_array($valueNames) ? $valueNames : [$valueNames];
+                $query->whereHas('variations.attributeProducts.attributeValue', function (Builder $builder) use ($attributeName, $valueNames, $locale) {
+                    $builder->where(function (Builder $q) use ($attributeName, $valueNames, $locale) {
+                        $q->whereHas('attribute', function (Builder $attributeBuilder) use ($attributeName, $locale) {
+                            $this->applyTranslatableLike($attributeBuilder, 'name', $attributeName, $locale);
                         });
+                        $q->where(function (Builder $valueBuilder) use ($valueNames, $locale) {
+                            foreach ($valueNames as $valueName) {
+                                $valueBuilder->orWhere(function (Builder $valueQuery) use ($valueName, $locale) {
+                                    $this->applyTranslatableLike($valueQuery, 'value', $valueName, $locale);
+                                });
+                            }
+                        });
+                    });
                 });
             }
         }
