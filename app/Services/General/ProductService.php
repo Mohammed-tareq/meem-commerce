@@ -91,12 +91,6 @@ class ProductService
         }
 
         $filters = $request->get('filters');
-        // الشكل المتوقع:
-        // [
-        //   attribute_id => [value_id1, value_id2],
-        //   attribute_id2 => [value_id3]
-        // ]
-
         if (!empty($filters) && is_array($filters)) {
             foreach ($filters as $attributeId => $valueIds) {
 

@@ -36,7 +36,7 @@ class SearchService
     private function buildProductQuery(Request $request, string $term, string $locale): Builder
     {
         $query = Product::query()
-            ->with(['shop:id,name,description', 'categories:id,name'])
+            ->with(['shop:id,name', 'categories:id,name'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
@@ -59,9 +59,6 @@ class SearchService
                     ->orWhere('sold_quantity', $term);
             }
 
-            $builder->orWhereHas('reviews', function (Builder $reviewQuery) use ($term) {
-                $reviewQuery->where('comment', 'like', '%' . $term . '%');
-            });
 
             $builder->orWhereHas('shop', function (Builder $shopQuery) use ($term, $locale) {
                 $this->applyTranslatableLike($shopQuery, 'name', $term, $locale);
