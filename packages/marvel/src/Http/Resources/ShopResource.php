@@ -41,8 +41,6 @@ class ShopResource extends Resource
                 !request()->routeIs($excludedRoutes),
                 [
                     'categories' => $this->whenLoaded('categories', CategoryResource::collection($this->categories)),
-                    'products_count' => $this->whenCounted('products'),
-
                 ]
             )
         ];

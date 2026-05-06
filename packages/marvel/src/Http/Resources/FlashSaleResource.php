@@ -28,7 +28,11 @@ class FlashSaleResource extends Resource
             "discount" => $this->discount,
             "max_discount_amount"=> $this->max_discount_amount,
             "created_at" => $this->created_at->format('Y-m-d'),
-            // "products" => $this->whenLoaded('products', ProductResource::collection($this->products)),
+            $this->mergeWhen(request()->routeIs('flash-sale.show'), function () {
+                return [
+                    "products" => $this->whenLoaded('products', ProductResource::collection($this->products)),
+                ];
+            }),
         ];
     }
 }
