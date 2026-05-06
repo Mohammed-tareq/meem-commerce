@@ -145,8 +145,11 @@ class WishlistController extends CoreController
     {
         try {
             $request->merge(['id' => $id]);
+            if ( $request->query('variant_id')) {
+                $request->merge(['variant_id' => $request->query('variant_id')]);
+            }
             $deletedWishlist = $this->delete($request);
-            return $this->apiResponse(REMOVED_FROM_WISHLIST_SUCCESSFULLY, 200, true);
+            return $this->apiResponse(REMOVED_FROM_WISHLIST_SUCCESSFULLY, 200, true, $deletedWishlist);
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
         }
@@ -159,11 +162,22 @@ class WishlistController extends CoreController
                 throw new AuthorizationException(NOT_AUTHORIZED);
             }
             $product = Product::where('id', $request->id)->first();
-            $wishlist = $this->repository->where('product_id', $product->id)->where('user_id', auth()->user()->id)->first();
+            if (!$product) {
+                throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            }
+            $wishlist = $this->repository
+                ->where('product_id', $product->id)
+                ->where('user_id', auth()->id())
+                ->when($request->product_variant_id, function ($query) use ($request) {
+                    $query->where('product_variant_id', $request->variant_id);
+                }, function ($query) {
+                    $query->whereNull('product_variant_id');
+                })
+                ->first();
             if (!empty($wishlist)) {
                 return $wishlist->delete();
             }
-            throw new HttpException(404, NOT_FOUND);
+            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
         }
