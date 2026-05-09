@@ -20,6 +20,7 @@ class CreateContactsTable extends Migration
             $table->text('message');
             $table->boolean('is_read')->default(false);
             $table->boolean('is_replay')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
     }
