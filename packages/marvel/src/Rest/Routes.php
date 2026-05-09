@@ -1,10 +1,7 @@
 <?php
 
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
-use Marvel\Database\Models\Commission;
-use Marvel\Enums\Permission;
 use Marvel\Enums\Role;
 use Marvel\Http\Controllers\AbusiveReportController;
 use Marvel\Http\Controllers\AddressController;
@@ -16,6 +13,8 @@ use Marvel\Http\Controllers\AttributeValueController;
 use Marvel\Http\Controllers\AuthorController;
 use Marvel\Http\Controllers\BannerController;
 use Marvel\Http\Controllers\BecameSellerController;
+use Marvel\Http\Controllers\BrandController;
+use Marvel\Http\Controllers\ContactController;
 use Marvel\Http\Controllers\CartController;
 use Marvel\Http\Controllers\CategoryController;
 use Marvel\Http\Controllers\CheckoutController;
@@ -96,7 +95,7 @@ Route::middleware(['throttle:sensitive'])->group(function () {
     Route::post('/forget-password', [UserController::class, 'forgetPassword']);
     Route::post('/verify-forget-password-token', [UserController::class, 'verifyForgetPasswordToken']);
     Route::post('/reset-password', [UserController::class, 'resetPassword']);
-    Route::post('/contact-us', [UserController::class, 'contactAdmin']);
+    Route::post('/contact-us', [ContactController::class, 'store']);
 });
 
 /**
@@ -170,6 +169,13 @@ Route::apiResource('attachments', AttachmentController::class, [
 Route::apiResource('categories', CategoryController::class, [
     'only' => ['index', 'show'],
 ]);
+Route::apiResource('brands', BrandController::class, [
+    'only' => ['index', 'show'],
+]);
+Route::delete('contacts/delete-all', [ContactController::class, 'deleteAll']);
+Route::delete('contacts/delete-all-read', [ContactController::class, 'deleteAllReadContacts']);
+Route::apiResource('contacts', ContactController::class)->except(['update']);
+Route::post('contacts/{id}/replay', [ContactController::class, 'sendReplay']);
 Route::apiResource('delivery-times', DeliveryTimeController::class, [
     'only' => ['index', 'show']
 ]);
@@ -304,7 +310,7 @@ Route::group(
     }
 );
 
-Route::group(['middleware' => [ 'auth:sanctum', 'email.verified']], function () {
+Route::group(['middleware' => ['auth:sanctum', 'email.verified']], function () {
     Route::post('/update-email', [UserController::class, 'updateUserEmail']);
     // Route::get('me', [UserController::class, 'me']);
     Route::apiResource('orders', OrderController::class, [
@@ -573,6 +579,7 @@ Route::group([
     ]);
     Route::apiResource('categories', CategoryController::class);
     Route::get('categories-parent', [CategoryController::class, 'fetchOnlyParent']);
+    Route::apiResource('brands', BrandController::class);
 
     Route::apiResource('delivery-times', DeliveryTimeController::class, [
         'only' => ['store', 'update', 'destroy']

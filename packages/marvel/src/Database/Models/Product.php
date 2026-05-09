@@ -351,7 +351,7 @@ class Product extends Model implements HasMedia
     /**
      * @return BelongsTo
      */
-   public function shops(): BelongsToMany
+    public function shops(): BelongsToMany
     {
         return $this->belongsToMany(Shop::class, 'product_shop');
     }
@@ -386,6 +386,14 @@ class Product extends Model implements HasMedia
     public function categories(): BelongsToMany
     {
         return $this->belongsToMany(Category::class, 'category_product');
+    }
+
+    /**
+     * @return BelongsToMany
+     */
+    public function brands(): BelongsToMany
+    {
+        return $this->belongsToMany(Brand::class, 'brand_product');
     }
 
     /**

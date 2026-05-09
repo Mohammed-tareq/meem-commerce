@@ -1,0 +1,92 @@
+<?php
+
+namespace Marvel\Database\Repositories;
+
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Marvel\Database\Models\Brand;
+use Marvel\Traits\MediaManager;
+use Prettus\Repository\Criteria\RequestCriteria;
+use Prettus\Repository\Exceptions\RepositoryException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+
+class BrandRepository extends BaseRepository
+{
+    use MediaManager;
+
+    /**
+     * @var array
+     */
+    protected $fieldSearchable = [
+        'name' => 'like',
+    ];
+
+    protected $dataArray = [
+        'name',
+        'slug',
+        'details',
+        'status',
+    ];
+
+    public function boot()
+    {
+        try {
+            $this->pushCriteria(app(RequestCriteria::class));
+        } catch (RepositoryException $e) {
+            //
+        }
+    }
+
+    /**
+     * Configure the Model
+     **/
+    public function model()
+    {
+        return Brand::class;
+    }
+
+    public function saveBrand(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $data = $request->only($this->dataArray);
+            $data['slug'] = $this->makeSlug($request);
+
+            $brand = $this->create($data);
+
+            if ($request->has('image')) {
+                if (!$this->uploadSingleImage($request, 'image', $brand, 'brands', 'brands')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
+            }
+
+            DB::commit();
+            return $brand;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new HttpException(500, $e->getMessage());
+        }
+    }
+
+    public function updateBrand($request, $brand)
+    {
+        try {
+            DB::beginTransaction();
+            $data = $request->only($this->dataArray);
+            if (isset($data['name'])) {
+                $data['slug'] = $this->makeSlug($request, 'slug', $brand->id);
+            }
+            $brand->update($data);
+            if ($request->has('image')) {
+                if (!$this->updateSingleImage($request, 'image', $brand, 'brands', 'brands')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
+            }
+            DB::commit();
+            return $this->findOrFail($brand->id);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw new HttpException(500, $e->getMessage());
+        }
+    }
+}

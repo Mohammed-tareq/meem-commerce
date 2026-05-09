@@ -151,5 +151,12 @@ return [
     'update-promotion' => 'Update promotion',
     'delete-promotion' => 'Delete promotion',
     'create-promotion' => 'Create promotion',
+    'view-brands' => 'View brands',
+    'create-brand' => 'Create brand',
+    'update-brand' => 'Update brand',
+    'delete-brand' => 'Delete brand',
+    'view-contacts' => 'View contacts',
+    'update-contact' => 'Update contact',
+    'delete-contact' => 'Delete contact',
 
 ];

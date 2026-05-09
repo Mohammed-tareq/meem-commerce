@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Database\Seeders\ContactSeeder;
 use Database\Seeders\ProductVariantSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -67,8 +68,11 @@ class DatabaseSeeder extends Seeder
             SliderSeeder::class,
             FaqSeeder::class,
             FlashSaleSeeder::class,
+            BrandSeeder::class,
+            ContactSeeder::class,
             ProductSeeder::class,
             ProductVariantSeeder::class,
+            BrandProductSeeder::class,
             CartSeeder::class,
             CouponSeeder::class,
             PromotionSeeder::class,

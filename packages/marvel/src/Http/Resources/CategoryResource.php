@@ -15,7 +15,7 @@ class CategoryResource extends Resource
      */
     public function toArray(Request $request)
     {
-       
+
         return [
             'id'                   => $this->id,
             'name'                 => $this->getTranslation('name', app()->getLocale()),
@@ -23,8 +23,10 @@ class CategoryResource extends Resource
             'image'                => $this->getFirstMediaUrl('categories'),
             'products_count'       => $this->whenCounted('products'),
             'details'              => $this->getTranslation('details', app()->getLocale()),
-            // 'products'                 => $this->whenLoaded('products', ProductResource::collection($this->products)),
-
+            $this->mergeWhen(request()->routeIs('categories.show'), [
+                'parent' => CategoryResource::collection($this->whenLoaded('parent')),
+                'children' => CategoryResource::collection($this->whenLoaded('children')),
+            ]),
         ];
     }
 }

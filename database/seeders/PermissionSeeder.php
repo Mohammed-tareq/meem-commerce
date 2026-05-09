@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Marvel\Database\Models\Role;
 use Spatie\Permission\Models\Permission;
@@ -33,6 +31,9 @@ class PermissionSeeder extends Seeder
             'view-author',
             'view-manufacturers',
             'view-manufacturer',
+            'view-brands',
+            'view-brand',
+            'view-contacts',
             'view-coupons',
             'verify-coupon',
             'view-cms-pages',
@@ -83,6 +84,8 @@ class PermissionSeeder extends Seeder
             'answer-question',
             'create-author',
             'create-manufacturer',
+            'update-contact',
+            'delete-contact',
             'view-analytics',
             'view-low-stock-products',
             'view-draft-products',
@@ -131,6 +134,9 @@ class PermissionSeeder extends Seeder
             'create-category',
             'update-category',
             'delete-category',
+            'create-brand',
+            'update-brand',
+            'delete-brand',
             'create-tag',
             'update-tag',
             'delete-tag',
@@ -263,6 +269,9 @@ class PermissionSeeder extends Seeder
             'create-category',
             'update-category',
             'delete-category',
+            'create-brand',
+            'update-brand',
+            'delete-brand',
             'create-tag',
             'update-tag',
             'delete-tag',
@@ -302,6 +311,10 @@ class PermissionSeeder extends Seeder
             'view-author',
             'view-manufacturers',
             'view-manufacturer',
+            'view-brands',
+            'view-brand',
+            'view-contacts',
+            'view-contact',
             'view-coupons',
             'verify-coupon',
             'view-cms-pages',
@@ -384,9 +397,5 @@ class PermissionSeeder extends Seeder
         $roleStaff->syncPermissions($staffAndOnwner);
         $roleCustomer->syncPermissions($customerPermission);
         $roleEditor->syncPermissions($editorPermission);
-
-
-
     }
-
 }

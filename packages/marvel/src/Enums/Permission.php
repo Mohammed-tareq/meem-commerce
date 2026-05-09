@@ -39,6 +39,9 @@ final class Permission extends Enum
     public const VIEW_AUTHOR = 'view-author';
     public const VIEW_MANUFACTURERS = 'view-manufacturers';
     public const VIEW_MANUFACTURER = 'view-manufacturer';
+    public const VIEW_BRANDS = 'view-brands';
+    public const VIEW_BRAND = 'view-brand';
+    public const VIEW_CONTACTS = 'view-contacts';
     public const VIEW_COUPONS = 'view-coupons';
     public const VERIFY_COUPON = 'verify-coupon';
     public const VIEW_CMS_PAGES = 'view-cms-pages';
@@ -100,6 +103,8 @@ final class Permission extends Enum
 
 
     public const CREATE_MANUFACTURER = 'create-manufacturer';
+    public const UPDATE_CONTACT = 'update-contact';
+    public const DELETE_CONTACT = 'delete-contact';
     public const VIEW_ANALYTICS = 'view-analytics';
     public const VIEW_LOW_STOCK_PRODUCTS = 'view-low-stock-products';
     public const VIEW_DRAFT_PRODUCTS = 'view-draft-products';
@@ -153,6 +158,9 @@ final class Permission extends Enum
     public const CREATE_CATEGORY = 'create-category';
     public const UPDATE_CATEGORY = 'update-category';
     public const DELETE_CATEGORY = 'delete-category';
+    public const CREATE_BRAND = 'create-brand';
+    public const UPDATE_BRAND = 'update-brand';
+    public const DELETE_BRAND = 'delete-brand';
     public const CREATE_TAG = 'create-tag';
     public const UPDATE_TAG = 'update-tag';
     public const DELETE_TAG = 'delete-tag';
