@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use Database\Seeders\ContactSeeder;
 use Database\Seeders\ProductVariantSeeder;
+use Database\Seeders\ReviewSeeder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Marvel\Database\Models\User;
@@ -71,6 +72,7 @@ class DatabaseSeeder extends Seeder
             BrandSeeder::class,
             ContactSeeder::class,
             ProductSeeder::class,
+            ReviewSeeder::class,
             ProductVariantSeeder::class,
             BrandProductSeeder::class,
             CartSeeder::class,

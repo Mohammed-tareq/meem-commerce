@@ -17,13 +17,11 @@ class CreateReviewsTable extends Migration
             $table->bigIncrements('id');
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->unsignedBigInteger('shop_id');
-            $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
             $table->unsignedBigInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
             $table->longText('comment');
             $table->double('rating')->nullable();
-            $table->json('photos')->nullable();
+            $table->boolean('approved')->default(false);
             $table->softDeletes();
             $table->timestamps();
         });
@@ -71,7 +69,6 @@ class CreateReviewsTable extends Migration
             $table->foreign('product_variant_id')->references('id')->on('product_variants')->onDelete('cascade');
             $table->timestamps();
         });
-
     }
 
     /**

@@ -18,6 +18,7 @@ final class Permission extends Enum
     public const STAFF = 'staff';
     public const CUSTOMER = 'customer';
 
+
     public const VIEW_SLIDER = 'view-slider';
     public const CREATE_SLIDER = 'create-slider';
     public const UPDATE_SLIDER = 'update-slider';
@@ -66,6 +67,9 @@ final class Permission extends Enum
     public const UPDATE_BANNERS = "update-banners";
     public const DELETE_BANNERS = "delete-banners";
     public const EDIT_USER = 'edit-user';
+
+    public const APPROVE_REVIEWS = 'approve-reviews';
+    public const DELETE_REVIEWS = 'delete-reviews';
 
     // 👤 Customer
     public const VIEW_PROFILE = 'view-profile';

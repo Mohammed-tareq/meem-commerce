@@ -158,5 +158,7 @@ return [
     'view-contacts' => 'View contacts',
     'update-contact' => 'Update contact',
     'delete-contact' => 'Delete contact',
+    'approve-reviews' => 'Approve reviews',
+    'delete-reviews' => 'Delete reviews',
 
 ];

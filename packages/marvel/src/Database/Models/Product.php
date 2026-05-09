@@ -41,6 +41,7 @@ class Product extends Model implements HasMedia
         'length',
         'weight',
         'has_flash_sale',
+        'flash_sale_id',
         'has_discount',
         'banner_id',
         'discount_type',
@@ -53,26 +54,11 @@ class Product extends Model implements HasMedia
         'discount_status',
     ];
     public array $translatable = ['name', 'description'];
-    // protected $metaTable = 'products_meta'; //optional.
-    // protected $disableFluentMeta = true;
-    public $hideMeta = true;
+        public $hideMeta = true;
 
-    // protected $casts = [
-    //     'image' => 'json',
-    //     'gallery' => 'json',
-    //     'video' => 'json',
-    // ];
 
-    protected $appends = [
-        // 'ratings',
-        // 'total_reviews',
-        // 'rating_count',
-        // 'my_review',
-        // 'in_wishlist',
-        // 'blocked_dates',
-        // 'translated_languages',
-        // 'sold'
-    ];
+
+
 
     protected $casts = [
         'discount_status' => 'boolean',
@@ -425,7 +411,7 @@ class Product extends Model implements HasMedia
      */
     public function variations(): HasMany
     {
-        return $this->hasMany(ProductVariant::class, 'product_id');
+        return $this->hasMany(ProductVariant::class, 'product_id')->with('attributeProducts.attributeValue.attribute');
     }
 
     /**

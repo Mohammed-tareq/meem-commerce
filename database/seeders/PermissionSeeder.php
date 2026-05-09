@@ -174,6 +174,8 @@ class PermissionSeeder extends Seeder
             'assign-role',
             'remove-role',
             'edit-user',
+            'approve-reviews',
+            'delete-reviews',
         ];
 
         $customerPermission = [

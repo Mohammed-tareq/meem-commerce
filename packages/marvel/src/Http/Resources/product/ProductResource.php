@@ -31,18 +31,49 @@ class ProductResource extends Resource
             'has_flash_sale'         => $this->has_flash_sale,
             'has_discount'           => $this->has_discount,
             'banner_id'              => $this->banner_id,
-            'shop_id'                => $this->shop_id,
             'created_at'             => $this->created_at ? $this->created_at->toIso8601String() : null,
-            "images"                 => $this->getmedia('products') ? $this->getmedia('products')->map(function ($media) {
-                return $media->getUrl();
-            }) : [],
-            $this->mergeWhen($this->relationLoaded('related_products'), function () {
-                return [
-                    'related_products' => ProductResource::collection($this->related_products),
-                ];
-            }),
-            "variants"                => $this->whenLoaded('variations', function () {
-                return $this->variations->map(function ($variant) {
+            'categories'            => $this->whenLoaded('categories', fn () => $this->getCategories($this->categories)),
+            // 'shops'                 => $this->whenLoaded('shops', fn() => $this->getShops($this->shops)),
+            'flash_sales'          => $this->whenLoaded('flash_sales', fn() => FlashSaleResource::collection($this->flash_sales)),
+            "images"                 => $this->getmedia('products') ? $this->getmediaImages('products') : [],
+            "variants"                => $this->whenLoaded('variations', fn() => $this->getVariants()),
+            $this->mergeWhen($this->relationLoaded('related_products'), fn () => ['related_products' => ProductResource::collection($this->related_products)]),
+        ];
+    }
+
+
+    private function getCategories($categories)
+    {
+        return $categories->map(function ($category) {
+            return [
+                'id' => $category->id,
+                'name' => $category->getTranslation('name', app()->getLocale()),
+                'slug' => $category->slug,
+            ];
+        });
+    }
+
+    private function getShops($shops)
+    {
+        return $shops->map(function ($shop) {
+            return [
+                'id' => $shop->id,
+                'name' => $shop->getTranslation('name', app()->getLocale()),
+                'slug' => $shop->slug,
+            ];
+        });
+    }
+
+    private function getmediaImages($collection)
+    {
+        return $this->getmedia($collection)->map(function ($media) {
+            return $media->getUrl();
+        });
+    }
+
+    private function getVariants()
+    {
+        return $this->variations->map(function ($variant) {
                     return [
                         'id' => $variant->id,
                         'price' => $variant->price,
@@ -52,15 +83,18 @@ class ProductResource extends Resource
                         'width' => $variant->width,
                         'length' => $variant->length,
                         'weight' => $variant->weight,
-                        'attributes' => $variant->attributeProducts->map(function ($attrProduct) {
+                        'attributes' => $this->getAttributeName($variant->attributeProducts),
+                    ];
+                });
+    }
+
+    private function getAttributeName($attributeProducts)
+    {
+        return $attributeProducts->map(function ($attrProduct) {
                             return [
                                 'attribute_name' => optional(optional($attrProduct->attributeValue)->attribute)->name,
                                 'value' => optional($attrProduct->attributeValue)->value,
                             ];
-                        }),
-                    ];
-                });
-            }),
-        ];
+                        });
     }
 }

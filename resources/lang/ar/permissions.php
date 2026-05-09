@@ -160,5 +160,7 @@ return [
     'view-contacts' => 'عرض جهات الاتصال',
     'update-contact' => 'تعديل جهة اتصال',
     'delete-contact' => 'حذف جهة اتصال',
+    'approve-reviews' => 'الموافقة على التقييمات',
+    'delete-reviews' => 'حذف التقييمات',
 
 ];

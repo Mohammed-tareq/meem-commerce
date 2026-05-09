@@ -36,69 +36,7 @@ class ProductRepository extends BaseRepository
 
     use MediaManager;
 
-    /**
-     * @var array
-     */
-    // protected $fieldSearchable = [
-    //     'name' => 'like',
-    //     'shop_id',
-    //     // 'status',
-    //     // 'is_rental',
-    //     // 'type.slug' => 'in',
-    //     // 'dropoff_locations.slug' => 'in',
-    //     // 'pickup_locations.slug' => 'in',
-    //     // 'persons.slug' => 'in',
-    //     // 'deposits.slug' => 'in',
-    //     // 'features.slug' => 'in',
-    //     // 'categories.slug' => 'in',
-    //     // 'tags.slug' => 'in',
-    //     // 'author.slug',
-    //     // 'manufacturer.slug' => 'in',
-    //     // 'min_price' => 'between',
-    //     // 'max_price' => '>=',
-    //     'price' => 'between',
-    //     // 'language',
-    //     // 'metas.key',
-    //     // 'metas.value',
-    //     // 'product_type',
-    //     // 'visibility'
-    // ];
 
-    // protected $dataArray = [
-    //     'name',
-    //     'slug',
-    //     'price',
-    //     'sale_price',
-    //     'product_type',
-    //     'quantity',
-    //     'description',
-    //     'sku',
-    //     'status',
-    //     'height',
-    //     'length',
-    //     'width',
-    //     'in_stock',
-    //     'has_discount',
-    //     'has_flash_sale',
-    // 'max_price',
-    // 'min_price',
-    // 'type_id',
-    // 'author_id',
-    // 'language',
-    // 'manufacturer_id',
-    // 'unit',
-    // 'is_digital',
-    // 'is_external',
-    // 'external_product_url',
-    // 'external_product_button_text',
-    // 'image',
-    // 'gallery',
-    // 'video',
-    // ];
-    // public function getProductDataArray(): array
-    // {
-    //     return $this->dataArray;
-    // }
 
     public function boot()
     {
@@ -118,82 +56,6 @@ class ProductRepository extends BaseRepository
     }
 
 
-    /**
-     * processFlashSaleProducts
-     *
-     * @param  Request $request
-     * @return object
-     */
-    public function processFlashSaleProducts(Request $request, $products_query)
-    {
-        $user = $request->user();
-        switch ($user) {
-            case $user->hasPermissionTo(Permission::SUPER_ADMIN):
-
-                // if condition : during deal data build
-                // else condition : when he entered into vendor shop & check
-                if ($request->searchedByUser === 'super_admin_builder') {
-
-                    $shop_id = $request->shop_id ?? null;
-                    $author_id = $request->author ?? null;
-                    $manufacturer_id = $request->manufacturer ?? null;
-
-                    $products_query = $products_query->where('in_flash_sale', '=', false)
-                        ->where('sale_price', '=', null)
-                        ->whereNotIn('id', function ($query) {
-                            $query->select('product_id')->from('flash_sale_requests_products');
-                        })
-                        ->when($shop_id, function ($products_query) use ($shop_id) {
-                            return $products_query->where('shop_id', '=', $shop_id);
-                        })
-                        ->when($author_id, function ($products_query) use ($author_id) {
-                            return $products_query->where('author_id', '=', $author_id);
-                        })
-                        ->when($manufacturer_id, function ($products_query) use ($manufacturer_id) {
-                            return $products_query->where('manufacturer_id', '=', $manufacturer_id);
-                        });
-                } else {
-                    $products_query = $products_query->where('in_flash_sale', '=', true)->where('shop_id', '=', $request->shop_id);
-                }
-
-                break;
-
-            case $user->hasPermissionTo(Permission::STORE_OWNER):
-
-                // if condition : when he want to see shop specific products
-                // else condition : fetched all deal products of vendor's listed all shops. This can be used in vendor root page route
-                if ($request->shop_id) {
-                    // if : fetching shop product for building flash sale request
-                    // else : just seeing which products are selected for flash sale of this shop
-                    if ($request->searchedByUser === 'vendor') {
-                        $products_query = $products_query->where('in_flash_sale', '=', false)
-                            ->where('shop_id', '=', $request->shop_id)
-                            ->where('sale_price', '=', null);
-                    } else {
-                        $products_query = $products_query->where('in_flash_sale', '=', true);
-                    }
-                } else {
-                    $products_query = $products_query->where('in_flash_sale', '=', true)->whereIn('shop_id', $user->shops->pluck('id'));
-                }
-
-                break;
-
-            case $user->hasPermissionTo(Permission::STAFF):
-
-                // staff can see only his assigned shop's deals product
-                $products_query = $products_query->where('in_flash_sale', '=', true);
-                break;
-
-
-            case $user->hasPermissionTo(Permission::CUSTOMER):
-
-                // customer can see all the products of a deal
-                $products_query = $products_query->where('in_flash_sale', '=', true);
-                break;
-        }
-
-        return $products_query;
-    }
 
 
     /**
@@ -247,7 +109,7 @@ class ProductRepository extends BaseRepository
 
             $this->syncRelation($product, $request, $data);
             DB::commit();
-            return $product->load('variations');
+            return $product->load('variations', 'categories' , 'flash_sales','shops');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -255,48 +117,6 @@ class ProductRepository extends BaseRepository
     }
 
 
-
-
-    public function checkProductForPublish($request, $product)
-    {
-        $status = '';
-        if ($product->shop['owner']['id'] == $request->user()->id) {
-            if ($product->status == ProductStatus::DRAFT || $product->status == ProductStatus::UNDER_REVIEW || $product->status == ProductStatus::REJECTED) {
-                if ($request->status == ProductStatus::DRAFT) {
-                    $status = ProductStatus::DRAFT;
-                } elseif ($request->status == ProductStatus::UNDER_REVIEW) {
-                    $status = ProductStatus::UNDER_REVIEW;
-                } else {
-                    $status = ProductStatus::DRAFT;
-                }
-            } elseif ($product->status == ProductStatus::APPROVED || $product->status == ProductStatus::PUBLISH || $product->status == ProductStatus::UNPUBLISH) {
-                if ($request->status == ProductStatus::PUBLISH) {
-                    $status = ProductStatus::PUBLISH;
-                } elseif ($request->status == ProductStatus::UNPUBLISH) {
-                    $status = ProductStatus::UNPUBLISH;
-                } else {
-                    $status = ProductStatus::UNPUBLISH;
-                }
-            }
-        } elseif ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-            if ($request->status == ProductStatus::APPROVED) {
-                $status = ProductStatus::PUBLISH;
-                event(new ProductReviewApproved($product));
-            } elseif ($request->status == ProductStatus::REJECTED) {
-                $status = ProductStatus::REJECTED;
-                event(new ProductReviewRejected($product));
-            } elseif ($request->status == ProductStatus::PUBLISH) {
-                return ProductStatus::PUBLISH;
-            } elseif ($request->status == ProductStatus::UNPUBLISH) {
-                $status = ProductStatus::UNPUBLISH;
-            } else {
-                $status = ProductStatus::REJECTED;
-            }
-        } else {
-            $status = ProductStatus::REJECTED;
-        }
-        return $status;
-    }
 
 
 
@@ -361,7 +181,7 @@ class ProductRepository extends BaseRepository
             $this->syncRelation($product, $request, $data);
             DB::commit();
 
-            return $product->load('variations');
+            return $product->load('variations', 'categories' , 'flash_sales','shops');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());

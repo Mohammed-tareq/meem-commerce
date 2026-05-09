@@ -47,6 +47,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('product_id');
             $table->foreign('flash_sale_id')->references('id')->on('flash_sales')->onDelete('cascade');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->unique(['flash_sale_id', 'product_id']);
         });
     }
 

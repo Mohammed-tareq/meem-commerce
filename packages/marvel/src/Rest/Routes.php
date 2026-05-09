@@ -605,6 +605,7 @@ Route::group([
     // Route::apiResource('order-status', OrderStatusController::class, [
     //     'only' => ['store', 'update', 'destroy'],
     // ]);
+    Route::post('reviews/{id}/toggle-approve', [ReviewController::class, 'toggleApproveReview']);
     Route::apiResource('reviews', ReviewController::class, [
         'only' => ['destroy']
     ]);
