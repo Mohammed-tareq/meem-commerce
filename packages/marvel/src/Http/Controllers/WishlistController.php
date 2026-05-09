@@ -94,7 +94,7 @@ class WishlistController extends CoreController
             $wishlist = $this->repository->storeWishlist($request);
             return $this->apiResponse(ADDED_TO_WISHLIST_SUCCESSFULLY, 200, true, $wishlist);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
 
@@ -151,7 +151,7 @@ class WishlistController extends CoreController
             $deletedWishlist = $this->delete($request);
             return $this->apiResponse(REMOVED_FROM_WISHLIST_SUCCESSFULLY, 200, true, $deletedWishlist);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
 
@@ -163,7 +163,7 @@ class WishlistController extends CoreController
             }
             $product = Product::where('id', $request->id)->first();
             if (!$product) {
-                throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+                throw new MarvelException(NOT_FOUND);
             }
             $wishlist = $this->repository
                 ->where('product_id', $product->id)
@@ -177,9 +177,9 @@ class WishlistController extends CoreController
             if (!empty($wishlist)) {
                 return $wishlist->delete();
             }
-            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         } catch (MarvelException $th) {
-            throw new MarvelException(COULD_NOT_DELETE_THE_RESOURCE);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
 
