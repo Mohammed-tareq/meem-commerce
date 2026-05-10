@@ -50,8 +50,9 @@ class ProductUpdateRequest extends FormRequest
             'categories.*'                 => ['integer', 'exists:categories,id'],
             'quantity'                     => ['sometimes', 'integer', 'min:1'],
             'images'                       => ['sometimes', 'array'],
-            'images.*'                     => ['sometimes', 'image','mimes:jpeg,png,jpg,gif',"max:2048"],
-            'status'                       => ['sometimes', 'in:true,1,0,false' ],
+            'images.*'                     => ['sometimes', 'image', 'mimes:jpeg,png,jpg,gif', "max:2048"],
+            'status'                       => ['sometimes', 'in:true,1,0,false'],
+            'pieces'                       => ['sometimes', 'integer', 'min:1'],
             'height'                       => ['nullable', 'numeric'],
             'length'                       => ['nullable', 'numeric'],
             'width'                        => ['nullable', 'numeric'],
@@ -78,7 +79,7 @@ class ProductUpdateRequest extends FormRequest
             'variants.*.width'             => ['sometimes', 'numeric', 'min:0'],
             'variants.*.height'            => ['sometimes', 'numeric', 'min:0'],
             'variants.*.attribute_values'  => ['sometimes', 'array'],
-            'variants.*.attribute_values.*'=> ['integer', 'exists:attribute_values,id'],
+            'variants.*.attribute_values.*' => ['integer', 'exists:attribute_values,id'],
         ];
     }
 

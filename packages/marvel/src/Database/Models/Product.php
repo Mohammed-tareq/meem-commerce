@@ -42,6 +42,7 @@ class Product extends Model implements HasMedia
         'weight',
         'has_flash_sale',
         'has_discount',
+        'pieces',
         'banner_id',
         'discount_type',
         'discount_amount',

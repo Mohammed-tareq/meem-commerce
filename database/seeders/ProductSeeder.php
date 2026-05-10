@@ -90,6 +90,7 @@ class ProductSeeder extends Seeder
                     'price' => $this->randomFloat(50, 2000),
                     'sku' => 'PRD-' . Str::uuid(),
                     'quantity' => random_int(0, 200),
+                    'pieces' => random_int(1, 10),
                     'sold_quantity' => random_int(0, 200),
                     'in_stock' => $this->randomBool(80),
                     'status' => $this->randomElement([0, 1]),

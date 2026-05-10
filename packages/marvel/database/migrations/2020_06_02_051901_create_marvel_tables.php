@@ -126,6 +126,7 @@ class CreateMarvelTables extends Migration
             $table->float('width', 10, 2)->nullable();
             $table->float('length', 10, 2)->nullable();
             $table->float('weight', 10, 2)->nullable();
+            $table->integer('pieces')->default(1);
             $table->boolean('has_flash_sale')->default(false);
             $table->boolean('has_discount')->default(false);
             $table->unsignedBigInteger('banner_id')->nullable();
