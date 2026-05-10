@@ -30,6 +30,7 @@ use Marvel\Exceptions\MarvelNotFoundException;
 use \OpenAI;
 use Marvel\Enums\Permission;
 use Marvel\Http\Resources\GetSingleProductResource;
+use Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Http\Resources\ProductResource;
 
 
@@ -111,8 +112,8 @@ class ProductController extends CoreController
     {
         $limit = $request->limit ? $request->limit : 15;
         $products = $this->fetchProducts($request)->with(['variations','categories','shops','flash_sales'])->paginate($limit)->withQueryString();
-        $data = ProductResource::collection($products)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $data = new  ProductCollection($products);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
 

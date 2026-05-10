@@ -1,9 +1,10 @@
 <?php
 
-namespace Marvel\Http\Resources;
+namespace Marvel\Http\Resources\product;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use Marvel\Http\Resources\ProductResource;
 
 class ProductCollection extends ResourceCollection
 {
