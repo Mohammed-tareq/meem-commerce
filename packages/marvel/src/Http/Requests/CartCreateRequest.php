@@ -20,6 +20,7 @@ class CartCreateRequest extends FormRequest
             'item' => ['required', 'array', 'min:1'],
             'item.product_id' => ['required', 'integer', 'exists:products,id'],
             'item.quantity' => ['required', 'integer', 'min:1'],
+            'item.product_variant_id' => ['sometimes', 'integer', 'exists:product_variants,id'],
         ];
     }
 

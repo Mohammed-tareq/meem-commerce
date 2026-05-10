@@ -103,42 +103,108 @@ class CartRepository extends BaseRepository
 
         $productId = $item['product_id'] ?? null;
         $quantity = (int) ($item['quantity'] ?? 0);
+        $variantId = $item['product_variant_id'] ?? null;
 
         if (!$productId || $quantity < 1) {
             return false;
         }
-
         $product = Product::findOrFail($productId);
+
         if ($product->quantity < $quantity) {
             throw new Exception('Quantity exceeds available stock.');
         }
         if (!$product->in_stock) {
             throw new Exception('Product exceeds available stock.');
         }
-
-        $price = $product->getCurrentPrice();
-        $totalPrice = $price * $quantity;
-
-        $cartItem = CartItem::where('cart_id', $cart->id)
-            ->where('product_id', $productId)
-            ->first();
-
-        if ($cartItem) {
-            $cartItem->update([
-                'quantity' => $quantity,
-                'price' => $price,
-                'total_price' => $totalPrice,
-            ]);
-        } else {
-            CartItem::create([
-                'cart_id' => $cart->id,
-                'product_id' => $productId,
-                'quantity' => $quantity,
-                'price' => $price,
-                'total_price' => $totalPrice,
-            ]);
+        if (!$product->variations()->exists() && $variantId) {
+            throw new Exception('Product exceeds available stock.');
         }
 
+
+        if ($product->isSimple()) {
+            $this->updateOrCreateCartForProductSimple($cart, $product, $quantity);
+        } else {
+            $this->updateOrCreateCartForProductVariant($cart, $product, $variantId, $quantity);
+        }
         return true;
+    }
+
+
+
+
+
+
+    protected function updateOrCreateCartForProductSimple($cart, $product, $quantity)
+    {
+        $cartItem = CartItem::where('cart_id', $cart->id)
+            ->where('product_id', $product->id)
+            ->whereNull('product_variant_id')
+            ->first();
+        if ($cartItem)
+            return $this->updateItemCartForProductSimple($cartItem, $product->getCurrentPrice(), $quantity);
+        else
+            return $this->createItemCartForProductSimple($cart, $product, $product->getCurrentPrice(), $quantity);
+    }
+
+    protected function updateItemCartForProductSimple($cartItem, $price, $quantity)
+    {
+        return $cartItem->update([
+            'quantity' => $cartItem->quantity + $quantity,
+            'total_price' => $cartItem->total_price + ($price * $quantity),
+        ]);
+    }
+
+    protected function createItemCartForProductSimple($cart, $product, $price, $quantity)
+    {
+
+        return  $cart->items()->create([
+            'product_id' => $product->id,
+            'quantity' => $quantity,
+            'product_variant_id' => null,
+            'price' => $price,
+            'total_price' => $price * $quantity,
+        ]);
+    }
+
+    protected function updateOrCreateCartForProductVariant($cart, $product, $variantId, $quantity)
+    {
+        $cartItem = CartItem::where('cart_id', $cart->id)
+            ->where('product_variant_id', $variantId)
+            ->where('product_id', $product->id)
+            ->first();
+        $variants = $product->variations()->whereId($variantId)->first();
+
+        if ($cartItem)
+            return $this->updateItemCartForProductVariant($cartItem, $variants->getCurrentPrice(), $quantity);
+        else
+            return $this->createItemCartForProductVariant($variants, $variants->getCurrentPrice(), $cart, $quantity);
+    }
+
+    protected function updateItemCartForProductVariant($cartItem, $variantPrice, $quantity)
+    {
+
+        $totalPrice = $variantPrice * $quantity;
+        return   $cartItem->update([
+            'quantity' => $cartItem->quantity + $quantity,
+            'total_price' => $cartItem->total_price + $totalPrice,
+        ]);
+    }
+
+    protected function createItemCartForProductVariant($variants, $variantPrice, $cart, $quantity)
+    {
+        $attributes = [];
+        foreach ($variants->variantAttributes as $attribute) {
+            $attributes[$attribute->attributeValue->attribute->name] = $attribute->attributeValue->value;
+        }
+
+        $totalPrice = $variantPrice * $quantity;
+        return  $cart->items()->create([
+            'product_id' => $variants->product->id,
+            'quantity' => $quantity,
+            'product_variant_id' => $variants->id,
+            'price' => $variantPrice,
+            'total_price' => $totalPrice,
+            'attributes' => $attributes
+        ]);
     }
 }

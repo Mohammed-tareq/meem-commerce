@@ -262,8 +262,10 @@ class CreateMarvelTables extends Migration
             $table->foreignId('cart_id')->constrained('carts')->cascadeOnDelete();
             $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
             $table->integer('quantity');
+            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->decimal('price', 10, 2);
             $table->decimal('total_price', 10, 2);
+            $table->json('attributes')->nullable();
             $table->timestamps();
         });
 

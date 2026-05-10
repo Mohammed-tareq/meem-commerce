@@ -11,7 +11,22 @@ class   CartItem extends Model
 
     protected $table = 'cart_items';
 
-    public $guarded = [];
+    public $fillable = [
+        'cart_id',
+        'product_id',
+        'quantity',
+        'price',
+        'total_price',
+        'product_variant_id',
+        'attributes'
+    ];
+        protected $casts = [
+            'attributes' => 'array',
+        ];
+
+
+
+
 
 
     public function cart()
@@ -22,5 +37,9 @@ class   CartItem extends Model
     public function product()
     {
         return $this->belongsTo(Product::class);
+    }
+    public function productVariant()
+    {
+        return $this->belongsTo(ProductVariant::class);
     }
 }

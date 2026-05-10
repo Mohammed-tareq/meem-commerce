@@ -500,4 +500,9 @@ class Product extends Model implements HasMedia
                     ->orWhereDate('end_date', '>=', $oneWeekFromNow);
             });
     }
+
+    public function isSimple()
+    {
+        return $this->product_type === 'simple';
+    }
 }
