@@ -11,9 +11,11 @@ class ProductResource extends Resource
             'name'                   => $this->getTranslation('name', app()->getLocale()),
             'slug'                   => $this->slug,
             'description'            => $this->getTranslation('description', app()->getLocale()), // Array فيه en/ar
-            'price'                  => $this->price,
-            'price_after_discount'   => $this->price_after_discount,
-            'price_after_flash_sale' => $this->price_after_flash_sale,
+            'price'                  => $this->roundMoney($this->price),
+            'current_price'          => $this->roundMoney($this->current_price),
+            'sale_price'             => $this->roundMoney($this->sale_price),
+            'price_after_discount'    => $this->roundMoney($this->price_after_discount),
+            'price_after_flash_sale'  => $this->roundMoney($this->price_after_flash_sale),
             'discount_type'          => $this->discount_type,
             'discount_amount'        => $this->discount_amount,
             'start_date'             => $this->start_date,
@@ -30,14 +32,15 @@ class ProductResource extends Resource
             'weight'                 => $this->weight,
             'has_flash_sale'         => $this->has_flash_sale,
             'has_discount'           => $this->has_discount,
+            $this->mergeWhen($this->has_discount,fn() => ['discount_valid' => $this->isDiscountActive()]),
             'banner_id'              => $this->banner_id,
             'created_at'             => $this->created_at ? $this->created_at->toIso8601String() : null,
-            'categories'            => $this->whenLoaded('categories', fn () => $this->getCategories($this->categories)),
+            'categories'            => $this->whenLoaded('categories', fn() => $this->getCategories($this->categories)),
             // 'shops'                 => $this->whenLoaded('shops', fn() => $this->getShops($this->shops)),
             'flash_sales'          => $this->whenLoaded('flash_sales', fn() => FlashSaleResource::collection($this->flash_sales)),
             "images"                 => $this->getmedia('products') ? $this->getmediaImages('products') : [],
             "variants"                => $this->whenLoaded('variations', fn() => $this->getVariants()),
-            $this->mergeWhen($this->relationLoaded('related_products'), fn () => ['related_products' => ProductResource::collection($this->related_products)]),
+            $this->mergeWhen($this->relationLoaded('related_products'), fn() => ['related_products' => ProductResource::collection($this->related_products)]),
         ];
     }
 
@@ -74,27 +77,37 @@ class ProductResource extends Resource
     private function getVariants()
     {
         return $this->variations->map(function ($variant) {
-                    return [
-                        'id' => $variant->id,
-                        'price' => $variant->price,
-                        'sale_price' => $variant->sale_price,
-                        'quantity' => $variant->quantity,
-                        'height' => $variant->height,
-                        'width' => $variant->width,
-                        'length' => $variant->length,
-                        'weight' => $variant->weight,
-                        'attributes' => $this->getAttributeName($variant->attributeProducts),
-                    ];
-                });
+            return [
+                'id' => $variant->id,
+                'price' => $this->roundMoney($variant->price),
+                'sale_price' => $this->roundMoney($variant->sale_price),
+                'current_price' => $this->roundMoney($variant->current_price),
+                'quantity' => $variant->quantity,
+                'height' => $variant->height,
+                'width' => $variant->width,
+                'length' => $variant->length,
+                'weight' => $variant->weight,
+                'attributes' => $this->getAttributeName($variant->attributeProducts),
+            ];
+        });
     }
 
     private function getAttributeName($attributeProducts)
     {
         return $attributeProducts->map(function ($attrProduct) {
-                            return [
-                                'attribute_name' => optional(optional($attrProduct->attributeValue)->attribute)->name,
-                                'value' => optional($attrProduct->attributeValue)->value,
-                            ];
-                        });
+            return [
+                'attribute_name' => optional(optional($attrProduct->attributeValue)->attribute)->name,
+                'value' => optional($attrProduct->attributeValue)->value,
+            ];
+        });
+    }
+
+    private function roundMoney($value)
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return round((float) $value, 2);
     }
 }

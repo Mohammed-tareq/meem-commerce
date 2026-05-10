@@ -9,9 +9,8 @@ use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
-use Marvel\Database\Models\Shop;
 use Marvel\Enums\DiscountType;
-use Marvel\Enums\ProductStatus;
+use Marvel\Services\Pricing\ProductPricingService;
 
 class ProductSeeder extends Seeder
 {
@@ -20,17 +19,48 @@ class ProductSeeder extends Seeder
         try {
 
             $discountTypes = DiscountType::getValues();
+            $pricingService = app(ProductPricingService::class);
 
             $englishWords = [
-                'premium', 'classic', 'modern', 'smart', 'wireless', 'compact',
-                'deluxe', 'elegant', 'kitchen', 'home', 'office', 'comfort',
-                'fresh', 'eco', 'durable', 'essential', 'luxury', 'pro'
+                'premium',
+                'classic',
+                'modern',
+                'smart',
+                'wireless',
+                'compact',
+                'deluxe',
+                'elegant',
+                'kitchen',
+                'home',
+                'office',
+                'comfort',
+                'fresh',
+                'eco',
+                'durable',
+                'essential',
+                'luxury',
+                'pro'
             ];
 
             $arabicWords = [
-                'ممتاز', 'كلاسيك', 'حديث', 'ذكي', 'لاسلكي', 'مدمج',
-                'فاخر', 'أنيق', 'مطبخ', 'منزل', 'مكتب', 'راحة',
-                'جديد', 'اقتصادي', 'متين', 'أساسي', 'فخم', 'احترافي'
+                'ممتاز',
+                'كلاسيك',
+                'حديث',
+                'ذكي',
+                'لاسلكي',
+                'مدمج',
+                'فاخر',
+                'أنيق',
+                'مطبخ',
+                'منزل',
+                'مكتب',
+                'راحة',
+                'جديد',
+                'اقتصادي',
+                'متين',
+                'أساسي',
+                'فخم',
+                'احترافي'
             ];
 
             $productImages = collect(File::files(public_path('images/products')));
@@ -46,6 +76,7 @@ class ProductSeeder extends Seeder
                 $productNameEn = $this->randomWords($englishWords, 3);
                 $productNameAr = $this->randomWords($arabicWords, 3);
 
+                $hasFlashSale = $this->randomBool(30);
                 $product = Product::create([
                     'name' => [
                         'en' => $productNameEn,
@@ -61,20 +92,20 @@ class ProductSeeder extends Seeder
                     'quantity' => random_int(0, 200),
                     'sold_quantity' => random_int(0, 200),
                     'in_stock' => $this->randomBool(80),
-                    'status' => $this->randomElement([0,1]),
+                    'status' => $this->randomElement([0, 1]),
                     'height' => random_int(5, 50) . 'cm',
                     'width' => random_int(5, 50) . 'cm',
                     'length' => random_int(5, 50) . 'cm',
                     'weight' => random_int(100, 5000) . 'g',
-                    'has_flash_sale' => $this->randomBool(30),
+                    'has_flash_sale' => $hasFlashSale,
                     'has_discount' => $this->randomBool(50),
                     'banner_id' => Banner::inRandomOrder()->first()->id,
                     'discount_type' => $this->randomElement($discountTypes),
                     'discount_amount' => $this->randomFloat(0, 500),
                     'start_date' => $this->maybeDate(50),
                     'end_date' => $this->maybeDate(50),
-                    'price_after_discount' => $this->maybeFloat(50, 20, 1500),
-                    'price_after_flash_sale' => $this->maybeFloat(50, 20, 1500),
+                    'price_after_discount' => null,
+                    'price_after_flash_sale' => null,
                 ]);
 
                 if ($productImagesCount > 0) {
@@ -87,9 +118,19 @@ class ProductSeeder extends Seeder
                             ->toMediaCollection('products', 'products');
                     }
                 }
-                $product->flash_sales()->attach(FlashSale::inRandomOrder()->first()->id);
+                $flashSale = $hasFlashSale ? FlashSale::inRandomOrder()->first() : null;
+
+                if ($flashSale) {
+                    $product->flash_sales()->attach($flashSale->id);
+                }
+
                 $product->categories()->attach(Category::inRandomOrder()->first()->id);
 
+                $pricing = $pricingService->calculateProductPricing($product, $flashSale);
+                $product->update([
+                    'price_after_discount' => $pricing['price_after_discount'],
+                    'price_after_flash_sale' => $pricing['price_after_flash_sale'],
+                ]);
             }
 
             $this->command->info('ProductSeeder completed successfully. Created 500 products.');
@@ -135,11 +176,6 @@ class ProductSeeder extends Seeder
     {
         $value = $min + (lcg_value() * ($max - $min));
         return round($value, 2);
-    }
-
-    private function maybeFloat(int $percent, float $min, float $max): ?float
-    {
-        return $this->randomBool($percent) ? $this->randomFloat($min, $max) : null;
     }
 
     private function maybeDate(int $percent): ?string

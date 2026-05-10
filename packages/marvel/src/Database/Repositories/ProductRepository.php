@@ -16,8 +16,6 @@ use Marvel\Database\Models\ProductVariant;
 use Marvel\Database\Models\Resource;
 use Marvel\Database\Models\Type;
 use Marvel\Database\Models\Variation;
-use Marvel\Enums\DiscountType;
-use Marvel\Enums\ProductStatus;
 use Marvel\Enums\ProductType;
 use Marvel\Traits\MediaManager;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -25,9 +23,7 @@ use Prettus\Repository\Exceptions\RepositoryException;
 use Spatie\Period\Boundaries;
 use Spatie\Period\Period;
 use Spatie\Period\Precision;
-use Marvel\Enums\Permission;
-use Marvel\Events\ProductReviewApproved;
-use Marvel\Events\ProductReviewRejected;
+use Marvel\Services\Pricing\ProductPricingService;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Marvel\Exceptions\MarvelException;
 
@@ -79,22 +75,12 @@ class ProductRepository extends BaseRepository
             $data = $request->except(['images', 'categories', 'variants']);
 
             $data['slug'] = $this->makeSlug($request);
-            $price = $data['price'] ?? null;
-            $hasDiscount = !empty($data['has_discount']) && (($data['discount_status'] ?? null) !== false);
-            $discountType = $data['discount_type'] ?? DiscountType::PERCENTAGE;
-            $discount_amount = $data['discount_amount'] ?? 0;
-
-            $data['price_after_discount'] = $hasDiscount
-                ? $this->calculateDiscountedPrice($price, $discountType, $discount_amount)
-                : null;
-
             $hasFlashSale = !empty($data['has_flash_sale']);
             $flashSaleId = $data['flash_sale_id'] ?? null;
             $flashSale = $this->resolveFlashSale($flashSaleId, null, $hasFlashSale);
-            // $basePriceForFlashSale = $hasDiscount && $data['price_after_discount'] !== null
-            //     ? $data['price_after_discount']
-            //     : $price;
-            $data['price_after_flash_sale'] = $this->calculateFlashSalePrice($flashSale, $price);
+            $pricing = app(ProductPricingService::class)->calculateProductPricingFromData($data, $flashSale);
+            $data['price_after_discount'] = $pricing['price_after_discount'];
+            $data['price_after_flash_sale'] = $pricing['price_after_flash_sale'];
 
             $product = $this->create($data);
 
@@ -109,7 +95,7 @@ class ProductRepository extends BaseRepository
 
             $this->syncRelation($product, $request, $data);
             DB::commit();
-            return $product->load('variations', 'categories' , 'flash_sales','shops');
+            return $product->load('variations', 'categories', 'flash_sales', 'shops');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -137,24 +123,20 @@ class ProductRepository extends BaseRepository
             $data = $request->except(['images', 'categories', 'variants']);
 
             $data['slug'] = $this->makeSlug($request, 'slug', $product->id);
-            $price = array_key_exists('price', $data) ? $data['price'] : $product->price;
-            $hasDiscount = !empty($data['has_discount']) && (($data['discount_status'] ?? null) !== false);
-
-            $hasDiscount = array_key_exists('has_discount', $data) && (($data['discount_status'] ?? null) !== false) ? (bool) $data['has_discount'] : $product->has_discount;
-            $discountType = $data['discount_type'] ?? $product->discount_type ?? DiscountType::PERCENTAGE;
-            $discount_amount = array_key_exists('discount_amount', $data) ? $data['discount_amount'] : $product->discount_amount;
-
-            $data['price_after_discount'] = $hasDiscount
-                ? $this->calculateDiscountedPrice($price, $discountType, $discount_amount)
-                : null;
-
             $hasFlashSale = array_key_exists('has_flash_sale', $data) ? (bool) $data['has_flash_sale'] : $product->has_flash_sale;
             $flashSaleId = $data['flash_sale_id'] ?? null;
             $flashSale = $this->resolveFlashSale($flashSaleId, $product, $hasFlashSale);
-            // $basePriceForFlashSale = $hasDiscount && $data['price_after_discount'] !== null
-            //     ? $data['price_after_discount']
-            //     : $price;
-            $data['price_after_flash_sale'] = $this->calculateFlashSalePrice($flashSale, $price);
+            $pricing = app(ProductPricingService::class)->calculateProductPricingFromData($data + $product->only([
+                'price',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+            ]), $flashSale);
+            $data['price_after_discount'] = $pricing['price_after_discount'];
+            $data['price_after_flash_sale'] = $pricing['price_after_flash_sale'];
 
             $product->update($data);
 
@@ -164,10 +146,6 @@ class ProductRepository extends BaseRepository
                 $this->addVariants(
                     $product,
                     $variants,
-                    $hasDiscount,
-                    $discountType,
-                    $discount_amount,
-                    $hasFlashSale,
                     $flashSale
                 );
             }
@@ -181,7 +159,7 @@ class ProductRepository extends BaseRepository
             $this->syncRelation($product, $request, $data);
             DB::commit();
 
-            return $product->load('variations', 'categories' , 'flash_sales','shops');
+            return $product->load('variations', 'categories', 'flash_sales', 'shops');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -199,7 +177,7 @@ class ProductRepository extends BaseRepository
 
             if ($flashSaleId) {
                 $product->flash_sales()->sync([$flashSaleId]);
-            }else {
+            } else {
                 $product->flash_sales()->detach();
             }
         }
@@ -207,21 +185,11 @@ class ProductRepository extends BaseRepository
     private function addVariants(
         $product,
         $variants,
-        $hasDiscount,
-        $discountType,
-        $discount_amount,
-        $hasFlashSale,
         $flashSale
     ) {
         foreach ($variants as $variant) {
             $variant['product_id'] = $product->id;
-            if ($hasDiscount && $variant['price'] !== null) {
-                $variant['sale_price'] = $this->calculateDiscountedPrice($variant['price'], $discountType, $discount_amount);
-            } else if ($hasFlashSale && $variant['price'] !== null) {
-                $variant['sale_price'] = $this->calculateFlashSalePrice($flashSale, $variant['price']);
-            } else {
-                $variant['sale_price'] = $variant['price'];
-            }
+            $variant['sale_price'] = app(ProductPricingService::class)->calculateVariantSalePrice($product, $variant, $flashSale);
             $productVariant = ProductVariant::create($variant);
             if (!$productVariant) {
                 DB::rollBack();
@@ -409,21 +377,23 @@ class ProductRepository extends BaseRepository
     public function calculateProductPrice($product_id)
     {
         try {
-            $product = Product::findOrFail($product_id);
+            $product = Product::with('flash_sales')->findOrFail($product_id);
         } catch (\Throwable $th) {
             throw $th;
         }
-        return $product->sale_price !== null ? $product->sale_price : $product->price;
+
+        return app(ProductPricingService::class)->calculateProductCurrentPrice($product);
     }
 
     public function calculateVariationPrice($variation_id)
     {
         try {
-            $variation = Variation::findOrFail($variation_id);
+            $variation = Variation::with(['product.flash_sales'])->findOrFail($variation_id);
         } catch (\Throwable $th) {
             throw $th;
         }
-        return $variation->sale_price !== null ? $variation->sale_price : $variation->price;
+
+        return app(ProductPricingService::class)->calculateVariantCurrentPrice($variation->product, $variation);
     }
 
     public function calculateLocationPrice($location_id)
@@ -466,22 +436,7 @@ class ProductRepository extends BaseRepository
 
     private function calculateDiscountedPrice($price, $discountType, $amount)
     {
-        if ($price === null) {
-            return null;
-        }
-
-        $price = (float) $price;
-        $amount = (float) $amount;
-
-        if ($discountType === DiscountType::PERCENTAGE) {
-            return round(max(0, $price - ($price * ($amount / 100))), 2);
-        }
-
-        if ($discountType === DiscountType::FIXED_RATE || $discountType === 'fixed') {
-            return round(max(0, $price - $amount), 2);
-        }
-
-        return round($price, 2);
+        return app(ProductPricingService::class)->calculateDiscountedPrice($price, $discountType, $amount);
     }
 
     private function resolveFlashSale($flashSaleId, $product, $hasFlashSale)
@@ -491,11 +446,11 @@ class ProductRepository extends BaseRepository
         }
 
         if (!empty($flashSaleId)) {
-            return FlashSale::find($flashSaleId);
+            return FlashSale::query()->whereKey($flashSaleId)->valid()->first();
         }
 
         if ($product instanceof Product) {
-            return $product->flash_sales()->orderBy('start_date', 'desc')->first();
+            return $product->flash_sales()->valid()->orderBy('start_date', 'desc')->first();
         }
 
         return null;
@@ -503,10 +458,6 @@ class ProductRepository extends BaseRepository
 
     private function calculateFlashSalePrice($flashSale, $basePrice)
     {
-        if (!$flashSale || !$flashSale->isValid() || $basePrice === null) {
-            return null;
-        }
-
-        return $flashSale->calcPrice($basePrice);
+        return app(ProductPricingService::class)->calculateFlashSalePrice($flashSale, $basePrice);
     }
 }

@@ -3,7 +3,6 @@
 namespace Marvel\Http\Resources;
 
 use Illuminate\Http\Request;
-use Marvel\Helper\ResourceHelpers;
 
 class GetSingleProductResource extends Resource
 {
@@ -41,7 +40,8 @@ class GetSingleProductResource extends Resource
             'is_external'                  => $this->is_external,
             'external_product_url'         => $this->external_product_url,
             'external_product_button_text' => $this->external_product_button_text,
-            'sale_price'                   => $this->sale_price,
+            'sale_price'                   => $this->current_price,
+            'current_price'                => $this->current_price,
             'max_price'                    => $this->max_price,
             'min_price'                    => $this->min_price,
             'ratings'                      => $this->ratings,
@@ -57,7 +57,7 @@ class GetSingleProductResource extends Resource
             'height'                       => $this->height,
             'length'                       => $this->length,
             'width'                        => $this->width,
-            'price'                        => $this->price,
+            'price'                        => $this->current_price,
             'quantity'                     => $this->quantity,
             'unit'                         => $this->unit,
             'in_flash_sale'                => $this->in_flash_sale

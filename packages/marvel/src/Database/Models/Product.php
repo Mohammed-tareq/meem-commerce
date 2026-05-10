@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Marvel\Enums\DiscountType;
 use Marvel\Traits\Excludable;
+use Marvel\Services\Pricing\ProductPricingService;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\Translatable\HasTranslations;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -54,7 +55,7 @@ class Product extends Model implements HasMedia
         'discount_status',
     ];
     public array $translatable = ['name', 'description'];
-        public $hideMeta = true;
+    public $hideMeta = true;
 
 
 
@@ -64,6 +65,13 @@ class Product extends Model implements HasMedia
         'discount_status' => 'boolean',
         'has_discount' => 'boolean',
         'has_flash_sale' => 'boolean',
+    ];
+
+    protected $appends = [
+        'current_price',
+        'sale_price',
+        'price_after_discount',
+        'price_after_flash_sale',
     ];
 
     /**
@@ -88,62 +96,6 @@ class Product extends Model implements HasMedia
             // Only set SKU if not already provided
             if (empty($product->sku)) {
                 $product->sku = 'PRD-' . Str::uuid();
-            }
-        });
-
-        // Recalculate stored prices whenever a product is retrieved from DB
-        static::retrieved(function ($product) {
-            try {
-                $discountPrice = $product->getDiscountedPrice();
-
-                // Determine base price for flash sale calculation
-                // $baseForFlash = $discountPrice ?? $product->price;
-
-                $flashPrice = $product->getFlashSalePrice($product->price);
-
-                $needsUpdate = false;
-                $updateData = [];
-
-                // Normalize null vs numeric
-                $currentDiscount = $product->price_after_discount;
-                $currentFlash = $product->price_after_flash_sale;
-
-                if ($discountPrice === null) {
-                    if ($currentDiscount !== null) {
-                        $updateData['price_after_discount'] = null;
-                        $needsUpdate = true;
-                    }
-                } else {
-                    // store numeric value
-                    if ($currentDiscount != $discountPrice) {
-                        $updateData['price_after_discount'] = $discountPrice;
-                        $needsUpdate = true;
-                    }
-                }
-
-                if ($flashPrice === null) {
-                    if ($currentFlash !== null) {
-                        $updateData['price_after_flash_sale'] = null;
-                        $needsUpdate = true;
-                    }
-                } else {
-                    if ($currentFlash != $flashPrice) {
-                        $updateData['price_after_flash_sale'] = $flashPrice;
-                        $needsUpdate = true;
-                    }
-                }
-
-                if ($needsUpdate && !empty($updateData)) {
-                    // Use DB query to avoid triggering model events again
-                    DB::table('products')->where('id', $product->id)->update($updateData);
-                    // Also sync current model instance so callers see updated values
-                    foreach ($updateData as $k => $v) {
-                        $product->$k = $v;
-                    }
-                }
-            } catch (\Exception $e) {
-                // Fail silently to avoid breaking retrieval flow
-                logger('Product price recalculation failed: ' . $e->getMessage());
             }
         });
     }
@@ -194,8 +146,6 @@ class Product extends Model implements HasMedia
             return null;
         }
 
-        $this->disableInvalidFlashSales();
-
         $now = Carbon::now();
 
         return $this->flash_sales()
@@ -213,7 +163,7 @@ class Product extends Model implements HasMedia
             return false;
         }
 
-        if (!$flashSale->sale_status) {
+        if (!$flashSale->status) {
             return false;
         }
 
@@ -232,94 +182,59 @@ class Product extends Model implements HasMedia
 
     public function disableInvalidFlashSales(): int
     {
-        $count = 0;
-        $flashSales = $this->flash_sales()->get();
-
-        foreach ($flashSales as $flashSale) {
-            if (!$this->isFlashSaleValid($flashSale) && $flashSale->sale_status) {
-                $flashSale->sale_status = false;
-                $flashSale->save();
-                $count++;
-            }
-        }
-
-        if ($count > 0) {
-            $this->price_after_flash_sale = null;
-            $this->save();
-        }
-
-        return $count;
+        return (int) $this->flash_sales()->where('status', false)->count();
     }
 
     public function getCurrentPrice()
     {
-        $discountedPrice = $this->getDiscountedPrice();
-        $basePrice = $discountedPrice ?? $this->price;
-        $flashSalePrice = $this->getFlashSalePrice($basePrice);
+        return app(ProductPricingService::class)->calculateProductCurrentPrice($this);
+    }
 
-        return $flashSalePrice ?? $basePrice;
+    public function getCurrentPriceAttribute()
+    {
+        return $this->getCurrentPrice();
     }
 
     public function getDiscountedPrice()
     {
-        if (!$this->isDiscountActive()) {
-            return null;
-        }
+        return app(ProductPricingService::class)->calculateProductPricing($this)['price_after_discount'];
+    }
 
-        return $this->calculateDiscountedPrice($this->price);
+    public function getPriceAfterDiscountAttribute()
+    {
+        return $this->getDiscountedPrice();
     }
 
     public function getFlashSalePrice($basePrice = null)
     {
-        $flashSale = $this->getActiveFlashSale();
-        if (!$flashSale) {
-            return null;
-        }
+        return app(ProductPricingService::class)->calculateFlashSalePrice($this->getActiveFlashSale(), $basePrice ?? $this->price);
+    }
 
-        $price = $basePrice ?? $this->price;
-        if ($price === null) {
-            return null;
-        }
+    public function getPriceAfterFlashSaleAttribute()
+    {
+        return $this->getFlashSalePrice($this->price);
+    }
 
-        return $flashSale->calcPrice($price);
+    public function getFinalPriceAttribute()
+    {
+        return $this->getCurrentPrice();
+    }
+
+    public function getSalePriceAttribute()
+    {
+        return $this->getCurrentPrice();
     }
 
     private function calculateDiscountedPrice($price)
     {
-        if ($price === null) {
-            return null;
-        }
-
-        $price = (float) $price;
-        $discountType = $this->discount_type ?? DiscountType::PERCENTAGE;
-        $discount_amount = (float) ($this->discount_amount ?? 0);
-
-        if ($discountType === DiscountType::PERCENTAGE) {
-            return round(max(0, $price - ($price * ($discount_amount / 100))), 2);
-        }
-
-        if ($discountType === DiscountType::FIXED_RATE) {
-            return round(max(0, $price - $discount_amount), 2);
-        }
-
-        return round($price, 2);
+        return app(ProductPricingService::class)->calculateDiscountedPrice(
+            $price,
+            $this->discount_type ?? DiscountType::PERCENTAGE,
+            $this->discount_amount ?? 0
+        );
     }
 
 
-    function getBlockedDates()
-    {
-        $_blockedDates = $this->fetchBlockedDatesForAProduct();
-        $_flatBlockedDates = [];
-        foreach ($_blockedDates as $date) {
-            $from = Carbon::parse($date->from);
-            $to = Carbon::parse($date->to);
-            $dateRange = CarbonPeriod::create($from, $to);
-            $_blockedDates = $dateRange->toArray();
-            unset($_blockedDates[count($_blockedDates) - 1]);
-            $_flatBlockedDates = array_unique(array_merge($_flatBlockedDates, $_blockedDates));
-        }
-        return $_flatBlockedDates;
-    }
 
     public function fetchBlockedDatesForAProduct()
     {
@@ -390,13 +305,7 @@ class Product extends Model implements HasMedia
         return $this->belongsToMany(Tag::class, 'product_tag');
     }
 
-    /**
-     * @return HasMany
-     */
-    // public function variation_options(): HasMany
-    // {
-    //     return $this->hasMany(Variation::class, 'product_id');
-    // }
+
 
     /**
      * @return belongsToMany
@@ -516,17 +425,7 @@ class Product extends Model implements HasMedia
         return $this->belongsToMany(Resource::class, 'feature_product', 'product_id', 'resource_id');
     }
 
-    /**
-     * @return int|mixed
-     */
-    // public function getSoldAttribute()
-    // {
-    //     return DB::table('order_product')
-    //         ->join('orders', 'orders.id', '=', 'order_product.order_id')
-    //         ->where('order_product.product_id', '=', $this->id)
-    //         ->where('orders.parent_id', '=', null)
-    //         ->sum('order_quantity');
-    // }
+
 
     /**
      * @return BelongsToMany

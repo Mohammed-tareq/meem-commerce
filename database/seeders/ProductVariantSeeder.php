@@ -7,25 +7,27 @@ use Marvel\Database\Models\Attribute;
 use Marvel\Database\Models\AttributeProduct;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
+use Marvel\Services\Pricing\ProductPricingService;
 
 class ProductVariantSeeder extends Seeder
 {
     public function run(): void
     {
+        $pricingService = app(ProductPricingService::class);
         $attributes = Attribute::with('values')->get();
 
         $colorValues = $this->valuesForAttribute($attributes, 'Color');
         $sizeValues = $this->valuesForAttribute($attributes, 'Size');
 
-        $products = Product::whereIn('id', [1, 2, 3, 4, 5])->get();
+        $products = Product::whereIn('id', [1, 2, 3, 4, 5])->with('flash_sales')->get();
 
         foreach ($products as $index => $product) {
             $basePrice = (float) $product->price;
+            $flashSale = $product->has_flash_sale ? $pricingService->resolveActiveFlashSale($product) : null;
 
             $variants = [
                 [
                     'price' => $basePrice,
-                    'sale_price' => $basePrice * 0.9,
                     'quantity' => max(5, (int) $product->quantity),
                     'height' => $product->height,
                     'width' => $product->width,
@@ -38,7 +40,6 @@ class ProductVariantSeeder extends Seeder
                 ],
                 [
                     'price' => $basePrice + 15,
-                    'sale_price' => $basePrice + 10,
                     'quantity' => max(3, (int) $product->quantity - 2),
                     'height' => $product->height,
                     'width' => $product->width,
@@ -56,7 +57,7 @@ class ProductVariantSeeder extends Seeder
 
                 $variant = ProductVariant::create([
                     'price' => $variantData['price'],
-                    'sale_price' => $variantData['sale_price'],
+                    'sale_price' => $pricingService->calculateVariantSalePrice($product, $variantData, $flashSale),
                     'quantity' => $variantData['quantity'],
                     'height' => $variantData['height'],
                     'width' => $variantData['width'],

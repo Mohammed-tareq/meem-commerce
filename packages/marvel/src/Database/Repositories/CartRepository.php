@@ -106,25 +106,21 @@ class CartRepository extends BaseRepository
 
         if (!$productId || $quantity < 1) {
             return false;
-            }
+        }
 
-            $product = Product::findOrFail($productId);
-        if($product->quantity < $quantity) {
-            throw new Exception(QUANTITY_EXCEEDS_AVAILABLE_STOCK);
+        $product = Product::findOrFail($productId);
+        if ($product->quantity < $quantity) {
+            throw new Exception('Quantity exceeds available stock.');
         }
         if (!$product->in_stock) {
-            throw new Exception(PRODUCT_EXCEEDS_AVAILABLE_STOCK);
+            throw new Exception('Product exceeds available stock.');
         }
 
-            if ($product->has_flash_sale && $product->isFlashSaleValid()) {
-                $price = $product->price_after_flash_sale ?? $product->getCurrentPrice();
-                } else {
-            $price = $product->getCurrentPrice();
-        }
+        $price = $product->getCurrentPrice();
         $totalPrice = $price * $quantity;
 
         $cartItem = CartItem::where('cart_id', $cart->id)
-        ->where('product_id', $productId)
+            ->where('product_id', $productId)
             ->first();
 
         if ($cartItem) {
@@ -145,6 +141,4 @@ class CartRepository extends BaseRepository
 
         return true;
     }
-
-
 }

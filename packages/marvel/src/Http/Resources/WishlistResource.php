@@ -2,8 +2,6 @@
 
 namespace Marvel\Http\Resources;
 
-use Illuminate\Http\Request;
-
 class WishlistResource extends Resource
 {
     public function toArray($request): array
@@ -13,8 +11,9 @@ class WishlistResource extends Resource
             'name'                   => $this->getTranslation('name', app()->getLocale()),
             'slug'                   => $this->slug,
             'price'                 => $this->product_type === 'simple'
-                                        ? $this->price
-                                        : $this->variations[0]->sale_price ?? $this->variations[0]->price ?? null,
+                ? $this->current_price
+                : $this->variations[0]->current_price ?? $this->variations[0]->price ?? null,
+            'current_price'          => $this->current_price,
             'price_after_discount'   => $this->price_after_discount,
             'price_after_flash_sale' => $this->price_after_flash_sale,
             'in_stock'               => $this->in_stock,
@@ -26,7 +25,8 @@ class WishlistResource extends Resource
                     return [
                         'id' => $variant->id,
                         'price' => $variant->price,
-                        'sale_price' => $variant->sale_price,
+                        'sale_price' => $variant->current_price,
+                        'current_price' => $variant->current_price,
                         'height' => $variant->height,
                         'width' => $variant->width,
                         'length' => $variant->length,

@@ -9,8 +9,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
-use Marvel\Enums\FlashSaleType;
 use Carbon\Carbon;
+use Marvel\Services\Pricing\ProductPricingService;
 
 class FlashSale extends Model
 {
@@ -41,20 +41,6 @@ class FlashSale extends Model
      *
 
 
-
-    /**
-     * Return the sluggable configuration array for this model.
-     *
-     * @return array
-     */
-    // public function sluggable(): array
-    // {
-    //     return [
-    //         'slug' => [
-    //             'source' => 'title',
-    //         ]
-    //     ];
-    // }
 
 
 
@@ -96,29 +82,7 @@ class FlashSale extends Model
 
     public function calcPrice($price)
     {
-        if ($price === null) {
-            return null;
-        }
-
-        $price = (float) $price;
-        $discount = (float) $this->discount;
-        $maxValue = $this->max_discount_amount ? (float) $this->max_discount_amount : null;
-
-        if ($this->type == FlashSaleType::PERCENTAGE) {
-            $discount = $price * ($discount / 100);
-
-            $discount = $maxValue !== null
-                ? min($discount, $maxValue)
-                : $discount;
-
-            return round(max(0, $price - $discount), 2);
-        } elseif ($this->type == FlashSaleType::FIXED_RATE) {
-            return round(max(0, $price - $discount), 2);
-        } elseif ($this->type == FlashSaleType::FINAL_PRICE) {
-            return round(max(0, $discount), 2);
-        }
-
-        return round($price, 2);
+        return app(ProductPricingService::class)->calculateFlashSalePrice($this, $price);
     }
 
     /**
