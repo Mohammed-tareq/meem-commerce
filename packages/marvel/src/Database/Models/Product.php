@@ -3,7 +3,6 @@
 namespace Marvel\Database\Models;
 
 use Carbon\Carbon;
-use Carbon\CarbonPeriod;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -467,5 +466,38 @@ class Product extends Model implements HasMedia
     public function scopeActive($query)
     {
         return $query->where('status', true)->where('quantity', '>', 0);
+    }
+
+    public function scopeFlashSaleWithinOneWeek($query)
+    {
+        $today = Carbon::today();
+        $oneWeekFromNow = Carbon::today()->addWeek();
+
+        return $query->where('has_flash_sale', true)
+            ->whereHas('flash_sales', function ($flashSaleQuery) use ($today, $oneWeekFromNow) {
+                $flashSaleQuery->where('status', true)
+                    ->whereDate('start_date', '<=', $today)
+                    ->whereDate('end_date', '>=', $oneWeekFromNow);
+            });
+    }
+
+    public function scopeDiscountWithinOneWeek($query)
+    {
+        $today = Carbon::today();
+        $oneWeekFromNow = Carbon::today()->addWeek();
+
+        return $query->where('has_discount', true)
+            ->where(function ($discountQuery) use ($today, $oneWeekFromNow) {
+                $discountQuery->whereNull('discount_status')
+                    ->orWhere('discount_status', true);
+            })
+            ->where(function ($discountQuery) use ($today, $oneWeekFromNow) {
+                $discountQuery->whereNull('start_date')
+                    ->orWhereDate('start_date', '<=', $today);
+            })
+            ->where(function ($discountQuery) use ($oneWeekFromNow) {
+                $discountQuery->whereNull('end_date')
+                    ->orWhereDate('end_date', '>=', $oneWeekFromNow);
+            });
     }
 }
