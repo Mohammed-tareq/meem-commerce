@@ -85,6 +85,11 @@ class ProductRepository extends BaseRepository
             $product = $this->create($data);
 
             if (!empty($variants)) {
+                $this->addVariants(
+                    $product,
+                    $variants,
+                    $flashSale
+                );
             }
 
             if ($request->has('images')) {

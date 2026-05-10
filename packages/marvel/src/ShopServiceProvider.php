@@ -17,7 +17,6 @@ use Marvel\Providers\EventServiceProvider;
 use Marvel\Console\InstallCommand;
 use Illuminate\Support\Facades\App;
 use Nuwave\Lighthouse\WhereConditions\WhereConditionsServiceProvider;
-use Illuminate\Support\Facades\Gate;
 use Marvel\Ai\Ai;
 use Marvel\Console\AdminCreateCommand;
 use Marvel\Console\AWSSetupCommand;
@@ -32,6 +31,7 @@ use Marvel\Console\MailSetupCommand;
 use Marvel\Console\MarvelInfoCommand;
 use Marvel\Console\OpenAiSetupCommand;
 use Marvel\Console\OTPGatewaySetupCommand;
+use Marvel\Console\RefreshProductPricingCommand;
 use Marvel\Console\QueueConnectionSetupCommand;
 use Marvel\Console\SettingsDataImporter;
 use Marvel\Console\TestMailSendCommand;
@@ -112,6 +112,7 @@ class ShopServiceProvider extends ServiceProvider
         DatabaseSetupCommand::class,
         MarvelInfoCommand::class,
         TestMailSendCommand::class,
+        RefreshProductPricingCommand::class,
     ];
 
     /**
@@ -311,7 +312,7 @@ class ShopServiceProvider extends ServiceProvider
         }
 
         foreach ($this->routeMiddleware as $alias => $middleware) {
-            $this->app->router->aliasMiddleware($alias, $middleware);
+            $this->app['router']->aliasMiddleware($alias, $middleware);
         }
     }
 }
