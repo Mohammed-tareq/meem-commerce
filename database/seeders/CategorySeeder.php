@@ -13,10 +13,13 @@ class CategorySeeder extends Seeder
     {
         $categoryImages = collect(File::files(public_path('images/categories')));
         $categoryImagesCount = $categoryImages->count();
+        $rootCategoryCount = 40;
 
         for ($i = 1; $i <= 100; $i++) {
             $slug = Str::slug("category-$i");
-            $parentCategory = Category::inRandomOrder()->first();
+            $parentCategory = $i <= $rootCategoryCount
+                ? null
+                : Category::query()->whereNull('parent_id')->inRandomOrder()->first();
 
             $category = Category::updateOrCreate(
                 ['slug' => $slug],
