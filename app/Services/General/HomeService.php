@@ -4,6 +4,7 @@ namespace App\Services\General;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\FlashSale;
@@ -17,24 +18,40 @@ use Marvel\Http\Resources\SliderResource;
 
 class HomeService
 {
-    public function getHomeData(?int $parentCategoryId = null): array
+    public function getHomeData(?int $parentCategoryId = null)
     {
         $categoryTree = $this->getCategoryTree();
         $categoriesWithChildren = $this->getCategories();
+       return  Cache::remember('home_data', 60, function () use ($categoryTree, $categoriesWithChildren) {
+            return [
+                'active_sliders' => SliderResource::collection($this->getActiveSliders()),
+                'active_banners' => BannerResource::collection($this->getActiveBanners()),
+                'best_categories' => CategoryResource::collection($categoriesWithChildren),
+                'parent_categories' => CategoryResource::collection($categoryTree),
+                 'discount_products_end_today' => ProductMiniResource::collection($this->getDiscountEndingTodayOrLowStockProducts()),
+                'flash_sales' => FlashSaleResource::collection($this->getFlashSales(9)),
+                'flash_sale_products' => ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek()),
+                'weekly_parent_categories' => CategoryResource::collection($categoryTree),
+                'weekly_products' =>  ProductMiniResource::collection($this->getWeeklyCategoryProducts()),
+                'all_discount_products' => ProductMiniResource::collection($this->getAllDiscountProducts()),
+                'flash_sales_after_9' => FlashSaleResource::collection($this->getFlashSales(9, 9)),
+            ];
+        });
 
-        return [
-            'active_sliders' => SliderResource::collection($this->getActiveSliders()),
-            'active_banners' => BannerResource::collection($this->getActiveBanners()),
-            'best_categories' => CategoryResource::collection($categoriesWithChildren),
-            'parent_categories' => $categoryTree,
-            'discount_products_end_today' => ProductMiniResource::collection($this->getDiscountEndingTodayOrLowStockProducts()),
-            'flash_sales' => FlashSaleResource::collection($this->getFlashSales(9)),
-            'flash_sale_products' => ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek()),
-            'weekly_parent_categories' => CategoryResource::collection($categoryTree),
-            'weekly_products' =>  ProductMiniResource::collection($this->getWeeklyCategoryProducts()),
-            'all_discount_products' => ProductMiniResource::collection($this->getAllDiscountProducts()),
-            'flash_sales_after_9' => FlashSaleResource::collection($this->getFlashSales(9, 9)),
-        ];
+
+        // return [
+        //     'active_sliders' => SliderResource::collection($this->getActiveSliders()),
+        //     'active_banners' => BannerResource::collection($this->getActiveBanners()),
+        //     'best_categories' => CategoryResource::collection($categoriesWithChildren),
+        //     'parent_categories' => CategoryResource::collection($categoryTree),
+        //     'discount_products_end_today' => ProductMiniResource::collection($this->getDiscountEndingTodayOrLowStockProducts()),
+        //     'flash_sales' => FlashSaleResource::collection($this->getFlashSales(9)),
+        //     'flash_sale_products' => ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek()),
+        //     'weekly_parent_categories' => CategoryResource::collection($categoryTree),
+        //     'weekly_products' =>  ProductMiniResource::collection($this->getWeeklyCategoryProducts()),
+        //     'all_discount_products' => ProductMiniResource::collection($this->getAllDiscountProducts()),
+        //     'flash_sales_after_9' => FlashSaleResource::collection($this->getFlashSales(9, 9)),
+        // ];
     }
 
     public function getActiveSliders(): Collection

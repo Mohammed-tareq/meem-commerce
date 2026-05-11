@@ -24,12 +24,12 @@ class CategoryResource extends Resource
             'products_count'       => $this->whenCounted('products'),
             'details'              => $this?->getTranslation('details', app()->getLocale()),
             $this->mergeWhen(request()->routeIs('categories.show'), [
-                'parent' => CategoryResource::collection($this->whenLoaded('parent')),
+                // 'parent' => CategoryResource::collection($this?->whenLoaded('parent')),
                 'children' => CategoryResource::collection($this->whenLoaded('children')),
             ]),
             $this->mergeWhen(request()->routeIs('home'), [
                 // 'children' => $this->getChildren(),
-                'parent' => $this->parent->getTranslation('name', app()->getLocale()),
+                'parent' => $this->parent?->getTranslation('name', app()->getLocale()),
             ]),
         ];
     }
