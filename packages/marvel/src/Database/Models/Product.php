@@ -99,19 +99,7 @@ class Product extends Model implements HasMedia
         });
     }
 
-    // public function discount(): HasOne
-    // {
-    //     return $this->hasOne(Discount::class);
-    // }
-
-    // public function getFinalPriceAttribute()
-    // {
-    //     if (!$this->has_discount) {
-    //         return $this->price;
-    //     }
-
-    //     return $this->discount->getPriceAfterDiscount($this);
-    // }
+   
 
     public function isDiscountActive(): bool
     {

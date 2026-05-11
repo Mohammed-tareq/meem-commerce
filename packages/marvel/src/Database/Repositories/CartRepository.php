@@ -63,10 +63,13 @@ class CartRepository extends BaseRepository
                 }
             }
             DB::commit();
-            return $cart->load(['items.product']);
+            return $cart->load(['items']);
+        } catch (AuthorizationException $e) {
+            DB::rollBack();
+            throw new HttpException(401, $e->getMessage());
         } catch (Exception $e) {
             DB::rollBack();
-            throw new HttpException(500, $e->getMessage());
+            throw new HttpException(400, $e->getMessage());
         }
     }
 
@@ -75,11 +78,12 @@ class CartRepository extends BaseRepository
         try {
             DB::beginTransaction();
 
-            $cart = $this->where('user_id', $request->user()->id)->firstOrFail();
-            $userId = $request->user()->id;
-            if ($userId && (int) $cart->user_id !== (int) $userId) {
+            $userId = $request->user()?->id ?? $request->user_id;
+            if (!$userId) {
                 throw new AuthorizationException(NOT_AUTHORIZED);
             }
+
+            $cart = $this->where('user_id', $userId)->firstOrFail();
 
             if ($request->has('item')) {
                 if (!$this->syncItems($cart, $request->item ?? [])) {
@@ -88,10 +92,13 @@ class CartRepository extends BaseRepository
             }
 
             DB::commit();
-            return $cart->load(['items.product']);
+            return $cart->load(['items']);
+        } catch (AuthorizationException $e) {
+            DB::rollBack();
+            throw new HttpException(401, $e->getMessage());
         } catch (Exception $e) {
             DB::rollBack();
-            throw new HttpException(500, $e->getMessage());
+            throw new HttpException(400, $e->getMessage());
         }
     }
 
@@ -110,20 +117,21 @@ class CartRepository extends BaseRepository
         }
         $product = Product::findOrFail($productId);
 
-        if ($product->quantity < $quantity) {
-            throw new Exception('Quantity exceeds available stock.');
-        }
         if (!$product->in_stock) {
             throw new Exception('Product exceeds available stock.');
         }
-        if (!$product->variations()->exists() && $variantId) {
-            throw new Exception('Product exceeds available stock.');
-        }
-
 
         if ($product->isSimple()) {
+            if ($variantId) {
+                throw new Exception(INVALID_ITEM_DATA);
+            }
+
             $this->updateOrCreateCartForProductSimple($cart, $product, $quantity);
         } else {
+            if (!$variantId) {
+                throw new Exception(INVALID_ITEM_DATA);
+            }
+
             $this->updateOrCreateCartForProductVariant($cart, $product, $variantId, $quantity);
         }
         return true;
@@ -140,17 +148,29 @@ class CartRepository extends BaseRepository
             ->where('product_id', $product->id)
             ->whereNull('product_variant_id')
             ->first();
-        if ($cartItem)
-            return $this->updateItemCartForProductSimple($cartItem, $product->getCurrentPrice(), $quantity);
-        else
-            return $this->createItemCartForProductSimple($cart, $product, $product->getCurrentPrice(), $quantity);
+
+        if ($cartItem) {
+            return $this->updateItemCartForProductSimple($cartItem, $product, $product->current_price, $quantity);
+        }
+
+        if ($product->quantity < $quantity) {
+            throw new Exception('Quantity exceeds available stock.');
+        }
+
+        return $this->createItemCartForProductSimple($cart, $product, $product->current_price, $quantity);
     }
 
-    protected function updateItemCartForProductSimple($cartItem, $price, $quantity)
+    protected function updateItemCartForProductSimple($cartItem, $product, $price, $quantity)
     {
+        $newQuantity =  $quantity;
+
+        if ($product->quantity < $newQuantity) {
+            throw new Exception('Quantity exceeds available stock.');
+        }
+
         return $cartItem->update([
-            'quantity' => $cartItem->quantity + $quantity,
-            'total_price' => $cartItem->total_price + ($price * $quantity),
+            'quantity' => $newQuantity,
+            'total_price' =>    $price * $newQuantity,
         ]);
     }
 
@@ -174,18 +194,32 @@ class CartRepository extends BaseRepository
             ->first();
         $variants = $product->variations()->whereId($variantId)->first();
 
-        if ($cartItem)
-            return $this->updateItemCartForProductVariant($cartItem, $variants->getCurrentPrice(), $quantity);
-        else
-            return $this->createItemCartForProductVariant($variants, $variants->getCurrentPrice(), $cart, $quantity);
+        if (!$variants) {
+            throw new Exception(INVALID_ITEM_DATA);
+        }
+
+        if ($cartItem) {
+            return $this->updateItemCartForProductVariant($cartItem, $variants, $variants->current_price, $quantity);
+        }
+
+        if ($variants->quantity < $quantity) {
+            throw new Exception('Quantity exceeds available stock.');
+        }
+
+        return $this->createItemCartForProductVariant($variants, $variants->current_price, $cart, $quantity);
     }
 
-    protected function updateItemCartForProductVariant($cartItem, $variantPrice, $quantity)
+    protected function updateItemCartForProductVariant($cartItem, $variants, $variantPrice, $quantity)
     {
+        $newQuantity = $cartItem->quantity + $quantity;
+
+        if ($variants->quantity < $newQuantity) {
+            throw new Exception('Quantity exceeds available stock.');
+        }
 
         $totalPrice = $variantPrice * $quantity;
-        return   $cartItem->update([
-            'quantity' => $cartItem->quantity + $quantity,
+        return $cartItem->update([
+            'quantity' => $newQuantity,
             'total_price' => $cartItem->total_price + $totalPrice,
         ]);
     }
@@ -193,7 +227,7 @@ class CartRepository extends BaseRepository
     protected function createItemCartForProductVariant($variants, $variantPrice, $cart, $quantity)
     {
         $attributes = [];
-        foreach ($variants->variantAttributes as $attribute) {
+        foreach ($variants->attributeProducts as $attribute) {
             $attributes[$attribute->attributeValue->attribute->name] = $attribute->attributeValue->value;
         }
 

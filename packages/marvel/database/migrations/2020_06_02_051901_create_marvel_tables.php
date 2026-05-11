@@ -257,17 +257,7 @@ class CreateMarvelTables extends Migration
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
         });
-        Schema::create('cart_items', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('cart_id')->constrained('carts')->cascadeOnDelete();
-            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
-            $table->integer('quantity');
-            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
-            $table->decimal('price', 10, 2);
-            $table->decimal('total_price', 10, 2);
-            $table->json('attributes')->nullable();
-            $table->timestamps();
-        });
+
 
         Schema::create('attributes', function (Blueprint $table) {
             $table->id();
@@ -296,6 +286,17 @@ class CreateMarvelTables extends Migration
             $table->string('length')->nullable();
             $table->unsignedBigInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->timestamps();
+        });
+        Schema::create('cart_items', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('cart_id')->constrained('carts')->cascadeOnDelete();
+            $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+            $table->integer('quantity');
+            $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
+            $table->decimal('price', 10, 2);
+            $table->decimal('total_price', 10, 2);
+            $table->json('attributes')->nullable();
             $table->timestamps();
         });
 
@@ -404,5 +405,10 @@ class CreateMarvelTables extends Migration
         Schema::dropIfExists('authors');
         Schema::dropIfExists('manufacturers');
         Schema::dropIfExists('banners');
+        Schema::dropIfExists('sliders');
+        Schema::dropIfExists('carts');
+        Schema::dropIfExists('cart_items');
+        
+
     }
 }

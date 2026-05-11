@@ -19,4 +19,4 @@ class AttributeProduct extends Model
     {
         return $this->belongsTo(AttributeValue::class);
     }
-}
+} 

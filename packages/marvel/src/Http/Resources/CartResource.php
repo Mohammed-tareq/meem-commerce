@@ -15,12 +15,10 @@ class CartResource extends Resource
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
-            'items' => CartItemResource::collection($items),
             'total_items' => $items ? $items->count() : null,
             'total_quantity' => $totalQuantity,
             'total_price' => $totalPrice,
-            'created_at' => $this->created_at ? $this->created_at->toIso8601String() : null,
-            'updated_at' => $this->updated_at ? $this->updated_at->toIso8601String() : null,
+            'items' => CartItemResource::collection($items),
         ];
     }
 }
