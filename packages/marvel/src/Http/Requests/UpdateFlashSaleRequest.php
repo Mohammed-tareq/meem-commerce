@@ -4,7 +4,6 @@ namespace Marvel\Http\Requests;
 
 use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -38,6 +37,7 @@ class UpdateFlashSaleRequest extends FormRequest
             'title.*' => ['sometimes', 'string', 'min:3', 'max:70', UniqueTranslationRule::for('flash_sales', "title")->ignore($id)],
             'description'        => ['sometimes', 'array'],
             'description.*'  => ['sometimes', 'string', 'max:1000'],
+            'image'        => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp'],
             'start_date'   => ['sometimes', 'date'],
             'end_date'     => ['sometimes', 'date'],
             'type' => ['sometimes', Rule::in(FlashSaleType::getValues())],

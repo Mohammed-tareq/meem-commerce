@@ -68,7 +68,6 @@ class Product extends Model implements HasMedia
 
     protected $appends = [
         'current_price',
-        'sale_price',
         'price_after_discount',
         'price_after_flash_sale',
     ];
@@ -99,7 +98,7 @@ class Product extends Model implements HasMedia
         });
     }
 
-   
+
 
     public function isDiscountActive(): bool
     {
@@ -207,10 +206,10 @@ class Product extends Model implements HasMedia
         return $this->getCurrentPrice();
     }
 
-    public function getSalePriceAttribute()
-    {
-        return $this->getCurrentPrice();
-    }
+    // public function getSalePriceAttribute()
+    // {
+    //     return $this->getCurrentPrice();
+    // }
 
     private function calculateDiscountedPrice($price)
     {

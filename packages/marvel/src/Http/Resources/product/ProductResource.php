@@ -13,7 +13,6 @@ class ProductResource extends Resource
             'description'            => $this->getTranslation('description', app()->getLocale()), // Array فيه en/ar
             'price'                  => $this->roundMoney($this->price),
             'current_price'          => $this->roundMoney($this->current_price),
-            'sale_price'             => $this->roundMoney($this->sale_price),
             'price_after_discount'    => $this->roundMoney($this->price_after_discount),
             'price_after_flash_sale'  => $this->roundMoney($this->price_after_flash_sale),
             'discount_type'          => $this->discount_type,
@@ -32,7 +31,7 @@ class ProductResource extends Resource
             'weight'                 => $this->weight,
             'has_flash_sale'         => $this->has_flash_sale,
             'has_discount'           => $this->has_discount,
-            $this->mergeWhen($this->has_discount,fn() => ['discount_valid' => $this->isDiscountActive()]),
+            $this->mergeWhen($this->has_discount, fn() => ['discount_valid' => $this->isDiscountActive()]),
             'banner_id'              => $this->banner_id,
             'created_at'             => $this->created_at ? $this->created_at->toIso8601String() : null,
             'categories'            => $this->whenLoaded('categories', fn() => $this->getCategories($this->categories)),
@@ -80,7 +79,6 @@ class ProductResource extends Resource
             return [
                 'id' => $variant->id,
                 'price' => $this->roundMoney($variant->price),
-                'sale_price' => $this->roundMoney($variant->sale_price),
                 'current_price' => $this->roundMoney($variant->current_price),
                 'quantity' => $variant->quantity,
                 'height' => $variant->height,

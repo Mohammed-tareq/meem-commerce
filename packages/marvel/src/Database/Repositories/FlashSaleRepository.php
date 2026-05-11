@@ -4,18 +4,18 @@
 namespace Marvel\Database\Repositories;
 
 use Exception;
-use Illuminate\Auth\Access\AuthorizationException;
-use Marvel\Http\Resources\FlashSaleResource;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
-use Marvel\Enums\FlashSaleType;
-use Marvel\Enums\Permission;
+use Marvel\Traits\MediaManager;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class FlashSaleRepository extends BaseRepository
 {
+    use MediaManager;
 
     /**
      * @var array
@@ -73,11 +73,19 @@ class FlashSaleRepository extends BaseRepository
     {
         try {
             // only admin can create flash deals
-            $data = $request->only($this->dataArray);
+            DB::beginTransaction();
+            $flash_sale = $this->create($request->except('image'));
 
-            $flash_sale = $this->create($data);
+            if ($request->hasFile('image')) {
+                if (!$this->uploadSingleImage($request, 'image', $flash_sale, 'flash-sales-image', 'flashSales')) {
+                    throw new HttpException(422, 'Flash sale image upload failed, please check the file format or size.');
+                }
+            }
+
+            DB::commit();
             return $flash_sale;
         } catch (Exception $th) {
+            DB::rollBack();
             throw new Exception(SOMETHING_WENT_WRONG, $th->getMessage());
         }
     }
@@ -94,12 +102,21 @@ class FlashSaleRepository extends BaseRepository
     {
         try {
             // only admin can update flash deals
+            DB::beginTransaction();
             $flash_sale = $this->findOrFail($id);
-            $data = $request->only($this->dataArray);
-            $flash_sale->update($data);
+            $flash_sale->update($request->except('image'));
+
+            if ($request->hasFile('image')) {
+                if (!$this->updateSingleImage($request, 'image', $flash_sale, 'flash-sales-image', 'flashSales')) {
+                    throw new HttpException(422, 'Flash sale image upload failed, please check the file format or size.');
+                }
+            }
+
+            DB::commit();
             $this->updateFlashSaleProductPrices($flash_sale);
             return $flash_sale;
         } catch (Exception $e) {
+            DB::rollBack();
             throw new Exception(SOMETHING_WENT_WRONG, $e->getMessage());
         }
     }

@@ -25,7 +25,6 @@ class WishlistResource extends Resource
                     return [
                         'id' => $variant->id,
                         'price' => $variant->price,
-                        'sale_price' => $variant->current_price,
                         'current_price' => $variant->current_price,
                         'height' => $variant->height,
                         'width' => $variant->width,

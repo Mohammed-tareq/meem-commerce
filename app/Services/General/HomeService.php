@@ -2,4 +2,150 @@
 
 namespace App\Services\General;
 
-class HomeService {}
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Collection;
+use Marvel\Database\Models\Banner;
+use Marvel\Database\Models\Category;
+use Marvel\Database\Models\FlashSale;
+use Marvel\Database\Models\Product;
+use Marvel\Database\Models\Slider;
+use Marvel\Http\Resources\BannerResource;
+use Marvel\Http\Resources\CategoryResource;
+use Marvel\Http\Resources\FlashSaleResource;
+use Marvel\Http\Resources\ProductMiniResource;
+use Marvel\Http\Resources\SliderResource;
+
+class HomeService
+{
+    public function getHomeData(?int $parentCategoryId = null): array
+    {
+        $categoryTree = $this->getCategoryTree();
+        $categoriesWithChildren = $this->getCategories();
+
+        return [
+            'active_sliders' => SliderResource::collection($this->getActiveSliders()),
+            'active_banners' => BannerResource::collection($this->getActiveBanners()),
+            'best_categories' => CategoryResource::collection($categoriesWithChildren),
+            'parent_categories' => $categoryTree,
+            'discount_products_end_today' => ProductMiniResource::collection($this->getDiscountEndingTodayOrLowStockProducts()),
+            'flash_sales' => FlashSaleResource::collection($this->getFlashSales(9)),
+            'flash_sale_products' => ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek()),
+            'weekly_parent_categories' => CategoryResource::collection($categoryTree),
+            'weekly_products' =>  ProductMiniResource::collection($this->getWeeklyCategoryProducts()),
+            'all_discount_products' => ProductMiniResource::collection($this->getAllDiscountProducts()),
+            'flash_sales_after_9' => FlashSaleResource::collection($this->getFlashSales(9, 9)),
+        ];
+    }
+
+    public function getActiveSliders(): Collection
+    {
+        return Slider::active()->ordered()->get();
+    }
+
+    public function getActiveBanners(): Collection
+    {
+        return Banner::active()->ordered()->get();
+    }
+
+    public function getFlashSales(int $limit, $after = null): Collection
+    {
+        return FlashSale::query()->valid()
+            ->when($after, function ($query, $after) {
+                $query->where('id', '>', $after);
+            })
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function getDiscountEndingTodayOrLowStockProducts(): Collection
+    {
+        return Product::query()->active()
+            ->where('has_discount', true)
+            ->where('has_flash_sale', false)
+            ->where(function (Builder $query) {
+                $query->whereDate('end_date', today())
+                    ->orWhere('quantity', '<', 10);
+            })
+            ->orderByDesc('id')
+            ->limit(25)
+            ->get()
+            ->filter(fn($product) => $product->isDiscountActive());
+    }
+
+    public function getFlashSaleProductsEndingThisWeek(): Collection
+    {
+        $weekEnd = now()->endOfWeek();
+
+        return Product::query()->active()
+            ->where('has_flash_sale', true)
+            ->whereHas('flash_sales', function ($query) use ($weekEnd) {
+                $query->valid()
+                    ->whereNotNull('end_date')
+                    ->whereBetween('end_date', [today(), $weekEnd]);
+            })
+            ->orderByDesc('id')
+            ->get();
+    }
+
+    public function getWeeklyCategoryProducts(int $productLimit = 10): Collection
+    {
+        $categoryIds = $this->getCategoryTree()->pluck('id')->toArray();
+        return Product::query()->active()
+            ->whereHas('categories', function ($query) use ($categoryIds) {
+                $query->whereIn('categories.id', $categoryIds);
+            })
+            ->where('has_discount', true)
+            ->orderByDesc('id')
+            ->limit($productLimit)
+            ->get()
+            ->filter(fn(Product $product) => $product->isDiscountActive());
+    }
+
+    public function getAllDiscountProducts(): Collection
+    {
+        return Product::query()->active()
+            ->where('has_discount', true)
+            ->with(['categories'])
+            ->orderByDesc('id')
+            ->get()
+            ->filter(fn($product) => $product->isDiscountActive());
+    }
+
+    private function getCategoryTree($id = 1): Collection
+    {
+        $parent = Category::query()->active()
+            ->whereNull('parent_id')
+            ->where('id', '=', $id)
+            ->with('children')
+            ->first();
+
+        if (!$parent) {
+            return collect();
+        }
+        return $parent->children()->active()->limit(5)->get();
+    }
+
+
+    private function getCategories(): Collection
+    {
+        $categories = Category::query()->active()
+            ->withCount('products')
+            ->orderByDesc('products_count')
+            ->limit(20)
+            ->get();
+
+        return $categories;
+    }
+
+
+
+    private function roundMoney($value)
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return round((float) $value, 2);
+    }
+}

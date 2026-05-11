@@ -7,7 +7,6 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
-use Marvel\Database\Models\FlashSale;
 use Marvel\Enums\FlashSaleType;
 
 class CreateFlashSaleRequest extends FormRequest
@@ -34,6 +33,7 @@ class CreateFlashSaleRequest extends FormRequest
             'title.*' => ['required', 'string', 'min:3', 'max:70', UniqueTranslationRule::for('flash_sales', "title")],
             'description'        => ['required', 'array'],
             'description.*'  => ['required', 'string', 'max:1000'],
+            'image'        => ['required', 'image', 'mimes:jpeg,png,jpg,webp'],
             'start_date'   => ['required', 'date'],
             'end_date'     => ['required', 'date'],
             'type' => ['required', Rule::in(FlashSaleType::getValues())],
@@ -43,7 +43,7 @@ class CreateFlashSaleRequest extends FormRequest
                 'numeric',
                 'min:1'
             ],
-            'status'=> ['required', 'in:1,0']
+            'status' => ['required', 'in:1,0']
 
         ];
     }

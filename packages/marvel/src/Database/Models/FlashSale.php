@@ -8,13 +8,15 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 use Carbon\Carbon;
 use Marvel\Services\Pricing\ProductPricingService;
 
-class FlashSale extends Model
+class FlashSale extends Model implements HasMedia
 {
-    use HasTranslations, SoftDeletes;
+    use HasTranslations, SoftDeletes, InteractsWithMedia;
 
     protected $table = 'flash_sales';
 

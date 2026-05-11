@@ -65,6 +65,12 @@ class ProductSeeder extends Seeder
 
             $productImages = collect(File::files(public_path('images/products')));
             $productImagesCount = $productImages->count();
+            $weeklyFlashSales = FlashSale::query()
+                ->valid()
+                ->whereBetween('start_date', [now()->startOfWeek(), now()->endOfWeek()])
+                ->orderBy('id')
+                ->get();
+            $weeklyFlashSalesCount = $weeklyFlashSales->count();
 
             // $shop = Shop::inRandomOrder()->first();
             // if (! $shop) {
@@ -119,10 +125,19 @@ class ProductSeeder extends Seeder
                             ->toMediaCollection('products', 'products');
                     }
                 }
-                $flashSale = $hasFlashSale ? FlashSale::inRandomOrder()->first() : null;
+                $flashSale = $hasFlashSale && $weeklyFlashSalesCount > 0
+                    ? $weeklyFlashSales[$i % $weeklyFlashSalesCount]
+                    : null;
 
                 if ($flashSale) {
+                    $product->update([
+                        'has_flash_sale' => true,
+                    ]);
                     $product->flash_sales()->attach($flashSale->id);
+                } else {
+                    $product->update([
+                        'has_flash_sale' => false,
+                    ]);
                 }
 
                 $product->categories()->attach(Category::inRandomOrder()->first()->id);

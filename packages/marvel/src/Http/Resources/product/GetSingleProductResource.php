@@ -40,7 +40,6 @@ class GetSingleProductResource extends Resource
             'is_external'                  => $this->is_external,
             'external_product_url'         => $this->external_product_url,
             'external_product_button_text' => $this->external_product_button_text,
-            'sale_price'                   => $this->current_price,
             'current_price'                => $this->current_price,
             'max_price'                    => $this->max_price,
             'min_price'                    => $this->min_price,

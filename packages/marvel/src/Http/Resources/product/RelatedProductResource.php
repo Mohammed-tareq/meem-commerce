@@ -21,7 +21,6 @@ class RelatedProductResource extends Resource
             'language'             => $this->language,
             'translated_languages' => $this->translated_languages,
             'product_type'         => $this->product_type,
-            'sale_price'           => $this->current_price,
             'current_price'        => $this->current_price,
             'max_price'            => $this->max_price,
             'min_price'            => $this->min_price,

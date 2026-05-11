@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Marvel\Database\Models\FlashSale;
 
@@ -10,12 +11,17 @@ class FlashSaleSeeder extends Seeder
 {
     public function run(): void
     {
+        $flashSaleImages = collect(File::files(public_path('images/banners')));
+        $flashSaleImagesCount = $flashSaleImages->count();
+        $weekStart = now()->startOfWeek();
+        $weekEnd = now()->endOfWeek();
+
         $flashSales = [
             [
-                'title' => ['en' => 'Mega Discount', 'ar' => 'خصم ضخم'],
+                'title' => ['en' => 'This Week Mega Discount', 'ar' => 'خصم ضخم هذا الأسبوع'],
                 'description' => ['en' => 'Save big on electronics', 'ar' => 'وفر الكثير على الإلكترونيات'],
-                'start_date' => now(),
-                'end_date' => now()->addDays(7),
+                'start_date' => $weekStart,
+                'end_date' => $weekEnd,
                 'type' => 'percentage',
                 'discount' => 20.0,
                 'max_discount_amount' => 100.0,
@@ -113,8 +119,18 @@ class FlashSaleSeeder extends Seeder
             ],
         ];
 
-        foreach ($flashSales as $sale) {
-            FlashSale::create($sale);
+        foreach ($flashSales as $index => $sale) {
+            $flashSale = FlashSale::create($sale);
+
+            if ($flashSaleImagesCount > 0 && ! $flashSale->hasMedia('flash-sales-image')) {
+                $image = $flashSaleImages[$index % $flashSaleImagesCount];
+
+                $flashSale
+                    ->addMedia($image->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                    ->toMediaCollection('flash-sales-image', 'flashSales');
+            }
         }
     }
 }

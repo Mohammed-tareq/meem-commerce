@@ -28,8 +28,7 @@ class SliderUpdateRequest extends FormRequest
     {
         return [
             "image"=> "sometimes | image | mimes:jpeg,png,jpg,gif | max:2048",
-            "type"=> "sometimes | in:image,slider",
-           "is_active"=> "sometimes | in:true,1,false,0",
+           "status"=> "sometimes | in:1,0",
         ];
     }
 

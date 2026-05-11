@@ -98,7 +98,6 @@ class CreateMarvelTables extends Migration
         });
         Schema::create('sliders', function (Blueprint $table) {
             $table->id();
-            // $table->enum('type', ['slider', 'image'])->default('slider');
             $table->string('title')->nullable();
             $table->integer('order');
             $table->boolean('status')->default(false);
@@ -408,7 +407,7 @@ class CreateMarvelTables extends Migration
         Schema::dropIfExists('sliders');
         Schema::dropIfExists('carts');
         Schema::dropIfExists('cart_items');
-        
+
 
     }
 }

@@ -16,16 +16,14 @@ class CheckLangMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-         $lang = $request->header('lang','en');
+        $lang = $request->header('lang', 'en');
 
-        $languages = ['en','ar'];
+        $languages = ['en', 'ar'];
 
-        if($lang && in_array($lang,$languages))
-        {
+        if ($lang && in_array($lang, $languages)) {
             App::setLocale($lang);
         }
 
         return $next($request);
     }
 }
-

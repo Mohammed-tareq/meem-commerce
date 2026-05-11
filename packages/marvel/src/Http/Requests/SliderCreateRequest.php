@@ -27,9 +27,9 @@ class   SliderCreateRequest extends FormRequest
     public function rules()
     {
         return [
+            'title' => 'sometimes|string|max:255',
             "image"=> "required | image | mimes:jpeg,png,jpg,gif | max:2048",
-            "type"=> "required | in:image,slider",
-            "is_active"=> "sometimes | in:true,1,false,0",
+            "status"=> "sometimes | in:1,0",
         ];
     }
 

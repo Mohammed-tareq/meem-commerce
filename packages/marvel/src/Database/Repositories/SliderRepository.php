@@ -34,14 +34,8 @@ class SliderRepository extends BaseRepository
             DB::beginTransaction();
             $slider = $this->create($request->except('image'));
             if ($request->has('image')) {
-                if ($request->type === "slider") {
-                    if (!$this->uploadSingleImage($request, 'image', $slider, 'slider-image', 'sliders')) {
-                        throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
-                    }
-                } else {
-                    if (!$this->uploadSingleImage($request, 'image', $slider, 'sliders-images-secondary', 'sliders')) {
-                        throw new HttpException(422, 'Secondary slider image upload failed, please check the file format or size.');
-                    }
+                if (!$this->uploadSingleImage($request, 'image', $slider, 'slider-image', 'sliders')) {
+                    throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
                 }
             }
 
@@ -65,10 +59,6 @@ class SliderRepository extends BaseRepository
                     if (!$this->updateSingleImage($request, 'image', $slider, 'slider-image', 'sliders')) {
                         throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
                     }
-                } else {
-                    if (!$this->updateSingleImage($request, 'image', $slider, 'sliders-images-secondary', 'sliders')) {
-                        throw new HttpException(422, 'Secondary slider image upload failed, please check the file format or size.');
-                    }
                 }
             }
             DB::commit();
@@ -83,7 +73,7 @@ class SliderRepository extends BaseRepository
     {
         try {
             $slider = $this->findOrFail($id);
-            $slider->update(['is_active' => !$slider->is_active]);
+            $slider->update(['status' => !$slider->status]);
             return $slider;
         } catch (\Exception $e) {
             throw new HttpException(400, NOT_FOUND);
@@ -94,7 +84,6 @@ class SliderRepository extends BaseRepository
     {
         try {
             $this->setNewOrder($sliders);
-
         } catch (\Exception $e) {
             throw new HttpException(500, $e->getMessage());
         }
