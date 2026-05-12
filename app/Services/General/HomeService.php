@@ -96,11 +96,20 @@ class HomeService
     {
         $products = DB::table('products')
             ->select([
-                'id', 'name', 'slug', 'description', 'price', 'product_type', 'sku', 'quantity',
-                'sold_quantity', 'in_stock', 'status', 'height', 'width', 'length', 'weight',
-                'has_flash_sale', 'has_discount', 'pieces', 'banner_id', 'discount_type',
-                'discount_amount', 'discount_status', 'start_date', 'end_date',
-                'price_after_discount', 'price_after_flash_sale',
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
             ])
             ->whereNull('deleted_at')
             ->where('status', true)
@@ -130,11 +139,20 @@ class HomeService
 
         $products = DB::table('products')
             ->select([
-                'id', 'name', 'slug', 'description', 'price', 'product_type', 'sku', 'quantity',
-                'sold_quantity', 'in_stock', 'status', 'height', 'width', 'length', 'weight',
-                'has_flash_sale', 'has_discount', 'pieces', 'banner_id', 'discount_type',
-                'discount_amount', 'discount_status', 'start_date', 'end_date',
-                'price_after_discount', 'price_after_flash_sale',
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
             ])
             ->whereNull('deleted_at')
             ->where('status', true)
@@ -168,11 +186,20 @@ class HomeService
 
         $products = DB::table('products')
             ->select([
-                'id', 'name', 'slug', 'description', 'price', 'product_type', 'sku', 'quantity',
-                'sold_quantity', 'in_stock', 'status', 'height', 'width', 'length', 'weight',
-                'has_flash_sale', 'has_discount', 'pieces', 'banner_id', 'discount_type',
-                'discount_amount', 'discount_status', 'start_date', 'end_date',
-                'price_after_discount', 'price_after_flash_sale',
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
             ])
             ->whereNull('deleted_at')
             ->where('status', true)
@@ -201,11 +228,20 @@ class HomeService
     {
         $products = DB::table('products')
             ->select([
-                'id', 'name', 'slug', 'description', 'price', 'product_type', 'sku', 'quantity',
-                'sold_quantity', 'in_stock', 'status', 'height', 'width', 'length', 'weight',
-                'has_flash_sale', 'has_discount', 'pieces', 'banner_id', 'discount_type',
-                'discount_amount', 'discount_status', 'start_date', 'end_date',
-                'price_after_discount', 'price_after_flash_sale',
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
             ])
             ->whereNull('deleted_at')
             ->where('status', true)
@@ -268,5 +304,4 @@ class HomeService
 
         return round((float) $value, 2);
     }
-
 }
