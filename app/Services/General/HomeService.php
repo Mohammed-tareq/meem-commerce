@@ -4,6 +4,7 @@ namespace App\Services\General;
 
 use App\Http\Resources\Category\CategoryHomeResource;
 use App\Http\Resources\Category\CategoryWithChildNameResource;
+use App\Http\Resources\Product\ProductMiniResource ;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -14,7 +15,6 @@ use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Slider;
 use Marvel\Http\Resources\BannerResource;
 use Marvel\Http\Resources\FlashSaleResource;
-use Marvel\Http\Resources\ProductMiniResource;
 use Marvel\Http\Resources\SliderResource;
 
 class HomeService
@@ -23,7 +23,7 @@ class HomeService
     {
         $parentCategoryId = $parentCategoryId ?: 1;
 
-        // return Cache::remember("home_data:parent:{$parentCategoryId}", 60, function () use ($parentCategoryId) {
+        return Cache::remember("home_data:parent:{$parentCategoryId}", 60, function () use ($parentCategoryId) {
             $categoryTree = $this->getCategoryTree($parentCategoryId);
             $categoriesWithChildren = $this->getCategories();
 
@@ -41,7 +41,7 @@ class HomeService
                 'all_discount_products' => ProductMiniResource::collection($this->getAllDiscountProducts()),
                 'flash_sales_after_9' => FlashSaleResource::collection($this->getFlashSales(9, 9)),
             ];
-        // });
+        });
     }
 
     public function getActiveSliders(): Collection
