@@ -4,7 +4,7 @@ namespace App\Services\General;
 
 use App\Http\Resources\Category\CategoryHomeResource;
 use App\Http\Resources\Category\CategoryWithChildNameResource;
-use App\Http\Resources\Product\ProductMiniResource ;
+use App\Http\Resources\Product\ProductMiniResource;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -23,25 +23,52 @@ class HomeService
     {
         $parentCategoryId = $parentCategoryId ?: 1;
 
-        return Cache::remember("home_data:parent:{$parentCategoryId}", 60, function () use ($parentCategoryId) {
-            $categoryTree = $this->getCategoryTree($parentCategoryId);
-            $categoriesWithChildren = $this->getCategories();
-
-            return [
-                'nav-bar'     => CategoryWithChildNameResource::collection($this->getCategoryWithChildren()),
-                'active_sliders' => SliderResource::collection($this->getActiveSliders()),
-                'active_banners' => BannerResource::collection($this->getActiveBanners()),
-                'best_categories' => CategoryHomeResource::collection($categoriesWithChildren),
-                'parent_categories' => CategoryHomeResource::collection($categoryTree),
-                'discount_products_end_today' => ProductMiniResource::collection($this->getDiscountEndingTodayOrLowStockProducts()),
-                'flash_sales' => FlashSaleResource::collection($this->getFlashSales(9)),
-                'flash_sale_products' => ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek()),
-                'weekly_parent_categories' => CategoryHomeResource::collection($categoryTree),
-                'weekly_products' => ProductMiniResource::collection($this->getWeeklyCategoryProducts($categoryTree)),
-                'all_discount_products' => ProductMiniResource::collection($this->getAllDiscountProducts()),
-                'flash_sales_after_9' => FlashSaleResource::collection($this->getFlashSales(9, 9)),
-            ];
+        $categoryTree = Cache::remember("home_data:parent:{$parentCategoryId}:category-tree", 60, function () use ($parentCategoryId) {
+            return $this->getCategoryTree($parentCategoryId);
         });
+
+        $categoriesWithChildren = Cache::remember("home_data:parent:{$parentCategoryId}:categories-with-children", 60, function () {
+            return $this->getCategories();
+        });
+
+        return [
+            'nav-bar' => Cache::remember("home-nav-bar", 60, function () {
+                return CategoryWithChildNameResource::collection($this->getCategoryWithChildren());
+            }),
+            'active_sliders' => Cache::remember("home-active-sliders", 60, function () {
+                return SliderResource::collection($this->getActiveSliders());
+            }),
+            'active_banners' => Cache::remember("home-active-banners", 60, function () {
+                return BannerResource::collection($this->getActiveBanners());
+            }),
+            'best_categories' => Cache::remember("home-best-categories", 60, function () use ($categoriesWithChildren) {
+                return CategoryHomeResource::collection($categoriesWithChildren);
+            }),
+            'parent_categories' => Cache::remember("home-parent-categories", 60, function () use ($categoryTree) {
+                return CategoryHomeResource::collection($categoryTree);
+            }),
+            'discount_products_end_today' => Cache::remember("home-discount-products-end-today", 60, function () {
+                return ProductMiniResource::collection($this->getDiscountEndingTodayOrLowStockProducts());
+            }),
+            'flash_sales' => Cache::remember("home-flash-sales", 60, function () {
+                return FlashSaleResource::collection($this->getFlashSales(9));
+            }),
+            'flash_sale_products' => Cache::remember("home-flash-sale-products", 60, function () {
+                return ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek());
+            }),
+            'weekly_parent_categories' => Cache::remember("home-weekly-parent-categories", 60, function () use ($categoryTree) {
+                return CategoryHomeResource::collection($categoryTree);
+            }),
+            'weekly_products' => Cache::remember("home-weekly-products", 60, function () use ($categoryTree) {
+                return ProductMiniResource::collection($this->getWeeklyCategoryProducts($categoryTree));
+            }),
+            'all_discount_products' => Cache::remember("home-all-discount-products", 60, function () {
+                return ProductMiniResource::collection($this->getAllDiscountProducts());
+            }),
+            'flash_sales_after_9' => Cache::remember("home-flash-sales-after-9", 60, function () {
+                return FlashSaleResource::collection($this->getFlashSales(9, 9));
+            }),
+        ];
     }
 
     public function getActiveSliders(): Collection
@@ -146,34 +173,21 @@ class HomeService
         return $categories;
     }
 
-    // private function getCategoryWithChildren(): Collection
-    // {
-    //     return Category::query()
-    //         ->active()
-    //         ->whereNull('parent_id')
-    //         ->with(['children' => function ($query) {
-    //             $query->active()
-    //                 ->select('id', 'parent_id', 'name')
-    //                 ->with(['children' => function ($query) {
-    //                     $query->active()->select('id', 'parent_id', 'name');
-    //                 }]);
-    //         }])
-    //         ->get();
-    // }
+
     private function getCategoryWithChildren(): Collection
-{
-    return Category::query()
-        ->active()
-        ->whereNull('parent_id')
-        ->with(['children' => function ($query) {
-            $query->active()
-                ->select('id', 'parent_id', 'name', 'slug')
-                ->with(['children' => function ($query) {
-                    $query->active()->select('id', 'parent_id', 'name', 'slug');
-                }]);
-        }])
-        ->get();
-}
+    {
+        return Category::query()
+            ->active()
+            ->whereNull('parent_id')
+            ->with(['children' => function ($query) {
+                $query->active()
+                    ->select('id', 'parent_id', 'name', 'slug')
+                    ->with(['children' => function ($query) {
+                        $query->active()->select('id', 'parent_id', 'name', 'slug');
+                    }]);
+            }])
+            ->get();
+    }
 
 
 
