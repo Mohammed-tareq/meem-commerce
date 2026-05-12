@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Api\General;
 use App\Http\Controllers\Controller;
 use App\Services\General\ProductService;
 use Illuminate\Http\Request;
-use Marvel\Http\Resources\ProductCollection;
+use \Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Http\Resources\ProductResource;
 use Marvel\Traits\ApiResponse;
 
@@ -26,7 +26,7 @@ class ProductController extends Controller
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, new ProductCollection($products));
     }
 
-   
+
     public function getProductById(Request $request)
     {
         $id = trim($request->route('id'));
