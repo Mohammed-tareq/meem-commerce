@@ -26,12 +26,12 @@ Route::prefix('general')->middleware(['api','throttle:general','check-lang'])->g
     //======================== shops=========================//
     Route::controller(ShopController::class)->group(function () {
         Route::get('shops', 'index')->name('general-shop-index');
-        Route::get('shops/{id}', 'getShopById');
+        Route::get('shops/{id}', 'getShopById')->name('general-shop-show');
     });
     //======================== categories=========================//
     Route::controller(CategoryController::class)->group(function () {
         Route::get('categories', 'index')->name('general-category-index');
-        Route::get('categories/{id}', 'getCategoryById');
+        Route::get('categories/{id}', 'getCategoryById')->name('general-category-show');
     });
     //======================== products=========================//
     Route::controller(ProductController::class)->group(function () {

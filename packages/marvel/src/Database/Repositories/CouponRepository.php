@@ -5,17 +5,16 @@ namespace Marvel\Database\Repositories;
 
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Coupon;
+use Marvel\Traits\MediaManager;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
-use Marvel\Database\Models\Settings;
-use Marvel\Database\Models\Shop;
-use Marvel\Enums\CouponType;
-use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelBadRequestException;
 
 class CouponRepository extends BaseRepository
 {
+    use MediaManager;
 
     /**
      * @var array
@@ -71,24 +70,44 @@ class CouponRepository extends BaseRepository
     public function storeCoupon(Request $request)
     {
         try {
-            $data = $request->only($this->dataArray);
-            return $this->create($data);
+            DB::beginTransaction();
+            $coupon = $this->create($request->except('image'));
+
+            if ($request->hasFile('image')) {
+                if (!$this->uploadSingleImage($request, 'image', $coupon, 'coupons', 'coupons')) {
+                    throw new MarvelBadRequestException(COULD_NOT_CREATE_THE_RESOURCE);
+                }
+            }
+            DB::commit();
+
+            return $coupon;
         } catch (Exception $th) {
+            DB::rollBack();
             throw new MarvelBadRequestException(COULD_NOT_CREATE_THE_RESOURCE);
         }
     }
     public function updateCoupon($id, Request $request)
     {
         try {
+            DB::beginTransaction();
             $coupon = $this->find($id);
             if (!$coupon) {
                 throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
             }
-            $data = $request->only($this->dataArray);
+            $data = $request->except('image');
 
             $coupon->update($data);
+
+            if ($request->hasFile('image')) {
+                if (!$this->updateSingleImage($request, 'image', $coupon, 'coupons', 'coupons')) {
+                    throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
+                }
+            }
+            DB::commit();
+
             return $coupon;
         } catch (Exception $th) {
+            DB::rollBack();
             throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }

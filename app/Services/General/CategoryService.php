@@ -13,7 +13,7 @@ class CategoryService
         $limit = $this->getLimit($request);
         $term = trim((string) $request->get('search', ''));
 
-        $query = Category::query()->active()->with('products')->withCount('products');
+        $query = Category::query()->active()->withCount('products');
 
         if ($term !== '') {
             $query->where(function (Builder $builder) use ($term) {

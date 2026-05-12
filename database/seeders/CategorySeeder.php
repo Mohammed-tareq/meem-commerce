@@ -14,12 +14,32 @@ class CategorySeeder extends Seeder
         $categoryImages = collect(File::files(public_path('images/categories')));
         $categoryImagesCount = $categoryImages->count();
         $rootCategoryCount = 40;
+        $childCategoryCount = 30;
+        $grandChildCategoryCount = 30;
 
         for ($i = 1; $i <= 100; $i++) {
             $slug = Str::slug("category-$i");
-            $parentCategory = $i <= $rootCategoryCount
-                ? null
-                : Category::query()->whereNull('parent_id')->inRandomOrder()->first();
+            $parentCategory = match (true) {
+                $i <= $rootCategoryCount => null,
+                $i <= $rootCategoryCount + $childCategoryCount => Category::query()
+                    ->whereNull('parent_id')
+                    ->inRandomOrder()
+                    ->first(),
+                $i <= $rootCategoryCount + $childCategoryCount + $grandChildCategoryCount => Category::query()
+                    ->whereNotNull('parent_id')
+                    ->whereHas('parent', function ($query) {
+                        $query->whereNull('parent_id');
+                    })
+                    ->inRandomOrder()
+                    ->first(),
+                default => Category::query()
+                    ->whereNotNull('parent_id')
+                    ->whereHas('parent', function ($query) {
+                        $query->whereNotNull('parent_id');
+                    })
+                    ->inRandomOrder()
+                    ->first(),
+            };
 
             $category = Category::updateOrCreate(
                 ['slug' => $slug],

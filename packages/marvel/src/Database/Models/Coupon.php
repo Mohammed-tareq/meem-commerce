@@ -7,11 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 use Marvel\Enums\DiscountType;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
-class Coupon extends Model
+class Coupon extends Model implements HasMedia
 {
-    use  HasTranslations;
+    use HasTranslations, InteractsWithMedia;
 
     protected $translatable = ['name'];
 

@@ -31,6 +31,10 @@ class CategoryResource extends Resource
                 // 'children' => $this->getChildren(),
                 'parent' => $this->parent?->getTranslation('name', app()->getLocale()),
             ]),
+            $this->mergeWhen(request()->routeIs('general-category-show'), [
+                'product' => $this->parent?->getTranslation('name', app()->getLocale()),
+            ]),
+
         ];
     }
 

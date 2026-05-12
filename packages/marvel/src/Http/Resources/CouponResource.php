@@ -17,12 +17,13 @@ class CouponResource extends Resource
         return [
             'id'            => $this->id,
             'code'          => $this->code,
-            'name'          => $this->getTranslation('name',app()->getLocale()),
+            'name'          => $this->getTranslation('name', app()->getLocale()),
+            'image'         => $this->getFirstMediaUrl('coupons'),
             'discount'      => $this->discount,
             'discount_type' => $this->typeByLang(), // percentage أو fixed
             'max_discount_amount' => $this->max_discount_amount,
-            'start_date'    => $this->start_date ,
-            'end_date'      => $this->end_date ,
+            'start_date'    => $this->start_date,
+            'end_date'      => $this->end_date,
             'limiter'       => $this->limiter,
             'used'          => $this->used,
             'status'        => (bool) $this->status,

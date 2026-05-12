@@ -3,9 +3,7 @@
 namespace Marvel\Http\Requests;
 
 use CodeZero\UniqueTranslation\UniqueTranslationRule;
-use Marvel\Enums\CouponType;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -34,6 +32,7 @@ class UpdateCouponRequest extends FormRequest
         return [
             "name" => "sometimes|array",
             'name.*' => ['required_with:name', UniqueTranslationRule::for('coupons', 'name')->ignore($this->route('coupon'))],
+            'image' => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp'],
             'discount'      => 'sometimes|numeric|min:0',
             'discount_type' => ['sometimes', Rule::in(DiscountType::getValues())],
             'max_discount_amount' => [
@@ -41,7 +40,7 @@ class UpdateCouponRequest extends FormRequest
                 'numeric',
                 'min:1'
             ],
-            
+
             'start_date'    => 'sometimes|date_format:Y-m-d',
             'end_date'      => 'sometimes|date_format:Y-m-d|after_or_equal:start_date',
             'limiter'       => 'nullable|integer|min:0',

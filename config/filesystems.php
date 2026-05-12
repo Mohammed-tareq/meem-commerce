@@ -83,6 +83,12 @@ return [
             'url' => env('APP_URL') . '/public/storage/brands',
             'visibility' => 'public',
         ],
+        'coupons' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/coupons'),
+            'url' => env('APP_URL') . '/public/storage/coupons',
+            'visibility' => 'public',
+        ],
         'reviews' => [
             'driver' => 'local',
             'root' => storage_path('app/public/reviews'),
