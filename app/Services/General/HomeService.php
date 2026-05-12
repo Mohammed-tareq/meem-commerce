@@ -5,9 +5,9 @@ namespace App\Services\General;
 use App\Http\Resources\Category\CategoryHomeResource;
 use App\Http\Resources\Category\CategoryWithChildNameResource;
 use App\Http\Resources\Product\ProductMiniResource;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\FlashSale;
@@ -94,57 +94,169 @@ class HomeService
 
     public function getDiscountEndingTodayOrLowStockProducts(): Collection
     {
-        return Product::query()->active()
+        $products = DB::table('products')
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->whereNull('deleted_at')
+            ->where('status', true)
             ->where('has_discount', true)
             ->where('has_flash_sale', false)
-            ->where(function (Builder $query) {
+            ->where(function ($query) {
                 $query->whereDate('end_date', today())
                     ->orWhere('quantity', '<', 10);
             })
             ->orderByDesc('id')
             ->limit(25)
-            ->get()
-            ->filter(fn($product) => $product->isDiscountActive());
+            ->get();
+
+        return $products->map(function ($product) {
+            $model = new Product();
+            $attributes = (array) $product;
+            $attributes['current_price'] = $this->moneyValue($product->price_after_discount ?? $product->price ?? null);
+            $model->setRawAttributes($attributes, true);
+
+            return $model;
+        })->filter(fn(Product $product) => $product->isDiscountActive())->values();
     }
 
     public function getFlashSaleProductsEndingThisWeek(): Collection
     {
         $weekEnd = now()->endOfWeek();
 
-        return Product::query()->active()
+        $products = DB::table('products')
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->whereNull('deleted_at')
+            ->where('status', true)
             ->where('has_flash_sale', true)
-            ->whereHas('flash_sales', function ($query) use ($weekEnd) {
-                $query->valid()
-                    ->whereNotNull('end_date')
-                    ->whereBetween('end_date', [today(), $weekEnd]);
+            ->whereExists(function ($query) use ($weekEnd) {
+                $query->select(DB::raw(1))
+                    ->from('flash_sale_products')
+                    ->join('flash_sales', 'flash_sale_products.flash_sale_id', '=', 'flash_sales.id')
+                    ->whereColumn('flash_sale_products.product_id', 'products.id')
+                    ->whereNull('flash_sales.deleted_at')
+                    ->where('flash_sales.status', true)
+                    ->whereNotNull('flash_sales.end_date')
+                    ->whereBetween('flash_sales.end_date', [today(), $weekEnd]);
             })
             ->orderByDesc('id')
             ->get();
+
+        return $products->map(function ($product) {
+            $model = new Product();
+            $attributes = (array) $product;
+            $attributes['current_price'] = $this->moneyValue($product->price_after_flash_sale ?? $product->price_after_discount ?? $product->price ?? null);
+            $model->setRawAttributes($attributes, true);
+
+            return $model;
+        })->values();
     }
 
     public function getWeeklyCategoryProducts(Collection $categoryTree, int $productLimit = 10): Collection
     {
         $categoryIds = $categoryTree->pluck('id')->all();
 
-        return Product::query()->active()
-            ->whereHas('categories', function ($query) use ($categoryIds) {
-                $query->whereIn('categories.id', $categoryIds);
-            })
+        $products = DB::table('products')
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->whereNull('deleted_at')
+            ->where('status', true)
             ->where('has_discount', true)
+            ->whereExists(function ($query) use ($categoryIds) {
+                $query->select(DB::raw(1))
+                    ->from('category_product')
+                    ->whereColumn('category_product.product_id', 'products.id')
+                    ->whereIn('category_product.category_id', $categoryIds);
+            })
             ->orderByDesc('id')
             ->limit($productLimit)
-            ->get()
-            ->filter(fn(Product $product) => $product->isDiscountActive());
+            ->get();
+
+        return $products->map(function ($product) {
+            $model = new Product();
+            $attributes = (array) $product;
+            $attributes['current_price'] = $this->moneyValue($product->price_after_discount ?? $product->price ?? null);
+            $model->setRawAttributes($attributes, true);
+
+            return $model;
+        })->filter(fn(Product $product) => $product->isDiscountActive())->values();
     }
 
     public function getAllDiscountProducts(): Collection
     {
-        return Product::query()->active()
+        $products = DB::table('products')
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->whereNull('deleted_at')
+            ->where('status', true)
             ->where('has_discount', true)
-            ->with(['categories'])
             ->orderByDesc('id')
-            ->get()
-            ->filter(fn($product) => $product->isDiscountActive());
+            ->get();
+
+        return $products->map(function ($product) {
+            $model = new Product();
+            $attributes = (array) $product;
+            $attributes['current_price'] = $this->moneyValue($product->price_after_discount ?? $product->price ?? null);
+            $model->setRawAttributes($attributes, true);
+
+            return $model;
+        })->filter(fn(Product $product) => $product->isDiscountActive())->values();
     }
 
     private function getCategoryTree($id = 1): Collection
@@ -178,17 +290,13 @@ class HomeService
     {
         return Category::query()
             ->active()
-    ->with(['children' => function ($query) {
-                        $query->active()->select('id', 'parent_id', 'name', 'slug');
-                    }
-            ])
+            ->with(['children' => function ($query) {
+                $query->active()->select('id', 'parent_id', 'name', 'slug');
+            }])
             ->get();
     }
 
-
-
-
-    private function roundMoney($value)
+    private function moneyValue($value)
     {
         if ($value === null || $value === '') {
             return null;
