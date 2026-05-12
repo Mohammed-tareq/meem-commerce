@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\Product;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductMiniResource extends JsonResource
@@ -20,8 +19,8 @@ class ProductMiniResource extends JsonResource
             'name'                   => $this->getTranslation('name', app()->getLocale()),
             'slug'                   => $this->slug,
             'price'                  => $this->roundMoney($this->price),
-            'current_price'          => $this->roundMoney($this->current_price),
-            'price_after_discount'    => $this->roundMoney($this->price_after_discount),
+            'current_price'          => $this->roundMoney($this->getRawOrComputedValue('current_price')),
+            'price_after_discount'    => $this->roundMoney($this->getRawOrComputedValue('price_after_discount')),
             'discount_type'          => $this->discount_type,
             'discount_amount'        => $this->discount_amount,
             'quantity'               => $this->quantity,
@@ -39,5 +38,12 @@ class ProductMiniResource extends JsonResource
         }
 
         return round((float) $value, 2);
+    }
+
+    private function getRawOrComputedValue(string $key)
+    {
+        $attributes = $this->getAttributes();
+
+        return array_key_exists($key, $attributes) ? $attributes[$key] : $this->{$key};
     }
 }
