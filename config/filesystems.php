@@ -59,6 +59,12 @@ return [
             'url' => env('APP_URL') . '/public/storage/settings',
             'visibility' => 'public',
         ],
+        'users' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/users'),
+            'url' => env('APP_URL') . '/public/storage/users',
+            'visibility' => 'public',
+        ],
         'banners' => [
             'driver' => 'local',
             'root' => storage_path('app/public/banners'),

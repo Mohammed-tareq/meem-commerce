@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Product\ProductResource;
 use App\Services\General\ProductService;
 use Illuminate\Http\Request;
+use Marvel\Http\Requests\ReviewCreateRequest;
+use Marvel\Http\Requests\ReviewUpdateRequest;
 use \Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Traits\ApiResponse;
 
@@ -35,5 +37,24 @@ class ProductController extends Controller
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,ProductResource::make($product));
+    }
+
+    public function addProductReview(ReviewCreateRequest $request, $id)
+    {
+
+        $review =  $this->productService->addProductReview($request , $id);
+        if (!$review) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+        return $this->apiResponse(REVIEW_CREATED_SUCCESSFULLY, 200, true);
+    }
+    public function updateProductReview(ReviewUpdateRequest $request, $id)
+    {
+
+        $review =  $this->productService->updateProductReview($request , $id);
+        if (!$review) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+        return $this->apiResponse(REVIEW_UPDATED_SUCCESSFULLY, 200, true);
     }
 }

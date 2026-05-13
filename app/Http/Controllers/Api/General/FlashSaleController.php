@@ -3,26 +3,37 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\FlashSale\FlashSaleResource;
+use App\Services\General\FlashSaleService;
 use App\Services\General\ProductService;
 use Illuminate\Http\Request;
-use Marvel\Http\Resources\ProductCollection;
+use Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Traits\ApiResponse;
 
 class FlashSaleController extends Controller
 {
     use ApiResponse;
 
-    private ProductService $productService;
+    private FlashSaleService $flashSaleService;
 
-    public function __construct(ProductService $productService)
+    public function __construct(FlashSaleService $flashSaleService)
     {
-        $this->productService = $productService;
+        $this->flashSaleService = $flashSaleService;
     }
 
     public function index(Request $request)
     {
-        $products = $this->productService->paginateFlashSales($request);
+        $flashSales = $this->flashSaleService->paginateFlashSales($request);
 
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, new ProductCollection($products));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::collection($flashSales));
+    }
+
+    public function getFlashSaleById($id)
+    {
+        $FlashSaleWithProducts  = $this->flashSaleService->getFlashSaleById($id);
+        if (!$FlashSaleWithProducts) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::make($FlashSaleWithProducts));
     }
 }

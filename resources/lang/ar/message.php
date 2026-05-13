@@ -135,4 +135,6 @@ return [
     'ERROR.COULD_NOT_ADD_COUPON_TO_CART_NOT_VALID' => 'تعذر إضافة القسيمة إلى السلة: القسيمة غير صالحة',
     'ERROR.COULD_NOT_ADD_COUPON_TO_EMPTY_CART' => 'تعذر إضافة القسيمة إلى سلة فارغة',
     'ERROR.COULD_NOT_ADD_COUPON_TO_CART_YOU_HAVE_ALREADY_APPLIED_A_COUPON' => 'تعذر إضافة القسيمة إلى السلة: تم تطبيق قسيمة بالفعل',
+    'ERROR.INVALID_COUPON_CODE_OR_COUPON_CANNOT_BE_APPLIED_OR_COUPON_USAGE_LIMIT_REACHED' => 'تعذر إضافة القسيمة إلى السلة: تم الوصول إلى حد استخدام القسيمة',
+    'COUPON_APPLIED_SUCCESSFULLY' => 'تم تطبيق القسيمة بنجاح',
 ];

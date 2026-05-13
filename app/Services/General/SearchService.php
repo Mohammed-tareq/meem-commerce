@@ -4,6 +4,7 @@ namespace App\Services\General;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Shop;
@@ -24,10 +25,14 @@ class SearchService
         $categories = $this->buildCategoryQuery($term, app()->getLocale())
             ->paginate($limit, ['*'], 'category_page');
 
+        $brands = $this->buildBrandQuery($term, app()->getLocale())
+            ->paginate($limit, ['*'], 'brand_page');
+
         $data = [
             'products' => $products,
             'shops' => $shops,
             'categories' => $categories,
+            'brands' => $brands,
         ];
 
         return $data;
@@ -89,6 +94,22 @@ class SearchService
     private function buildCategoryQuery(string $term, string $locale): Builder
     {
         $query = Category::query()->withCount('products');
+
+        if ($term !== '') {
+            $query->where(function (Builder $builder) use ($term, $locale) {
+                $this->applyTranslatableLike($builder, 'name', $term, $locale);
+                $builder->orWhere(function (Builder $sub) use ($term, $locale) {
+                    $this->applyTranslatableLike($sub, 'details', $term, $locale);
+                });
+            });
+        }
+
+        return $query->orderByDesc('id');
+    }
+
+    private function buildBrandQuery(string $term, string $locale): Builder
+    {
+        $query = Brand::query()->active();
 
         if ($term !== '') {
             $query->where(function (Builder $builder) use ($term, $locale) {

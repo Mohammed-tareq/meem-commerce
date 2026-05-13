@@ -127,12 +127,16 @@ class CartRepository extends BaseRepository
             }
 
             $this->updateOrCreateCartForProductSimple($cart, $product, $quantity);
+            $totalPrice = $cart->items()->sum('total_price');
+            $cart->update(['total_price' => $totalPrice]);
         } else {
             if (!$variantId) {
                 throw new Exception(INVALID_ITEM_DATA);
             }
 
             $this->updateOrCreateCartForProductVariant($cart, $product, $variantId, $quantity);
+            $totalPrice = $cart->items()->sum('total_price');
+            $cart->update(['total_price' => $totalPrice]);
         }
         return true;
     }

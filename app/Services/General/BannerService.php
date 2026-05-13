@@ -9,6 +9,12 @@ class BannerService
 
     public function getBanners()
     {
-        return Banner::with('products')->active()->get();
+        return Banner::active()->get();
     }
+    public function getBannerById($id)
+    {
+        $banner =  Banner::active()->find($id);
+        return $banner->load('products');
+    }
+
 }

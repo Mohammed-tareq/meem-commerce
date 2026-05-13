@@ -3,6 +3,7 @@
 namespace Marvel\Services\Pricing;
 
 use Carbon\Carbon;
+use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
@@ -113,6 +114,32 @@ class ProductPricingService
     public function calculateProductCurrentPrice(Product $product): ?float
     {
         return $this->runSafely(fn(): ?float => $this->calculateProductPricing($product)['final_price'], $this->normalizeMoney($product->price));
+    }
+
+    public function calculateCouponPrice(Coupon $coupon, $basePrice): ?float
+    {
+        return $this->runSafely(function () use ($coupon, $basePrice): ?float {
+            $normalizedBasePrice = $this->normalizeMoney($basePrice);
+
+            if ($normalizedBasePrice === null) {
+                return null;
+            }
+
+            return $coupon->calcPrice($normalizedBasePrice);
+        }, null);
+    }
+
+    public function calculateCouponPriceByCode(string $code, $basePrice): ?float
+    {
+        return $this->runSafely(function () use ($code, $basePrice): ?float {
+            $coupon = Coupon::valid()->where('code', $code)->first();
+
+            if (!$coupon) {
+                return null;
+            }
+
+            return $this->calculateCouponPrice($coupon, $basePrice);
+        }, null);
     }
 
     public function calculateVariantCurrentPrice(Product $product, ProductVariant|array $variation, ?FlashSale $flashSale = null): ?float
@@ -323,6 +350,4 @@ class ProductPricingService
     {
         return (float) $amount;
     }
-
-
 }

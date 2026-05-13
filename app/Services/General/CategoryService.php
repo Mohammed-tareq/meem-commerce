@@ -29,7 +29,7 @@ class CategoryService
 
     public function getById($id)
     {
-        return Category::query()->active()->with('products')->withCount('products')->where('id', $id)->firstOrFail();
+        return Category::query()->active()->with('products','children.children')->withCount('products')->where('id', $id)->firstOrFail();
     }
     private function applyTranslatableLike(Builder $query, string $field, string $term, string $locale): void
     {

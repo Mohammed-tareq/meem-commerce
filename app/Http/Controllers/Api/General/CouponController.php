@@ -11,7 +11,7 @@ use Marvel\Http\Resources\CouponResource;
 class CouponController extends Controller
 {
     use ApiResponse;
-    private $couponService;
+    protected $couponService;
     public function __construct(CouponService $couponService)
     {
         $this->couponService = $couponService;
@@ -21,5 +21,17 @@ class CouponController extends Controller
     {
         $coupons = $this->couponService->getCoupons($request);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CouponResource::collection($coupons));
+    }
+
+    public function applyCoupon(Request $request)
+    {
+        $code = $request->get('code');
+        $result = $this->couponService->addCouponToCCart($code);
+
+        if (!$result) {
+            return $this->apiResponse(INVALID_COUPON_CODE_OR_COUPON_CANNOT_BE_APPLIED_OR_COUPON_USAGE_LIMIT_REACHED, 400, false);
+        }
+
+        return $this->apiResponse(COUPON_APPLIED_SUCCESSFULLY, 200, true);
     }
 }

@@ -3,6 +3,7 @@
 namespace Marvel\Database\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -63,6 +64,24 @@ class Coupon extends Model implements HasMedia
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'coupon_id');
+    }
+
+    /**
+     * @return BelongsToMany
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'coupon_usages')
+            ->withPivot(['order_id', 'used_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * @return HasMany
+     */
+    public function couponUsages(): HasMany
+    {
+        return $this->hasMany(CouponUsage::class, 'coupon_id');
     }
 
 
@@ -139,8 +158,7 @@ class Coupon extends Model implements HasMedia
         return $map[$locale][$this->discount_type] ?? $this->discount_type;
     }
 
-
-    public function calcPrice($price)
+    public function calcPrice($price): ?float
     {
         if ($price === null) {
             return null;
@@ -148,21 +166,25 @@ class Coupon extends Model implements HasMedia
 
         $price = (float) $price;
         $discount = (float) $this->discount;
-        $maxValue = $this->max_discount_amount ? (float) $this->max_discount_amount : null;
 
         if ($this->discount_type === DiscountType::PERCENTAGE) {
-            $discount = $price * ($discount / 100);
 
-            $discount = $maxValue !== null
-                ? min($discount, $maxValue)
-                : $discount;
+            $discountAmount = $price * ($discount / 100);
 
-            return round(max(0, $price - $discount), 2);
-        } elseif ($this->discount_type == DiscountType::FIXED_RATE) {
-            return round(max(0, $price - $discount), 2);
-        } else {
+            if ($this->max_discount_amount !== null) {
+                $discountAmount = min(
+                    $discountAmount,
+                    (float) $this->max_discount_amount
+                );
+            }
 
-            return round($price, 2);
+            return round(max(0, $price - $discountAmount), 2);
         }
+
+        if ($this->discount_type === DiscountType::FIXED_RATE) {
+            return round(max(0, $price - $discount), 2);
+        }
+
+        return round($price, 2);
     }
 }

@@ -2,12 +2,19 @@
 
 namespace App\Services\General;
 
+use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Product;
+use Marvel\Database\Models\Review;
+use Marvel\Traits\MediaManager;
+use Symfony\Component\HttpKernel\Exception\HttpException;
+
 
 class ProductService
 {
+    use MediaManager;
     public function paginate(Request $request)
     {
         $limit = $this->getLimit($request);
@@ -26,13 +33,7 @@ class ProductService
         return $query->orderByDesc('id')->paginate($limit);
     }
 
-    public function getBySlug($slug)
-    {
-        return Product::where('slug', $slug)
-            ->with(['shops:id,name', 'categories:id,name'])
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')->first();
-    }
+
     public function paginateFlashSales(Request $request)
     {
         $limit = $this->getLimit($request);
@@ -53,15 +54,86 @@ class ProductService
         return $query->orderByDesc('id')->paginate($limit);
     }
 
-    public function getProductById($id)
+    public function getProductById($id, $limit = 10)
     {
-        return Product::query()->active()
-            ->with(['shops:id,name', 'categories:id,name'])
+        $product =  Product::query()->active()
+            ->with(['categories', 'variations', 'reviews.user'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
             ->where('id', $id)
             ->firstOrFail();
+        if (!$product) {
+            return null;
+        }
+        $related_products = $this->fetchRelated($product, $limit);
+        $product->setRelation('related_products', $related_products);
+
+        return $product;
     }
+
+
+
+    public function addProductReview($request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            $product = Product::find($id);
+            if (!$product) {
+                return null;
+            }
+            $reviewData = $request->only(['rating', 'comment']);
+            $reviewData['user_id'] = auth()->id();
+            $reviewData['product_id'] = $id;
+
+            $review = $product->reviews()->create($reviewData);
+            if ($request->has('images')) {
+                if (!$this->uploadImages($request, 'images', $review, 'reviews', 'reviews')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
+            }
+            DB::commit();
+            return $review;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+    public function updateProductReview($request, $id)
+    {
+        try {
+            DB::beginTransaction();
+            $review = Review::find($id);
+            if (!$review || $review->user_id !== auth()->id()) {
+                return null;
+            }
+
+            $reviewData = $request->only(['rating', 'comment']);
+
+            $review = $review->update($reviewData);
+            if ($request->has('images')) {
+                if (!$this->uploadImages($request, 'images', $review, 'reviews', 'reviews')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
+            }
+            DB::commit();
+            return $review;
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    private function fetchRelated($product, $limit = 10)
+    {
+        $categories = $product->categories->pluck('id');
+
+        return $product->whereHas('categories', function ($query) use ($categories) {
+            $query->whereIn('categories.id', $categories);
+        })
+            ->where('id', '!=', $product->id)
+            ->limit($limit)->get() ?? collect();
+    }
+
 
     private function applyProductFilters(Builder $query, Request $request): void
     {

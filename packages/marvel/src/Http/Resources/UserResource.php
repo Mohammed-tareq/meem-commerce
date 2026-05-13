@@ -21,6 +21,7 @@ class UserResource extends Resource
             'email_verified_at' => $this->email_verified_at,
             'is_active' => $this->is_active,
             'shop_id' => $this->shop_id,
+            'image' => $this->getFirstMediaUrl('user-image') ?: null,
             'roles' => RoleResource::collection($this->whenLoaded('roles')),
             'permissions' => PermissionResource::collection($this->getPermissionsViaRoles()),
             // 'created_at' => $this->created_at,

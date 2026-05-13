@@ -12,18 +12,17 @@ return new class extends Migration {
      */
     public function up()
     {
-        // Schema::create('coupon_usages', function (Blueprint $table) {
-        //     $table->id();
-        //     $table->foreignId('coupon_id')->constrained('coupons')->onDelete('cascade');
-        //     $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
-        //     $table->foreignId('order_id')->constrained('orders')->onDelete('cascade');
-        //     $table->timestamp('used_at');
-        //     $table->timestamps();
+        Schema::create('coupon_usages', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('coupon_id')->constrained('coupons')->cascadeOnDelete();
+            $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('order_id')->nullable()->constrained('orders')->nullOnDelete();
+            $table->timestamp('used_at')->useCurrent();
+            $table->timestamps();
 
-        //     // Index for quick lookups
-        //     $table->index(['coupon_id', 'user_id']);
-        //     $table->index('coupon_id');
-        // });
+            $table->index(['coupon_id', 'user_id']);
+            $table->unique(['coupon_id', 'user_id']);
+        });
     }
 
     /**
@@ -34,5 +33,9 @@ return new class extends Migration {
     public function down()
     {
         Schema::dropIfExists('coupon_usages');
+        Schema::table('coupon_usages', function (Blueprint $table) {
+                $table->dropIndex(['coupon_id', 'user_id']);
+
+        });
     }
 };

@@ -2,7 +2,6 @@
 
 namespace Marvel\Database\Models;
 
-use App\Enums\RoleType;
 // DISABLED: Email verification not needed
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -19,15 +18,17 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 // use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Marvel\Enums\OrderStatus;
-use Marvel\Enums\PaymentStatus;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class User extends Authenticatable  implements MustVerifyEmail
+class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
     // DISABLED: use Notifiable;
     use HasRoles;
     use HasApiTokens;
     use Notifiable;
     use SoftDeletes;
+    use InteractsWithMedia;
 
 
     protected $guard_name = 'api';
@@ -91,7 +92,7 @@ class User extends Authenticatable  implements MustVerifyEmail
      * @return HasOne
      */
 
-     public function cart()
+    public function cart()
     {
         return $this->hasOne(Cart::class);
     }
@@ -228,11 +229,31 @@ class User extends Authenticatable  implements MustVerifyEmail
     /**
      * coupons
      *
+     * @return BelongsToMany
+     */
+    public function coupons(): BelongsToMany
+    {
+        return $this->belongsToMany(Coupon::class, 'coupon_usages')
+            ->withPivot(['order_id', 'used_at'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Backward-compatible alias for the coupon relation.
+     *
+     * @return BelongsToMany
+     */
+    public function coupon(): BelongsToMany
+    {
+        return $this->coupons();
+    }
+
+    /**
      * @return HasMany
      */
-    public function coupon(): HasMany
+    public function couponUsages(): HasMany
     {
-        return $this->HasMany(Coupon::class);
+        return $this->hasMany(CouponUsage::class, 'user_id');
     }
 
     public function loadLastOrder()
@@ -243,5 +264,10 @@ class User extends Authenticatable  implements MustVerifyEmail
         $this->setRelation('last_order', $data);
 
         return $this;
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('user-image')->useDisk('users');
     }
 }

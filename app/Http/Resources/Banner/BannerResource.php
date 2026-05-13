@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Http\Resources\Banner;
+
+use App\Http\Resources\Product\ProductMiniResource;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class BannerResource extends JsonResource
+{
+    /**
+     * Transform the resource into an array.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+             return [
+            'id'          => $this->id,
+            'title'       => $this->title,
+            'description' => $this->description,
+            'image'       => $this->getFirstMediaUrl('banners'),
+            "status"   => (bool)$this->status,
+            "products"    => $this->whenLoaded('products', function () {
+                return ProductMiniResource::collection($this->products);
+            }),
+        ];
+    }
+}

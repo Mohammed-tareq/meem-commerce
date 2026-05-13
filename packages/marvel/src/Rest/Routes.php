@@ -191,9 +191,7 @@ Route::apiResource('refund-reasons', RefundReasonController::class, [
 Route::apiResource('resources', ResourceController::class, [
     'only' => ['index', 'show']
 ]);
-Route::apiResource('meem-products', MeemProductController::class, [
-    'only' => ['index', 'show'],
-]);
+
 
 Route::get('featured-categories', 'Marvel\Http\Controllers\CategoryController@fetchFeaturedCategories');
 
@@ -214,9 +212,9 @@ Route::apiResource('shops', ShopController::class, [
 Route::apiResource('settings', SettingsController::class, [
     'only' => ['index'],
 ]);
-Route::apiResource('reviews', ReviewController::class, [
-    'only' => ['index', 'show'],
-]);
+// Route::apiResource('reviews', ReviewController::class, [
+//     'only' => ['index', 'show'],
+// ]);
 Route::apiResource('questions', QuestionController::class, [
     'only' => ['index', 'show'],
 ]);

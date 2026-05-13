@@ -14,6 +14,7 @@ class   Cart extends Model
     public $fillable = [
         'user_id',
         'coupon',
+        'total_price',
     ];
 
 

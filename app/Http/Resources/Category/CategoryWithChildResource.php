@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Category;
 
+use App\Http\Resources\Product\ProductMiniResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,6 +23,7 @@ class CategoryWithChildResource extends JsonResource
             'products_count'       => $this->whenCounted('products'),
             'details'              => $this?->getTranslation('details', app()->getLocale()),
             'children' => CategoryWithChildResource::collection($this->whenLoaded('children')),
+            'products' => ProductMiniResource::collection($this->whenLoaded('products'))
         ];
     }
 }

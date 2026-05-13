@@ -80,7 +80,7 @@ class ReviewRepository extends BaseRepository
             DB::commit();
             return $review;
         } catch (Exception $e) {
-                DB::rollBack();
+            DB::rollBack();
             throw new HttpException(400, SOMETHING_WENT_WRONG);
         }
     }
@@ -88,6 +88,7 @@ class ReviewRepository extends BaseRepository
     public function updateReview($request, $id)
     {
         try {
+            DB::beginTransaction();
             $review = $this->findOrFail($id);
             $review->update($request->only($this->dataArray));
             if ($request->has('images')) {
@@ -95,8 +96,10 @@ class ReviewRepository extends BaseRepository
                     throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
                 }
             }
+            DB::commit();
             return $review;
         } catch (Exception $e) {
+            DB::rollBack();
             throw new HttpException(400, SOMETHING_WENT_WRONG);
         }
     }

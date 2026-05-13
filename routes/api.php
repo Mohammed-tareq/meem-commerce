@@ -13,15 +13,7 @@ use App\Http\Controllers\Api\General\SettingController;
 use App\Http\Controllers\Api\General\ShopController;
 use App\Http\Controllers\Api\General\SliderController;
 
-
-
-
-
-
-
-
-
-Route::prefix('general')->middleware(['api','throttle:general','check-lang'])->group(function () {
+Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])->group(function () {
 
     //======================== shops=========================//
     Route::controller(ShopController::class)->group(function () {
@@ -37,29 +29,44 @@ Route::prefix('general')->middleware(['api','throttle:general','check-lang'])->g
     Route::controller(ProductController::class)->group(function () {
         Route::get('products', 'index');
         Route::get('products/{id}', 'getProductById');
+        //========================= product reviews =========================//
+        Route::post('products/{id}/reviews', 'addProductReview')->middleware('auth:sanctum');
+        Route::put('products/reviews/{id}', 'updateProductReview')->middleware('auth:sanctum');
     });
-    Route::get('coupons', [CouponController::class, 'index']);
-    Route::get('search', [SearchController::class, 'index']);
-    Route::get('settings', [SettingController::class, 'index']);
-    Route::get('sliders', [SliderController::class, 'index']);
-    Route::get('banners', [BannerController::class, 'index']);
+
+    //========================= home=========================//
     Route::get('home', [HomeController::class, 'index'])->name('home');
+
+    //========================= faqs=========================//
     Route::get('faqs', [FAQController::class, 'index']);
-    Route::get('flash-sales', [FlashSaleController::class, 'index']);
+
+    //========================= flash-sales=========================//
+    Route::controller(FlashSaleController::class)->group(function () {
+        Route::get('flash-sales', 'index')->name('general-flash-sale-index');
+        Route::get('flash-sales/{id}', 'getFlashSaleById')->name('general-flash-sale-show');
+    });
+
+    //========================= banners=========================//
+    Route::controller(BannerController::class)->group(function () {
+        Route::get('banners', 'index')->name('general-banner-index');
+        Route::get('banners/{id}', 'getBannerById')->name('general-banner-show');
+    });
+
+
+
+    //========================= sliders=========================//
+    Route::get('sliders', [SliderController::class, 'index']);
+    //========================= coupons=========================//
+    Route::controller(CouponController::class)->group(function () {
+        Route::get('coupons', 'index')->name('general-coupon-index');
+        Route::post('coupons/apply', 'applyCoupon')->middleware('auth:sanctum');
+    });
+    //======================== settings=========================//
+    Route::controller(SettingController::class)->group(function () {
+        Route::get('settings', [SettingController::class, 'index']);
+    });
+    Route::get('search', [SearchController::class, 'index']);
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

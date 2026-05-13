@@ -28,11 +28,12 @@ class UserCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'first_name'     => ['required', 'string', 'max:50','min:2'],
-            'last_name'     => ['required', 'string', 'max:50' ,"min:2"],
+            'first_name'     => ['required', 'string', 'max:50', 'min:2'],
+            'last_name'     => ['required', 'string', 'max:50', "min:2"],
             'email'    => ['required', 'email', 'unique:users,email', 'email:rfc,dns'],
             'password' => ['required', 'string', 'min:8', 'max:50', 'confirmed'],
             'password_confirmation' => ['required', 'string', 'min:8', 'max:50'],
+            'image' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp'],
             'policy' => ['required', 'in:1,true'],
         ];
     }

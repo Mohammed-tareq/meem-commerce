@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Category\CategoryWithChildResource;
 use App\Services\General\CategoryService;
 use Marvel\Http\Resources\CategoryCollection;
 use Marvel\Traits\ApiResponse;
@@ -33,7 +34,7 @@ class CategoryController extends Controller
         if (!$category) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  CategoryResource::make($category));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  CategoryWithChildResource::make($category));
     }
-   
+
 }

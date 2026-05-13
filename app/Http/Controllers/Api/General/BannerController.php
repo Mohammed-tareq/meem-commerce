@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Banner\BannerResource;
 use App\Services\General\BannerService;
-use Marvel\Http\Resources\BannerResource;
 use Marvel\Traits\ApiResponse;
 
 class BannerController extends Controller
@@ -21,5 +21,14 @@ class BannerController extends Controller
     {
         $banners =  $this->bannerService->getBanners();
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  BannerResource::collection($banners));
+    }
+
+    public function getBannerById($id)
+    {
+        $banner =  $this->bannerService->getBannerById($id);
+        if (!$banner) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, BannerResource::make($banner));
     }
 }

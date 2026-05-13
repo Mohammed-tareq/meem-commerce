@@ -3,7 +3,6 @@
 namespace Marvel\Database\Repositories;
 
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Marvel\Database\Models\User;
 use Prettus\Validator\Exceptions\ValidatorException;
@@ -15,13 +14,14 @@ use Marvel\Mail\ForgetPassword;
 use Illuminate\Support\Facades\Mail;
 use Marvel\Database\Models\Address;
 use Marvel\Database\Models\Profile;
-use Marvel\Database\Models\Settings;
-use Marvel\Database\Models\Shop;
 use Marvel\Exceptions\MarvelException;
+use Marvel\Traits\MediaManager;
 use Spatie\Permission\Models\Role;
 
 class UserRepository extends BaseRepository
 {
+    use MediaManager;
+
     /**
      * @var array
      */
@@ -65,6 +65,9 @@ class UserRepository extends BaseRepository
                 // Ensure newly created users via repository are verified by default
                 'email_verified_at' => now(),
             ]);
+            if ($request->hasFile('image')) {
+                $this->uploadSingleImage($request, 'image', $user, 'user-image', 'users');
+            }
             $user->givePermissionTo(UserPermission::CUSTOMER);
             if (isset($request['address']) && count($request['address'])) {
                 $user->address()->createMany($request['address']);
@@ -105,11 +108,11 @@ class UserRepository extends BaseRepository
                     Profile::create($profile);
                 }
             }
+            if ($request->hasFile('image')) {
+                $this->updateSingleImage($request, 'image', $user, 'user-image', 'users');
+            }
             $user->update($request->only($this->dataArray));
-            $user->profile = $user->profile;
-            $user->address = $user->address;
-            $user->shop = $user->shop;
-            $user->managed_shop = $user->managed_shop;
+            $user->load(['profile', 'address', 'shop', 'managed_shop']);
             return $user;
         } catch (ValidationException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
@@ -161,6 +164,9 @@ class UserRepository extends BaseRepository
                 'password' => Hash::make($request->password),
                 'email_verified_at' => now(),
             ]);
+            if ($request->hasFile('image')) {
+                $this->uploadSingleImage($request, 'image', $user, 'user-image', 'users');
+            }
             $role = Role::whereIn('id', $request->roles)->get();
             if ($role->count() > 0) {
                 $user->assignRole($role);

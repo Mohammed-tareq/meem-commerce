@@ -254,6 +254,7 @@ class CreateMarvelTables extends Migration
             $table->id();
             $table->string('coupon')->nullable();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->decimal('total_price', 10, 2)->default(0);
             $table->timestamps();
         });
 

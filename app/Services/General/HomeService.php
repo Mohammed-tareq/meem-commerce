@@ -8,11 +8,13 @@ use App\Http\Resources\Product\ProductMiniResource;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Slider;
+use Marvel\Http\Resources\BrandResource;
 use Marvel\Http\Resources\BannerResource;
 use Marvel\Http\Resources\FlashSaleResource;
 use Marvel\Http\Resources\SliderResource;
@@ -40,6 +42,9 @@ class HomeService
             }),
             'active_banners' => Cache::remember("home-active-banners", 60, function () {
                 return BannerResource::collection($this->getActiveBanners());
+            }),
+            'brands' => Cache::remember("home-brands", 60, function () {
+                return BrandResource::collection($this->getBrands());
             }),
             'best_categories' => Cache::remember("home-best-categories", 60, function () use ($categoriesWithChildren) {
                 return CategoryHomeResource::collection($categoriesWithChildren);
@@ -79,6 +84,15 @@ class HomeService
     public function getActiveBanners(): Collection
     {
         return Banner::active()->ordered()->get();
+    }
+
+    public function getBrands(): Collection
+    {
+        return Brand::query()
+            ->active()
+            ->select(['id', 'name', 'slug', 'details', 'status'])
+            ->orderByDesc('id')
+            ->get();
     }
 
     public function getFlashSales(int $limit, $after = null): Collection
