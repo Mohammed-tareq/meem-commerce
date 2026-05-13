@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Product\ProductResource;
 use App\Services\General\ProductService;
 use Illuminate\Http\Request;
 use \Marvel\Http\Resources\product\ProductCollection;
-use Marvel\Http\Resources\ProductResource;
 use Marvel\Traits\ApiResponse;
 
 class ProductController extends Controller
