@@ -9,7 +9,26 @@ class OrderProduct extends Model
 {
     protected $table = 'order_products';
 
-    public $guarded = [];
+    public $fillable = [
+        'order_id',
+        'product_id',
+        'product_variant_id',
+        'product_name',
+        'product_sku',
+        'shop_name',
+        'attributes',
+        'product_quantity',
+        'product_price',
+        'product_total_price',
+        'product_discount_price',
+        'product_flash_sale_price',
+    ];
+
+    protected $casts = [
+        'attributes' => 'array',
+    ];
+
+
 
 
     public function order(): BelongsTo

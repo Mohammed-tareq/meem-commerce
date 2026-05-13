@@ -6,7 +6,6 @@ use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
-use Marvel\Enums\PaymentGatewayType;
 
 class OrderCreateRequest extends FormRequest
 {
@@ -28,25 +27,11 @@ class OrderCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'coupon_id'               => 'nullable|exists:Marvel\Database\Models\Coupon,id',
-            'shop_id'                 => 'nullable|exists:Marvel\Database\Models\Shop,id',
-            'customer_id'             => 'nullable|exists:Marvel\Database\Models\User,id',
-            'language'                => ['nullable', 'string'],
-            'amount'                  => 'required|numeric',
-            'paid_total'              => 'required|numeric',
-            'total'                   => 'required|numeric',
-            'delivery_time'           => 'nullable|string',
-            'customer_contact'        => 'string|required',
-            'customer_name'           => 'nullable|string',
-            'payment_gateway'         => ['required', Rule::in(PaymentGatewayType::getValues())],
-            'altered_payment_gateway' => 'nullable|string',
-            'products'                => 'required|array',
-            'card'                    => 'array',
-            'token'                   => 'nullable|string',
-            'use_wallet_points'       => 'nullable|boolean',
-            'shipping_address'        => 'array',
-            'billing_address'         => 'array',
-            'note'                    => 'nullable|string',
+            'name' => ['required', 'string', 'max:255'],
+            'user_phone' => ['required', 'string', 'max:255'],
+            'user_email' => ['required', 'email', 'max:255'],
+            'address' => ['required', 'array'],
+            'notes' => ['nullable', 'string'],
         ];
     }
 

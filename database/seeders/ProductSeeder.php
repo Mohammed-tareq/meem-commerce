@@ -99,7 +99,7 @@ class ProductSeeder extends Seeder
                     'pieces' => random_int(1, 10),
                     'sold_quantity' => random_int(0, 200),
                     'in_stock' => $this->randomBool(80),
-                    'status' => $this->randomElement([0, 1]),
+                    'status' => $this->randomElement([1, 0]),
                     'height' => random_int(5, 50) . 'cm',
                     'width' => random_int(5, 50) . 'cm',
                     'length' => random_int(5, 50) . 'cm',

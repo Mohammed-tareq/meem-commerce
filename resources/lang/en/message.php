@@ -137,4 +137,5 @@ return [
     'ERROR.COULD_NOT_ADD_COUPON_TO_CART_YOU_HAVE_ALREADY_APPLIED_A_COUPON' => 'Could not add coupon to cart: you have already applied a coupon',
     'INVALID_COUPON_CODE_OR_COUPON_CANNOT_BE_APPLIED_OR_COUPON_USAGE_LIMIT_REACHED' => 'Invalid coupon code or coupon cannot be applied or coupon usage limit reached',
     'COUPON_APPLIED_SUCCESSFULLY' => 'Coupon applied successfully',
+    'FILED_TO_CREATE_ORDER_TRY_AGAIN' => 'Failed to create order, try again',
 ];

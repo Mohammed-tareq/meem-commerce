@@ -26,12 +26,12 @@ class CouponController extends Controller
     public function applyCoupon(Request $request)
     {
         $code = $request->get('code');
-        $result = $this->couponService->addCouponToCCart($code);
+        $result = $this->couponService->addCouponToCart($code);
 
         if (!$result) {
             return $this->apiResponse(INVALID_COUPON_CODE_OR_COUPON_CANNOT_BE_APPLIED_OR_COUPON_USAGE_LIMIT_REACHED, 400, false);
         }
 
-        return $this->apiResponse(COUPON_APPLIED_SUCCESSFULLY, 200, true);
+        return $this->apiResponse(COUPON_APPLIED_SUCCESSFULLY, 200, true , $result);
     }
 }

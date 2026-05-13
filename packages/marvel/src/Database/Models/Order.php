@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Marvel\Traits\TranslationTrait;
 
 class Order extends Model
 {
@@ -17,19 +16,30 @@ class Order extends Model
 
     protected $table = 'orders';
 
-    public $guarded = [];
+    public $fillable = [
+        'user_id',
+        'name',
+        'user_phone',
+        'user_email',
+        'address',
+        'notes',
+        'price',
+        'shipping_price',
+        'total_price',
+        'coupon',
+        'coupon_discount',
+        'coupon_discount_type',
+        'coupon_discount_max_amount',
+    ];
 
-    // protected $casts = [
-    //     'shipping_address'    => 'json',
-    //     'billing_address'     => 'json',
-    //     'payment_intent_info' => 'json',
-    // ];
+    protected $casts = [
+        'address' => 'array',
+    ];
 
-    // protected $hidden = [
-    //     //        'created_at',
-    //     'updated_at',
-    //     'deleted_at'
-    // ];
+
+    protected $hidden = [
+        'deleted_at'
+    ];
 
     protected static function boot()
     {

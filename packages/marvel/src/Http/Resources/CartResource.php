@@ -10,6 +10,7 @@ class CartResource extends Resource
     {
         $items = $this->whenLoaded('items');
         $totalQuantity = $items ? $items->sum('quantity') : null;
+        $totalPrice = $items ? $items->sum('total_price') : null;
 
 
         return [
@@ -17,7 +18,7 @@ class CartResource extends Resource
             'user_id' => $this->user_id,
             'total_items' => $items ? $items->count() : null,
             'total_quantity' => $totalQuantity,
-            'total_price' => $this->total_price,
+            'total_price' => $totalPrice,
             'items' => CartItemResource::collection($items),
         ];
     }

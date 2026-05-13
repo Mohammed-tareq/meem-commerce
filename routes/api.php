@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\General\CouponController;
 use App\Http\Controllers\Api\General\FAQController;
 use App\Http\Controllers\Api\General\HomeController;
 use App\Http\Controllers\Api\General\FlashSaleController;
+use App\Http\Controllers\Api\General\OrderController;
 use App\Http\Controllers\Api\General\ProductController;
 use App\Http\Controllers\Api\General\SearchController;
 use App\Http\Controllers\Api\General\SettingController;
@@ -14,6 +15,9 @@ use App\Http\Controllers\Api\General\ShopController;
 use App\Http\Controllers\Api\General\SliderController;
 
 Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])->group(function () {
+
+    //========================= home=========================//
+    Route::get('home', [HomeController::class, 'index'])->name('home');
 
     //======================== shops=========================//
     Route::controller(ShopController::class)->group(function () {
@@ -34,8 +38,18 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
         Route::put('products/reviews/{id}', 'updateProductReview')->middleware('auth:sanctum');
     });
 
-    //========================= home=========================//
-    Route::get('home', [HomeController::class, 'index'])->name('home');
+    //========================= coupons=========================//
+    Route::controller(CouponController::class)->group(function () {
+        Route::get('coupons', 'index')->name('general-coupon-index');
+        Route::post('coupons/apply', 'applyCoupon')->middleware('auth:sanctum');
+    });
+    //========================= order=========================//
+    Route::controller(OrderController::class)->middleware('auth:sanctum')->group(function () {
+        Route::get('orders', 'index');
+        Route::post('orders', 'createOrder');
+    });
+
+
 
     //========================= faqs=========================//
     Route::get('faqs', [FAQController::class, 'index']);
@@ -56,11 +70,7 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
 
     //========================= sliders=========================//
     Route::get('sliders', [SliderController::class, 'index']);
-    //========================= coupons=========================//
-    Route::controller(CouponController::class)->group(function () {
-        Route::get('coupons', 'index')->name('general-coupon-index');
-        Route::post('coupons/apply', 'applyCoupon')->middleware('auth:sanctum');
-    });
+
     //======================== settings=========================//
     Route::controller(SettingController::class)->group(function () {
         Route::get('settings', [SettingController::class, 'index']);

@@ -38,7 +38,7 @@ class CouponService
         return Coupon::valid()->where('code', $code)->first();
     }
 
-    public function addCouponToCCart($code)
+    public function addCouponToCart($code)
     {
         return DB::transaction(function () use ($code) {
             $coupon = $this->findByCode($code);
@@ -66,8 +66,8 @@ class CouponService
             }
 
 
-            $cart = $this->updateCartTotalPrice($cart, $coupon);
-            return $cart;
+            $result = $this->updateCartTotalPrice($cart, $coupon);
+            return $result;
         });
     }
     private function CheckCouponUsage($couponId)
@@ -92,8 +92,6 @@ class CouponService
 
         $couponUsage = $user->couponUsages()->firstOrCreate([
             'coupon_id' => $coupon->id,
-        ], [
-            'used_at' => now(),
         ]);
 
         if (!$couponUsage->wasRecentlyCreated) {
@@ -109,9 +107,12 @@ class CouponService
     {
         $totalPriceForCart = app(ProductPricingService::class)->calculateCouponPrice($coupon, $cart->total_price);
         $cart->forceFill([
-            'total_price' => $totalPriceForCart,
+            'coupon' => $coupon->code,
         ])->save();
 
-        return $cart;
+        return [
+            'total_price' => $totalPriceForCart,
+            'coupon_discount' =>round($cart->total_price - $totalPriceForCart, 2),
+        ];
     }
 }

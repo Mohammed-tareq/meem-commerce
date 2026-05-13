@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->foreignId('coupon_id')->constrained('coupons')->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('order_id')->nullable()->constrained('orders')->nullOnDelete();
-            $table->timestamp('used_at')->useCurrent();
+            $table->timestamp('used_at')->nullable();
             $table->timestamps();
 
             $table->index(['coupon_id', 'user_id']);
