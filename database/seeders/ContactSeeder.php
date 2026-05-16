@@ -36,7 +36,7 @@ class ContactSeeder extends Seeder
             'I want to share feedback about my shopping experience.',
         ];
 
-        for ($i = 1; $i <= 500; $i++) {
+        for ($i = 1; $i <= 5000; $i++) {
             $subject = $subjects[($i - 1) % count($subjects)] . ' #' . $i;
             $message = $messages[($i - 1) % count($messages)];
 

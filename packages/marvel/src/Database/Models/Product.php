@@ -457,7 +457,11 @@ class Product extends Model implements HasMedia
 
     public function scopeActive($query)
     {
-        return $query->where('status', true)->where('quantity', '>', 0);
+        return $query->where('status', true)
+            ->where(function ($builder) {
+                $builder->where('in_stock', true)
+                    ->orWhereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) > 0');
+            });
     }
 
     public function scopeFlashSaleWithinOneWeek($query)

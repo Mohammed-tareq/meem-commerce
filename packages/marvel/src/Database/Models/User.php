@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -17,6 +18,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 // DISABLED: Notifiable trait causes SMTP connection attempts
 // use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Database\Factories\UserFactory;
 use Marvel\Enums\OrderStatus;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -29,6 +31,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     use Notifiable;
     use SoftDeletes;
     use InteractsWithMedia;
+    use HasFactory;
 
 
     protected $guard_name = 'api';
@@ -64,6 +67,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     ];
 
     protected $appends = ['email_verified'];
+
+    protected static function newFactory()
+    {
+        return UserFactory::new();
+    }
 
     protected static function boot()
     {

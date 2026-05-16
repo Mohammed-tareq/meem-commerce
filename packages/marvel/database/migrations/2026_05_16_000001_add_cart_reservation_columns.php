@@ -9,12 +9,12 @@ return new class extends Migration {
     public function up()
     {
         Schema::table('products', function (Blueprint $table) {
-            $table->integer('stock_quantity')->default(0)->after('quantity');
+            $table->integer('stock_quantity')->default(0);
             $table->integer('reserved_quantity')->default(0)->after('stock_quantity');
         });
 
         Schema::table('product_variants', function (Blueprint $table) {
-            $table->integer('stock_quantity')->default(0)->after('quantity');
+            $table->integer('stock_quantity')->default(0);
             $table->integer('reserved_quantity')->default(0)->after('stock_quantity');
             $table->integer('sold_quantity')->default(0)->after('reserved_quantity');
         });
@@ -33,13 +33,7 @@ return new class extends Migration {
             $table->index(['cart_id', 'product_id', 'product_variant_id']);
         });
 
-        DB::table('products')->update([
-            'stock_quantity' => DB::raw('quantity'),
-        ]);
 
-        DB::table('product_variants')->update([
-            'stock_quantity' => DB::raw('quantity'),
-        ]);
     }
 
     public function down()

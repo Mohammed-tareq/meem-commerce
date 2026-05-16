@@ -21,9 +21,9 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()->active()
-            ->with(['shops', 'categories.media', 'variations'])
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews');
+            ->with(['shops', 'categories', 'variations', 'media'])
+            ->withAvg(['reviews' => fn (Builder $builder) => $builder->approved()], 'rating')
+            ->withCount(['reviews' => fn (Builder $builder) => $builder->approved()]);
 
         $this->applyProductFilters($query, $request);
         if ($term !== '') {
@@ -40,9 +40,9 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()
-            ->with(['shops', 'categories.media'])
-            ->withAvg('reviews.media', 'rating')
-            ->withCount('reviews');
+            ->with(['shops', 'categories', 'media'])
+            ->withAvg(['reviews' => fn (Builder $builder) => $builder->approved()], 'rating')
+            ->withCount(['reviews' => fn (Builder $builder) => $builder->approved()]);
 
         $this->applyProductFilters($query, $request);
         $this->applyFlashSaleFilter($query);
@@ -51,24 +51,30 @@ class ProductService
             $this->applyProductSearch($query, $term, app()->getLocale());
         }
 
-        return $query->with('media')->orderByDesc('id')->paginate($limit);
+        return $query->orderByDesc('id')->paginate($limit);
     }
 
     public function getProductById($id, $limit = 10)
     {
-        $product =  Product::query()->active()
-            ->with(['categories.media', 'variations', 'reviews.user.media'])
-            ->withAvg('reviews', 'rating')
-            ->withCount('reviews')
-            ->where('id', $id)
-            ->firstOrFail();
+        $product = Product::query()
+            ->active()
+            ->with([
+                'categories',
+                'variations',
+                'media',
+                'reviews' => fn (Builder $builder) => $builder->approved()->with('user'),
+            ])
+            ->withAvg(['reviews' => fn (Builder $builder) => $builder->approved()], 'rating')
+            ->withCount(['reviews' => fn (Builder $builder) => $builder->approved()])
+            ->find($id);
+
         if (!$product) {
             return null;
         }
-        $related_products = $this->fetchRelated($product, $limit);
-        $product->setRelation('related_products', $related_products);
 
-        return $product->load('media');
+        $product->setRelation('related_products', $this->fetchRelated($product, $limit));
+
+        return $product;
     }
 
 
@@ -92,7 +98,7 @@ class ProductService
                 }
             }
             DB::commit();
-            return $review->load('media');
+            return $review;
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;
@@ -109,9 +115,9 @@ class ProductService
 
             $reviewData = $request->only(['rating', 'comment']);
 
-            $review = $review->update($reviewData);
+            $review->update($reviewData);
             if ($request->has('images')) {
-                if (!$this->uploadImages($request, 'images', $review, 'reviews', 'reviews')) {
+                if (!$this->uploadImages($request, 'images', $review->fresh(), 'reviews', 'reviews')) {
                     throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
                 }
             }
@@ -123,15 +129,23 @@ class ProductService
         }
     }
 
-    private function fetchRelated($product, $limit = 10)
+    private function fetchRelated(Product $product, int $limit = 10)
     {
         $categories = $product->categories->pluck('id');
 
-        return $product->whereHas('categories', function ($query) use ($categories) {
-            $query->whereIn('categories.id', $categories);
-        })
+        if ($categories->isEmpty()) {
+            return collect();
+        }
+
+        return Product::query()
+            ->active()
+            ->with(['categories', 'variations', 'media'])
+            ->whereHas('categories', function (Builder $query) use ($categories) {
+                $query->whereIn('categories.id', $categories);
+            })
             ->where('id', '!=', $product->id)
-            ->limit($limit)->get() ?? collect();
+            ->limit($limit)
+            ->get();
     }
 
 
@@ -188,6 +202,8 @@ class ProductService
             }
         }
 
+        $this->applyDimensionFilters($query, $request);
+
         $ratingMin = $request->get('rating_min');
         $ratingMax = $request->get('rating_max');
         if ($ratingMin !== null || $ratingMax !== null) {
@@ -199,13 +215,70 @@ class ProductService
         }
     }
 
+    private function applyDimensionFilters(Builder $query, Request $request): void
+    {
+        $dimensions = [
+            'height' => ['height_min', 'height_max'],
+            'width' => ['width_min', 'width_max'],
+            'length' => ['length_min', 'length_max'],
+            'weight' => ['weight_min', 'weight_max'],
+        ];
+
+        foreach ($dimensions as $column => [$minKey, $maxKey]) {
+            $this->applyDimensionRange(
+                $query,
+                $column,
+                $request->get($minKey),
+                $request->get($maxKey)
+            );
+        }
+    }
+
+    private function applyDimensionRange(Builder $query, string $column, mixed $min, mixed $max): void
+    {
+        $allowed = ['height', 'width', 'length', 'weight'];
+        if (!in_array($column, $allowed, true)) {
+            return;
+        }
+
+        $hasMin = $min !== null && $min !== '';
+        $hasMax = $max !== null && $max !== '';
+
+        if (!$hasMin && !$hasMax) {
+            return;
+        }
+
+        $minValue = $hasMin ? (float) $min : null;
+        $maxValue = $hasMax ? (float) $max : null;
+
+        $productNumericSql = "CAST(REGEXP_REPLACE(COALESCE(products.{$column}, ''), '[^0-9.]', '') AS DECIMAL(12,4))";
+
+        $query->where(function (Builder $outer) use ($column, $minValue, $maxValue, $productNumericSql, $hasMin, $hasMax) {
+            $outer->where(function (Builder $productQuery) use ($productNumericSql, $minValue, $maxValue, $hasMin, $hasMax) {
+                if ($hasMin) {
+                    $productQuery->whereRaw("{$productNumericSql} >= ?", [$minValue]);
+                }
+                if ($hasMax) {
+                    $productQuery->whereRaw("{$productNumericSql} <= ?", [$maxValue]);
+                }
+            })->orWhereHas('variations', function (Builder $variantQuery) use ($column, $minValue, $maxValue, $hasMin, $hasMax) {
+                if ($hasMin) {
+                    $variantQuery->where($column, '>=', $minValue);
+                }
+                if ($hasMax) {
+                    $variantQuery->where($column, '<=', $maxValue);
+                }
+            });
+        });
+    }
+
     private function applyFlashSaleFilter(Builder $query): void
     {
         $now = now();
 
         $query->where('has_flash_sale', true)
             ->whereHas('flash_sales', function (Builder $builder) use ($now) {
-                $builder->where('sale_status', true)
+                $builder->where('status', true)
                     ->whereDate('start_date', '<=', $now)
                     ->whereDate('end_date', '>=', $now);
             });
@@ -224,6 +297,18 @@ class ProductService
                 $builder->orWhere('price', $term)
                     ->orWhere('sold_quantity', $term);
             }
+
+            foreach (['height', 'width', 'length', 'weight'] as $dimension) {
+                $builder->orWhere($dimension, 'like', '%' . $term . '%');
+            }
+
+            $builder->orWhereHas('variations', function (Builder $variantQuery) use ($term) {
+                $variantQuery->where(function (Builder $dimensions) use ($term) {
+                    foreach (['height', 'width', 'length', 'weight'] as $dimension) {
+                        $dimensions->orWhere($dimension, 'like', '%' . $term . '%');
+                    }
+                });
+            });
 
             $builder->orWhereHas('reviews', function (Builder $reviewQuery) use ($term) {
                 $reviewQuery->where('comment', 'like', '%' . $term . '%');

@@ -17,7 +17,7 @@ class CategorySeeder extends Seeder
         $childCategoryCount = 30;
         $grandChildCategoryCount = 30;
 
-        for ($i = 1; $i <= 100; $i++) {
+        for ($i = 1; $i <= 1000; $i++) {
             $slug = Str::slug("category-$i");
             $parentCategory = match (true) {
                 $i <= $rootCategoryCount => null,

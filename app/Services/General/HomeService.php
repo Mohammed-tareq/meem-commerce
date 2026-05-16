@@ -11,17 +11,19 @@ use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Category;
+use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Slider;
 use Marvel\Http\Resources\BrandResource;
 use Marvel\Http\Resources\BannerResource;
+use Marvel\Http\Resources\CouponResource;
 use Marvel\Http\Resources\FlashSaleResource;
 use Marvel\Http\Resources\SliderResource;
 
 class HomeService
 {
-    public function getHomeData(?int $parentCategoryId = null)
+    public function getHomeData(?int $parentCategoryId = null, ?array $sections = null)
     {
         $parentCategoryId = $parentCategoryId ?: 1;
 
@@ -33,7 +35,7 @@ class HomeService
             return $this->getCategories();
         });
 
-        return [
+        $data = [
             'nav-bar' => Cache::remember("home-nav-bar", 60, function () {
                 return CategoryWithChildNameResource::collection($this->getCategoryWithChildren());
             }),
@@ -55,6 +57,9 @@ class HomeService
             'discount_products_end_today' => Cache::remember("home-discount-products-end-today", 60, function () {
                 return ProductMiniResource::collection($this->getDiscountEndingTodayOrLowStockProducts());
             }),
+            'coupons' => Cache::remember('home-latest-coupons', 60, function () {
+                return CouponResource::collection($this->getLatestValidCoupons(3));
+            }),
             'flash_sales' => Cache::remember("home-flash-sales", 60, function () {
                 return FlashSaleResource::collection($this->getFlashSales(9));
             }),
@@ -73,6 +78,48 @@ class HomeService
             'flash_sales_after_9' => Cache::remember("home-flash-sales-after-9", 60, function () {
                 return FlashSaleResource::collection($this->getFlashSales(9, 9));
             }),
+
+        ];
+
+        if ($sections === null || $sections === []) {
+            return $data;
+        }
+
+        $requested = array_values(array_intersect(array_keys($data), $sections));
+
+        return array_intersect_key($data, array_flip($requested));
+    }
+
+    public function getLatestValidCoupons(int $limit = 3): Collection
+    {
+        return Coupon::query()
+            ->valid()
+            ->with('media')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function availableSections(): array
+    {
+        return [
+            'nav-bar',
+            'active_sliders',
+            'active_banners',
+            'brands',
+            'best_categories',
+            'parent_categories',
+            'discount_products_end_today',
+            'flash_sales',
+            'flash_sale_products',
+            'weekly_parent_categories',
+            'weekly_products',
+            'all_discount_products',
+            'flash_sales_after_9',
+            'coupons',
         ];
     }
 
