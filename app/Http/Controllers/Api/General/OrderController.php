@@ -74,10 +74,14 @@ class OrderController extends Controller
         ];
 
         $invoice = $this->myfatoraService->createInvoice($data);
+
+        if (!is_array($invoice)) {
+            return $this->apiResponse('Error creating invoice', 500, false);
+        }
+
         $invoiceUrl = data_get($invoice, 'Data.InvoiceURL');
         $invoiceId = data_get($invoice, 'Data.InvoiceId');
 
-        dd($invoiceUrl, $invoiceId);
         if (!$invoiceUrl || !$invoiceId) {
             return $this->apiResponse('Error creating invoice', 500, false);
         }
@@ -109,6 +113,11 @@ class OrderController extends Controller
         ];
 
         $invoice = $this->myfatoraService->checkInvoice($data);
+
+        if (!is_array($invoice)) {
+            return $this->apiResponse('Invalid payment response', 400, false);
+        }
+
         $invoiceStatus = data_get($invoice, 'Data.InvoiceStatus');
         $invoiceId = data_get($invoice, 'Data.InvoiceId');
 
