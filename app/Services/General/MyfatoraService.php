@@ -17,20 +17,32 @@ class MyfatoraService
         $this->baseUrl = env('MYFATOORAH_BASE_URL');
     }
 
-    public function handelRequest($url, $data = [])
+    /**
+     * @return array<string, mixed>|null
+     */
+    public function handelRequest(string $url, array $data = []): ?array
     {
-        if (empty($data)) {
-            return false;
+        if ($data === []) {
+            return null;
         }
+
         $response = Http::withHeaders($this->header)
             ->acceptJson()
             ->timeout(30)
             ->withoutVerifying()
             ->post($this->baseUrl . $url, $data);
-        if ($response->successful()) {
-            return $response->json();
+
+        if (!$response->successful()) {
+            return null;
         }
-        return false;
+
+        $body = $response->json();
+
+        if (!is_array($body) || !($body['IsSuccess'] ?? false)) {
+            return null;
+        }
+
+        return $body;
     }
 
 
