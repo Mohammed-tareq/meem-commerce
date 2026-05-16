@@ -74,8 +74,8 @@ class OrderController extends Controller
         ];
 
         $invoice = $this->myfatoraService->createInvoice($data);
-        $invoiceUrl = data_get($invoice, 'Data.InvoiceURL');
-        $invoiceId = data_get($invoice, 'Data.InvoiceId');
+        $invoiceUrl = $invoice['Data']['InvoiceURL'];
+        $invoiceId = $invoice['Data']['InvoiceId'];
 
         if (!$invoice || !$invoiceUrl || !$invoiceId) {
             return $this->apiResponse('Error creating invoice', 500, false);
