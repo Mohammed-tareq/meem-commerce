@@ -46,7 +46,7 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     });
     //========================= order=========================//
     Route::controller(OrderController::class)->group(function () {
-        Route::get('orders', 'index')->middleware('auth:sanctum');;
+        Route::get('orders', 'index')->middleware('auth:sanctum');
         //========================= checkout =========================//
         Route::post('checkout', 'checkout')->middleware('auth:sanctum');
         Route::get('checkout/callback', 'checkoutCallback')->name('api.checkout.callback');

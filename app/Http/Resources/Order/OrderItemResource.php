@@ -1,0 +1,69 @@
+<?php
+
+namespace App\Http\Resources\Order;
+
+use App\Http\Resources\Product\ProductMiniResource;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
+
+class OrderItemResource extends JsonResource
+{
+    /**
+     * @return array<string, mixed>
+     */
+    public function toArray(Request $request): array
+    {
+        return [
+            'id' => $this->id,
+            'quantity' => (int) $this->product_quantity,
+            'unit_price' => $this->roundMoney($this->product_price),
+            'total_price' => $this->roundMoney($this->product_total_price),
+            'product' => $this->resolveProduct($request),
+            'variant' => $this->resolveVariant($request),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function resolveProduct(Request $request): array
+    {
+        if ($this->relationLoaded('product') && $this->product) {
+            return ProductMiniResource::make($this->product)->toArray($request);
+        }
+
+        return [
+            'id' => $this->product_id,
+            'name' => $this->product_name,
+            'sku' => $this->product_sku,
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function resolveVariant(Request $request): ?array
+    {
+        if (!$this->product_variant_id) {
+            return null;
+        }
+
+        if ($this->relationLoaded('productVariant') && $this->productVariant) {
+            return OrderProductVariantResource::make($this->productVariant)->toArray($request);
+        }
+
+        return [
+            'id' => $this->product_variant_id,
+            'attributes' => $this->attributes,
+        ];
+    }
+
+    private function roundMoney(mixed $value): ?float
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return round((float) $value, 2);
+    }
+}

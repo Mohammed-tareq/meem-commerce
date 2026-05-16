@@ -9,7 +9,7 @@ class SliderService
 
     public function getSliders()
     {
-        $sliders = Slider::active()->get();
+        $sliders = Slider::active()->with('media')->get();
         return $sliders;
     }
 }

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Marvel\Enums\PaymentStatus;
 
 class Order extends Model
 {
@@ -135,6 +136,11 @@ class Order extends Model
     //     return $this->hasMany(Review::class);
     // }
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderProduct::class);
@@ -148,5 +154,24 @@ class Order extends Model
     public function shop(): BelongsTo
     {
         return $this->belongsTo(Shop::class);
+    }
+
+    public function scopeForUser(Builder $query, int $userId): Builder
+    {
+        return $query->where('user_id', $userId);
+    }
+
+    public function getOrderNumberAttribute(): string
+    {
+        return 'ORD-' . str_pad((string) $this->id, 8, '0', STR_PAD_LEFT);
+    }
+
+    public function getPaymentStatusAttribute(): string
+    {
+        return match ($this->status) {
+            'completed', 'delivered' => PaymentStatus::SUCCESS,
+            'cancelled' => PaymentStatus::FAILED,
+            default => PaymentStatus::PENDING,
+        };
     }
 }

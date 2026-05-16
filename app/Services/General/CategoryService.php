@@ -13,7 +13,7 @@ class CategoryService
         $limit = $this->getLimit($request);
         $term = trim((string) $request->get('search', ''));
 
-        $query = Category::query()->active()->withCount('products');
+        $query = Category::query()->active()->withCount('products.media');
 
         if ($term !== '') {
             $query->where(function (Builder $builder) use ($term) {
@@ -29,7 +29,7 @@ class CategoryService
 
     public function getById($id)
     {
-        return Category::query()->active()->with('products','children.children')->withCount('products')->where('id', $id)->firstOrFail();
+        return Category::query()->active()->with('products.media','children.children.media')->withCount('products')->where('id', $id)->firstOrFail();
     }
     private function applyTranslatableLike(Builder $query, string $field, string $term, string $locale): void
     {

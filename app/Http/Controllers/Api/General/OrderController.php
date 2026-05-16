@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Order\OrderCollection;
 use App\Services\General\CartInventoryService;
 use App\Services\General\MyfatoraService;
 use App\Services\General\OrderService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\User;
 use Marvel\Http\Requests\OrderCreateRequest;
@@ -23,6 +25,18 @@ class OrderController extends Controller
         $this->orderService = $orderService;
         $this->myfatoraService = $myfatoraService;
         $this->cartInventoryService = $cartInventoryService;
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $orders = $this->orderService->paginateForUser($request);
+
+        return $this->apiResponse(
+            FETCH_DATA_SUCCESSFULLY,
+            200,
+            true,
+            new OrderCollection($orders)
+        );
     }
 
     public function checkout(OrderCreateRequest $request)

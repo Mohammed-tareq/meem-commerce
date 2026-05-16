@@ -9,12 +9,12 @@ class BannerService
 
     public function getBanners()
     {
-        return Banner::active()->get();
+        return Banner::active()->with('media')->get();
     }
     public function getBannerById($id)
     {
         $banner =  Banner::active()->find($id);
-        return $banner->load('products');
+        return $banner->load('products.media');
     }
 
 }

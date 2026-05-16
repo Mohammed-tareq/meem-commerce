@@ -21,7 +21,7 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()->active()
-            ->with(['shops', 'categories', 'variations'])
+            ->with(['shops', 'categories.media', 'variations'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews');
 
@@ -40,8 +40,8 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()
-            ->with(['shops', 'categories'])
-            ->withAvg('reviews', 'rating')
+            ->with(['shops', 'categories.media'])
+            ->withAvg('reviews.media', 'rating')
             ->withCount('reviews');
 
         $this->applyProductFilters($query, $request);
@@ -51,13 +51,13 @@ class ProductService
             $this->applyProductSearch($query, $term, app()->getLocale());
         }
 
-        return $query->orderByDesc('id')->paginate($limit);
+        return $query->with('media')->orderByDesc('id')->paginate($limit);
     }
 
     public function getProductById($id, $limit = 10)
     {
         $product =  Product::query()->active()
-            ->with(['categories', 'variations', 'reviews.user'])
+            ->with(['categories.media', 'variations', 'reviews.user.media'])
             ->withAvg('reviews', 'rating')
             ->withCount('reviews')
             ->where('id', $id)
@@ -68,7 +68,7 @@ class ProductService
         $related_products = $this->fetchRelated($product, $limit);
         $product->setRelation('related_products', $related_products);
 
-        return $product;
+        return $product->load('media');
     }
 
 
@@ -92,7 +92,7 @@ class ProductService
                 }
             }
             DB::commit();
-            return $review;
+            return $review->load('media');
         } catch (Exception $e) {
             DB::rollBack();
             throw $e;

@@ -2,6 +2,8 @@
 
 namespace App\Services\General;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\CouponUsage;
@@ -12,6 +14,10 @@ use Marvel\Services\Pricing\ProductPricingService;
 
 class OrderService
 {
+    private const DEFAULT_PER_PAGE = 15;
+
+    private const MAX_PER_PAGE = 100;
+
     protected $dataArray = [
         'name',
         'user_phone',
@@ -20,6 +26,41 @@ class OrderService
         'notes',
     ];
 
+
+    public function paginateForUser(Request $request): LengthAwarePaginator
+    {
+        $limit = $this->getLimit($request);
+        $userId = (int) $request->user()->id;
+
+        return Order::query()
+            ->forUser($userId)
+            ->with($this->orderListRelations())
+            ->paginate($limit)
+            ->withQueryString();
+    }
+
+    /**
+     * @return array<int|string, mixed>
+     */
+    private function orderListRelations(): array
+    {
+        return [
+            'shop',
+            'orderItems.product.media',
+            'orderItems.productVariant.attributeProducts.attributeValue',
+        ];
+    }
+
+    private function getLimit(Request $request): int
+    {
+        $limit = (int) $request->get('limit', self::DEFAULT_PER_PAGE);
+
+        if ($limit <= 0) {
+            return self::DEFAULT_PER_PAGE;
+        }
+
+        return min($limit, self::MAX_PER_PAGE);
+    }
 
     public function calcInvoicePrice($request)
     {
