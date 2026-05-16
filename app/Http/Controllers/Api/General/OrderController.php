@@ -79,9 +79,9 @@ class OrderController extends Controller
 
        try{
         if (!$invoiceUrl || !$invoiceId) {
-                return $this->apiResponse('Error creating invoice', 500, false);
-            }
-        } catch (\Throwable $e) {
+            throw new \Exception('Error creating invoice');
+        }
+       } catch (\Throwable $e) {
             return $this->apiResponse($e->getMessage(), 500, false);
         }
 
