@@ -15,14 +15,15 @@ class   CartItem extends Model
         'cart_id',
         'product_id',
         'quantity',
+        'reserved_quantity',
         'price',
         'total_price',
         'product_variant_id',
         'attributes'
     ];
-        protected $casts = [
-            'attributes' => 'array',
-        ];
+    protected $casts = [
+        'attributes' => 'array',
+    ];
 
 
 

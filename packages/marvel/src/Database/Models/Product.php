@@ -32,7 +32,9 @@ class Product extends Model implements HasMedia
         'price',
         'product_type',
         'sku',
+        'stock_quantity',
         'quantity',
+        'reserved_quantity',
         'sold_quantity',
         'in_stock',
         'status',
@@ -64,6 +66,9 @@ class Product extends Model implements HasMedia
         'discount_status' => 'boolean',
         'has_discount' => 'boolean',
         'has_flash_sale' => 'boolean',
+        'stock_quantity' => 'integer',
+        'reserved_quantity' => 'integer',
+        'sold_quantity' => 'integer',
     ];
 
     protected $appends = [
@@ -491,5 +496,20 @@ class Product extends Model implements HasMedia
     public function isSimple()
     {
         return $this->product_type === 'simple';
+    }
+
+    public function getAvailableStockAttribute(): int
+    {
+        return max(0, (int) $this->stock_quantity - (int) ($this->reserved_quantity ?? 0));
+    }
+
+    public function getQuantityAttribute(): int
+    {
+        return $this->available_stock;
+    }
+
+    public function setQuantityAttribute($value): void
+    {
+        $this->attributes['stock_quantity'] = (int) $value;
     }
 }

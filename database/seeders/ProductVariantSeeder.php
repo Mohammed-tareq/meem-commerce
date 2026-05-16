@@ -28,7 +28,7 @@ class ProductVariantSeeder extends Seeder
             $variants = [
                 [
                     'price' => $basePrice,
-                    'quantity' => max(5, (int) $product->quantity),
+                    'stock_quantity' => max(5, (int) $product->stock_quantity),
                     'height' => $product->height,
                     'width' => $product->width,
                     'length' => $product->length,
@@ -40,7 +40,7 @@ class ProductVariantSeeder extends Seeder
                 ],
                 [
                     'price' => $basePrice + 15,
-                    'quantity' => max(3, (int) $product->quantity - 2),
+                    'stock_quantity' => max(3, (int) $product->stock_quantity - 2),
                     'height' => $product->height,
                     'width' => $product->width,
                     'length' => $product->length,
@@ -58,7 +58,9 @@ class ProductVariantSeeder extends Seeder
                 $variant = ProductVariant::create([
                     'price' => $variantData['price'],
                     'sale_price' => $pricingService->calculateVariantSalePrice($product, $variantData, $flashSale),
-                    'quantity' => $variantData['quantity'],
+                    'stock_quantity' => $variantData['stock_quantity'],
+                    'reserved_quantity' => 0,
+                    'sold_quantity' => 0,
                     'height' => $variantData['height'],
                     'width' => $variantData['width'],
                     'length' => $variantData['length'],

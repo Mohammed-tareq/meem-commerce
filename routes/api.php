@@ -46,12 +46,12 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     });
     //========================= order=========================//
     Route::controller(OrderController::class)->group(function () {
-        Route::get('orders', 'index')->middleware('auth:sanctum');  ;
+        Route::get('orders', 'index')->middleware('auth:sanctum');;
         //========================= checkout =========================//
         Route::post('checkout', 'checkout')->middleware('auth:sanctum');
         Route::get('checkout/callback', 'checkoutCallback')->name('api.checkout.callback');
         Route::get('checkout/error', 'checkoutErrorCallback')->name('api.checkout.errorCallback');
-        });
+    });
 
 
 
@@ -102,65 +102,10 @@ Route::get('/enum-types', function () {
 });
 
 
-
-Route::get('/payment', function () {
-    $url = 'SendPayment';
-    $data = [
-        'InvoiceValue' => 2000,
-        'CustomerName' => "TAREQ",
-        'NotificationOption' => 'LNK',
-        'DisplayCurrencyIso' => 'EGP',
-        'MobileCountryCode' => '+20',
-        'CustomerMobile' => 01111111111,
-        'CustomerEmail' => 'test@example.com',
-        'CallBackUrl' => route('api.checkout.callback'),
-        'ErrorUrl' => route('api.checkout.errorCallBack'),
+Route::get('check-card-payment', function () {
+    return [
+        'CardNumber' => '2223000000000007',
+        'CardExpiryMonthand year' => '01/39',
+        'CardCVV' => '100',
     ];
-    $response = Http::withHeaders([
-        'authorization' => 'Bearer ' . env('MYFATOORAH_API_KEY'),
-    ])
-        ->acceptJson()
-        ->timeout(30)
-        ->withoutVerifying()
-        ->post('https://apitest.myfatoorah.com/v2/' . $url, $data);
-
-        // create order and transaction
-    return $response->json();
 });
-
-Route::get('/callback', function () {
-    $url = 'GetPaymentStatus';
-    $paymentId = request()->query('paymentId', request()->input('paymentId'));
-    $data = [
-        'Key' => $paymentId,
-        'KeyType' => 'PaymentId',
-    ];
-    $response = Http::withHeaders([
-        'authorization' => 'Bearer ' . env('MYFATOORAH_API_KEY'),
-    ])
-        ->acceptJson()
-        ->timeout(30)
-        ->withoutVerifying()
-        ->post('https://apitest.myfatoorah.com/v2/' . $url, $data);
-
-        // update order status
-        //clear cart
-    return $response->json();
-})->name('api.checkout.callback');
-
-Route::get('/error', function () {
-    $url = 'GetPaymentStatus';
-    $data = [
-        'Key' => request()->paymentId,
-        'KeyType' => 'PaymentId',
-    ];
-    $response = Http::withHeaders([
-        'authorization' => 'Bearer ' . env('MYFATOORAH_API_KEY'),
-    ])
-        ->acceptJson()
-        ->timeout(30)
-        ->withoutVerifying()
-        ->post('https://apitest.myfatoorah.com/v2/' . $url, $data);
-
-    return $response->json();
-})->name('api.checkout.errorCallBack');

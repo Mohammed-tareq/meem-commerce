@@ -15,6 +15,14 @@ class   Cart extends Model
         'user_id',
         'coupon',
         'total_price',
+        'status',
+        'reserved_at',
+        'expires_at',
+    ];
+
+    protected $casts = [
+        'reserved_at' => 'datetime',
+        'expires_at' => 'datetime',
     ];
 
 

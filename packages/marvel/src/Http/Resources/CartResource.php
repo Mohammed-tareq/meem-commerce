@@ -16,6 +16,9 @@ class CartResource extends Resource
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
+            'status' => $this->status,
+            'reserved_at' => $this->reserved_at,
+            'expires_at' => $this->expires_at,
             'total_items' => $items ? $items->count() : null,
             'total_quantity' => $totalQuantity,
             'total_price' => $totalPrice,

@@ -27,6 +27,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('marvel:refresh-product-pricing')
             ->dailyAt('00:00')
             ->withoutOverlapping();
+
+        $schedule->command('cart:expire')
+            ->hourly()
+            ->withoutOverlapping();
     }
 
     /**

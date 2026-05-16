@@ -5,9 +5,9 @@ namespace App\Services\General;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\CouponUsage;
+use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
-use Marvel\Database\Models\User;
 use Marvel\Services\Pricing\ProductPricingService;
 
 class OrderService
@@ -135,7 +135,11 @@ class OrderService
 
     private function getCartUser()
     {
-        return auth()->user()->cart?->load('items.product');
+        return Cart::query()
+            ->where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->with(['items.product', 'items.productVariant'])
+            ->first();
     }
 
     private function getCoupon($couponCode)
@@ -192,14 +196,7 @@ class OrderService
             return false;
         }
 
-        $user = auth()->user();
-        if ($user && $user->id === $targetUserId) {
-            $user->cart?->items()->delete();
-            return true;
-        }
-
-        $cart = User::with('cart.items')->find($targetUserId)?->cart;
-
+        $cart = Cart::query()->where('user_id', $targetUserId)->first();
         if (!$cart) {
             return false;
         }

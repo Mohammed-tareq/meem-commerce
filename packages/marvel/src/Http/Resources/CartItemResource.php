@@ -11,7 +11,9 @@ class CartItemResource extends Resource
         return [
             'id' => $this->id,
             'product_id' => $this->product_id,
+            'product_variant_id' => $this->product_variant_id,
             'quantity' => $this->quantity,
+            'reserved_quantity' => $this->reserved_quantity,
             'price' => $this->price,
             'total_price' => $this->total_price,
             'attributes' => $this?->attributes,

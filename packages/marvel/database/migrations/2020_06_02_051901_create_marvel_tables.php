@@ -116,7 +116,6 @@ class CreateMarvelTables extends Migration
             $table->text('description')->nullable();
             $table->decimal('price', 10, 2)->nullable();
             $table->string('sku')->nullable();
-            $table->integer('quantity')->default(0);
             $table->integer('sold_quantity')->default(0);
             $table->boolean('in_stock')->default(true);
             $table->boolean('status')->default(false);
@@ -145,7 +144,7 @@ class CreateMarvelTables extends Migration
             $table->id();
             $table->double('price', 10, 2);
             $table->double('sale_price', 10, 2)->nullable();
-            $table->integer('quantity')->default(0);
+            $table->boolean('in_stock')->default(true);
             $table->string('height')->nullable();
             $table->string('width')->nullable();
             $table->string('weight')->nullable();

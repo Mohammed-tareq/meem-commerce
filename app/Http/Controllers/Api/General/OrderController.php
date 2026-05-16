@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Services\General\CartInventoryService;
 use App\Services\General\MyfatoraService;
 use App\Services\General\OrderService;
 use Illuminate\Http\Request;
+use Marvel\Database\Models\User;
 use Marvel\Http\Requests\OrderCreateRequest;
 use Marvel\Traits\ApiResponse;
 
@@ -14,17 +16,31 @@ class OrderController extends Controller
     use ApiResponse;
     protected $orderService;
     protected $myfatoraService;
+    protected $cartInventoryService;
 
-    public function __construct(OrderService $orderService, MyfatoraService $myfatoraService)
+    public function __construct(OrderService $orderService, MyfatoraService $myfatoraService, CartInventoryService $cartInventoryService)
     {
         $this->orderService = $orderService;
         $this->myfatoraService = $myfatoraService;
+        $this->cartInventoryService = $cartInventoryService;
     }
 
     public function checkout(OrderCreateRequest $request)
     {
         $orderDataUser = $request->validated();
         $orderDataUser['user_id'] = $request->user()->id;
+
+        $cart = $this->cartInventoryService->getActiveCartForUser($request->user());
+        if (!$cart) {
+            return $this->apiResponse('Cart not found', 400, false);
+        }
+
+        try {
+            $this->cartInventoryService->ensureCartReservation($cart);
+        } catch (\Throwable $e) {
+            return $this->apiResponse($e->getMessage(), 400, false);
+        }
+
         $orderPrice = $this->orderService->calcInvoicePrice($request);
         if (!$orderPrice || $orderPrice <= 0) {
             return $this->apiResponse(FILED_TO_CREATE_ORDER_TRY_AGAIN, 500, false);
@@ -39,8 +55,8 @@ class OrderController extends Controller
             'CustomerMobile' => $orderDataUser['user_phone'],
             'CustomerEmail' => $orderDataUser['user_email'],
             'language' => app()->getLocale() == 'ar' ? 'ar' : 'en',
-            'CallBackUrl' => 'http://localhost:8000/api/v1/general/checkout/callback',
-            'ErrorUrl' => 'http://localhost:8000/api/v1/general/checkout/errorCallback',
+            'CallBackUrl' => route('api.checkout.callback'),
+            'ErrorUrl' => route('api.checkout.errorCallback'),
         ];
 
         $invoice = $this->myfatoraService->createInvoice($data);
@@ -86,13 +102,24 @@ class OrderController extends Controller
         }
 
         if ($invoiceStatus !== 'Paid') {
-            $this->orderService->changeOrderStatus($invoiceId, 'cancelled');
+            $order = $this->orderService->changeOrderStatus($invoiceId, 'cancelled');
+            if ($order && ($user = User::find($order->user_id))) {
+                $cart = $this->cartInventoryService->getActiveCartForUser($user);
+                if ($cart) {
+                    $this->cartInventoryService->releaseCart($cart, false);
+                }
+            }
             return $this->apiResponse('Payment failed', 400, false);
         }
 
         $order = $this->orderService->changeOrderStatus($invoiceId, 'completed');
         if ($order) {
-            $this->orderService->clearCart($order->user_id);
+            if ($user = User::find($order->user_id)) {
+                $cart = $this->cartInventoryService->getActiveCartForUser($user);
+                if ($cart) {
+                    $this->cartInventoryService->finalizeCart($cart);
+                }
+            }
         }
         // if ($order = $this->orderService->getOrder($invoice['Data']["InvoiceId"])) {
         //     $this->orderService->sendAdminNotification($order);
@@ -117,7 +144,13 @@ class OrderController extends Controller
         $invoiceId = data_get($invoice, 'Data.InvoiceId');
 
         if ($invoiceStatus && $invoiceStatus !== 'Paid' && $invoiceId) {
-            $this->orderService->changeOrderStatus($invoiceId, 'cancelled');
+            $order = $this->orderService->changeOrderStatus($invoiceId, 'cancelled');
+            if ($order && ($user = User::find($order->user_id))) {
+                $cart = $this->cartInventoryService->getActiveCartForUser($user);
+                if ($cart) {
+                    $this->cartInventoryService->releaseCart($cart, false);
+                }
+            }
         }
         return $this->apiResponse('Payment failed', 400, false);
     }
