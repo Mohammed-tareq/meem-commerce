@@ -8,7 +8,12 @@ class   Transaction extends Model
 {
     protected $table = 'transactions';
 
-    public $guarded = [];
+    public $fillable = [
+        'order_id',
+        'invoice_id',
+        'payment_method',
+        'user_id',
+    ];
 
 
     /**

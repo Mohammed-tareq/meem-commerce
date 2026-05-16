@@ -178,6 +178,7 @@ class CreateMarvelTables extends Migration
             $table->decimal('coupon_discount_max_amount', 10, 3)->nullable();
 
             $table->enum('status', ['pending', 'completed', 'delivered', 'cancelled'])->default('pending');
+            $table->softDeletes();
             $table->timestamps();
         });
 

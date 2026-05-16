@@ -30,6 +30,8 @@ class Order extends Model
         'coupon_discount',
         'coupon_discount_type',
         'coupon_discount_max_amount',
+        'status',
+        'shop_id',
     ];
 
     protected $casts = [

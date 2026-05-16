@@ -4,7 +4,10 @@ namespace App\Services\General;
 
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Coupon;
+use Marvel\Database\Models\CouponUsage;
 use Marvel\Database\Models\Order;
+use Marvel\Database\Models\Transaction;
+use Marvel\Database\Models\User;
 use Marvel\Services\Pricing\ProductPricingService;
 
 class OrderService
@@ -31,10 +34,32 @@ class OrderService
 
             $totalPrice =  $this->calculatePriceByCoupon($cart, $totalPrice);
             $cart->update(['total_price' => $totalPrice]);
-            $order = $this->saveOrderInDatabase($request->only($this->dataArray), $cart);
-            $orderItems = $this->createOrderItems($order, $cart);
             DB::commit();
-            return true;
+            return $cart->total_price;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return null;
+        }
+    }
+    public function addItemsInOrder($request)
+    {
+        try {
+            DB::beginTransaction();
+            $cart = $this->getCartUser();
+            if (!$cart || !$cart->items()->exists()) {
+                return null;
+            }
+            $order = $this->saveOrderInDatabase($request->only($this->dataArray), $cart);
+            if (!$order) {
+                DB::rollBack();
+                return null;
+            }
+            if (!$this->createOrderItems($order, $cart)) {
+                DB::rollBack();
+                return null;
+            }
+            DB::commit();
+            return $order;
         } catch (\Exception $e) {
             DB::rollBack();
             return null;
@@ -90,28 +115,21 @@ class OrderService
 
 
 
-    //     public function createTransaction($orderId, $invoiceId, string $paymentType)
-    //     {
-    //         $transaction = Transaction::create([
-    //             'order_id' => $orderId,
-    //             'user_id' => auth('web')->user()->id,
-    //             'invoice_id' => $invoiceId,
-    //             'payment_method' => $paymentType,
-    //         ]);
-    //         if (!$transaction) {
-    //             return false;
-    //         }
-    //         return $transaction;
+    public function createTransaction($orderId, $invoiceId, string $paymentType)
+    {
+        $transaction = Transaction::create([
+            'order_id' => $orderId,
+            'user_id' => auth()->user()->id,
+            'invoice_id' => $invoiceId,
+            'payment_method' => $paymentType,
+        ]);
+        if (!$transaction) {
+            return false;
+        }
+        return $transaction;
+    }
 
-    //     }
 
-    // public function sendAdminNotification($order)
-    // {
-    //     $admins = Admin::active()->whereHas('role', function ($q) {
-    //         $q->whereJsonContains('permissions', 'notification');
-    //     })->get();
-    //     Notification::send($admins, new CreateOrderNotification($order));
-    // }
 
 
 
@@ -127,9 +145,6 @@ class OrderService
         }
         return null;
     }
-
-
-
 
 
     private function calculatePriceByCoupon($cart, $totalPrice)
@@ -149,8 +164,10 @@ class OrderService
         if (!$coupon) {
             return false;
         }
-        $couponUsage = $coupon->users()->where('user_id', auth()->id())->first();
-        return $couponUsage?->pivot?->used_at;
+        return CouponUsage::where('coupon_id', $coupon->id)
+            ->where('user_id', auth()->id())
+            ->whereNotNull('used_at')
+            ->exists();
     }
     private function CalcPriceByCoupon($couponId, $price)
     {
@@ -165,28 +182,71 @@ class OrderService
         if ($used && $used->pivot->used_at) {
             return $price;
         }
-        $used  = $coupon->users()->updateExistingPivot(auth()->id(), ['used_at' => now()]);
         return app(ProductPricingService::class)->calculateCouponPrice($coupon, $price);
     }
 
+    public function clearCart(?int $userId = null)
+    {
+        $targetUserId = $userId ?? auth()->id();
+        if (!$targetUserId) {
+            return false;
+        }
 
+        $user = auth()->user();
+        if ($user && $user->id === $targetUserId) {
+            $user->cart?->items()->delete();
+            return true;
+        }
 
+        $cart = User::with('cart.items')->find($targetUserId)?->cart;
 
+        if (!$cart) {
+            return false;
+        }
 
-    // public function clearCart()
-    // {
-    //     auth('web')->user()->cart->items()->delete();
-    // }
+        return (bool) $cart->items()->delete();
+    }
 
-    // public function changeOrderStatus($transactionId, $status)
-    // {
-    //     $transaction = Transaction::where('invoice_id', $transactionId)->first();
-    //     if (!$transaction) {
-    //         return false;
-    //     }
-    //     return $transaction->order->update(['status' => $status]);
+    public function changeOrderStatus($invoiceId, $status)
+    {
+        $transaction = Transaction::where('invoice_id', $invoiceId)->first();
+        if (!$transaction) {
+            return false;
+        }
+        $order = $transaction->order;
+        if (!$order->update(['status' => $status])) {
+            return false;
+        }
 
-    // }
+        if ($status === 'completed') {
+            $this->recordCouponUsage($order);
+        }
+
+        return $order;
+    }
+
+    private function recordCouponUsage($order): void
+    {
+        if (!$order->coupon) {
+            return;
+        }
+
+        $coupon = Coupon::where('code', $order->coupon)->first();
+        if (!$coupon) {
+            return;
+        }
+
+        CouponUsage::updateOrCreate(
+            [
+                'coupon_id' => $coupon->id,
+                'user_id' => $order->user_id,
+            ],
+            [
+                'order_id' => $order->id,
+                'used_at' => now(),
+            ]
+        );
+    }
 
     // public function getOrder($transactionId)
     // {
@@ -196,5 +256,13 @@ class OrderService
     //     }
     //     return $order = $transaction->order;
 
+    // }
+
+    // public function sendAdminNotification($order)
+    // {
+    //     $admins = Admin::active()->whereHas('role', function ($q) {
+    //         $q->whereJsonContains('permissions', 'notification');
+    //     })->get();
+    //     Notification::send($admins, new CreateOrderNotification($order));
     // }
 }

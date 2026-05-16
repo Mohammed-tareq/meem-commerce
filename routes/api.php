@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\General\SearchController;
 use App\Http\Controllers\Api\General\SettingController;
 use App\Http\Controllers\Api\General\ShopController;
 use App\Http\Controllers\Api\General\SliderController;
+use Illuminate\Support\Facades\Http;
 
 Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])->group(function () {
 
@@ -44,10 +45,13 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
         Route::post('coupons/apply', 'applyCoupon')->middleware('auth:sanctum');
     });
     //========================= order=========================//
-    Route::controller(OrderController::class)->middleware('auth:sanctum')->group(function () {
-        Route::get('orders', 'index');
-        Route::post('orders', 'createOrder');
-    });
+    Route::controller(OrderController::class)->group(function () {
+        Route::get('orders', 'index')->middleware('auth:sanctum');  ;
+        //========================= checkout =========================//
+        Route::post('checkout', 'checkout')->middleware('auth:sanctum');
+        Route::get('checkout/callback', 'checkoutCallback')->name('api.checkout.callback');
+        Route::get('checkout/error', 'checkoutErrorCallback')->name('api.checkout.errorCallback');
+        });
 
 
 
@@ -96,3 +100,67 @@ Route::get('/enum-types', function () {
         200
     );
 });
+
+
+
+Route::get('/payment', function () {
+    $url = 'SendPayment';
+    $data = [
+        'InvoiceValue' => 2000,
+        'CustomerName' => "TAREQ",
+        'NotificationOption' => 'LNK',
+        'DisplayCurrencyIso' => 'EGP',
+        'MobileCountryCode' => '+20',
+        'CustomerMobile' => 01111111111,
+        'CustomerEmail' => 'test@example.com',
+        'CallBackUrl' => route('api.checkout.callback'),
+        'ErrorUrl' => route('api.checkout.errorCallBack'),
+    ];
+    $response = Http::withHeaders([
+        'authorization' => 'Bearer ' . env('MYFATOORAH_API_KEY'),
+    ])
+        ->acceptJson()
+        ->timeout(30)
+        ->withoutVerifying()
+        ->post('https://apitest.myfatoorah.com/v2/' . $url, $data);
+
+        // create order and transaction
+    return $response->json();
+});
+
+Route::get('/callback', function () {
+    $url = 'GetPaymentStatus';
+    $paymentId = request()->query('paymentId', request()->input('paymentId'));
+    $data = [
+        'Key' => $paymentId,
+        'KeyType' => 'PaymentId',
+    ];
+    $response = Http::withHeaders([
+        'authorization' => 'Bearer ' . env('MYFATOORAH_API_KEY'),
+    ])
+        ->acceptJson()
+        ->timeout(30)
+        ->withoutVerifying()
+        ->post('https://apitest.myfatoorah.com/v2/' . $url, $data);
+
+        // update order status
+        //clear cart
+    return $response->json();
+})->name('api.checkout.callback');
+
+Route::get('/error', function () {
+    $url = 'GetPaymentStatus';
+    $data = [
+        'Key' => request()->paymentId,
+        'KeyType' => 'PaymentId',
+    ];
+    $response = Http::withHeaders([
+        'authorization' => 'Bearer ' . env('MYFATOORAH_API_KEY'),
+    ])
+        ->acceptJson()
+        ->timeout(30)
+        ->withoutVerifying()
+        ->post('https://apitest.myfatoorah.com/v2/' . $url, $data);
+
+    return $response->json();
+})->name('api.checkout.errorCallBack');
