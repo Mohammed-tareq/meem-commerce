@@ -77,13 +77,11 @@ class OrderController extends Controller
         $invoiceUrl = data_get($invoice, 'Data.InvoiceURL');
         $invoiceId = data_get($invoice, 'Data.InvoiceId');
 
-       try{
+        dd($invoiceUrl, $invoiceId);
         if (!$invoiceUrl || !$invoiceId) {
-            throw new \Exception('Error creating invoice');
+            return $this->apiResponse('Error creating invoice', 500, false);
         }
-       } catch (\Throwable $e) {
-            return $this->apiResponse($e->getMessage(), 500, false);
-        }
+
 
         if (!$order = $this->orderService->addItemsInOrder($request)) {
             return $this->apiResponse('Error adding items to order', 500, false);
