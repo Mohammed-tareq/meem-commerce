@@ -8,10 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Marvel\Enums\PromotionMountType;
 use Spatie\Translatable\HasTranslations;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
-class Promotion extends Model
+class Promotion extends Model implements HasMedia
 {
-    use HasTranslations;
+    use HasTranslations, InteractsWithMedia;
     public  array $translatable = ['name'];
 
     protected $table = 'promotions';
@@ -196,7 +198,6 @@ class Promotion extends Model
             return;
         }
 
-       return  $this->products()->get();
+        return  $this->products()->get();
     }
-
 }

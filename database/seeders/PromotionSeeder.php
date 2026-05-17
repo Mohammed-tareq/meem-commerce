@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\File;
 use Marvel\Database\Models\Promotion;
 use Marvel\Database\Models\Product;
 use Marvel\Enums\PromotionType;
@@ -15,6 +16,9 @@ class PromotionSeeder extends Seeder
     {
         $productIds = Product::query()->pluck('id')->all();
         $promotionCount = 100;
+
+        $promotionImages = collect(File::files(public_path('images/banners')));
+        $promotionImagesCount = $promotionImages->count();
 
         for ($index = 1; $index <= $promotionCount; $index++) {
             $type = rand(0, 1) === 0 ? PromotionType::PRICE : PromotionType::QTY;
@@ -62,6 +66,23 @@ class PromotionSeeder extends Seeder
 
             if (!empty($promotionProductIds)) {
                 $promotion->products()->sync($promotionProductIds);
+            }
+
+            // attach a banner image from local `public/images/banners` if available,
+            // otherwise fall back to a remote placeholder.
+            try {
+                if ($promotionImagesCount > 0) {
+                    $image = $promotionImages[($index - 1) % $promotionImagesCount];
+                    $promotion->addMedia($image->getPathname())
+                        ->preservingOriginal()
+                        ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                        ->toMediaCollection('promotions', 'promotions');
+                } else {
+                    $imageUrl = 'https://picsum.photos/seed/promotion' . $index . '/1200/400';
+                    $promotion->addMediaFromUrl($imageUrl)->toMediaCollection('promotions', 'promotions');
+                }
+            } catch (\Exception $e) {
+                // ignore image attach failures during seeding
             }
         }
     }

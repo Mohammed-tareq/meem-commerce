@@ -15,6 +15,7 @@ class PromotionResource extends Resource
             'value' => $this->value,
             'code' => $this->code,
             'min_order_amount' => $this->min_order_amount,
+            'image' => method_exists($this, 'getFirstMediaUrl') ? $this->getFirstMediaUrl('promotions') : null,
             'start_at' => $this->start_at ? $this->start_at->toIso8601String() : null,
             'end_at' => $this->end_at ? $this->end_at->toIso8601String() : null,
             'status' => (bool) $this->status,

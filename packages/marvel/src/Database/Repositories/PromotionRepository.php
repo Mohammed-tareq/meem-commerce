@@ -8,9 +8,11 @@ use Marvel\Database\Models\Promotion;
 use Marvel\Exceptions\MarvelBadRequestException;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
+use Marvel\Traits\MediaManager;
 
 class PromotionRepository extends BaseRepository
 {
+    use MediaManager;
     protected $fieldSearchable = [
         'name' => 'like',
         'type',
@@ -54,7 +56,15 @@ class PromotionRepository extends BaseRepository
     {
         try {
             $data = $request->only($this->dataArray);
-            return $this->create($data);
+            $promotion = $this->create($data);
+
+            if ($request->hasFile('image')) {
+                if (!$this->uploadSingleImage($request, 'image', $promotion, 'promotions', 'promotions')) {
+                    throw new MarvelBadRequestException('Image upload failed');
+                }
+            }
+
+            return $promotion;
         } catch (Exception $e) {
             throw new MarvelBadRequestException(COULD_NOT_CREATE_THE_RESOURCE);
         }
@@ -70,6 +80,13 @@ class PromotionRepository extends BaseRepository
 
             $data = $request->only($this->dataArray);
             $promotion->update($data);
+
+            if ($request->hasFile('image')) {
+                if (!$this->updateSingleImage($request, 'image', $promotion, 'promotions', 'promotions')) {
+                    throw new MarvelBadRequestException('Image upload failed');
+                }
+            }
+
             return $promotion;
         } catch (Exception $e) {
             throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);

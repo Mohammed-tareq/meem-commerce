@@ -107,6 +107,12 @@ return [
             'url' => env('APP_URL') . '/public/storage/flash-sales',
             'visibility' => 'public',
         ],
+        'promotions' => [
+            'driver' => 'local',
+            'root' => storage_path('app/public/promotions'),
+            'url' => env('APP_URL') . '/public/storage/promotions',
+            'visibility' => 'public',
+        ],
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
