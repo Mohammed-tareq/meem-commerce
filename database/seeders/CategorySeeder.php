@@ -13,7 +13,7 @@ class CategorySeeder extends Seeder
     {
         $categoryImages = collect(File::files(public_path('images/categories')));
         $categoryImagesCount = $categoryImages->count();
-        $totalCategories = 100;
+        $totalCategories = 3000;
         $rootCategories = 20;
         $maxDepth = 4;
         $categoriesPerParent = 2;

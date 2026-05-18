@@ -78,7 +78,7 @@ class ProductSeeder extends Seeder
             //     return;
             // }
 
-            for ($i = 1; $i <= 500; $i++) {
+            for ($i = 1; $i <= 10000; $i++) {
                 $productNameEn = $this->randomWords($englishWords, 3);
                 $productNameAr = $this->randomWords($arabicWords, 3);
 
