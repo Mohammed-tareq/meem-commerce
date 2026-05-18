@@ -13,59 +13,82 @@ class CategorySeeder extends Seeder
     {
         $categoryImages = collect(File::files(public_path('images/categories')));
         $categoryImagesCount = $categoryImages->count();
-        $rootCategoryCount = 40;
-        $childCategoryCount = 30;
-        $grandChildCategoryCount = 30;
+        $totalCategories = 100;
+        $rootCategories = 20;
+        $maxDepth = 4;
+        $categoriesPerParent = 2;
 
-        for ($i = 1; $i <= 100; $i++) {
-            $slug = Str::slug("category-$i");
-            $parentCategory = match (true) {
-                $i <= $rootCategoryCount => null,
-                $i <= $rootCategoryCount + $childCategoryCount => Category::query()
-                    ->whereNull('parent_id')
-                    ->inRandomOrder()
-                    ->first(),
-                $i <= $rootCategoryCount + $childCategoryCount + $grandChildCategoryCount => Category::query()
-                    ->whereNotNull('parent_id')
-                    ->whereHas('parent', function ($query) {
-                        $query->whereNull('parent_id');
-                    })
-                    ->inRandomOrder()
-                    ->first(),
-                default => Category::query()
-                    ->whereNotNull('parent_id')
-                    ->whereHas('parent', function ($query) {
-                        $query->whereNotNull('parent_id');
-                    })
-                    ->inRandomOrder()
-                    ->first(),
-            };
+        $createdCategoriesByLevel = [];
+        $createdCount = 0;
 
-            $category = Category::updateOrCreate(
-                ['slug' => $slug],
-                [
-                    'name' => [
-                        'ar' => "كاتوجوري $i",
-                        'en' => "Category $i",
-                    ],
-                    'details' => [
-                        'ar' => "تفاصيل الكاتوجوري $i",
-                        'en' => "Details of category number $i",
-                    ],
-                    'parent_id' => $parentCategory?->id,
-                ]
-            );
+        for ($level = 1; $level <= $maxDepth && $createdCount < $totalCategories; $level++) {
+            if ($level === 1) {
+                $count = min($rootCategories, $totalCategories - $createdCount);
 
-            if ($categoryImagesCount > 0 && ! $category->hasMedia('categories')) {
-                $image = $categoryImages[($i - 1) % $categoryImagesCount];
-                $category
-                    ->addMedia($image->getPathname())
-                    ->preservingOriginal()
-                    ->usingFileName(Str::uuid() . '.' . $image->getExtension())
-                    ->toMediaCollection('categories', 'categories');
+                for ($index = 1; $index <= $count; $index++) {
+                    $createdCategoriesByLevel[1][] = $this->seedCategory(
+                        $createdCount + 1,
+                        null,
+                        $categoryImages,
+                        $categoryImagesCount
+                    );
+
+                    $createdCount++;
+                }
+
+                continue;
             }
 
-            $category->shops()->syncWithoutDetaching([1, 2]);
+            $parents = $createdCategoriesByLevel[$level - 1] ?? [];
+
+            foreach ($parents as $parentCategory) {
+                for ($index = 1; $index <= $categoriesPerParent && $createdCount < $totalCategories; $index++) {
+                    $createdCategoriesByLevel[$level][] = $this->seedCategory(
+                        $createdCount + 1,
+                        $parentCategory,
+                        $categoryImages,
+                        $categoryImagesCount
+                    );
+
+                    $createdCount++;
+                }
+
+                if ($createdCount >= $totalCategories) {
+                    break 2;
+                }
+            }
         }
+    }
+
+    private function seedCategory(int $sequence, ?Category $parentCategory, $categoryImages, int $categoryImagesCount): Category
+    {
+        $category = Category::updateOrCreate(
+            ['slug' => Str::slug("category-{$sequence}")],
+            [
+                'name' => [
+                    'ar' => "كاتوجوري {$sequence}",
+                    'en' => "Category {$sequence}",
+                ],
+                'details' => [
+                    'ar' => "تفاصيل الكاتوجوري {$sequence}",
+                    'en' => "Details of category number {$sequence}",
+                ],
+                'parent_id' => $parentCategory?->id,
+            ]
+        );
+
+        if ($categoryImagesCount > 0 && ! $category->hasMedia('categories')) {
+            $image = $categoryImages[($sequence - 1) % $categoryImagesCount];
+
+            $category
+                ->addMedia($image->getPathname())
+                ->preservingOriginal()
+                ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                ->toMediaCollection('categories', 'categories');
+        }
+
+        $category->shops()->syncWithoutDetaching([1, 2]);
+
+        return $category;
     }
 }

@@ -23,6 +23,8 @@ use Marvel\Http\Resources\SliderResource;
 
 class HomeService
 {
+    public function __construct(private readonly CategoryHierarchyService $hierarchyService) {}
+
     public function getHomeData(?int $parentCategoryId = null, ?array $sections = null)
     {
         $parentCategoryId = $parentCategoryId ?: 1;
@@ -325,13 +327,16 @@ class HomeService
         $parent = Category::query()->active()
             ->whereNull('parent_id')
             ->where('id', '=', $id)
-            ->with('children')
+            ->withCount('products')
             ->first();
 
         if (!$parent) {
             return collect();
         }
-        return $parent->children()->active()->limit(5)->get();
+
+        $this->hierarchyService->loadRecursiveTree($parent, true);
+
+        return $parent->children;
     }
 
 
@@ -349,12 +354,13 @@ class HomeService
 
     private function getCategoryWithChildren(): Collection
     {
-        return Category::query()
+        $categories = Category::query()
             ->active()
-            ->with(['children' => function ($query) {
-                $query->active()->select('id', 'parent_id', 'name', 'slug');
-            }])
+            ->whereNull('parent_id')
+            ->withCount('products')
             ->get();
+
+        return $this->hierarchyService->loadRecursiveChildren($categories, true);
     }
 
     private function moneyValue($value)

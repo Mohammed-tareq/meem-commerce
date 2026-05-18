@@ -2,9 +2,11 @@
 
 namespace Marvel\Database\Models;
 
+use App\Services\General\CategoryHierarchyService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Cviebrock\EloquentSluggable\Sluggable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -18,7 +20,20 @@ class Category extends Model implements HasMedia
     protected $table = 'categories';
     public array $translatable = ['name', 'details'];
 
-    public $fillable = ['name', 'details', 'slug', 'parent_id', 'status'];
+    public $fillable = ['name', 'details', 'slug', 'parent_id', 'level', 'status'];
+
+    protected $casts = [
+        'parent_id' => 'integer',
+        'level' => 'integer',
+        'status' => 'boolean',
+    ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $category) {
+            app(CategoryHierarchyService::class)->syncHierarchy($category);
+        });
+    }
 
 
 
@@ -43,7 +58,7 @@ class Category extends Model implements HasMedia
 
     public function scopeSearch($query, $field, $term, $locale)
     {
-       return  $query->where(function ($q) use ($field, $term, $locale) {
+        return  $query->where(function ($q) use ($field, $term, $locale) {
             $q->where($field . '->' . $locale, 'like', "%$term%")
                 ->orWhere($field, 'like', "%$term%");
         });
@@ -62,17 +77,17 @@ class Category extends Model implements HasMedia
     }
 
 
-    public function children()
+    public function children(): HasMany
     {
-        return $this->hasMany('Marvel\Database\Models\Category', 'parent_id', 'id')->with('children')->withCount('products');
+        return $this->hasMany(self::class, 'parent_id', 'id');
     }
 
 
     /**
      * @return BelongsTo
      */
-    public function parent()
+    public function parent(): BelongsTo
     {
-        return $this->belongsTo('Marvel\Database\Models\Category', 'parent_id', 'id');
+        return $this->belongsTo(self::class, 'parent_id', 'id');
     }
 }

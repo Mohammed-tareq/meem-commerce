@@ -3,8 +3,8 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Services\General\CategoryHierarchyService;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Repositories\CategoryRepository;
@@ -14,7 +14,6 @@ use Marvel\Http\Requests\CategoryCreateRequest;
 use Marvel\Http\Requests\CategoryUpdateRequest;
 use Marvel\Http\Resources\CategoryResource;
 use Marvel\Traits\ApiResponse;
-use Prettus\Validator\Exceptions\ValidatorException;
 
 
 /**
@@ -283,10 +282,10 @@ class CategoryController extends CoreController
     public function show(Request $request, $id)
     {
         try {
-            //            $language = $request->language ?? DEFAULT_LANGUAGE;
-            $category = $this->repository->with(['parent', 'children', 'shops'])
+            $category = $this->repository->with(['parent', 'shops', 'products'])
                 ->withCount('products')
                 ->where('id', $id)->firstOrFail();
+            app(CategoryHierarchyService::class)->loadRecursiveTree($category, true);
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryResource::make($category));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
@@ -341,7 +340,7 @@ class CategoryController extends CoreController
     }
 
 
-    public function categoryUpdate(CategoryUpdateRequest $request)
+    public function categoryUpdate(CategoryUpdateRequest $request): Category
     {
         $category = $this->repository->findOrFail($request->id);
         return $this->repository->updateCategory($request, $category);

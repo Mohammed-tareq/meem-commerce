@@ -5,6 +5,7 @@ namespace Marvel\Database\Repositories;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Marvel\Database\Models\Category;
 use Marvel\Traits\MediaManager;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -67,6 +68,9 @@ class CategoryRepository extends BaseRepository
             $category->shops()->sync($request->shops_id);
             DB::commit();
             return $category;
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -87,9 +91,12 @@ class CategoryRepository extends BaseRepository
                     throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
                 }
             }
-            $category->shops()->sync($request->shop_id);
+            $category->shops()->sync($request->shops_id ?? []);
             DB::commit();
             return $this->findOrFail($category->id);
+        } catch (ValidationException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());

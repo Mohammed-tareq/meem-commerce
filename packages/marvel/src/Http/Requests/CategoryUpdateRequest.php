@@ -3,6 +3,7 @@
 
 namespace Marvel\Http\Requests;
 
+use App\Services\General\CategoryHierarchyService;
 use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -28,33 +29,33 @@ class CategoryUpdateRequest extends FormRequest
      */
     public function rules()
     {
-        $id = $this->route('category');
+        $id = $this->route('id') ?? $this->route('category') ?? $this->input('id');
         return [
             'name'         => ['sometimes', 'array'],
-            'name.*'       => ['sometimes', 'string' , UniqueTranslationRule::for('categories')->ignore($id)],
+            'name.*'       => ['sometimes', 'string', UniqueTranslationRule::for('categories')->ignore($id)],
             'image'        => ['sometimes', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
-            'parent_id'    => ['nullable', 'integer', 'exists:categories,id'],
+            'parent_id'    => [
+                'nullable',
+                'integer',
+                'exists:categories,id',
+                function ($attribute, $value, $fail) use ($id) {
+                    if ($value === null || $id === null) {
+                        return;
+                    }
+
+                    if (app(CategoryHierarchyService::class)->createsCycle((int) $id, (int) $value)) {
+                        $fail('The selected parent category creates a circular reference.');
+                    }
+                },
+            ],
             'shops_id' => ['sometimes', 'array'],
-            'shops_id.*' => ['sometimes', 'integer' ,"exists:shops,id"],
-            'details'      => ['sometimes', 'string','min:3','max:2500'],
+            'shops_id.*' => ['sometimes', 'integer', "exists:shops,id"],
+            'details'      => ['sometimes', 'string', 'min:3', 'max:2500'],
         ];
     }
 
-    /**
-     * Get the error messages that apply to the request parameters.
-     *
-     * @return array
-     */
-    public function messages()
-    {
-        return [
-            'name.*.string'         => 'Name is not a valid string',
-            'name.*.max:255'        => 'Name can not be more than 255 character',
-            'image.string'        => 'image is not a valid string',
-            'banner_image.string' => 'Banner image is not a valid image',
-            'parent.integer'      => 'Parent is not a valid integer',
-        ];
-    }
+
+
 
     public function failedValidation(Validator $validator)
     {
