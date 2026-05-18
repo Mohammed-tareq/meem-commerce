@@ -5,6 +5,7 @@ namespace Marvel\Database\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Marvel\Enums\PromotionMountType;
 use Spatie\Translatable\HasTranslations;
@@ -23,9 +24,12 @@ class Promotion extends Model implements HasMedia
         'type',
         'type_amount',
         'value',
+        'discount',
         'max_discount_amount',
         'code',
         'required_quantity_type',
+        'minimum_order_amount',
+        'apply_to',
         'product_id',
         'limiter',
         'usage',
@@ -42,6 +46,8 @@ class Promotion extends Model implements HasMedia
         'limiter' => 'integer',
         'required_quantity_type' => 'integer',
         'value' => 'float',
+        'discount' => 'float',
+        'minimum_order_amount' => 'float',
         'max_discount_amount' => 'float',
         'product_id' => 'integer',
     ];
@@ -59,11 +65,37 @@ class Promotion extends Model implements HasMedia
                 $promotion->code = (string) Str::uuid();
             }
         });
+
+        static::saving(function (self $promotion) {
+            if (!Schema::hasColumn($promotion->getTable(), 'discount')) {
+                return;
+            }
+
+            if ($promotion->discount !== null && ($promotion->value === null || !$promotion->isDirty('value'))) {
+                $promotion->value = $promotion->discount;
+            }
+
+            if ($promotion->value !== null && ($promotion->discount === null || !$promotion->isDirty('discount'))) {
+                $promotion->discount = $promotion->value;
+            }
+        });
     }
 
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'promotion_product', 'promotion_id', 'product_id');
+    }
+
+    public function giftProducts(): BelongsToMany
+    {
+        return $this->belongsToMany(Product::class, 'promotion_gift_products', 'promotion_id', 'product_id')
+            ->withPivot('quantity')
+            ->withTimestamps();
+    }
+
+    public function appliesToAllProducts(): bool
+    {
+        return ($this->apply_to ?? 'all_products') === 'all_products';
     }
 
 
@@ -158,7 +190,7 @@ class Promotion extends Model implements HasMedia
         }
 
         $price = (float) $price;
-        $value = (float) $this->value;
+        $value = (float) ($this->discount ?? $this->value);
         $maxValue = $this->max_discount_amount !== null ? (float) $this->max_discount_amount : null;
 
         if ($this->isPercentagePromotion()) {

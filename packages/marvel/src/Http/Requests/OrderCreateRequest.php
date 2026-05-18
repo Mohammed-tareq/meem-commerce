@@ -32,6 +32,7 @@ class OrderCreateRequest extends FormRequest
             'user_email' => ['required', 'email', 'max:255'],
             'address' => ['required', 'array'],
             'notes' => ['nullable', 'string'],
+            'selected_promotion_id' => ['nullable', 'integer', 'exists:promotions,id'],
         ];
     }
 

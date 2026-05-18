@@ -31,6 +31,10 @@ class Order extends Model
         'coupon_discount',
         'coupon_discount_type',
         'coupon_discount_max_amount',
+        'promotion_id',
+        'promotion_code',
+        'promotion_type',
+        'promotion_discount',
         'status',
         'shop_id',
     ];

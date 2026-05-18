@@ -22,10 +22,13 @@ class OrderProduct extends Model
         'product_total_price',
         'product_discount_price',
         'product_flash_sale_price',
+        'is_gift',
+        'promotion_id',
     ];
 
     protected $casts = [
         'attributes' => 'array',
+        'is_gift' => 'boolean',
     ];
 
 
@@ -44,5 +47,10 @@ class OrderProduct extends Model
     public function productVariant(): BelongsTo
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function promotion(): BelongsTo
+    {
+        return $this->belongsTo(Promotion::class);
     }
 }

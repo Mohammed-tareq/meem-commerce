@@ -25,9 +25,13 @@ class PromotionRepository extends BaseRepository
         'type',
         'type_amount',
         'value',
+        'discount',
         'code',
         'max_discount_amount',
         'required_quantity_type',
+        'minimum_order_amount',
+        'apply_to',
+        'limiter',
         'start_at',
         'end_at',
         'status',
@@ -56,7 +60,9 @@ class PromotionRepository extends BaseRepository
     {
         try {
             $data = $request->only($this->dataArray);
+            $data = $this->normalizePromotionData($data);
             $promotion = $this->create($data);
+            $this->syncPromotionProducts($promotion, $request);
 
             if ($request->hasFile('image')) {
                 if (!$this->uploadSingleImage($request, 'image', $promotion, 'promotions', 'promotions')) {
@@ -79,7 +85,9 @@ class PromotionRepository extends BaseRepository
             }
 
             $data = $request->only($this->dataArray);
+            $data = $this->normalizePromotionData($data);
             $promotion->update($data);
+            $this->syncPromotionProducts($promotion, $request);
 
             if ($request->hasFile('image')) {
                 if (!$this->updateSingleImage($request, 'image', $promotion, 'promotions', 'promotions')) {
@@ -90,6 +98,44 @@ class PromotionRepository extends BaseRepository
             return $promotion;
         } catch (Exception $e) {
             throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
+        }
+    }
+
+    private function normalizePromotionData(array $data): array
+    {
+        if (array_key_exists('discount', $data) && !array_key_exists('value', $data)) {
+            $data['value'] = $data['discount'];
+        }
+
+        if (array_key_exists('value', $data) && !array_key_exists('discount', $data)) {
+            $data['discount'] = $data['value'];
+        }
+
+        return $data;
+    }
+
+    private function syncPromotionProducts(Promotion $promotion, Request $request): void
+    {
+        if ($request->has('product_ids')) {
+            $promotion->products()->sync($request->input('product_ids', []));
+        }
+
+        if ($request->has('gift_product_ids')) {
+            $giftProducts = collect($request->input('gift_product_ids', []))
+                ->mapWithKeys(fn ($productId) => [(int) $productId => ['quantity' => 1]])
+                ->all();
+
+            $promotion->giftProducts()->sync($giftProducts);
+        }
+
+        if ($request->has('gift_products')) {
+            $giftProducts = collect($request->input('gift_products', []))
+                ->mapWithKeys(fn ($gift) => [
+                    (int) $gift['product_id'] => ['quantity' => max(1, (int) ($gift['quantity'] ?? 1))],
+                ])
+                ->all();
+
+            $promotion->giftProducts()->sync($giftProducts);
         }
     }
 }

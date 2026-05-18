@@ -9,6 +9,7 @@ use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\CartItem;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
+use Marvel\Database\Models\Promotion;
 use Marvel\Database\Models\User;
 
 class CartInventoryService
@@ -47,6 +48,56 @@ class CartInventoryService
                 'price' => $price,
                 'total_price' => $price * $desiredQuantity,
                 'attributes' => $variant ? $attributes : null,
+            ];
+
+            if ($item) {
+                $item->update($payload);
+                $this->touchCartReservation($cart);
+
+                return $item->refresh();
+            }
+
+            $item = $cart->items()->create($payload);
+            $this->touchCartReservation($cart);
+
+            return $item;
+        });
+    }
+
+    public function reserveGiftItem(Cart $cart, Product $product, Promotion $promotion, int $quantity): CartItem
+    {
+        return DB::transaction(function () use ($cart, $product, $promotion, $quantity) {
+            $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
+            $item = CartItem::query()
+                ->where('cart_id', $cart->id)
+                ->where('product_id', $product->id)
+                ->whereNull('product_variant_id')
+                ->where('promotion_id', $promotion->id)
+                ->where('is_gift', true)
+                ->lockForUpdate()
+                ->first();
+
+            $desiredQuantity = max(1, $quantity);
+            $stock = $this->lockInventoryRow($product, null);
+            $reservedQuantity = (int) ($item?->reserved_quantity ?? 0);
+            $delta = $desiredQuantity - $reservedQuantity;
+
+            if ($delta > 0) {
+                $this->reserveStock($stock, $delta);
+            } elseif ($delta < 0) {
+                $this->releaseStock($stock, abs($delta));
+            }
+
+            $payload = [
+                'product_id' => $product->id,
+                'product_variant_id' => null,
+                'quantity' => $desiredQuantity,
+                'reserved_quantity' => $desiredQuantity,
+                'price' => 0,
+                'total_price' => 0,
+                'attributes' => null,
+                'is_gift' => true,
+                'promotion_id' => $promotion->id,
             ];
 
             if ($item) {
@@ -109,8 +160,9 @@ class CartInventoryService
                 if ($item->reserved_quantity > 0) {
                     $stock = $this->lockInventoryRowByItem($item);
                     $this->finalizeStock($stock, (int) $item->reserved_quantity);
-                    $item->delete();
                 }
+
+                $item->delete();
             }
 
             $cart->update([
@@ -145,7 +197,9 @@ class CartInventoryService
     public function ensureCartReservation(Cart $cart): Cart
     {
         return DB::transaction(function () use ($cart) {
-            $cart = Cart::whereKey($cart->id)->lockForUpdate()->with(['items.product', 'items.productVariant'])->firstOrFail();
+            $cart = Cart::whereKey($cart->id)
+            ->lockForUpdate()
+            ->with(['items.product', 'items.productVariant'])->firstOrFail();
             foreach ($cart->items as $item) {
                 $this->syncCartItemReservation($item);
             }

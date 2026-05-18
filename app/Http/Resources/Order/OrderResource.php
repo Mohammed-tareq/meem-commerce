@@ -17,7 +17,14 @@ class OrderResource extends JsonResource
             'id' => $this->id,
             'order_number' => $this->order_number,
             'status' => $this->status,
+            'subtotal' => $this->roundMoney($this->price),
+            'discount' => $this->roundMoney(((float) ($this->coupon_discount ?? 0)) + ((float) ($this->promotion_discount ?? 0))),
             'total' => $this->roundMoney($this->total_price),
+            'promotion' => $this->promotion_id ? [
+                'id' => $this->promotion_id,
+                'type' => $this->promotion_type,
+                'code' => $this->promotion_code,
+            ] : null,
             'created_at' => $this->created_at?->toIso8601String(),
             'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
         ];

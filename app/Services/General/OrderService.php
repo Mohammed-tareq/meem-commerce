@@ -26,6 +26,9 @@ class OrderService
         'notes',
     ];
 
+    public function __construct(private PromotionService $promotionService)
+    {
+    }
 
     public function paginateForUser(Request $request): LengthAwarePaginator
     {
@@ -71,12 +74,13 @@ class OrderService
             if (!$cart || !$cart->items()->exists()) {
                 return null;
             }
-            $totalPrice = $cart->items->sum('total_price');
-
-            $totalPrice =  $this->calculatePriceByCoupon($cart, $totalPrice);
-            $cart->update(['total_price' => $totalPrice]);
+            $checkoutTotals = $this->calculateCheckoutTotals($cart, (int) $request->input('selected_promotion_id') ?: null);
+            $cart->update(['total_price' => $checkoutTotals['final_total']]);
             DB::commit();
             return $cart->total_price;
+        } catch (\InvalidArgumentException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             return null;
@@ -90,26 +94,41 @@ class OrderService
             if (!$cart || !$cart->items()->exists()) {
                 return null;
             }
-            $order = $this->saveOrderInDatabase($request->only($this->dataArray), $cart);
+            $checkoutTotals = $this->calculateCheckoutTotals($cart, (int) $request->input('selected_promotion_id') ?: null);
+            $order = $this->saveOrderInDatabase($request->only($this->dataArray), $cart, $checkoutTotals);
             if (!$order) {
                 DB::rollBack();
                 return null;
             }
+            $cart->load(['items.product', 'items.productVariant']);
             if (!$this->createOrderItems($order, $cart)) {
                 DB::rollBack();
                 return null;
             }
+            $this->promotionService->incrementUsage($checkoutTotals['promotion']['id'] ?? null);
             DB::commit();
             return $order;
+        } catch (\InvalidArgumentException $e) {
+            DB::rollBack();
+            throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
             return null;
         }
     }
 
-    protected function saveOrderInDatabase($order, $cart)
+    public function eligiblePromotionsForUser(): ?array
     {
-        $totalPriceBeforeCoupon = $cart->items->sum('total_price');
+        $cart = $this->getCartUser();
+        if (!$cart || !$cart->items()->exists()) {
+            return null;
+        }
+
+        return $this->promotionService->eligiblePromotionsPayload($cart);
+    }
+
+    protected function saveOrderInDatabase($order, $cart, array $checkoutTotals)
+    {
         $couponData = $this->getCoupon($cart?->coupon ?? null);
         $order = Order::create([
             'user_id' => auth()->user()->id,
@@ -118,13 +137,17 @@ class OrderService
             'user_email' => $order['user_email'],
             'address' => $order['address'],
             'notes' => $order['notes'] ?? null,
-            'price' => $totalPriceBeforeCoupon,
+            'price' => $checkoutTotals['subtotal'],
             'shipping_price' => null,
-            'total_price' => $cart->total_price,
+            'total_price' => $checkoutTotals['final_total'],
             'coupon' => $couponData?->code ?? null,
-            'coupon_discount' => $couponData?->discount ?? null,
+            'coupon_discount' => $checkoutTotals['coupon_discount'] ?: null,
             'coupon_discount_type' => $couponData?->discount_type ?? null,
-            'coupon_discount_max_amount' => $couponData?->discount_max_amount ?? null,
+            'coupon_discount_max_amount' => $couponData?->max_discount_amount ?? null,
+            'promotion_id' => $checkoutTotals['promotion']['id'] ?? null,
+            'promotion_code' => $checkoutTotals['promotion']['code'] ?? null,
+            'promotion_type' => $checkoutTotals['promotion']['type'] ?? null,
+            'promotion_discount' => $checkoutTotals['promotion_discount'],
             'status' => 'pending',
         ]);
         return $order;
@@ -144,6 +167,8 @@ class OrderService
                 'product_flash_sale_price' => $item->product->has_flash_sale ? $item->product->flash_sales()->valid()->where('id', $item->product->flash_sale_id)->first()?->price : null,
                 'product_discount_price' => $item->product->has_discount ? $item->product->discount_amount : null,
                 'attributes' => $item->attributes ?? null,
+                'is_gift' => (bool) ($item->is_gift ?? false),
+                'promotion_id' => $item->promotion_id,
 
             ]);
             if (!$orderItem) {
@@ -202,6 +227,23 @@ class OrderService
         } else {
             return $totalPrice = $this->CalcPriceByCoupon($cart->coupon, $totalPrice);
         }
+    }
+
+    private function calculateCheckoutTotals(Cart $cart, ?int $selectedPromotionId): array
+    {
+        $promotionTotals = $this->promotionService->applySelectedPromotion($cart, $selectedPromotionId);
+        $priceAfterPromotion = $promotionTotals['final_total'];
+        $priceAfterCoupon = $this->calculatePriceByCoupon($cart, $priceAfterPromotion);
+        $finalTotal = round(max(0, (float) $priceAfterCoupon), 2);
+
+        return [
+            'subtotal' => $promotionTotals['subtotal'],
+            'promotion_discount' => $promotionTotals['discount'],
+            'coupon_discount' => round(max(0, $priceAfterPromotion - $finalTotal), 2),
+            'final_total' => $finalTotal,
+            'promotion' => $promotionTotals['promotion'],
+            'gift_items' => $promotionTotals['gift_items'],
+        ];
     }
     private function checkCouponUsage($couponId)
     {

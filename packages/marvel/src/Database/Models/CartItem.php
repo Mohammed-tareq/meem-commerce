@@ -19,10 +19,13 @@ class   CartItem extends Model
         'price',
         'total_price',
         'product_variant_id',
-        'attributes'
+        'attributes',
+        'is_gift',
+        'promotion_id',
     ];
     protected $casts = [
         'attributes' => 'array',
+        'is_gift' => 'boolean',
     ];
 
 
@@ -42,5 +45,10 @@ class   CartItem extends Model
     public function productVariant()
     {
         return $this->belongsTo(ProductVariant::class);
+    }
+
+    public function promotion()
+    {
+        return $this->belongsTo(Promotion::class);
     }
 }

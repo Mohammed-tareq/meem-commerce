@@ -4,86 +4,164 @@ namespace Database\Seeders;
 
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
-use Marvel\Database\Models\Promotion;
+use Illuminate\Support\Str;
 use Marvel\Database\Models\Product;
+use Marvel\Database\Models\Promotion;
+use Marvel\Enums\PromotionMountType;
 use Marvel\Enums\PromotionType;
 
 class PromotionSeeder extends Seeder
 {
+    private const PROMOTION_COUNT = 60;
+
     public function run(): void
     {
         $productIds = Product::query()->pluck('id')->all();
-        $promotionCount = 100;
+        $promotionImages = File::exists(public_path('images/banners'))
+            ? collect(File::files(public_path('images/banners')))
+            : collect();
 
-        $promotionImages = collect(File::files(public_path('images/banners')));
-        $promotionImagesCount = $promotionImages->count();
+        for ($index = 1; $index <= self::PROMOTION_COUNT; $index++) {
+            $promotion = match ($index % 3) {
+                0 => $this->createGiftPromotion($index, $productIds),
+                1 => $this->createPercentagePromotion($index, $productIds),
+                default => $this->createFixedPromotion($index, $productIds),
+            };
 
-        for ($index = 1; $index <= $promotionCount; $index++) {
-            $type = rand(0, 1) === 0 ? PromotionType::PRICE : PromotionType::QTY;
-            $typeAmount = $type === PromotionType::QTY
-                ? 'gift'
-                : (rand(0, 1) === 0 ? 'percentage' : 'fixed_rate');
-            $isGiftPromotion = $typeAmount === 'gift';
-            $promotionProductIds = [];
+            $this->attachPromotionImage($promotion, $promotionImages, $index);
+        }
+    }
 
-            if ($isGiftPromotion && !empty($productIds)) {
-                $sampleSize = min(count($productIds), rand(1, 3));
-                $randomKeys = array_rand(array_flip($productIds), $sampleSize);
-                $promotionProductIds = is_array($randomKeys) ? array_values($randomKeys) : [$randomKeys];
+    private function createPercentagePromotion(int $index, array $productIds): Promotion
+    {
+        $requiredProductIds = $this->randomProductIds($productIds, rand(0, 1) === 1 ? rand(1, 3) : 0);
+        $discount = collect([5, 10, 15, 20, 25, 30])->random();
+
+        $promotion = $this->createPromotion([
+            'name' => [
+                'en' => "{$discount}% OFF Promotion {$index}",
+                'ar' => "خصم {$discount}% {$index}",
+            ],
+            'type' => PromotionType::PRICE,
+            'type_amount' => PromotionMountType::PERCENTAGE,
+            'value' => $discount,
+            'discount' => $discount,
+            'max_discount_amount' => collect([50, 75, 100, 150, 200])->random(),
+            'required_quantity_type' => rand(1, 3),
+            'minimum_order_amount' => collect([0, 250, 500, 750, 1000])->random(),
+            'apply_to' => empty($requiredProductIds) ? 'all_products' : 'specific_products',
+        ]);
+
+        $promotion->products()->sync($requiredProductIds);
+
+        return $promotion;
+    }
+
+    private function createFixedPromotion(int $index, array $productIds): Promotion
+    {
+        $requiredProductIds = $this->randomProductIds($productIds, rand(0, 1) === 1 ? rand(1, 3) : 0);
+        $discount = collect([25, 50, 75, 100, 150, 200])->random();
+
+        $promotion = $this->createPromotion([
+            'name' => [
+                'en' => "{$discount} EGP OFF Promotion {$index}",
+                'ar' => "خصم {$discount} جنيه {$index}",
+            ],
+            'type' => PromotionType::PRICE,
+            'type_amount' => PromotionMountType::FIXED_RATE,
+            'value' => $discount,
+            'discount' => $discount,
+            'max_discount_amount' => null,
+            'required_quantity_type' => rand(1, 3),
+            'minimum_order_amount' => collect([0, 300, 600, 900])->random(),
+            'apply_to' => empty($requiredProductIds) ? 'all_products' : 'specific_products',
+        ]);
+
+        $promotion->products()->sync($requiredProductIds);
+
+        return $promotion;
+    }
+
+    private function createGiftPromotion(int $index, array $productIds): Promotion
+    {
+        $requiredProductIds = $this->randomProductIds($productIds, rand(1, 3));
+        $giftProductIds = $this->randomProductIds($productIds, rand(1, 2), $requiredProductIds);
+
+        if (empty($giftProductIds) && !empty($productIds)) {
+            $giftProductIds = $this->randomProductIds($productIds, 1);
+        }
+
+        $promotion = $this->createPromotion([
+            'name' => [
+                'en' => "Buy More Get Gift {$index}",
+                'ar' => "اشتري أكثر واحصل على هدية {$index}",
+            ],
+            'type' => PromotionType::QTY,
+            'type_amount' => PromotionMountType::GIFT,
+            'value' => 0,
+            'discount' => 0,
+            'max_discount_amount' => null,
+            'required_quantity_type' => rand(2, 5),
+            'minimum_order_amount' => collect([0, 250, 500])->random(),
+            'apply_to' => empty($requiredProductIds) ? 'all_products' : 'specific_products',
+        ]);
+
+        $promotion->products()->sync($requiredProductIds);
+
+        $giftProducts = collect($giftProductIds)
+            ->mapWithKeys(fn ($productId) => [(int) $productId => ['quantity' => rand(1, 2)]])
+            ->all();
+
+        $promotion->giftProducts()->sync($giftProducts);
+
+        return $promotion;
+    }
+
+    private function createPromotion(array $attributes): Promotion
+    {
+        return Promotion::create(array_merge([
+            'code' => strtoupper(Str::random(10)),
+            'limiter' => rand(25, 250),
+            'usage' => 0,
+            'start_at' => Carbon::now()->subDays(rand(0, 10)),
+            'end_at' => Carbon::now()->addDays(rand(10, 60)),
+            'status' => true,
+        ], $attributes));
+    }
+
+    private function randomProductIds(array $productIds, int $count, array $exclude = []): array
+    {
+        $availableProductIds = array_values(array_diff($productIds, $exclude));
+
+        if ($count <= 0 || empty($availableProductIds)) {
+            return [];
+        }
+
+        return collect($availableProductIds)
+            ->shuffle()
+            ->take(min($count, count($availableProductIds)))
+            ->values()
+            ->all();
+    }
+
+    private function attachPromotionImage(Promotion $promotion, $promotionImages, int $index): void
+    {
+        try {
+            if ($promotionImages->isNotEmpty()) {
+                $image = $promotionImages[($index - 1) % $promotionImages->count()];
+                $promotion->addMedia($image->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                    ->toMediaCollection('promotions', 'promotions');
+
+                return;
             }
 
-            $value = $typeAmount === 'percentage'
-                ? rand(5, 50)
-                : rand(5, 200);
-
-            $requiredQuantity = $type === PromotionType::QTY
-                ? rand(2, 5)
-                : rand(1, 3);
-
-            $promotion = Promotion::create([
-                'name' => [
-                    'en' => $type === PromotionType::QTY
-                        ? "Quantity Promotion {$index}"
-                        : "Promotion {$index}",
-                    'ar' => $type === PromotionType::QTY
-                        ? "عرض حسب الكمية {$index}"
-                        : "عرض ترويجي {$index}",
-                ],
-                'type' => $type,
-                'type_amount' => $typeAmount,
-                'value' => $value,
-                'max_discount_amount' => $typeAmount === 'percentage' ? rand(20, 100) : null,
-                'code' => (string) Str::uuid(),
-                'required_quantity_type' => $requiredQuantity,
-                'limiter' => rand(10, 100),
-                'usage' => rand(0, 20),
-                'start_at' => Carbon::now()->subDays(rand(0, 5)),
-                'end_at' => Carbon::now()->addDays(rand(5, 30)),
-                'status' => true,
-            ]);
-
-            if (!empty($promotionProductIds)) {
-                $promotion->products()->sync($promotionProductIds);
-            }
-
-            // attach a banner image from local `public/images/banners` if available,
-            // otherwise fall back to a remote placeholder.
-            try {
-                if ($promotionImagesCount > 0) {
-                    $image = $promotionImages[($index - 1) % $promotionImagesCount];
-                    $promotion->addMedia($image->getPathname())
-                        ->preservingOriginal()
-                        ->usingFileName(Str::uuid() . '.' . $image->getExtension())
-                        ->toMediaCollection('promotions', 'promotions');
-                } else {
-                    $imageUrl = 'https://picsum.photos/seed/promotion' . $index . '/1200/400';
-                    $promotion->addMediaFromUrl($imageUrl)->toMediaCollection('promotions', 'promotions');
-                }
-            } catch (\Exception $e) {
-                // ignore image attach failures during seeding
-            }
+            $promotion->addMediaFromUrl('https://picsum.photos/seed/promotion' . $index . '/1200/400')
+                ->toMediaCollection('promotions', 'promotions');
+        } catch (\Exception $e) {
+            // Image attachment should not block demo data creation.
         }
     }
 }

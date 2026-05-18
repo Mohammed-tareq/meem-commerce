@@ -39,6 +39,17 @@ class OrderController extends Controller
         );
     }
 
+    public function eligiblePromotions(): JsonResponse
+    {
+        $payload = $this->orderService->eligiblePromotionsForUser();
+
+        if (!$payload) {
+            return $this->apiResponse('Cart not found', 400, false);
+        }
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $payload);
+    }
+
     public function checkout(OrderCreateRequest $request)
     {
         $orderDataUser = $request->validated();
@@ -55,7 +66,12 @@ class OrderController extends Controller
             return $this->apiResponse($e->getMessage(), 400, false);
         }
 
-        $orderPrice = $this->orderService->calcInvoicePrice($request);
+        try {
+            $orderPrice = $this->orderService->calcInvoicePrice($request);
+        } catch (\InvalidArgumentException $e) {
+            return $this->apiResponse($e->getMessage(), 422, false);
+        }
+
         if (!$orderPrice || $orderPrice <= 0) {
             return $this->apiResponse(FILED_TO_CREATE_ORDER_TRY_AGAIN, 500, false);
         }
@@ -87,7 +103,13 @@ class OrderController extends Controller
         }
 
 
-        if (!$order = $this->orderService->addItemsInOrder($request)) {
+        try {
+            $order = $this->orderService->addItemsInOrder($request);
+        } catch (\InvalidArgumentException $e) {
+            return $this->apiResponse($e->getMessage(), 422, false);
+        }
+
+        if (!$order) {
             return $this->apiResponse('Error adding items to order', 500, false);
         }
 

@@ -48,6 +48,7 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     Route::controller(OrderController::class)->group(function () {
         Route::get('orders', 'index')->middleware('auth:sanctum');
         //========================= checkout =========================//
+        Route::get('checkout/promotions', 'eligiblePromotions')->middleware('auth:sanctum');
         Route::post('checkout', 'checkout')->middleware('auth:sanctum');
         Route::get('checkout/callback', 'checkoutCallback')->name('api.checkout.callback');
         Route::get('checkout/error', 'checkoutErrorCallback')->name('api.checkout.errorCallback');
