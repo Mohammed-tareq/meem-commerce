@@ -1,8 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\General;
 
 use App\Services\General\PromotionEngine\PromotionEligibilityResolver;
+use App\Services\General\PromotionEngine\PromotionApplicator;
+use App\Services\General\PromotionEngine\Outcome\DiscountOutcome;
+use App\Services\General\PromotionEngine\Outcome\GiftOutcome;
 use App\Services\General\PromotionEngine\PromotionResult;
 use Illuminate\Support\Collection;
 use Marvel\Database\Models\Cart;
@@ -14,38 +19,41 @@ class PromotionService
     public function __construct(
         private PromotionEligibilityResolver $resolver,
         private CartInventoryService $inventoryService,
-    ) {
-    }
+        private PromotionApplicator $applicator,
+    ) {}
 
     public function eligiblePromotions(Cart $cart): Collection
     {
         $cart->load(['items.product', 'items.productVariant']);
 
         $subtotal = $this->subtotal($cart);
+        $subtotalCents = (int) round((float) $subtotal * 100);
         $promotions = Promotion::valid()
             ->with(['products:id', 'giftProducts:id,name,sku'])
             ->get();
 
-        return $this->resolver->eligible($cart, $promotions, $subtotal);
+        return $this->resolver->eligible($cart, $promotions, $subtotalCents);
     }
 
     public function eligiblePromotionsPayload(Cart $cart): array
     {
         return [
             'eligible_promotions' => $this->eligiblePromotions($cart)
-                ->map(fn (PromotionResult $result) => $result->toArray())
+                ->map(fn(PromotionResult $result) => $result->toArray())
                 ->values()
                 ->all(),
         ];
     }
 
-    public function applySelectedPromotion(Cart $cart, ?int $promotionId): array
+    public function applySelectedPromotion(Cart $cart, ?int $promotionId, ?int $selectedGiftProductId = null): array
     {
         $this->removeGiftItems($cart);
         $cart->load(['items.product', 'items.productVariant']);
 
         $subtotal = $this->subtotal($cart);
+        $subtotalCents = (int) round((float) $subtotal * 100);
         $result = null;
+        $appliedDetails = ['discount' => 0.0, 'gift_items' => []];
 
         if ($promotionId) {
             $promotion = Promotion::valid()
@@ -58,30 +66,42 @@ class PromotionService
                 throw new \InvalidArgumentException('Selected promotion is not valid.');
             }
 
-            $result = $this->resolver->resolve($cart, $promotion, $subtotal);
+            // Evaluate promotion (read-only)
+            $result = $this->resolver->resolve($cart, $promotion, $subtotalCents);
 
             if (!$result) {
                 throw new \InvalidArgumentException('Selected promotion is not eligible for this cart.');
             }
 
-            $this->applyGiftItems($cart, $result);
+            // Build PromotionEvaluation to pass to strategy (resolver already computed scoped outcome via resolver->resolve returning PromotionResult for backward compatibility)
+            // Determine outcome via strategy by re-evaluating (resolver returned PromotionResult for compatibility). Use resolver->eligible to fetch evaluation if needed.
+            $evaluation = $this->resolver->matchedEligibility($cart, $promotion, $subtotalCents);
+
+            // Use strategy to compute outcome (we already performed computeOutcome in resolver for compatibility; map to Outcome types)
+            // For backward compatibility we reuse PromotionResult structure: if it has giftItems, treat as GiftOutcome; else Discount
+            if (!empty($result->giftItems)) {
+                $selectedGiftItem = $this->resolveSelectedGiftItem($result->giftItems, $selectedGiftProductId);
+                $outcome = new GiftOutcome([$selectedGiftItem]);
+            } else {
+                $amountCents = (int) round((float) ($result->discount ?? 0) * 100);
+                $outcome = new DiscountOutcome($amountCents, $evaluation->matchedSubtotalCents);
+            }
+
+            // Apply outcome transactionally, reserving gifts and updating cart
+            $appliedDetails = $this->applicator->applyOutcome($cart, $promotion, $outcome);
+            $cart->refresh();
+            $cart->load(['items.product', 'items.productVariant']);
         }
-
-        $discount = min($subtotal, (float) ($result?->discount ?? 0));
-        $finalTotal = round(max(0, $subtotal - $discount), 2);
-
-        $cart->forceFill(['total_price' => $finalTotal])->save();
-
         return [
-            'subtotal' => round($subtotal, 2),
-            'discount' => round($discount, 2),
-            'final_total' => $finalTotal,
+            'subtotal' => round((float) $subtotal, 2),
+            'discount' => round((float) ($appliedDetails['discount'] ?? 0), 2),
+            'final_total' => round((float) $cart->total_price, 2),
             'promotion' => $result ? [
                 'id' => $result->promotion->id,
                 'type' => $result->promotion->type_amount,
                 'code' => $result->promotion->code,
             ] : null,
-            'gift_items' => $result?->giftItems ?? [],
+            'gift_items' => $appliedDetails['gift_items'] ?? [],
         ];
     }
 
@@ -107,7 +127,7 @@ class PromotionService
         $cart->items()
             ->where('is_gift', true)
             ->get()
-            ->each(fn ($item) => $this->inventoryService->releaseItem($item, true));
+            ->each(fn($item) => $this->inventoryService->releaseItem($item, true));
     }
 
     private function applyGiftItems(Cart $cart, PromotionResult $result): void
@@ -129,7 +149,38 @@ class PromotionService
     private function subtotal(Cart $cart): float
     {
         return round((float) $cart->items
-            ->reject(fn ($item) => (bool) ($item->is_gift ?? false))
-            ->sum('total_price'), 2);
+            ->reject(fn($item) => (bool) ($item->is_gift ?? false))
+            ->sum(function ($item) {
+                $baseLineTotal = ((float) ($item->price ?? 0)) * ((int) ($item->quantity ?? 0));
+
+                if ($baseLineTotal > 0) {
+                    return $baseLineTotal;
+                }
+
+                return (float) ($item->total_price ?? 0);
+            }), 2);
+    }
+
+    private function resolveSelectedGiftItem(array $giftItems, ?int $selectedGiftProductId): array
+    {
+        $availableGiftItems = collect($giftItems)
+            ->filter(fn($giftItem) => (int) ($giftItem['price_cents'] ?? 0) === 0)
+            ->values();
+
+        if ($availableGiftItems->isEmpty()) {
+            throw new \InvalidArgumentException('No available gift products for this promotion.');
+        }
+
+        if ($selectedGiftProductId) {
+            $selectedGiftItem = $availableGiftItems->firstWhere('product_id', $selectedGiftProductId);
+
+            if (!$selectedGiftItem) {
+                throw new \InvalidArgumentException('Selected gift product is not available for this promotion.');
+            }
+
+            return $selectedGiftItem;
+        }
+
+        return $availableGiftItems->first();
     }
 }

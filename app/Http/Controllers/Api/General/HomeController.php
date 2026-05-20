@@ -30,6 +30,13 @@ class HomeController extends Controller
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
+    public function navData()
+    {
+        $data = $this->homeService->getNavData();
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
+    }
+
     /**
      * @return list<string>|null
      */

@@ -1,14 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\General\PromotionEngine\Contracts;
 
-use App\Services\General\PromotionEngine\PromotionResult;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Promotion;
+use App\Services\General\PromotionEngine\PromotionEvaluation;
+use App\Services\General\PromotionEngine\Outcome\PromotionOutcome;
 
 interface PromotionStrategy
 {
-    public function eligible(Promotion $promotion, Cart $cart, float $subtotal, int $matchedQuantity): bool;
+    // Determine eligibility using the evaluation (read-only)
+    // `subtotal` provided in integer cents
+    public function eligible(Promotion $promotion, Cart $cart, int $subtotalCents, PromotionEvaluation $evaluation): bool;
 
-    public function apply(Promotion $promotion, Cart $cart, float $subtotal, int $matchedQuantity): PromotionResult;
+    // Compute read-only outcome (DiscountOutcome or GiftOutcome). Amounts in outcomes must be integer cents.
+    public function computeOutcome(Promotion $promotion, Cart $cart, int $subtotalCents, PromotionEvaluation $evaluation): PromotionOutcome;
 }

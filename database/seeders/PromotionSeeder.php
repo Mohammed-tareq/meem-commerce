@@ -120,14 +120,28 @@ class PromotionSeeder extends Seeder
 
     private function createPromotion(array $attributes): Promotion
     {
+        $applyTo = $attributes['apply_to'] ?? 'specific_products';
+
         return Promotion::create(array_merge([
-            'code' => strtoupper(Str::random(10)),
+            'code' => $this->generatePromotionCode($applyTo),
             'limiter' => rand(25, 250),
             'usage' => 0,
             'start_at' => Carbon::now()->subDays(rand(0, 10)),
             'end_at' => Carbon::now()->addDays(rand(10, 60)),
             'status' => true,
         ], $attributes));
+    }
+
+    private function generatePromotionCode(string $applyTo, int $length = 10): string
+    {
+        $prefix = match ($applyTo) {
+            'all_products' => 'ALL',
+            'specific_products' => 'PRO',
+            'specific_categories' => 'CAT',
+            default => 'PRO',
+        };
+
+        return $prefix . strtoupper(Str::random($length));
     }
 
     private function randomProductIds(array $productIds, int $count, array $exclude = []): array

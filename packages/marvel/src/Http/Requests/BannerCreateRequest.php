@@ -27,53 +27,58 @@ class BannerCreateRequest extends FormRequest
      */
     public function rules()
     {
-            return [
-                "title" => ["required", "array"],
+        return [
+            "title" => ["required", "array"],
 
-                "title.en" => [
-                    "required",
-                    "string",
-                    "max:255",
-                    "min:3",
-                    UniqueTranslationRule::for('banners','title'),
-                ],
+            "title.en" => [
+                "required",
+                "string",
+                "max:255",
+                "min:3",
+                UniqueTranslationRule::for('banners', 'title'),
+            ],
 
-                "title.ar" => [
-                    "required",
-                    "string",
-                    "max:255",
-                    "min:3",
-                    UniqueTranslationRule::for('banners','title'),
-                ],
+            "title.ar" => [
+                "required",
+                "string",
+                "max:255",
+                "min:3",
+                UniqueTranslationRule::for('banners', 'title'),
+            ],
 
-                "description" => ["required", "array"],
+            "description" => ["required", "array"],
 
-                "description.en" => [
-                    "nullable",
-                    "string",
-                    "max:500",
-                    "min:5",
-                    UniqueTranslationRule::for('banners','description'),
-                ],
+            "description.en" => [
+                "nullable",
+                "string",
+                "max:500",
+                "min:5",
+                UniqueTranslationRule::for('banners', 'description'),
+            ],
 
-                "description.ar" => [
-                    "nullable",
-                    "string",
-                    "max:500",
-                    "min:5",
-                    UniqueTranslationRule::for('banners','description'),
-                ],
+            "description.ar" => [
+                "nullable",
+                "string",
+                "max:500",
+                "min:5",
+                UniqueTranslationRule::for('banners', 'description'),
+            ],
 
-                "image" => [
-                    "required",
-                    "image",
-                    "mimes:jpeg,png,jpg,gif",
-                    "max:2048",
-                ],
-
-                "status" => ["sometimes", "in:0,1"],
-            ];
-
+            "image_desktop" => [
+                "required",
+                "image",
+                "mimes:jpeg,png,jpg,gif",
+                "max:2048",
+            ],
+            
+            "image_mobile" => [
+                "required",
+                "image",
+                "mimes:jpeg,png,jpg,gif",
+                "max:2048",
+            ],
+            "status" => ["sometimes", "in:0,1"],
+        ];
     }
 
     public function failedValidation(Validator $validator)

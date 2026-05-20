@@ -21,6 +21,7 @@ class OrderProduct extends Model
         'product_price',
         'product_total_price',
         'product_discount_price',
+        'promotion_discount_amount',
         'product_flash_sale_price',
         'is_gift',
         'promotion_id',
@@ -29,6 +30,7 @@ class OrderProduct extends Model
     protected $casts = [
         'attributes' => 'array',
         'is_gift' => 'boolean',
+        'promotion_discount_amount' => 'float',
     ];
 
 

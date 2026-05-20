@@ -54,7 +54,7 @@ class ProductCreateRequest extends FormRequest
             'shop_id'                      => ['required', 'exists:shops,id'],
             'categories'                   => ['required', 'array'],
             'categories.*'                 => ['integer', 'exists:categories,id'],
-            'quantity'                     => ['required', 'integer', 'min:1'],
+            'quantity'                     => ['sometimes   ', 'integer', 'min:1'],
             // 'images'                        => ['required', 'array'],
             // 'images.*'                      => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'pieces'                       => ['sometimes', 'integer', 'min:1'],

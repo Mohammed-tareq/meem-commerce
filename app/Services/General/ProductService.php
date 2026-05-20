@@ -62,10 +62,10 @@ class ProductService
                 'categories',
                 'variations',
                 'media',
-                'reviews' => fn (Builder $builder) => $builder->approved()->with('user'),
+                'reviews' => fn ($builder) => $builder->approved()->with('user'),
             ])
-            ->withAvg(['reviews' => fn (Builder $builder) => $builder->approved()], 'rating')
-            ->withCount(['reviews' => fn (Builder $builder) => $builder->approved()])
+            ->withAvg(['reviews' => fn ($builder) => $builder->approved()], 'rating')
+            ->withCount(['reviews' => fn ($builder) => $builder->approved()])
             ->find($id);
 
         if (!$product) {

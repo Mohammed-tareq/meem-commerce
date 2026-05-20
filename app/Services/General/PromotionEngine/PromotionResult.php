@@ -3,15 +3,16 @@
 namespace App\Services\General\PromotionEngine;
 
 use Marvel\Database\Models\Promotion;
+use App\Services\General\PromotionEngine\DTOs\GiftItem;
 
 class PromotionResult
 {
+    /** @param GiftItem[] $giftItems */
     public function __construct(
         public readonly Promotion $promotion,
         public readonly float $discount,
         public readonly array $giftItems = [],
-    ) {
-    }
+    ) {}
 
     public function toArray(): array
     {
@@ -21,7 +22,7 @@ class PromotionResult
             'title' => $this->title(),
             'code' => $this->promotion->code,
             'discount' => round($this->discount, 2),
-            'gift_items' => $this->giftItems,
+            'gift_items' => array_map(fn(GiftItem $g) => $g->toArray(), $this->giftItems),
         ];
     }
 

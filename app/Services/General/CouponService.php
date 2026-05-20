@@ -112,7 +112,7 @@ class CouponService
 
         return [
             'total_price' => $totalPriceForCart,
-            'coupon_discount' =>round($cart->total_price - $totalPriceForCart, 2),
+            'coupon_discount' => round((float) $cart->total_price - (float) $totalPriceForCart, 2),
         ];
     }
 }

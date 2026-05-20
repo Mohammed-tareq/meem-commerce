@@ -18,6 +18,7 @@ class OrderItemResource extends JsonResource
             'quantity' => (int) $this->product_quantity,
             'unit_price' => $this->roundMoney($this->product_price),
             'total_price' => $this->roundMoney($this->product_total_price),
+            'promotion_discount_amount' => $this->roundMoney($this->promotion_discount_amount),
             'is_gift' => (bool) ($this->is_gift ?? false),
             'promotion_id' => $this->promotion_id,
             'product' => $this->resolveProduct($request),

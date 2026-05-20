@@ -24,8 +24,12 @@ class ProductMiniResource extends JsonResource
             'discount_type'          => $this->discount_type,
             'discount_amount'        => $this->discount_amount,
             'quantity'               => $this->quantity,
-            'discount_valid'           =>  (bool) $this->isDiscountActive(),
-            'image'                  =>  $this->getmedia('products') ? $this->getmediaImages('products') : [],
+            'discount_valid'         => (bool) $this->isDiscountActive(),
+            'ratings'                => $this->reviews()->avg('rating') ?? 0,
+            'image'                  => [
+                'original'  => $this->getFirstMediaUrl('products'),
+                'thumbnails' => $this->getMediaImages('products'),
+            ],
         ];
     }
 
@@ -47,10 +51,16 @@ class ProductMiniResource extends JsonResource
 
         return array_key_exists($key, $attributes) ? $attributes[$key] : $this->{$key};
     }
-    private function getmediaImages($collection)
+    private function getMediaImages($collection)
     {
-        return $this->getmedia($collection)->map(function ($media) {
-            return $media->getUrl();
-        });
+        $media = $this->getMedia($collection);
+
+
+        // Return all media URLs except the first (used as 'original')
+        return $media->slice(1)
+            ->map(function ($m) {
+                return $m->getUrl();
+            });
+
     }
 }

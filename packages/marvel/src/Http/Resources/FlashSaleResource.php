@@ -18,7 +18,9 @@ class FlashSaleResource extends Resource
             "id" => $this->id,
             "title" => $this->getTranslation("title", app()->getLocale()),
             "slug" => $this->slug,
-            "image" => $this->getFirstMediaUrl('flash-sales-image'),
+            "image" => [
+                'original' => $this?->getFirstMediaUrl('flash-sales-image'),
+            ],
             $this->mergeWhen(!request()->routeIs('home'), function () {
                 return [
                     "description" => $this->getTranslation("description", app()->getLocale()),

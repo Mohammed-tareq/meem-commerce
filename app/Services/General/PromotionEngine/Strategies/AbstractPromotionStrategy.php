@@ -1,22 +1,28 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\General\PromotionEngine\Strategies;
 
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Promotion;
+use App\Services\General\PromotionEngine\PromotionEvaluation;
 
 abstract class AbstractPromotionStrategy
 {
-    public function eligible(Promotion $promotion, Cart $cart, float $subtotal, int $matchedQuantity): bool
+    // subtotal cents
+    public function eligible(Promotion $promotion, Cart $cart, int $subtotal, PromotionEvaluation $evaluation): bool
     {
         if (!$promotion->isValid()) {
             return false;
         }
 
-        if ($subtotal < (float) ($promotion->minimum_order_amount ?? 0)) {
+        // Eligibility should be based on matched subtotal (scope of the promotion)
+        $minimumCents = (int) round(((float) ($promotion->minimum_order_amount ?? 0)) * 100);
+        if ($evaluation->matchedSubtotalCents < $minimumCents) {
             return false;
         }
 
-        return $promotion->isRequiredQuantityTrue($matchedQuantity);
+        return $promotion->isRequiredQuantityTrue($evaluation->matchedQuantity);
     }
 }

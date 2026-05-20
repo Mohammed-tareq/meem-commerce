@@ -101,15 +101,16 @@ class CartRepository extends BaseRepository
         }
 
         $product = Product::findOrFail($productId);
-        if ($product->available_stock < $quantity) {
-            throw new Exception('Product exceeds available stock.');
-        }
 
         $inventoryService = app(CartInventoryService::class);
 
         if ($product->isSimple()) {
             if ($variantId) {
                 throw new Exception(INVALID_ITEM_DATA);
+            }
+
+            if ($product->available_stock < $quantity) {
+                throw new Exception('Product exceeds available stock.');
             }
 
             $inventoryService->reserveItem($cart, $product, null, $quantity, $mode, $attributes);

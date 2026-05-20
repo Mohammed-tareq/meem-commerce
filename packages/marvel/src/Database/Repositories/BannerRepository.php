@@ -34,10 +34,17 @@ class BannerRepository extends BaseRepository
         try {
 
             DB::beginTransaction();
-            $banner = $this->create($request->except('image'));
-            if ($request->has('image')) {
-                if (!$this->uploadSingleImage($request, 'image', $banner, 'banners', 'banners')) {
-                    throw new HttpException(422, 'Banner image upload failed, please check the file format or size.');
+            $banner = $this->create($request->except('image_desktop', 'image_mobile'));
+            if ($request->has('image_desktop') || $request->has('image_mobile')) {
+                if ($request->has('image_desktop')) {
+                    if (!$this->uploadSingleImage($request, 'image_desktop', $banner, 'banners', 'banners')) {
+                        throw new HttpException(422, 'Banner image upload failed, please check the file format or size.');
+                    }
+                }
+                if ($request->has('image_mobile')) {
+                    if (!$this->uploadSingleImage($request, 'image_mobile', $banner, 'banners', 'banners')) {
+                        throw new HttpException(422, 'Banner image upload failed, please check the file format or size.');
+                    }
                 }
             }
             DB::commit();
@@ -53,9 +60,14 @@ class BannerRepository extends BaseRepository
         try {
             DB::beginTransaction();
             $banner = $this->findOrFail($id);
-            $banner->update($request->except('image'));
-            if ($request->has('image')) {
-                if (!$this->updateSingleImage($request, 'image', $banner, 'banners', 'banners')) {
+            $banner->update($request->except('image_desktop', 'image_mobile'));
+            if ($request->has('image_desktop')) {
+                if (!$this->updateSingleImage($request, 'image_desktop', $banner, 'banners', 'banners')) {
+                    throw new HttpException(422, 'Banner image upload failed, please check the file format or size.');
+                }
+            }
+            if ($request->has('image_mobile')) {
+                if (!$this->updateSingleImage($request, 'image_mobile', $banner, 'banners', 'banners')) {
                     throw new HttpException(422, 'Banner image upload failed, please check the file format or size.');
                 }
             }

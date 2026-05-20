@@ -62,7 +62,7 @@ class Promotion extends Model implements HasMedia
 
         static::creating(function (self $promotion) {
             if (empty($promotion->code)) {
-                $promotion->code = (string) Str::uuid();
+                $promotion->code = self::generateUniqueCode($promotion);
             }
         });
 
@@ -231,5 +231,25 @@ class Promotion extends Model implements HasMedia
         }
 
         return  $this->products()->get();
+    }
+
+    private static function generateUniqueCode(self $promotion, int $length = 10): string
+    {
+        $prefix = self::codePrefix($promotion);
+
+        do {
+            $code = $prefix . strtoupper(Str::random($length));
+        } while (self::query()->where('code', $code)->exists());
+
+        return $code;
+    }
+
+    private static function codePrefix(self $promotion): string
+    {
+        return match ($promotion->apply_to ?? 'specific_products') {
+            'all_products' => 'ALL',
+            'specific_products' => 'PRO',
+            default => 'PRO',
+        };
     }
 }

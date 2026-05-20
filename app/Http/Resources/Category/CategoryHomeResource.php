@@ -14,11 +14,13 @@ class CategoryHomeResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return[
+        return [
             'id'                   => $this->id,
             'name'                 => $this->getTranslation('name', app()->getLocale()),
             'slug'                 => $this->slug,
-            'image'                => $this->getFirstMediaUrl('categories'),
+            'image'                => [
+                'original' =>   $this->getFirstMediaUrl('categories'),
+            ],
             'products_count'       => $this->whenCounted('products'),
             'details'              => $this?->getTranslation('details', app()->getLocale()),
             $this->mergeWhen(request()->routeIs('home'), [

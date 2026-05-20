@@ -19,9 +19,9 @@ class UpdatePromotionRequest extends FormRequest
 
     public function rules()
     {
-         return [
+        return [
             "name" => "sometimes|array",
-            'name.*' => ['required_with:name', UniqueTranslationRule::for('promotions', 'name')],
+            'name.*' => ['required_with:name', UniqueTranslationRule::for('promotions', 'name')->ignore($this->route('promotion'))],
             'type' => ['sometimes', Rule::in(PromotionType::getValues())],
             'type_amount' => ['sometimes', Rule::in(PromotionMountType::getValues())],
             'product_ids' => ['sometimes', 'array'],

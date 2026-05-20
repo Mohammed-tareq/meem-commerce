@@ -2,7 +2,6 @@
 
 namespace Marvel\Http\Requests;
 
-use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -33,6 +32,7 @@ class OrderCreateRequest extends FormRequest
             'address' => ['required', 'array'],
             'notes' => ['nullable', 'string'],
             'selected_promotion_id' => ['nullable', 'integer', 'exists:promotions,id'],
+            'selected_gift_product_id' => ['nullable', 'integer', 'exists:products,id'],
         ];
     }
 

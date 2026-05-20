@@ -18,7 +18,7 @@ return new class extends Migration
             }
 
             if (!Schema::hasColumn('promotions', 'apply_to')) {
-                $table->string('apply_to')->default('all_products')->after('minimum_order_amount');
+                $table->string('apply_to')->default('specific_products')->after('minimum_order_amount');
             }
 
             $table->index(['status', 'start_at', 'end_at'], 'promotions_validity_index');

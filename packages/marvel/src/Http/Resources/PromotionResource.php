@@ -16,7 +16,6 @@ class PromotionResource extends Resource
             'value' => $this->value,
             'discount' => $this->discount ?? $this->value,
             'code' => $this->code,
-            'min_order_amount' => $this->min_order_amount,
             'minimum_order_amount' => $this->minimum_order_amount,
             'required_quantity' => $this->required_quantity_type,
             'apply_to' => $this->apply_to,

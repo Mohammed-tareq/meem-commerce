@@ -2,83 +2,90 @@
 
 namespace App\Services\General;
 
+use App\Http\Resources\Banner\BannerResource;
 use App\Http\Resources\Category\CategoryHomeResource;
 use App\Http\Resources\Category\CategoryWithChildNameResource;
 use App\Http\Resources\Product\ProductMiniResource;
+use App\Http\Resources\Slider\SliderResource;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Banner;
+use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Slider;
 use Marvel\Http\Resources\BrandResource;
-use Marvel\Http\Resources\BannerResource;
 use Marvel\Http\Resources\CouponResource;
 use Marvel\Http\Resources\FlashSaleResource;
-use Marvel\Http\Resources\SliderResource;
 
 class HomeService
 {
     public function __construct(private readonly CategoryHierarchyService $hierarchyService) {}
 
+    public function getNavData()
+    {
+        return Cache::remember("home-nav-bar", 120, function () {
+            return CategoryWithChildNameResource::collection($this->getCategoryWithChildren());
+        });
+    }
     public function getHomeData(?int $parentCategoryId = null, ?array $sections = null)
     {
         $parentCategoryId = $parentCategoryId ?: 1;
 
-        $categoryTree = Cache::remember("home_data:parent:{$parentCategoryId}:category-tree", 60, function () use ($parentCategoryId) {
+        $categoryTree = Cache::remember("home_data:parent:{$parentCategoryId}:category-tree", 120, function () use ($parentCategoryId) {
             return $this->getCategoryTree($parentCategoryId);
         });
 
-        $categoriesWithChildren = Cache::remember("home_data:parent:{$parentCategoryId}:categories-with-children", 60, function () {
+        $categoriesWithChildren = Cache::remember("home_data:parent:{$parentCategoryId}:categories-with-children", 120, function () {
             return $this->getCategories();
         });
 
         $data = [
-            'nav-bar' => Cache::remember("home-nav-bar", 60, function () {
-                return CategoryWithChildNameResource::collection($this->getCategoryWithChildren());
-            }),
-            'active_sliders' => Cache::remember("home-active-sliders", 60, function () {
+
+            'sliders' => Cache::remember("home-active-sliders", 120, function () {
                 return SliderResource::collection($this->getActiveSliders());
             }),
-            'active_banners' => Cache::remember("home-active-banners", 60, function () {
-                return BannerResource::collection($this->getActiveBanners());
+            'dailyOffers' => Cache::remember("home-flash-sales", 120, function () {
+                return FlashSaleResource::collection($this->getFlashSalesForOneDay(9));
             }),
-            'brands' => Cache::remember("home-brands", 60, function () {
-                return BrandResource::collection($this->getBrands());
-            }),
-            'best_categories' => Cache::remember("home-best-categories", 60, function () use ($categoriesWithChildren) {
+            'bestCategories' => Cache::remember("home-best-categories", 120, function () use ($categoriesWithChildren) {
                 return CategoryHomeResource::collection($categoriesWithChildren);
             }),
-            'parent_categories' => Cache::remember("home-parent-categories", 60, function () use ($categoryTree) {
-                return CategoryHomeResource::collection($categoryTree);
-            }),
-            'discount_products_end_today' => Cache::remember("home-discount-products-end-today", 60, function () {
+            'discountProductsEndToday' => Cache::remember("home-discount-products-end-today", 120, function () {
                 return ProductMiniResource::collection($this->getDiscountEndingTodayOrLowStockProducts());
             }),
-            'coupons' => Cache::remember('home-latest-coupons', 60, function () {
+            'banners' => Cache::remember("home-active-banners", 120, function () {
+                return BannerResource::collection($this->getActiveBanners());
+            }),
+            'brands' => Cache::remember("home-brands", 120, function () {
+                return BrandResource::collection($this->getBrands());
+            }),
+
+            // 'parent_categories' => Cache::remember("home-parent-categories", 120, function () use ($categoryTree) {
+            //     return CategoryHomeResource::collection($categoryTree);
+            // }),
+
+            'coupons' => Cache::remember('home-latest-coupons', 120, function () {
                 return CouponResource::collection($this->getLatestValidCoupons(3));
             }),
-            'flash_sales' => Cache::remember("home-flash-sales", 60, function () {
-                return FlashSaleResource::collection($this->getFlashSales(9));
-            }),
-            'flash_sale_products' => Cache::remember("home-flash-sale-products", 60, function () {
-                return ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek());
-            }),
-            'weekly_parent_categories' => Cache::remember("home-weekly-parent-categories", 60, function () use ($categoryTree) {
+        'flashSaleProducts' =>   ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek()),
+            // 'flashSaleProducts' => Cache::remember("home-flash-sale-products", 120, function () {
+            //     return ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek());
+            // }),
+            'parentCategories' => Cache::remember("home-weekly-parent-categories", 120, function () use ($categoryTree) {
                 return CategoryHomeResource::collection($categoryTree);
             }),
-            'weekly_products' => Cache::remember("home-weekly-products", 60, function () use ($categoryTree) {
+            'weeklyProducts' => Cache::remember("home-weekly-products", 120, function () use ($categoryTree) {
                 return ProductMiniResource::collection($this->getWeeklyCategoryProducts($categoryTree));
             }),
-            'all_discount_products' => Cache::remember("home-all-discount-products", 60, function () {
+            'allDiscountProducts' => Cache::remember("home-all-discount-products", 120, function () {
                 return ProductMiniResource::collection($this->getAllDiscountProducts());
             }),
-            'flash_sales_after_9' => Cache::remember("home-flash-sales-after-9", 60, function () {
-                return FlashSaleResource::collection($this->getFlashSales(9, 9));
+            'newArrivals' => Cache::remember("home-flash-sales-after-9", 120, function () {
+                return ProductMiniResource::collection($this->getNewArrivals(15));
             }),
 
         ];
@@ -146,6 +153,7 @@ class HomeService
 
     public function getFlashSales(int $limit, $after = null): Collection
     {
+
         return FlashSale::query()->valid()
             ->when($after, function ($query, $after) {
                 $query->where('id', '>', $after);
@@ -154,10 +162,19 @@ class HomeService
             ->limit($limit)
             ->get();
     }
+    public function getFlashSalesForOneDay(int $limit): Collection
+    {
+        return FlashSale::query()->valid()
+            ->where('start_date', '=', today())
+            ->where('end_date', '=', today())
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+    }
 
     public function getDiscountEndingTodayOrLowStockProducts(): Collection
     {
-        $products = DB::table('products')
+        $products = Product::query()
             ->select([
                 'id',
                 'name',
@@ -174,33 +191,29 @@ class HomeService
                 'price_after_discount',
                 'price_after_flash_sale',
             ])
+            ->with('reviews')
             ->whereNull('deleted_at')
             ->where('status', true)
             ->where('has_discount', true)
             ->where('has_flash_sale', false)
             ->where(function ($query) {
                 $query->whereDate('end_date', today())
-                    ->orWhere('quantity', '<', 10);
+                    ->orWhereBetween('quantity', [1, 9]);
             })
             ->orderByDesc('id')
             ->limit(25)
             ->get();
 
-        return $products->map(function ($product) {
-            $model = new Product();
-            $attributes = (array) $product;
-            $attributes['current_price'] = $this->moneyValue($product->price_after_discount ?? $product->price ?? null);
-            $model->setRawAttributes($attributes, true);
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
 
-            return $model;
+            return $product;
         })->filter(fn(Product $product) => $product->isDiscountActive())->values();
     }
 
-    public function getFlashSaleProductsEndingThisWeek(): Collection
+    public function getNewArrivals(int $limit): Collection
     {
-        $weekEnd = now()->endOfWeek();
-
-        $products = DB::table('products')
+        $products = Product::query()
             ->select([
                 'id',
                 'name',
@@ -217,6 +230,43 @@ class HomeService
                 'price_after_discount',
                 'price_after_flash_sale',
             ])
+            ->with(['reviews', 'media'])
+            ->whereNull('deleted_at')
+            ->where('status', true)
+            ->where('has_flash_sale', false)
+            ->whereDate('created_at', '>=', now()->subDays(15))
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get();
+
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
+
+            return $product;
+        })->values();
+    }
+    public function getFlashSaleProductsEndingThisWeek(): Collection
+    {
+        $weekEnd = now()->endOfWeek();
+
+        $products = Product::query()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->with(['reviews', 'media'])
             ->whereNull('deleted_at')
             ->where('status', true)
             ->where('has_flash_sale', true)
@@ -233,13 +283,10 @@ class HomeService
             ->orderByDesc('id')
             ->get();
 
-        return $products->map(function ($product) {
-            $model = new Product();
-            $attributes = (array) $product;
-            $attributes['current_price'] = $this->moneyValue($product->price_after_flash_sale ?? $product->price_after_discount ?? $product->price ?? null);
-            $model->setRawAttributes($attributes, true);
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_flash_sale ?? $product->price_after_discount ?? $product->price ?? null));
 
-            return $model;
+            return $product;
         })->values();
     }
 
@@ -247,7 +294,7 @@ class HomeService
     {
         $categoryIds = $categoryTree->pluck('id')->all();
 
-        $products = DB::table('products')
+        $products = Product::query()
             ->select([
                 'id',
                 'name',
@@ -264,6 +311,7 @@ class HomeService
                 'price_after_discount',
                 'price_after_flash_sale',
             ])
+            ->with(['reviews', 'media'])
             ->whereNull('deleted_at')
             ->where('status', true)
             ->where('has_discount', true)
@@ -277,19 +325,16 @@ class HomeService
             ->limit($productLimit)
             ->get();
 
-        return $products->map(function ($product) {
-            $model = new Product();
-            $attributes = (array) $product;
-            $attributes['current_price'] = $this->moneyValue($product->price_after_discount ?? $product->price ?? null);
-            $model->setRawAttributes($attributes, true);
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
 
-            return $model;
+            return $product;
         })->filter(fn(Product $product) => $product->isDiscountActive())->values();
     }
 
     public function getAllDiscountProducts(): Collection
     {
-        $products = DB::table('products')
+        $products = Product::query()
             ->select([
                 'id',
                 'name',
@@ -306,19 +351,17 @@ class HomeService
                 'price_after_discount',
                 'price_after_flash_sale',
             ])
+            ->with(['reviews', 'media'])
             ->whereNull('deleted_at')
             ->where('status', true)
             ->where('has_discount', true)
             ->orderByDesc('id')
             ->get();
 
-        return $products->map(function ($product) {
-            $model = new Product();
-            $attributes = (array) $product;
-            $attributes['current_price'] = $this->moneyValue($product->price_after_discount ?? $product->price ?? null);
-            $model->setRawAttributes($attributes, true);
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
 
-            return $model;
+            return $product;
         })->filter(fn(Product $product) => $product->isDiscountActive())->values();
     }
 

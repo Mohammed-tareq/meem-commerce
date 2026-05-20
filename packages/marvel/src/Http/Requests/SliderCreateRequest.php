@@ -28,7 +28,8 @@ class   SliderCreateRequest extends FormRequest
     {
         return [
             'title' => 'sometimes|string|max:255',
-            "image"=> "required | image | mimes:jpeg,png,jpg,gif | max:2048",
+            "image_desktop"=> "required | image | mimes:jpeg,png,jpg,gif | max:2048",
+            "image_mobile"=> "required | image | mimes:jpeg,png,jpg,gif | max:2048",
             "status"=> "sometimes | in:1,0",
         ];
     }

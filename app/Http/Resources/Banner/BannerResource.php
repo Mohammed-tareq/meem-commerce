@@ -19,7 +19,10 @@ class BannerResource extends JsonResource
             'id'          => $this->id,
             'title'       => $this->title,
             'description' => $this->description,
-            'image'       => $this->getFirstMediaUrl('banners'),
+            'image'       =>[
+                'desktop' => $this?->getFirstMediaUrl('banner-image-desktop'),
+                'mobile' => $this?->getFirstMediaUrl('banner-image-mobile'),
+            ],
             "status"   => (bool)$this->status,
             "products"    => $this->whenLoaded('products', function () {
                 return ProductMiniResource::collection($this->products);

@@ -77,6 +77,7 @@ class CategoryRepository extends BaseRepository
         }
     }
 
+    
     public function updateCategory($request, $category)
     {
         try {

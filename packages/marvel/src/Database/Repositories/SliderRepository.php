@@ -32,9 +32,14 @@ class SliderRepository extends BaseRepository
         try {
 
             DB::beginTransaction();
-            $slider = $this->create($request->except('image'));
-            if ($request->has('image')) {
-                if (!$this->uploadSingleImage($request, 'image', $slider, 'slider-image', 'sliders')) {
+            $slider = $this->create($request->except('image_desktop', 'image_mobile'));
+            if ($request->has('image_desktop')) {
+                if (!$this->uploadSingleImage($request, 'image', $slider, 'slider-image-desktop', 'sliders')) {
+                    throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
+                }
+            }
+            if ($request->has('image_mobile')) {
+                if (!$this->uploadSingleImage($request, 'image', $slider, 'slider-image-mobile', 'sliders')) {
                     throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
                 }
             }
@@ -53,12 +58,15 @@ class SliderRepository extends BaseRepository
         try {
             DB::beginTransaction();
             $slider = $this->findOrFail($id);
-            $slider->update($request->except('image'));
-            if ($request->has('image')) {
-                if ($request->type === "slider") {
-                    if (!$this->updateSingleImage($request, 'image', $slider, 'slider-image', 'sliders')) {
-                        throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
-                    }
+            $slider->update($request->except('image_desktop', 'image_mobile'));
+            if ($request->has('image_desktop')) {
+                if (!$this->updateSingleImage($request, 'image_desktop', $slider, 'slider-image-desktop', 'sliders')) {
+                    throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
+                }
+            }
+            if ($request->has('image_mobile')) {
+                if (!$this->updateSingleImage($request, 'image_mobile', $slider, 'slider-image-mobile', 'sliders')) {
+                    throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
                 }
             }
             DB::commit();

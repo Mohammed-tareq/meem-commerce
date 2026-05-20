@@ -18,7 +18,10 @@ use Illuminate\Support\Facades\Http;
 Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])->group(function () {
 
     //========================= home=========================//
-    Route::get('home', [HomeController::class, 'index'])->name('home');
+    Route::controller(HomeController::class)->group(function () {
+    Route::get('home', 'index')->name('home');
+    Route::get('navbar', 'navData')->name('navbar');
+    });
 
     //======================== shops=========================//
     Route::controller(ShopController::class)->group(function () {

@@ -40,7 +40,7 @@ class ProductResource extends JsonResource
             'has_flash_sale'         => $this->has_flash_sale,
             'has_discount'           => $this->has_discount,
             $this->mergeWhen($this->has_discount, fn() => ['discount_valid' => $this->isDiscountActive()]),
-            "images"                 => $this->getmedia('products') ? $this->getmediaImages('products') : [],
+            "images"                 => $this->getmedia('products') ? $this->getMediaImages('products') : [],
             "variants"                => $this->whenLoaded('variations', fn() => $this->getVariants()),
             'reviews'                 => ReviewResource::collection($this->whenLoaded('reviews')),
             $this->mergeWhen($this->relationLoaded('related_products'), fn() => ['related_products' => ProductMiniResource::collection($this->related_products)]),
@@ -50,7 +50,7 @@ class ProductResource extends JsonResource
 
 
 
-    private function getmediaImages($collection)
+    private function getMediaImages($collection)
     {
         return $this->getmedia($collection)->map(function ($media) {
             return $media->getUrl();
