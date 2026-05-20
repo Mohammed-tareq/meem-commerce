@@ -3,8 +3,11 @@
 namespace App\Services\General;
 
 use App\Http\Resources\Banner\BannerResource;
+use App\Http\Resources\Brand\BrandResource;
 use App\Http\Resources\Category\CategoryHomeResource;
 use App\Http\Resources\Category\CategoryWithChildNameResource;
+use App\Http\Resources\Coupons\CouponResource;
+use App\Http\Resources\FlashSale\FlashSaleResource;
 use App\Http\Resources\Product\ProductMiniResource;
 use App\Http\Resources\Slider\SliderResource;
 use Illuminate\Support\Collection;
@@ -17,9 +20,6 @@ use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Slider;
-use Marvel\Http\Resources\BrandResource;
-use Marvel\Http\Resources\CouponResource;
-use Marvel\Http\Resources\FlashSaleResource;
 
 class HomeService
 {
