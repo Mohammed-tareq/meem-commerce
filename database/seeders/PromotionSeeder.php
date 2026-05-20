@@ -162,18 +162,29 @@ class PromotionSeeder extends Seeder
     private function attachPromotionImage(Promotion $promotion, $promotionImages, int $index): void
     {
         try {
+            $imagesToAttach = 9;
+
             if ($promotionImages->isNotEmpty()) {
-                $image = $promotionImages[($index - 1) % $promotionImages->count()];
-                $promotion->addMedia($image->getPathname())
-                    ->preservingOriginal()
-                    ->usingFileName(Str::uuid() . '.' . $image->getExtension())
-                    ->toMediaCollection('promotions', 'promotions');
+                $total = $promotionImages->count();
+                for ($i = 0; $i < $imagesToAttach; $i++) {
+                    $image = $promotionImages[($index - 1 + $i) % $total];
+                    $collection = $i % 2 === 0 ? 'promotions-desktop' : 'promotions-mobile';
+                    $promotion->addMedia($image->getPathname())
+                        ->preservingOriginal()
+                        ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                        ->toMediaCollection($collection, 'promotions');
+                }
 
                 return;
             }
 
-            $promotion->addMediaFromUrl('https://picsum.photos/seed/promotion' . $index . '/1200/400')
-                ->toMediaCollection('promotions', 'promotions');
+            // Fallback to picsum seeds so each promotion gets multiple images
+            for ($i = 0; $i < $imagesToAttach; $i++) {
+                $seed = $index . '-' . $i;
+                $collection = $i % 2 === 0 ? 'promotions-desktop' : 'promotions-mobile';
+                $promotion->addMediaFromUrl('https://picsum.photos/seed/promotion' . $seed . '/1200/400')
+                    ->toMediaCollection($collection, 'promotions');
+            }
         } catch (\Exception $e) {
             // Image attachment should not block demo data creation.
         }

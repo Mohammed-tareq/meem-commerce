@@ -32,7 +32,8 @@ class UpdateCouponRequest extends FormRequest
         return [
             "name" => "sometimes|array",
             'name.*' => ['required_with:name', UniqueTranslationRule::for('coupons', 'name')->ignore($this->route('coupon'))],
-            'image' => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp'],
+            'image-desktop' => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp'],
+            'image-mobile' => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp'],
             'discount'      => 'sometimes|numeric|min:0',
             'discount_type' => ['sometimes', Rule::in(DiscountType::getValues())],
             'max_discount_amount' => [

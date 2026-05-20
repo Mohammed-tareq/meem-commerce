@@ -25,13 +25,21 @@ class BrandSeeder extends Seeder
                     'status' => random_int(0, 1),
                 ]
             );
-            if ($brandImagesCount > 0 && ! $brand->hasMedia('brands')) {
+            if ($brandImagesCount > 0 && ! $brand->hasMedia('brands-desktop')) {
                 $image = $brandImages[($i - 1) % $brandImagesCount];
                 $brand
                     ->addMedia($image->getPathname())
                     ->preservingOriginal()
                     ->usingFileName(Str::uuid() . '.' . $image->getExtension())
-                    ->toMediaCollection('brands', 'brands');
+                    ->toMediaCollection('brands-desktop', 'brands');
+            }
+            if ($brandImagesCount > 0 && ! $brand->hasMedia('brands-mobile')) {
+                $image = $brandImages[($i - 1) % $brandImagesCount];
+                $brand
+                    ->addMedia($image->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                    ->toMediaCollection('brands-mobile', 'brands');
             }
         }
     }

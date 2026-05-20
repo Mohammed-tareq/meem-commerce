@@ -17,32 +17,86 @@ class UpdatePromotionRequest extends FormRequest
         return true;
     }
 
-    public function rules()
-    {
-        return [
-            "name" => "sometimes|array",
-            'name.*' => ['required_with:name', UniqueTranslationRule::for('promotions', 'name')->ignore($this->route('promotion'))],
-            'type' => ['sometimes', Rule::in(PromotionType::getValues())],
-            'type_amount' => ['sometimes', Rule::in(PromotionMountType::getValues())],
-            'product_ids' => ['sometimes', 'array'],
-            'product_ids.*' => 'exists:products,id',
-            'gift_product_ids' => ['sometimes', 'array', 'min:1'],
-            'gift_product_ids.*' => 'exists:products,id',
-            'gift_products' => ['sometimes', 'array', 'min:1'],
-            'gift_products.*.product_id' => 'required_with:gift_products|exists:products,id',
-            'gift_products.*.quantity' => 'sometimes|integer|min:1',
-            'value' => 'sometimes|numeric|min:1',
-            'discount' => 'sometimes|numeric|min:0',
-            'max_discount_amount' => 'sometimes|numeric|min:1',
-            'required_quantity_type' => 'nullable|integer|min:1',
-            'minimum_order_amount' => 'nullable|numeric|min:0',
-            'apply_to' => ['nullable', Rule::in(['all_products', 'specific_products'])],
-            'limiter' => 'nullable|integer|min:1',
-            'start_at' => 'nullable|date|before_or_equal:today',
-            'end_at' => 'nullable|date|after_or_equal:start_at',
-            'status' => 'sometimes|in:0,1',
-        ];
-    }
+   public function rules()
+{
+    return [
+        "name" => "sometimes|array",
+        'name.*' => ['required_with:name', UniqueTranslationRule::for('promotions', 'name')],
+
+        "image-desktop" => "sometimes|image|mimes:jpeg,png,jpg,webp",
+        "image-mobile"  => "sometimes|image|mimes:jpeg,png,jpg,webp",
+
+        'type'        => ['sometimes', Rule::in(PromotionType::getValues())],
+        'type_amount' => ['sometimes', Rule::in(PromotionMountType::getValues())],
+
+        'product_ids'   => ['sometimes', 'array'],
+        'product_ids.*' => 'exists:products,id',
+
+        'gift_product_ids'   => ['sometimes', 'array', 'min:1'],
+        'gift_product_ids.*' => 'exists:products,id',
+
+        'gift_products' => ['sometimes', 'array', 'min:1'],
+        'gift_products.*.product_id' => 'required_with:gift_products|exists:products,id',
+        'gift_products.*.quantity'   => 'sometimes|integer|min:1',
+
+        'value' => [
+            'sometimes',
+            'numeric',
+            'min:1',
+            Rule::requiredIf(function () {
+                $type = request()->input('type');
+                $giftIds = request()->input('gift_product_ids', []);
+                $giftProducts = request()->input('gift_products', []);
+
+                return !(
+                    $type === 'quantity' &&
+                    (!empty($giftIds) || !empty($giftProducts))
+                );
+            }),
+        ],
+
+        'discount' => [
+            'sometimes',
+            'numeric',
+            'min:0',
+            Rule::requiredIf(function () {
+                $type = request()->input('type');
+                $giftIds = request()->input('gift_product_ids', []);
+                $giftProducts = request()->input('gift_products', []);
+
+                return !(
+                    $type === 'quantity' &&
+                    (!empty($giftIds) || !empty($giftProducts))
+                );
+            }),
+        ],
+
+        'max_discount_amount' => 'sometimes|numeric|min:1',
+
+        'required_quantity_type' => 'sometimes|integer|min:1',
+
+        'minimum_order_amount' => [
+            'sometimes',
+            'numeric',
+            'min:0',
+            Rule::requiredIf(function () {
+                $type = request()->input('type');
+                $price = request()->input('price');
+
+                return !empty($price) || $type !== 'quantity';
+            }),
+        ],
+
+        'apply_to' => ['nullable', Rule::in(['all_products', 'specific_products'])],
+        'limiter'  => 'nullable|integer|min:1',
+
+        'start_at' => 'nullable|date|before_or_equal:today',
+        'end_at'   => 'nullable|date|after_or_equal:start_at',
+
+        'status'   => 'sometimes|in:0,1',
+    ];
+}
+
 
     public function failedValidation(Validator $validator)
     {

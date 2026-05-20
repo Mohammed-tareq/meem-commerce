@@ -76,7 +76,15 @@ class SliderSeeder extends Seeder
                     ->addMedia($image->getPathname())
                     ->preservingOriginal()
                     ->usingFileName(Str::uuid() . '.' . $image->getExtension())
-                    ->toMediaCollection('slider-image', 'sliders');
+                    ->toMediaCollection('sliders-desktop', 'sliders');
+            }
+            if ($sliderImagesCount > 0) {
+                $image = $sliderImages[$index % $sliderImagesCount];
+                $sliderModel
+                    ->addMedia($image->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                    ->toMediaCollection('sliders-mobile', 'sliders');
             }
         }
     }

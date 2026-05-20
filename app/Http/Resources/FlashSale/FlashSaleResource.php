@@ -21,7 +21,10 @@ class FlashSaleResource extends JsonResource
             'discription' => $this?->getTranslation('description', app()->getLocale()),
             'slug' => $this->slug,
             'start_date' => $this->start_date,
-            'image'                  =>  $this->getFirstMediaUrl('flash-sales-image'),
+            'image'                  =>  [
+                'desktop' => $this->getFirstMediaUrl('flash-sales-desktop'),
+                'mobile' => $this->getFirstMediaUrl('flash-sales-mobile'),
+            ],
             'end_date' => $this->end_date,
             'products' => ProductMiniResource::collection($this->whenLoaded('products')),
         ];

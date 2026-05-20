@@ -62,12 +62,12 @@ class BannerRepository extends BaseRepository
             $banner = $this->findOrFail($id);
             $banner->update($request->except('image_desktop', 'image_mobile'));
             if ($request->has('image_desktop')) {
-                if (!$this->updateSingleImage($request, 'image_desktop', $banner, 'banners', 'banners')) {
+                if (!$this->updateSingleImage($request, 'image_desktop', $banner, 'banners-desktop', 'banners')) {
                     throw new HttpException(422, 'Banner image upload failed, please check the file format or size.');
                 }
             }
             if ($request->has('image_mobile')) {
-                if (!$this->updateSingleImage($request, 'image_mobile', $banner, 'banners', 'banners')) {
+                if (!$this->updateSingleImage($request, 'image_mobile', $banner, 'banners-mobile', 'banners')) {
                     throw new HttpException(422, 'Banner image upload failed, please check the file format or size.');
                 }
             }

@@ -76,7 +76,15 @@ class BannerSeeder extends Seeder
                     ->addMedia($image->getPathname())
                     ->preservingOriginal()
                     ->usingFileName(Str::uuid() . '.' . $image->getExtension())
-                    ->toMediaCollection('banners', 'banners');
+                    ->toMediaCollection('banners-desktop', 'banners');
+            }
+            if ($bannerImagesCount > 0) {
+                $image = $bannerImages[$index % $bannerImagesCount];
+                $bannerModel
+                    ->addMedia($image->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                    ->toMediaCollection('banners-mobile', 'banners');
             }
         }
     }

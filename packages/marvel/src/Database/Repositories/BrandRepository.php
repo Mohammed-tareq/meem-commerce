@@ -54,8 +54,13 @@ class BrandRepository extends BaseRepository
 
             $brand = $this->create($data);
 
-            if ($request->has('image')) {
-                if (!$this->uploadSingleImage($request, 'image', $brand, 'brands', 'brands')) {
+            if ($request->has('image-desktop')) {
+                if (!$this->uploadSingleImage($request, 'image-desktop', $brand, 'brands-desktop', 'brands')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
+            }
+            if ($request->has('image-mobile')) {
+                if (!$this->uploadSingleImage($request, 'image-mobile', $brand, 'brands-mobile', 'brands')) {
                     throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
                 }
             }
@@ -77,8 +82,13 @@ class BrandRepository extends BaseRepository
                 $data['slug'] = $this->makeSlug($request, 'slug', $brand->id);
             }
             $brand->update($data);
-            if ($request->has('image')) {
-                if (!$this->updateSingleImage($request, 'image', $brand, 'brands', 'brands')) {
+            if ($request->has('image-desktop')) {
+                if (!$this->updateSingleImage($request, 'image-desktop', $brand, 'brands-desktop', 'brands')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
+                }
+            }
+            if ($request->has('image-mobile')) {
+                if (!$this->updateSingleImage($request, 'image-mobile', $brand, 'brands-mobile', 'brands')) {
                     throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
                 }
             }

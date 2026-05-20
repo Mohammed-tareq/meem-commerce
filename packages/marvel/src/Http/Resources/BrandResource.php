@@ -18,7 +18,10 @@ class BrandResource extends Resource
             'id' => $this->id,
             'name' => $this->getTranslation('name', app()->getLocale()),
             'slug' => $this->slug,
-            'image' => $this->getFirstMediaUrl('brands'),
+            'image' => [
+                'desktop' => $this->getFirstMediaUrl('brands-desktop'),
+                'mobile' => $this->getFirstMediaUrl('brands-mobile'),
+            ],
             'details' => $this->getTranslation('details', app()->getLocale()),
             'status' => (bool) $this->status,
         ];

@@ -71,13 +71,19 @@ class CouponRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
-            $coupon = $this->create($request->except('image'));
+            $coupon = $this->create($request->except('image-desktop', 'image-mobile'));
 
-            if ($request->hasFile('image')) {
-                if (!$this->uploadSingleImage($request, 'image', $coupon, 'coupons', 'coupons')) {
+             if ($request->hasFile('image-desktop')) {
+                if (!$this->uploadSingleImage($request, 'image-desktop', $coupon, 'coupons-desktop', 'coupons')) {
                     throw new MarvelBadRequestException(COULD_NOT_CREATE_THE_RESOURCE);
                 }
             }
+             if ($request->hasFile('image-mobile')) {
+                if (!$this->uploadSingleImage($request, 'image-mobile', $coupon, 'coupons-mobile', 'coupons')) {
+                    throw new MarvelBadRequestException(COULD_NOT_CREATE_THE_RESOURCE);
+                }
+            }
+
             DB::commit();
 
             return $coupon;
@@ -94,12 +100,17 @@ class CouponRepository extends BaseRepository
             if (!$coupon) {
                 throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
             }
-            $data = $request->except('image');
+            $data = $request->except('image-desktop', 'image-mobile');
 
             $coupon->update($data);
 
-            if ($request->hasFile('image')) {
-                if (!$this->updateSingleImage($request, 'image', $coupon, 'coupons', 'coupons')) {
+            if ($request->hasFile('image-desktop')) {
+                if (!$this->updateSingleImage($request, 'image-desktop', $coupon, 'coupons-desktop', 'coupons')) {
+                    throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
+                }
+            }
+            if ($request->hasFile('image-mobile')) {
+                if (!$this->updateSingleImage($request, 'image-mobile', $coupon, 'coupons-mobile', 'coupons')) {
                     throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
                 }
             }

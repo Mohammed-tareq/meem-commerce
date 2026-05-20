@@ -64,8 +64,13 @@ class PromotionRepository extends BaseRepository
             $promotion = $this->create($data);
             $this->syncPromotionProducts($promotion, $request);
 
-            if ($request->hasFile('image')) {
-                if (!$this->uploadSingleImage($request, 'image', $promotion, 'promotions', 'promotions')) {
+            if ($request->hasFile('image-desktop')) {
+                if (!$this->uploadSingleImage($request, 'image-desktop', $promotion, 'promotions-desktop', 'promotions')) {
+                    throw new MarvelBadRequestException('Image upload failed');
+                }
+            }
+            if ($request->hasFile('image-mobile')) {
+                if (!$this->uploadSingleImage($request, 'image-mobile', $promotion, 'promotions-mobile', 'promotions')) {
                     throw new MarvelBadRequestException('Image upload failed');
                 }
             }
@@ -89,12 +94,16 @@ class PromotionRepository extends BaseRepository
             $promotion->update($data);
             $this->syncPromotionProducts($promotion, $request);
 
-            if ($request->hasFile('image')) {
-                if (!$this->updateSingleImage($request, 'image', $promotion, 'promotions', 'promotions')) {
+            if ($request->hasFile('image-desktop')) {
+                if (!$this->updateSingleImage($request, 'image-desktop', $promotion, 'promotions-desktop', 'promotions')) {
                     throw new MarvelBadRequestException('Image upload failed');
                 }
             }
-
+            if ($request->hasFile('image-mobile')) {
+                if (!$this->updateSingleImage($request, 'image-mobile', $promotion, 'promotions-mobile', 'promotions')) {
+                    throw new MarvelBadRequestException('Image upload failed');
+                }
+            }
             return $promotion;
         } catch (Exception $e) {
             throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);

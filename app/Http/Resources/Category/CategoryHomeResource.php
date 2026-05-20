@@ -19,7 +19,8 @@ class CategoryHomeResource extends JsonResource
             'name'                 => $this->getTranslation('name', app()->getLocale()),
             'slug'                 => $this->slug,
             'image'                => [
-                'original' =>   $this->getFirstMediaUrl('categories'),
+                'desktop' =>   $this->getFirstMediaUrl('categories-desktop'),
+                'mobile' =>   $this->getFirstMediaUrl('categories-mobile'),
             ],
             'products_count'       => $this->whenCounted('products'),
             'details'              => $this?->getTranslation('details', app()->getLocale()),

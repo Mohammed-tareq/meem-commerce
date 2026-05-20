@@ -5,19 +5,24 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str as SupportStr;
 use Marvel\Database\Models\Coupon;
 
 class CouponSeeder extends Seeder
 {
     public function run(): void
     {
-        for ($i = 1; $i <= 10000; $i++) {
+        $bannerImages = collect(File::files(public_path('images/banners')));
+        $bannerImagesCount = $bannerImages->count();
+
+        for ($i = 1; $i <= 1000; $i++) {
             $discountType = collect(['percentage', 'fixed_rate'])->random();
             $discount = $discountType === 'percentage'
                 ? rand(5, 50)
                 : rand(10, 200);
 
-            Coupon::create([
+            $coupon = Coupon::create([
                 'code'          => strtoupper(Str::random(8)),
                 'name'          => [
                     'en' => "Coupon $i",
@@ -34,6 +39,23 @@ class CouponSeeder extends Seeder
                 'used'          => rand(0, 50),
                 'status'        => true,
             ]);
+
+            if ($bannerImagesCount > 0 && $coupon) {
+                $image = $bannerImages[$i % $bannerImagesCount];
+                $coupon
+                    ->addMedia($image->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(SupportStr::uuid() . '.' . $image->getExtension())
+                    ->toMediaCollection('coupons-desktop', 'coupons');
+            }
+            if ($bannerImagesCount > 0 && $coupon) {
+                $image = $bannerImages[$i % $bannerImagesCount];
+                $coupon
+                    ->addMedia($image->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(SupportStr::uuid() . '.' . $image->getExtension())
+                    ->toMediaCollection('coupons-mobile', 'coupons');
+            }
         }
     }
 }

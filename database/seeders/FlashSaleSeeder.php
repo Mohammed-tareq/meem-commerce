@@ -122,14 +122,23 @@ class FlashSaleSeeder extends Seeder
         foreach ($flashSales as $index => $sale) {
             $flashSale = FlashSale::create($sale);
 
-            if ($flashSaleImagesCount > 0 && ! $flashSale->hasMedia('flash-sales-image')) {
+            if ($flashSaleImagesCount > 0 && ! $flashSale->hasMedia('flash-sales-desktop')) {
                 $image = $flashSaleImages[$index % $flashSaleImagesCount];
 
                 $flashSale
                     ->addMedia($image->getPathname())
                     ->preservingOriginal()
                     ->usingFileName(Str::uuid() . '.' . $image->getExtension())
-                    ->toMediaCollection('flash-sales-image', 'flashSales');
+                    ->toMediaCollection('flash-sales-desktop', 'flashSales');
+            }
+            if ($flashSaleImagesCount > 0 && ! $flashSale->hasMedia('flash-sales-mobile')) {
+                $image = $flashSaleImages[$index % $flashSaleImagesCount];
+
+                $flashSale
+                    ->addMedia($image->getPathname())
+                    ->preservingOriginal()
+                    ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                    ->toMediaCollection('flash-sales-mobile', 'flashSales');
             }
         }
     }

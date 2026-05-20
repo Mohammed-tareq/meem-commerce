@@ -19,7 +19,10 @@ class CategoryWithChildResource extends JsonResource
             'id'                   => $this->id,
             'name'                 => $this->getTranslation('name', app()->getLocale()),
             'slug'                 => $this->slug,
-            'image'                => $this->getFirstMediaUrl('categories'),
+            'image'                => [
+                'desktop' =>   $this->getFirstMediaUrl('categories-desktop'),
+                'mobile' =>   $this->getFirstMediaUrl('categories-mobile'),
+            ],
             'products_count'       => $this->whenCounted('products'),
             'details'              => $this?->getTranslation('details', app()->getLocale()),
             'children' => CategoryWithChildResource::collection($this->whenLoaded('children')),

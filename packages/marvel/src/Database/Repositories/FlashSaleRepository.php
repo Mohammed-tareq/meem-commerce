@@ -74,10 +74,16 @@ class FlashSaleRepository extends BaseRepository
         try {
             // only admin can create flash deals
             DB::beginTransaction();
-            $flash_sale = $this->create($request->except('image'));
+            $flash_sale = $this->create($request->except('image-desktop', 'image-mobile'));
 
-            if ($request->hasFile('image')) {
-                if (!$this->uploadSingleImage($request, 'image', $flash_sale, 'flash-sales-image', 'flashSales')) {
+            if ($request->hasFile('image-desktop')) {
+                if (!$this->uploadSingleImage($request, 'image-desktop', $flash_sale, 'flash-sales-desktop', 'flashSales')) {
+                    throw new HttpException(422, 'Flash sale image upload failed, please check the file format or size.');
+                }
+            }
+
+            if ($request->hasFile('image-mobile')) {
+                if (!$this->uploadSingleImage($request, 'image-mobile', $flash_sale, 'flash-sales-mobile', 'flashSales')) {
                     throw new HttpException(422, 'Flash sale image upload failed, please check the file format or size.');
                 }
             }
@@ -104,13 +110,20 @@ class FlashSaleRepository extends BaseRepository
             // only admin can update flash deals
             DB::beginTransaction();
             $flash_sale = $this->findOrFail($id);
-            $flash_sale->update($request->except('image'));
+            $flash_sale->update($request->except('image-desktop', 'image-mobile'));
 
-            if ($request->hasFile('image')) {
-                if (!$this->updateSingleImage($request, 'image', $flash_sale, 'flash-sales-image', 'flashSales')) {
+             if ($request->hasFile('image-desktop')) {
+                if (!$this->updateSingleImage($request, 'image-desktop', $flash_sale, 'flash-sales-desktop', 'flashSales')) {
                     throw new HttpException(422, 'Flash sale image upload failed, please check the file format or size.');
                 }
             }
+
+             if ($request->hasFile('image-mobile')) {
+                if (!$this->updateSingleImage($request, 'image-mobile', $flash_sale, 'flash-sales-mobile', 'flashSales')) {
+                    throw new HttpException(422, 'Flash sale image upload failed, please check the file format or size.');
+                }
+            }
+
 
             DB::commit();
             $this->updateFlashSaleProductPrices($flash_sale);

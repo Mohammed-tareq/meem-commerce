@@ -13,7 +13,7 @@ class CategorySeeder extends Seeder
     {
         $categoryImages = collect(File::files(public_path('images/categories')));
         $categoryImagesCount = $categoryImages->count();
-        $totalCategories = 3000;
+        $totalCategories = 900;
         $rootCategories = 20;
         $maxDepth = 4;
         $categoriesPerParent = 2;
@@ -77,14 +77,23 @@ class CategorySeeder extends Seeder
             ]
         );
 
-        if ($categoryImagesCount > 0 && ! $category->hasMedia('categories')) {
+        if ($categoryImagesCount > 0 && ! $category->hasMedia('categories-desktop')) {
             $image = $categoryImages[($sequence - 1) % $categoryImagesCount];
 
             $category
                 ->addMedia($image->getPathname())
                 ->preservingOriginal()
                 ->usingFileName(Str::uuid() . '.' . $image->getExtension())
-                ->toMediaCollection('categories', 'categories');
+                ->toMediaCollection('categories-desktop', 'categories');
+        }
+        if ($categoryImagesCount > 0 && ! $category->hasMedia('categories-mobile')) {
+            $image = $categoryImages[($sequence - 1) % $categoryImagesCount];
+
+            $category
+                ->addMedia($image->getPathname())
+                ->preservingOriginal()
+                ->usingFileName(Str::uuid() . '.' . $image->getExtension())
+                ->toMediaCollection('categories-mobile', 'categories');
         }
 
         $category->shops()->syncWithoutDetaching([1, 2]);

@@ -71,10 +71,9 @@ class HomeService
             'coupons' => Cache::remember('home-latest-coupons', 120, function () {
                 return CouponResource::collection($this->getLatestValidCoupons(3));
             }),
-        'flashSaleProducts' =>   ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek()),
-            // 'flashSaleProducts' => Cache::remember("home-flash-sale-products", 120, function () {
-            //     return ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek());
-            // }),
+            'flashSaleProducts' => Cache::remember("home-flash-sale-products", 120, function () {
+                return ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek());
+            }),
             'parentCategories' => Cache::remember("home-weekly-parent-categories", 120, function () use ($categoryTree) {
                 return CategoryHomeResource::collection($categoryTree);
             }),
