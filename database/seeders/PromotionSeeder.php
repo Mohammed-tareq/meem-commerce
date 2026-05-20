@@ -110,7 +110,7 @@ class PromotionSeeder extends Seeder
         $promotion->products()->sync($requiredProductIds);
 
         $giftProducts = collect($giftProductIds)
-            ->mapWithKeys(fn ($productId) => [(int) $productId => ['quantity' => rand(1, 2)]])
+            ->mapWithKeys(fn($productId) => [(int) $productId => ['quantity' => rand(1, 2)]])
             ->all();
 
         $promotion->giftProducts()->sync($giftProducts);
