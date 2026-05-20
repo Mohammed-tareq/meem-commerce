@@ -27,8 +27,8 @@ class ProductMiniResource extends JsonResource
             'discount_valid'         => (bool) $this->isDiscountActive(),
             'ratings'                => $this->reviews()->avg('rating') ?? 0,
             'image'                  => [
-                'original'  => $this->getFirstMediaUrl('products'),
-                'thumbnails' => $this->getMediaImages('products'),
+                'thumbnail'  => $this->getFirstMediaUrl('products'),
+                'original' => $this->getMediaImages('products'),
             ],
         ];
     }
