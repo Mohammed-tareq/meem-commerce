@@ -35,6 +35,8 @@ class CouponRequest extends FormRequest
             'name.*' => ['required_with:name', UniqueTranslationRule::for('coupons', 'name')],
             'image-desktop' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp'],
             'image-mobile' => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp'],
+            'border_color' => ['nullable', 'string', 'max:50'],
+            'borderless' => ['sometimes', 'in:1,0'],
             'discount'      => 'required|numeric|min:0',
             'discount_type' => ['required', Rule::in(DiscountType::getValues())],
             'max_discount_amount' => [

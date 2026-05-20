@@ -30,7 +30,9 @@ class Coupon extends Model implements HasMedia
         'end_date',
         'limiter',
         'used',
-        'status'
+        'status',
+        'border_color',
+        'borderless',
     ];
 
     // protected $appends = ['is_valid'];
@@ -39,6 +41,7 @@ class Coupon extends Model implements HasMedia
         'status' => 'boolean',
         'start_date' => 'date',
         'end_date' => 'date',
+        'borderless' => 'boolean',
     ];
 
     protected static function boot()

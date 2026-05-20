@@ -28,6 +28,8 @@ class CouponSeeder extends Seeder
                     'en' => "Coupon $i",
                     'ar' => "قسيمة $i",
                 ],
+                'border_color'  => rand(1, 5) === 1 ? sprintf('#%06x', mt_rand(0, 0xFFFFFF)) : null,
+                'borderless'    => (bool) rand(0, 1),
                 'discount'      => $discount,
                 'max_discount_amount' => $discountType === 'percentage'
                     ? rand(20, 100)

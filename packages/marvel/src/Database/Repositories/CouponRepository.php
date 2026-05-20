@@ -29,6 +29,8 @@ class CouponRepository extends BaseRepository
         "name",
         'discount',
         'discount_type',
+        'border_color',
+        'borderless',
         'start_date',
         'end_date',
         'limiter',

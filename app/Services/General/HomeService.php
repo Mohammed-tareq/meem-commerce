@@ -69,7 +69,7 @@ class HomeService
             // }),
 
             'coupons' => Cache::remember('home-latest-coupons', 120, function () {
-                return CouponResource::collection($this->getLatestValidCoupons(3));
+                return CouponResource::collection($this->getLatestValidCoupons(5));
             }),
             'flashSaleProducts' => Cache::remember("home-flash-sale-products", 120, function () {
                 return ProductMiniResource::collection($this->getFlashSaleProductsEndingThisWeek());
@@ -84,7 +84,7 @@ class HomeService
                 return ProductMiniResource::collection($this->getAllDiscountProducts());
             }),
             'newArrivals' => Cache::remember("home-flash-sales-after-9", 120, function () {
-                return ProductMiniResource::collection($this->getNewArrivals(15));
+                return ProductMiniResource::collection($this->getNewArrivals(10));
             }),
 
         ];
@@ -98,7 +98,7 @@ class HomeService
         return array_intersect_key($data, array_flip($requested));
     }
 
-    public function getLatestValidCoupons(int $limit = 3): Collection
+    public function getLatestValidCoupons(int $limit = 5): Collection
     {
         return Coupon::query()
             ->valid()
@@ -200,7 +200,7 @@ class HomeService
                     ->orWhereBetween('quantity', [1, 9]);
             })
             ->orderByDesc('id')
-            ->limit(25)
+            ->limit(10)
             ->get();
 
         return $products->map(function (Product $product) {
@@ -210,7 +210,7 @@ class HomeService
         })->filter(fn(Product $product) => $product->isDiscountActive())->values();
     }
 
-    public function getNewArrivals(int $limit): Collection
+    public function getNewArrivals(int $limit = 10): Collection
     {
         $products = Product::query()
             ->select([
@@ -280,6 +280,7 @@ class HomeService
                     ->whereBetween('flash_sales.end_date', [today(), $weekEnd]);
             })
             ->orderByDesc('id')
+            ->limit(10)
             ->get();
 
         return $products->map(function (Product $product) {
@@ -355,6 +356,7 @@ class HomeService
             ->where('status', true)
             ->where('has_discount', true)
             ->orderByDesc('id')
+            ->limit(10)
             ->get();
 
         return $products->map(function (Product $product) {

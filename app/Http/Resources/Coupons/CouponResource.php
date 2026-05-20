@@ -14,13 +14,15 @@ class CouponResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-             return [
+        return [
             'id'          => $this->id,
             'name'       => $this->getTranslation('name', app()->getLocale()),
-            'image'       =>[
+            'image'       => [
                 'desktop' => $this?->getFirstMediaUrl('coupons-desktop'),
                 'mobile' => $this?->getFirstMediaUrl('coupons-mobile'),
             ],
+            'borderColor'   => $this->border_color ?? null,
+            'borderless'    => (bool) ($this->borderless ?? false),
 
         ];
     }

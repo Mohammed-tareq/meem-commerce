@@ -34,6 +34,8 @@ class UpdateCouponRequest extends FormRequest
             'name.*' => ['required_with:name', UniqueTranslationRule::for('coupons', 'name')->ignore($this->route('coupon'))],
             'image-desktop' => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp'],
             'image-mobile' => ['sometimes', 'image', 'mimes:jpeg,png,jpg,webp'],
+            'border_color' => ['nullable', 'string', 'max:50'],
+            'borderless' => ['sometimes', 'in:1,0'],
             'discount'      => 'sometimes|numeric|min:0',
             'discount_type' => ['sometimes', Rule::in(DiscountType::getValues())],
             'max_discount_amount' => [
