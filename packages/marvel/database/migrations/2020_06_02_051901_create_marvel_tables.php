@@ -40,8 +40,8 @@ class CreateMarvelTables extends Migration
             $table->integer('limiter')->nullable();
             $table->integer('used')->default(0);
             $table->boolean('status')->default(true);
-              $table->string('border_color')->nullable()->after('name');
-            $table->boolean('borderless')->default(false)->after('border_color');
+            $table->string('border_color')->nullable();
+            $table->boolean('borderless')->default(false);
             $table->timestamps();
         });
 
