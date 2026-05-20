@@ -75,12 +75,12 @@ class CouponRepository extends BaseRepository
             DB::beginTransaction();
             $coupon = $this->create($request->except('image-desktop', 'image-mobile'));
 
-             if ($request->hasFile('image-desktop')) {
+            if ($request->hasFile('image-desktop')) {
                 if (!$this->uploadSingleImage($request, 'image-desktop', $coupon, 'coupons-desktop', 'coupons')) {
                     throw new MarvelBadRequestException(COULD_NOT_CREATE_THE_RESOURCE);
                 }
             }
-             if ($request->hasFile('image-mobile')) {
+            if ($request->hasFile('image-mobile')) {
                 if (!$this->uploadSingleImage($request, 'image-mobile', $coupon, 'coupons-mobile', 'coupons')) {
                     throw new MarvelBadRequestException(COULD_NOT_CREATE_THE_RESOURCE);
                 }
