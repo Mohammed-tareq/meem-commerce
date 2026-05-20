@@ -19,8 +19,8 @@ class BrandResource extends JsonResource
             'name'       => $this->getTranslation('name', app()->getLocale()),
             'slug'       => $this->slug,
             'image'       =>[
-                'desktop' => $this?->getFirstMediaUrl('banners-desktop'),
-                'mobile' => $this?->getFirstMediaUrl('banners-mobile'),
+                'desktop' => $this?->getFirstMediaUrl('brands-desktop'),
+                'mobile' => $this?->getFirstMediaUrl('brands-mobile'),
             ],
             "status"   => (bool)$this->status,
 
