@@ -22,6 +22,11 @@ class GovernorateUpdateRequest extends FormRequest
             'name.en' => ['sometimes', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('governorates')->ignore($this->route('governorate'))],
             'name.ar' => ['sometimes', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('governorates')->ignore($this->route('governorate'))],
             'status' => ['nullable', 'boolean'],
+            'shipping_price' => ['sometimes', 'array'],
+            'shipping_price.price' => ['sometimes', 'numeric'],
+            'shipping_price.estimated_days' => ['sometimes', 'integer'],
+            'shipping_price.free_shipping_over' => ['sometimes', 'numeric'],
+            'shipping_price.status' => ['sometimes', 'boolean'],
         ];
     }
     public function failedValidation(Validator $validator)

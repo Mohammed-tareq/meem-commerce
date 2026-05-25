@@ -63,6 +63,7 @@ class PermissionSeeder extends Seeder
             'create-governorate',
             'update-governorate',
             'delete-governorate',
+            'manage-shipping-prices',
 
             // 👤 Customer
             'view-profile',

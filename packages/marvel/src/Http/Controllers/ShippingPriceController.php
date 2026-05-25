@@ -6,10 +6,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use InvalidArgumentException;
 use Marvel\Database\Repositories\ShippingPriceRepository;
+use Marvel\Enums\Permission;
 use Marvel\Http\Requests\BulkStatusRequest;
 use Marvel\Http\Requests\ShippingPriceStoreRequest;
 use Marvel\Http\Requests\ShippingPriceUpdateRequest;
 use Marvel\Http\Resources\ShippingPriceResource;
+use Marvel\Traits\ApiResponse;
 use OpenApi\Annotations as OA;
 
 /**
@@ -20,8 +22,10 @@ use OpenApi\Annotations as OA;
  */
 class ShippingPriceController extends CoreController
 {
+    use ApiResponse;
     public function __construct(private readonly ShippingPriceRepository $repository)
     {
+        $this->middleware("permission:" . Permission::MANAGE_SHIPPING_PRICES, ['only' => ['store', 'update', 'destroy', 'bulkStatus']]);
     }
 
     /**
@@ -43,11 +47,7 @@ class ShippingPriceController extends CoreController
             $request->get('governorate_id') ? (int) $request->get('governorate_id') : null
         );
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Shipping prices fetched successfully.',
-            'data' => ShippingPriceResource::collection($prices),
-        ]);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ShippingPriceResource::collection($prices));
     }
 
     /**
@@ -60,17 +60,9 @@ class ShippingPriceController extends CoreController
      */
     public function store(ShippingPriceStoreRequest $request): JsonResponse
     {
-        try {
-            $price = $this->repository->create($request->validated());
-        } catch (InvalidArgumentException $e) {
-            return response()->json(['status' => false, 'message' => $e->getMessage()], 422);
-        }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Shipping price created successfully.',
-            'data' => new ShippingPriceResource($price),
-        ], 201);
+        $price = $this->repository->create($request->validated());
+        return $this->apiResponse(CREATE_DATA_SUCCESSFULLY, 201, true,  ShippingPriceResource::make($price));
     }
 
     /**
@@ -85,17 +77,13 @@ class ShippingPriceController extends CoreController
      */
     public function show(int $id): JsonResponse
     {
-        $price = $this->repository->findById($id, ['governorate.country']);
+        $price = $this->repository->findById($id, ['governorate']);
 
         if (!$price) {
             return response()->json(['status' => false, 'message' => 'Shipping price not found.'], 404);
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Shipping price fetched successfully.',
-            'data' => new ShippingPriceResource($price),
-        ]);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ShippingPriceResource::make($price));
     }
 
     /**
@@ -112,20 +100,11 @@ class ShippingPriceController extends CoreController
         $price = $this->repository->findById($id);
 
         if (!$price) {
-            return response()->json(['status' => false, 'message' => 'Shipping price not found.'], 404);
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
-        try {
-            $price = $this->repository->update($price, $request->validated());
-        } catch (InvalidArgumentException $e) {
-            return response()->json(['status' => false, 'message' => $e->getMessage()], 422);
-        }
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Shipping price updated successfully.',
-            'data' => new ShippingPriceResource($price),
-        ]);
+        $price = $this->repository->update($price, $request->validated());
+        return $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, ShippingPriceResource::make($price));
     }
 
     /**
@@ -142,25 +121,18 @@ class ShippingPriceController extends CoreController
         $price = $this->repository->findById($id);
 
         if (!$price) {
-            return response()->json(['status' => false, 'message' => 'Shipping price not found.'], 404);
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
         $this->repository->delete($price);
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Shipping price deleted successfully.',
-        ]);
+        return $this->apiResponse(DELETE_DATA_SUCCESSFULLY, 200, true);
     }
 
     public function bulkStatus(BulkStatusRequest $request): JsonResponse
     {
         $count = $this->repository->bulkStatus($request->input('ids', []), (bool) $request->input('status'));
 
-        return response()->json([
-            'status' => true,
-            'message' => 'Shipping prices updated successfully.',
-            'data' => ['updated' => $count],
-        ]);
+        return $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, ['updated' => $count]);
     }
 }

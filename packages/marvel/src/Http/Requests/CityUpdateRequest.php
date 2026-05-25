@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -17,8 +18,9 @@ class CityUpdateRequest extends FormRequest
     {
         return [
             'governorate_id' => ['sometimes', 'integer', 'exists:governorates,id'],
-            'name' => ['sometimes', 'array'],
-            'name.*' => ['required_with:name', 'string', 'min:2'],
+            'name.en' => ['sometimes', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('cities')->ignore($this->route('city'))],
+            'name.ar' => ['sometimes', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('cities')->ignore($this->route('city'))],
+            'status' => ['nullable', 'in:1,0'],
         ];
     }
 

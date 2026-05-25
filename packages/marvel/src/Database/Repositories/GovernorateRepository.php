@@ -6,8 +6,10 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use InvalidArgumentException;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Country;
 use Marvel\Database\Models\Governorate;
+use Marvel\Database\Models\ShippingPrice;
 
 class GovernorateRepository
 {
@@ -47,7 +49,23 @@ class GovernorateRepository
     {
         $this->ensureCountryExists((int)$data['country_id']);
 
-        return Governorate::create($data);
+        return DB::transaction(function () use ($data) {
+            $shippingData = $data['shipping_price'] ?? null;
+
+            // remove nested shipping_price before creating governorate
+            $govData = $data;
+            unset($govData['shipping_price']);
+
+            $governorate = Governorate::create($govData);
+
+            if (! empty($shippingData) && is_array($shippingData)) {
+                // attach governorate_id and create shipping price via relation
+                $shippingData['governorate_id'] = $governorate->id;
+                ShippingPrice::create($shippingData);
+            }
+
+            return $governorate->refresh();
+        });
     }
 
     public function update(Governorate $governorate, array $data): Governorate
@@ -55,10 +73,27 @@ class GovernorateRepository
         if (isset($data['country_id'])) {
             $this->ensureCountryExists((int)$data['country_id']);
         }
+        return DB::transaction(function () use ($governorate, $data) {
+            $shippingData = $data['shipping_price'] ?? null;
 
-        $governorate->update($data);
+            $govData = $data;
+            unset($govData['shipping_price']);
 
-        return $governorate->refresh();
+            $governorate->update($govData);
+
+            if (! empty($shippingData) && is_array($shippingData)) {
+                $existing = $governorate->shippingPrice()->first();
+
+                if ($existing) {
+                    $existing->update($shippingData);
+                } else {
+                    $shippingData['governorate_id'] = $governorate->id;
+                    ShippingPrice::create($shippingData);
+                }
+            }
+
+            return $governorate->refresh();
+        });
     }
 
     public function delete(Governorate $governorate): bool
@@ -84,11 +119,20 @@ class GovernorateRepository
 
     private function applySearch(Builder $query, ?string $search): void
     {
-        if (!$search) {
+        if (blank($search)) {
             return;
         }
 
-        $query->where('name->en', 'like', "%{$search}%")
-            ->orWhere('name->ar', 'like', "%{$search}%");
+        $search = mb_strtolower($search);
+
+        $query->where(function ($q) use ($search) {
+            $q->whereRaw(
+                'LOWER(name->>"$.en") LIKE ?',
+                ["%{$search}%"]
+            )->orWhereRaw(
+                'LOWER(name->>"$.ar") LIKE ?',
+                ["%{$search}%"]
+            );
+        });
     }
 }

@@ -172,6 +172,7 @@ return [
     'create-governorate' => "Create governorate",
     'update-governorate' => 'Update governorate',
     'delete-governorate' => 'Delete governorate',
+    'manage-shipping-prices' => 'Manage shipping prices',
 
 
 ];

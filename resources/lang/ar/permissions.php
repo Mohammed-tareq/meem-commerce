@@ -174,6 +174,7 @@ return [
     'create-governorate' => "إنشاء محافظة",
     'update-governorate' => 'تعديل محافظة',
     'delete-governorate' => 'مسح محافظة',
+    'manage-shipping-prices' => 'إدارة أسعار الشحن',
 
 
 ];

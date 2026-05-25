@@ -203,4 +203,5 @@ final class Permission extends Enum
     public const ACCEPT_ABUSIVE_REPORT = 'accept-abusive-report';
     public const REJECT_ABUSIVE_REPORT = 'reject-abusive-report';
     public const VIEW_ATTRIBUTES = 'view-attributes';
+    public const MANAGE_SHIPPING_PRICES = 'manage-shipping-prices';
 }

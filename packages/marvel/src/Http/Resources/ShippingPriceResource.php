@@ -16,9 +16,7 @@ class ShippingPriceResource extends JsonResource
             'estimated_days' => $this->estimated_days,
             'free_shipping_over' => $this->free_shipping_over !== null ? (float) $this->free_shipping_over : null,
             'status' => (bool) $this->status,
-            'governorate' => new GovernorateResource($this->whenLoaded('governorate')),
             'created_at' => optional($this->created_at)->toIso8601String(),
-            'updated_at' => optional($this->updated_at)->toIso8601String(),
         ];
     }
 }

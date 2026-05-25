@@ -12,13 +12,8 @@ class CityResource extends JsonResource
         return [
             'id' => $this->id,
             'governorate_id' => $this->governorate_id,
-            'name' => $this->name,
-            'name_translated' => method_exists($this, 'getTranslation')
-                ? $this->getTranslation('name', app()->getLocale(), false)
-                : $this->name,
-            'governorate' => new GovernorateResource($this->whenLoaded('governorate')),
+            'name' => $this->getTranslation('name', app()->getLocale()),
             'created_at' => optional($this->created_at)->toIso8601String(),
-            'updated_at' => optional($this->updated_at)->toIso8601String(),
         ];
     }
 }

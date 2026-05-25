@@ -71,11 +71,20 @@ class CityRepository
 
     private function applySearch(Builder $query, ?string $search): void
     {
-        if (!$search) {
+        if (blank($search)) {
             return;
         }
 
-        $query->where('name->en', 'like', "%{$search}%")
-            ->orWhere('name->ar', 'like', "%{$search}%");
+        $search = mb_strtolower($search);
+
+        $query->where(function ($q) use ($search) {
+            $q->whereRaw(
+                'LOWER(name->>"$.en") LIKE ?',
+                ["%{$search}%"]
+            )->orWhereRaw(
+                'LOWER(name->>"$.ar") LIKE ?',
+                ["%{$search}%"]
+            );
+        });
     }
 }

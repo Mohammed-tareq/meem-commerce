@@ -18,6 +18,7 @@ use Marvel\Http\Controllers\ContactController;
 use Marvel\Http\Controllers\CartController;
 use Marvel\Http\Controllers\CategoryController;
 use Marvel\Http\Controllers\CheckoutController;
+use Marvel\Http\Controllers\CityController;
 use Marvel\Http\Controllers\ConversationController;
 use Marvel\Http\Controllers\CouponController;
 use Marvel\Http\Controllers\CmsPageController;
@@ -61,6 +62,7 @@ use Marvel\Http\Controllers\ComponentDataController;
 use Marvel\Http\Controllers\CountryController;
 use Marvel\Http\Controllers\GovernorateController;
 use Marvel\Http\Controllers\MeemProductController;
+use Marvel\Http\Controllers\ShippingPriceController;
 
 // use Illuminate\Support\Facades\Auth;
 
@@ -451,6 +453,8 @@ Route::group(
         Route::apiResource('governorates', GovernorateController::class);
         Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities']);
         Route::post('governorates/change-status', [GovernorateController::class, 'bulkStatus']);
+        
+        Route::apiResource('cities', CityController::class);
 
         // Route::get('shop-notification/{id}', [ShopNotificationController::class, 'show']);
         // Route::put('shop-notification/{id}', [ShopNotificationController::class, 'update']);
