@@ -4,7 +4,9 @@ namespace Marvel\Database\Repositories;
 
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Marvel\Database\Models\Promotion;
+use Marvel\Database\Models\ProductVariant;
 use Marvel\Exceptions\MarvelBadRequestException;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
@@ -105,6 +107,8 @@ class PromotionRepository extends BaseRepository
                 }
             }
             return $promotion;
+        } catch (MarvelBadRequestException $e) {
+            throw $e;
         } catch (Exception $e) {
             throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
@@ -130,18 +134,39 @@ class PromotionRepository extends BaseRepository
         }
 
         if ($request->has('gift_product_ids')) {
+            if (!Schema::hasColumn('promotion_gift_products', 'product_variant_id')) {
+                throw new MarvelBadRequestException('Gift variants require a migration.');
+            }
             $giftProducts = collect($request->input('gift_product_ids', []))
-                ->mapWithKeys(fn ($productId) => [(int) $productId => ['quantity' => 1]])
+                ->mapWithKeys(fn($productId) => [(int) $productId => ['quantity' => 1, 'product_variant_id' => null]])
                 ->all();
 
             $promotion->giftProducts()->sync($giftProducts);
         }
 
         if ($request->has('gift_products')) {
+            if (!Schema::hasColumn('promotion_gift_products', 'product_variant_id')) {
+                throw new MarvelBadRequestException('Gift variants require a migration.');
+            }
             $giftProducts = collect($request->input('gift_products', []))
-                ->mapWithKeys(fn ($gift) => [
-                    (int) $gift['product_id'] => ['quantity' => max(1, (int) ($gift['quantity'] ?? 1))],
-                ])
+                ->mapWithKeys(function ($gift) {
+                    $productId = (int) $gift['product_id'];
+                    $variantId = isset($gift['product_variant_id']) ? (int) $gift['product_variant_id'] : null;
+
+                    if ($variantId) {
+                        $variant = ProductVariant::query()->whereKey($variantId)->first();
+                        if (!$variant || (int) $variant->product_id !== $productId) {
+                            throw new MarvelBadRequestException('Gift variant does not belong to the selected product.');
+                        }
+                    }
+
+                    return [
+                        $productId => [
+                            'quantity' => max(1, (int) ($gift['quantity'] ?? 1)),
+                            'product_variant_id' => $variantId,
+                        ],
+                    ];
+                })
                 ->all();
 
             $promotion->giftProducts()->sync($giftProducts);

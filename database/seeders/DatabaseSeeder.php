@@ -66,7 +66,7 @@ class DatabaseSeeder extends Seeder
         // }
 
         $this->call([
-            ShopSeeder::class,
+            // ShopSeeder::class,
             CategorySeeder::class,
             AttributeSeeder::class,
             BannerSeeder::class,
@@ -81,8 +81,9 @@ class DatabaseSeeder extends Seeder
             BrandProductSeeder::class,
             CartSeeder::class,
             CouponSeeder::class,
-            PromotionSeeder::class,
-            ShopRelationsSeeder::class,
+            LocationSeeder::class,
+            // PromotionSeeder::class,
+            // ShopRelationsSeeder::class,
             WishlistSeeder::class,
         ]);
     }

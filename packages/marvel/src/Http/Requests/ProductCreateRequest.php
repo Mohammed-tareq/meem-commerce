@@ -51,7 +51,6 @@ class ProductCreateRequest extends FormRequest
             'description.*'                => ['required', 'string', 'max:10000'],
             'price'                        => ['sometimes', 'numeric', 'min:0', 'required_if:product_type,' . ProductType::SIMPLE],
             'product_type'                 => ['required', Rule::in($productType)],
-            'shop_id'                      => ['required', 'exists:shops,id'],
             'categories'                   => ['required', 'array'],
             'categories.*'                 => ['integer', 'exists:categories,id'],
             'quantity'                     => ['sometimes   ', 'integer', 'min:1'],

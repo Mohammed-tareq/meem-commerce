@@ -162,5 +162,18 @@ return [
     'delete-contact' => 'حذف جهة اتصال',
     'approve-reviews' => 'الموافقة على التقييمات',
     'delete-reviews' => 'حذف التقييمات',
+    'view-country' => 'عرض الدول',
+    'create-country'  => 'إنشاء دولة',
+    'update-country' => "تعديل دوله",
+    'delete-country' => 'مسح دوله',
+    'view-city' => 'عرض المدن',
+    'create-city' => 'إنشاء مدينة',
+    'update-city' => 'تعديل مدينة',
+    'delete-city' => 'مسح مدينة',
+    'view-governorate' => 'عرض المحافظات',
+    'create-governorate' => "إنشاء محافظة",
+    'update-governorate' => 'تعديل محافظة',
+    'delete-governorate' => 'مسح محافظة',
+
 
 ];

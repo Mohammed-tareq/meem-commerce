@@ -146,7 +146,13 @@ class PromotionApplicator
                     }
 
                     try {
-                        $item = $this->inventoryService->reserveGiftItem($cart, $product, $promotion, max(1, (int) $gift->quantity));
+                        $item = $this->inventoryService->reserveGiftItem(
+                            $cart,
+                            $product,
+                            $promotion,
+                            max(1, (int) $gift->quantity),
+                            $gift->productVariantId
+                        );
                         $reserved[] = $item->id;
                         break;
                     } catch (\Throwable $e) {

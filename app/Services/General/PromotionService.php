@@ -29,7 +29,12 @@ class PromotionService
         $subtotal = $this->subtotal($cart);
         $subtotalCents = (int) round((float) $subtotal * 100);
         $promotions = Promotion::valid()
-            ->with(['products:id', 'giftProducts:id,name,sku'])
+            ->with([
+                'products:id',
+                'giftProducts:id,name,sku,product_type,stock_quantity,reserved_quantity',
+                'giftProducts.variations:id,product_id,stock_quantity,reserved_quantity,price,height,width,length,weight',
+                'giftProducts.variations.attributeProducts.attributeValue.attribute',
+            ])
             ->get();
 
         return $this->resolver->eligible($cart, $promotions, $subtotalCents);
@@ -53,12 +58,18 @@ class PromotionService
         $subtotal = $this->subtotal($cart);
         $subtotalCents = (int) round((float) $subtotal * 100);
         $result = null;
-        $appliedDetails = ['discount' => 0.0, 'gift_items' => []];
+        $discountDetails = ['discount' => 0.0, 'gift_items' => []];
+        $giftDetails = ['discount' => 0.0, 'gift_items' => []];
 
         if ($promotionId) {
             $promotion = Promotion::valid()
                 ->whereKey($promotionId)
-                ->with(['products:id', 'giftProducts:id,name,sku'])
+                ->with([
+                    'products:id',
+                    'giftProducts:id,name,sku,product_type,stock_quantity,reserved_quantity',
+                    'giftProducts.variations:id,product_id,stock_quantity,reserved_quantity,price,height,width,length,weight',
+                    'giftProducts.variations.attributeProducts.attributeValue.attribute',
+                ])
                 ->lockForUpdate()
                 ->first();
 
@@ -79,29 +90,33 @@ class PromotionService
 
             // Use strategy to compute outcome (we already performed computeOutcome in resolver for compatibility; map to Outcome types)
             // For backward compatibility we reuse PromotionResult structure: if it has giftItems, treat as GiftOutcome; else Discount
-            if (!empty($result->giftItems)) {
-                $selectedGiftItem = $this->resolveSelectedGiftItem($result->giftItems, $selectedGiftProductId);
-                $outcome = new GiftOutcome([$selectedGiftItem]);
-            } else {
-                $amountCents = (int) round((float) ($result->discount ?? 0) * 100);
-                $outcome = new DiscountOutcome($amountCents, $evaluation->matchedSubtotalCents);
+            $amountCents = (int) round((float) ($result->discount ?? 0) * 100);
+
+            if ($amountCents > 0) {
+                $discountOutcome = new DiscountOutcome($amountCents, $evaluation->matchedSubtotalCents);
+                $discountDetails = $this->applicator->applyOutcome($cart, $promotion, $discountOutcome);
+                $cart->refresh();
+                $cart->load(['items.product', 'items.productVariant']);
             }
 
-            // Apply outcome transactionally, reserving gifts and updating cart
-            $appliedDetails = $this->applicator->applyOutcome($cart, $promotion, $outcome);
-            $cart->refresh();
-            $cart->load(['items.product', 'items.productVariant']);
+            if (!empty($result->giftItems)) {
+                $selectedGiftItem = $this->resolveSelectedGiftItem($result->giftItems, $selectedGiftProductId);
+                $giftOutcome = new GiftOutcome([$selectedGiftItem]);
+                $giftDetails = $this->applicator->applyOutcome($cart, $promotion, $giftOutcome);
+                $cart->refresh();
+                $cart->load(['items.product', 'items.productVariant']);
+            }
         }
         return [
             'subtotal' => round((float) $subtotal, 2),
-            'discount' => round((float) ($appliedDetails['discount'] ?? 0), 2),
+            'discount' => round((float) ($discountDetails['discount'] ?? 0), 2),
             'final_total' => round((float) $cart->total_price, 2),
             'promotion' => $result ? [
                 'id' => $result->promotion->id,
                 'type' => $result->promotion->type_amount,
                 'code' => $result->promotion->code,
             ] : null,
-            'gift_items' => $appliedDetails['gift_items'] ?? [],
+            'gift_items' => $giftDetails['gift_items'] ?? [],
         ];
     }
 
@@ -142,7 +157,13 @@ class PromotionService
                 continue;
             }
 
-            $this->inventoryService->reserveGiftItem($cart, $product, $result->promotion, max(1, (int) $giftItem['quantity']));
+            $this->inventoryService->reserveGiftItem(
+                $cart,
+                $product,
+                $result->promotion,
+                max(1, (int) $giftItem['quantity']),
+                $giftItem['product_variant_id'] ?? null
+            );
         }
     }
 

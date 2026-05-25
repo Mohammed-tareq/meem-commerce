@@ -49,6 +49,20 @@ class PermissionSeeder extends Seeder
             "delete-promotion",
             "create-promotion",
             "update-promotion",
+            'view-country',
+            'create-country',
+            'update-country',
+            'delete-country',
+
+            'view-city',
+            'create-city',
+            'update-city',
+            'delete-city',
+
+            'view-governorate',
+            'create-governorate',
+            'update-governorate',
+            'delete-governorate',
 
             // 👤 Customer
             'view-profile',

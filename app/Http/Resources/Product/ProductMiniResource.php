@@ -20,7 +20,9 @@ class ProductMiniResource extends JsonResource
             'slug'                   => $this->slug,
             'price'                  => $this->roundMoney($this->price),
             'current_price'          => $this->roundMoney($this->getRawOrComputedValue('current_price')),
-            'price_after_discount'    => $this->roundMoney($this->getRawOrComputedValue('price_after_discount')),
+            'price_after_discount'   => $this->roundMoney($this->getRawOrComputedValue('price_after_discount')),
+            'price_after_flash_sale' => $this->roundMoney($this->getRawOrComputedValue('price_after_flash_sale')),
+            'has_discount'           => $this->has_discount,
             'discount_type'          => $this->discount_type,
             'discount_amount'        => $this->discount_amount,
             'quantity'               => $this->quantity,
@@ -61,6 +63,5 @@ class ProductMiniResource extends JsonResource
             ->map(function ($m) {
                 return $m->getUrl();
             });
-
     }
 }

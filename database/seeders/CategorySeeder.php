@@ -96,7 +96,7 @@ class CategorySeeder extends Seeder
                 ->toMediaCollection('categories-mobile', 'categories');
         }
 
-        $category->shops()->syncWithoutDetaching([1, 2]);
+        // $category->shops()->syncWithoutDetaching([1, 2]);
 
         return $category;
     }

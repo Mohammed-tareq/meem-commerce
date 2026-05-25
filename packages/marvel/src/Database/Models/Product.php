@@ -75,6 +75,7 @@ class Product extends Model implements HasMedia
         'current_price',
         'price_after_discount',
         'price_after_flash_sale',
+        'final_price',
     ];
 
     /**

@@ -64,21 +64,58 @@ class CartInventoryService
         });
     }
 
-    public function reserveGiftItem(Cart $cart, Product $product, Promotion $promotion, int $quantity): CartItem
+    public function reserveGiftItem(Cart $cart, Product $product, Promotion $promotion, int $quantity, ?int $productVariantId = null): CartItem
     {
-        return DB::transaction(function () use ($cart, $product, $promotion, $quantity) {
+        return DB::transaction(function () use ($cart, $product, $promotion, $quantity, $productVariantId) {
             $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
             $item = CartItem::query()
                 ->where('cart_id', $cart->id)
                 ->where('product_id', $product->id)
-                ->whereNull('product_variant_id')
                 ->where('promotion_id', $promotion->id)
                 ->where('is_gift', true)
                 ->lockForUpdate()
                 ->first();
 
+            $variant = null;
+            if (method_exists($product, 'isSimple') && !$product->isSimple()) {
+                if ($productVariantId) {
+                    $variant = $product->variations()
+                        ->whereKey($productVariantId)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$variant) {
+                        throw new Exception('Selected gift variant is not available.');
+                    }
+                }
+
+                if ($item?->product_variant_id) {
+                    $variant = ProductVariant::query()
+                        ->whereKey($item->product_variant_id)
+                        ->lockForUpdate()
+                        ->first();
+
+                    if (!$variant) {
+                        $item?->delete();
+                        $item = null;
+                    }
+                }
+
+                if (!$variant && !$productVariantId) {
+                    $variant = $product->variations()
+                        ->whereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) > 0')
+                        ->orderBy('id')
+                        ->lockForUpdate()
+                        ->first();
+                }
+
+                if (!$variant) {
+                    throw new Exception('No available variant stock for gift product.');
+                }
+            }
+
             $desiredQuantity = max(1, $quantity);
-            $stock = $this->lockInventoryRow($product, null);
+            $stock = $this->lockInventoryRow($product, $variant);
             $reservedQuantity = (int) ($item?->reserved_quantity ?? 0);
             $delta = $desiredQuantity - $reservedQuantity;
 
@@ -90,7 +127,7 @@ class CartInventoryService
 
             $payload = [
                 'product_id' => $product->id,
-                'product_variant_id' => null,
+                'product_variant_id' => $variant?->id,
                 'quantity' => $desiredQuantity,
                 'reserved_quantity' => $desiredQuantity,
                 'price' => 0,
@@ -198,8 +235,8 @@ class CartInventoryService
     {
         return DB::transaction(function () use ($cart) {
             $cart = Cart::whereKey($cart->id)
-            ->lockForUpdate()
-            ->with(['items.product', 'items.productVariant'])->firstOrFail();
+                ->lockForUpdate()
+                ->with(['items.product', 'items.productVariant'])->firstOrFail();
             foreach ($cart->items as $item) {
                 $this->syncCartItemReservation($item);
             }

@@ -58,6 +58,8 @@ use Marvel\Http\Controllers\RefundReasonController;
 use Marvel\Http\Controllers\StoreNoticeController;
 use Marvel\Http\Controllers\TermsAndConditionsController;
 use Marvel\Http\Controllers\ComponentDataController;
+use Marvel\Http\Controllers\CountryController;
+use Marvel\Http\Controllers\GovernorateController;
 use Marvel\Http\Controllers\MeemProductController;
 
 // use Illuminate\Support\Facades\Auth;
@@ -441,6 +443,14 @@ Route::group(
         Route::post('banner/reorder', [BannerController::class, 'reorder']);
         Route::post('slider/change-status', [SliderController::class, 'changeStatus']);
         Route::post('sliders/reorder', [SliderController::class, 'reorder']);
+
+        Route::apiResource('countries', CountryController::class);
+        Route::get('countries/{id}/governorates', [CountryController::class, 'governorates']);
+        Route::post('countries/change-status', [CountryController::class, 'bulkStatus']);
+        
+        Route::apiResource('governorates', GovernorateController::class);
+        Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities']);
+        Route::post('governorates/change-status', [GovernorateController::class, 'bulkStatus']);
 
         // Route::get('shop-notification/{id}', [ShopNotificationController::class, 'show']);
         // Route::put('shop-notification/{id}', [ShopNotificationController::class, 'update']);

@@ -16,7 +16,7 @@ class CouponSeeder extends Seeder
         $bannerImages = collect(File::files(public_path('images/banners')));
         $bannerImagesCount = $bannerImages->count();
 
-        for ($i = 1; $i <= 1000; $i++) {
+        for ($i = 1; $i <= 100; $i++) {
             $discountType = collect(['percentage', 'fixed_rate'])->random();
             $discount = $discountType === 'percentage'
                 ? rand(5, 50)
@@ -28,7 +28,7 @@ class CouponSeeder extends Seeder
                     'en' => "Coupon $i",
                     'ar' => "قسيمة $i",
                 ],
-                'border_color'  => rand(1, 5) === 1 ? sprintf('#%06x', mt_rand(0, 0xFFFFFF)) : null,
+                'border_color'  =>  sprintf('#%06x', mt_rand(0, 0xFFFFFF)) ,
                 'borderless'    => (bool) rand(0, 1),
                 'discount'      => $discount,
                 'max_discount_amount' => $discountType === 'percentage'

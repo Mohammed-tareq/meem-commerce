@@ -7,6 +7,7 @@ namespace App\Services\General\PromotionEngine;
 use App\Services\General\PromotionEngine\Strategies\FixedPromotionStrategy;
 use App\Services\General\PromotionEngine\Strategies\GiftPromotionStrategy;
 use App\Services\General\PromotionEngine\Strategies\PercentagePromotionStrategy;
+use App\Services\General\PromotionEngine\Outcome\GiftOutcome;
 use Illuminate\Support\Collection;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Promotion;
@@ -56,13 +57,25 @@ class PromotionEligibilityResolver
         // computeOutcome is read-only and does not mutate DB
         $outcome = $strategy->computeOutcome($promotion, $cart, $subtotalCents, $evaluation);
 
+        $giftItems = [];
+        if ($outcome instanceof GiftOutcome) {
+            $giftItems = $outcome->giftItems;
+        } elseif ($promotion->giftProducts->isNotEmpty()) {
+            $giftOutcome = app(GiftPromotionStrategy::class)
+                ->computeOutcome($promotion, $cart, $subtotalCents, $evaluation);
+
+            if ($giftOutcome instanceof GiftOutcome) {
+                $giftItems = $giftOutcome->giftItems;
+            }
+        }
+
         // Convert outcome into PromotionResult for backward compatibility consumers
         if ($outcome instanceof \App\Services\General\PromotionEngine\Outcome\DiscountOutcome) {
-            return new PromotionResult($promotion, $outcome->amountCents / 100.0);
+            return new PromotionResult($promotion, $outcome->amountCents / 100.0, $giftItems);
         }
 
         if ($outcome instanceof \App\Services\General\PromotionEngine\Outcome\GiftOutcome) {
-            return new PromotionResult($promotion, 0.0, $outcome->giftItems);
+            return new PromotionResult($promotion, 0.0, $giftItems);
         }
 
         return null;

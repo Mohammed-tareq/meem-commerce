@@ -160,5 +160,18 @@ return [
     'delete-contact' => 'Delete contact',
     'approve-reviews' => 'Approve reviews',
     'delete-reviews' => 'Delete reviews',
+    'view-country' => 'View countries',
+    'create-country'  => 'Create country',
+    'update-country' => "Update country",
+    'delete-country' => 'Delete country',
+    'view-city' => 'View cities',
+    'create-city' => 'Create city',
+    'update-city' => 'Update city',
+    'delete-city' => 'Delete city',
+    'view-governorate' => 'View governorates',
+    'create-governorate' => "Create governorate",
+    'update-governorate' => 'Update governorate',
+    'delete-governorate' => 'Delete governorate',
+
 
 ];

@@ -7,6 +7,9 @@ use App\Services\General\PromotionEngine\PromotionEligibilityResolver;
 use Marvel\Enums\PromotionMountType;
 use Marvel\Database\Models\Promotion;
 use Marvel\Database\Models\Cart;
+use Marvel\Database\Models\Product;
+use Marvel\Database\Models\ProductVariant;
+use Marvel\Enums\ProductType;
 
 class PromotionEligibilityResolverTest extends TestCase
 {
@@ -159,5 +162,83 @@ class PromotionEligibilityResolverTest extends TestCase
 
         $this->assertNotNull($result);
         $this->assertEquals(200.0, $result->discount);
+    }
+
+    public function test_gift_promotion_includes_variant_payload_when_configured(): void
+    {
+        $resolver = new PromotionEligibilityResolver();
+
+        $cart = new Cart();
+        $cartItems = collect([
+            (object) ['product_id' => 1, 'quantity' => 1, 'total_price' => 100, 'is_gift' => false],
+        ]);
+        $cart->setRelation('items', $cartItems);
+
+        $product = new Product();
+        $product->id = 200;
+        $product->name = 'Gift Product';
+        $product->sku = 'GIFT-200';
+        $product->product_type = ProductType::VARIABLE;
+        $product->stock_quantity = 0;
+        $product->reserved_quantity = 0;
+
+        $variant = new ProductVariant();
+        $variant->id = 7;
+        $variant->product_id = 200;
+        $variant->stock_quantity = 5;
+        $variant->reserved_quantity = 0;
+        $variant->price = 120.0;
+        $variant->sale_price = null;
+        $variant->height = '10';
+        $variant->width = '20';
+        $variant->length = '30';
+        $variant->weight = '2';
+        $variant->setRelation('attributeProducts', collect());
+        $variant->setRelation('product', $product);
+
+        $product->setRelation('variations', collect([$variant]));
+        $product->pivot = (object) ['quantity' => 1, 'product_variant_id' => 7];
+
+        $promotion = new Promotion();
+        $promotion->type_amount = PromotionMountType::GIFT;
+        $promotion->discount = 0;
+        $promotion->apply_to = 'all_products';
+        $promotion->status = true;
+        $promotion->minimum_order_amount = 0;
+        $promotion->required_quantity_type = null;
+        $promotion->setRelation('products', collect());
+        $promotion->setRelation('giftProducts', collect([$product]));
+
+        $result = $resolver->resolve($cart, $promotion, 10000);
+
+        $this->assertNotNull($result);
+        $this->assertNotEmpty($result->giftItems);
+        $this->assertEquals(7, $result->giftItems[0]['product_variant_id']);
+        $this->assertEquals(7, $result->giftItems[0]['product_variant']['id']);
+    }
+
+    public function test_promotion_not_eligible_when_minimum_order_not_met(): void
+    {
+        $resolver = new PromotionEligibilityResolver();
+
+        $cart = new Cart();
+        $cartItems = collect([
+            (object) ['product_id' => 1, 'quantity' => 1, 'total_price' => 100, 'is_gift' => false],
+        ]);
+        $cart->setRelation('items', $cartItems);
+
+        $promotion = new Promotion();
+        $promotion->type_amount = PromotionMountType::PERCENTAGE;
+        $promotion->discount = 10;
+        $promotion->apply_to = 'all_products';
+        $promotion->status = true;
+        $promotion->minimum_order_amount = 200; // above subtotal
+        $promotion->required_quantity_type = null;
+        $promotion->setRelation('products', collect());
+        $promotion->setRelation('giftProducts', collect());
+
+        $result = $resolver->resolve($cart, $promotion, 10000);
+
+        $this->assertNull($result);
     }
 }

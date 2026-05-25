@@ -71,6 +71,21 @@ final class Permission extends Enum
     public const APPROVE_REVIEWS = 'approve-reviews';
     public const DELETE_REVIEWS = 'delete-reviews';
 
+    public const VIEW_CITY = 'view-city';
+    public const CREATE_CITY = 'create-city';
+    public const UPDATE_CITY = 'update-city';
+    public const DELETE_CITY = 'delete-city';
+
+    public const VIEW_GOVERNORATE = 'view-governorate';
+    public const CREATE_GOVERNORATE = 'create-governorate';
+    public const UPDATE_GOVERNORATE = 'update-governorate';
+    public const DELETE_GOVERNORATE = 'delete-governorate';
+
+    public const VIEW_COUNTRY = 'view-country';
+    public const CREATE_COUNTRY = 'create-country';
+    public const UPDATE_COUNTRY = 'update-country';
+    public const DELETE_COUNTRY = 'delete-country';
+
     // 👤 Customer
     public const VIEW_PROFILE = 'view-profile';
     public const UPDATE_PROFILE = 'update-profile';

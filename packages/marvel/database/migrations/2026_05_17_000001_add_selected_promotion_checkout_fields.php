@@ -30,11 +30,13 @@ return new class extends Migration
                 $table->id();
                 $table->foreignId('promotion_id')->constrained('promotions')->cascadeOnDelete();
                 $table->foreignId('product_id')->constrained('products')->cascadeOnDelete();
+                $table->foreignId('product_variant_id')->constrained('product_variants')->cascadeOnDelete();
                 $table->unsignedInteger('quantity')->default(1);
                 $table->timestamps();
 
                 $table->unique(['promotion_id', 'product_id']);
                 $table->index('product_id');
+                $table->index('product_variant_id');
             });
         }
 
@@ -106,6 +108,10 @@ return new class extends Migration
             $table->dropIndex('promotions_validity_index');
             $table->dropIndex('promotions_usage_limiter_index');
             $table->dropColumn(['discount', 'minimum_order_amount', 'apply_to']);
+        });
+        Schema::table('promotion_gift_products', function (Blueprint $table) {
+            $table->dropIndex('product_variant_id');
+            $table->dropIndex('product_id');
         });
     }
 };

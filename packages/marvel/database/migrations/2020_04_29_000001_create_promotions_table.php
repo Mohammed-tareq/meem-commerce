@@ -26,11 +26,11 @@ class CreatePromotionsTable extends Migration
             $table->boolean('status')->default(true);
             $table->timestamps();
         });
-
     }
 
     public function down()
     {
         Schema::dropIfExists('promotions');
+
     }
 }

@@ -89,7 +89,7 @@ class Promotion extends Model implements HasMedia
     public function giftProducts(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'promotion_gift_products', 'promotion_id', 'product_id')
-            ->withPivot('quantity')
+            ->withPivot('quantity', 'product_variant_id')
             ->withTimestamps();
     }
 
