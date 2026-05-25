@@ -9,110 +9,155 @@ use Marvel\Database\Models\Category;
 
 class CategorySeeder extends Seeder
 {
+    private int $sequenceCounter = 1;
+
     public function run(): void
     {
         $categoryImages = collect(File::files(public_path('images/categories')));
         $categoryImagesCount = $categoryImages->count();
 
-        // Use a set of realistic root categories (with Arabic translations)
-        $realRootCategories = [
-            ['en' => 'Electronics', 'ar' => 'إلكترونيات'],
-            ['en' => 'Fashion', 'ar' => 'موضة'],
-            ['en' => 'Home & Kitchen', 'ar' => 'المنزل والمطبخ'],
-            ['en' => 'Health & Beauty', 'ar' => 'الصحة والجمال'],
-            ['en' => 'Sports & Outdoors', 'ar' => 'الرياضة في الهواء الطلق'],
-            ['en' => 'Toys & Games', 'ar' => 'ألعاب'],
-            ['en' => 'Automotive', 'ar' => 'السيارات'],
-            ['en' => 'Baby Products', 'ar' => 'منتجات الأطفال'],
-            ['en' => 'Groceries', 'ar' => 'بقالة'],
-            ['en' => 'Books', 'ar' => 'كتب'],
-            ['en' => 'Computers', 'ar' => 'حاسوب'],
-            ['en' => 'Mobile Phones', 'ar' => 'هواتف محمولة'],
-            ['en' => 'Furniture', 'ar' => 'أثاث'],
-            ['en' => 'Garden & Outdoors', 'ar' => 'الحديقة في الهواء الطلق'],
-            ['en' => 'Office Supplies', 'ar' => 'مستلزمات المكتب'],
-            ['en' => 'Jewelry', 'ar' => 'مجوهرات'],
-            ['en' => 'Shoes', 'ar' => 'أحذية'],
-            ['en' => 'Watches', 'ar' => 'ساعات'],
-            ['en' => 'Pet Supplies', 'ar' => 'مستلزمات الحيوانات الأليفة'],
-            ['en' => 'Musical Instruments', 'ar' => 'آلات موسيقية'],
+        // Structured categories matching the provided image (English + Arabic)
+        $structured = [
+            [
+                'name' => ['en' => 'Fresh Food', 'ar' => 'أطعمة طازجة'],
+                'children' => [
+                    ['name' => ['en' => 'Vegetables & Fruits', 'ar' => 'الخضار والفواكه'], 'children' => [
+                        ['name' => ['en' => 'Leafy Greens', 'ar' => 'خضراوات ورقية']],
+                        ['name' => ['en' => 'Root Vegetables', 'ar' => 'خضروات جذرية']],
+                        ['name' => ['en' => 'Fresh Fruits', 'ar' => 'فواكه طازجة']],
+                    ]],
+                    ['name' => ['en' => 'Dairy & Eggs', 'ar' => 'منتجات الألبان والبيض'], 'children' => [
+                        ['name' => ['en' => 'Milk & Alternatives', 'ar' => 'حليب ومشتقاته']],
+                        ['name' => ['en' => 'Cheese', 'ar' => 'جبن']],
+                        ['name' => ['en' => 'Eggs', 'ar' => 'بيض']],
+                    ]],
+                    ['name' => ['en' => 'Meat & Poultry', 'ar' => 'اللحوم والدواجن'], 'children' => [
+                        ['name' => ['en' => 'Beef', 'ar' => 'لحم بقر']],
+                        ['name' => ['en' => 'Chicken', 'ar' => 'دواجن']],
+                        ['name' => ['en' => 'Lamb', 'ar' => 'لحم ضأن']],
+                    ]],
+                    ['name' => ['en' => 'Seafood', 'ar' => 'السمك والمأكولات البحرية'], 'children' => [
+                        ['name' => ['en' => 'Fish', 'ar' => 'أسماك']],
+                        ['name' => ['en' => 'Shellfish', 'ar' => 'محاريات']],
+                    ]],
+                    ['name' => ['en' => 'Bakery', 'ar' => 'مخبوزات'], 'children' => [
+                        ['name' => ['en' => 'Bread', 'ar' => 'خبز']],
+                        ['name' => ['en' => 'Pastries', 'ar' => 'معجنات']],
+                    ]],
+                ],
+            ],
+            [
+                'name' => ['en' => 'Supermarket', 'ar' => 'السوبر ماركت'],
+                'children' => [
+                    ['name' => ['en' => 'Snacks & Biscuits', 'ar' => 'بسكويت ووجبات خفيفة'], 'children' => [
+                        ['name' => ['en' => 'Chips & Crisps', 'ar' => 'رقائق']],
+                        ['name' => ['en' => 'Chocolate & Sweets', 'ar' => 'شوكولاتة وحلويات']],
+                    ]],
+                    ['name' => ['en' => 'Breakfast & Cereals', 'ar' => 'إفطار وحبوب'], 'children' => [
+                        ['name' => ['en' => 'Oats & Porridge', 'ar' => 'شوفان']],
+                        ['name' => ['en' => 'Cereals', 'ar' => 'حبوب']],
+                    ]],
+                    ['name' => ['en' => 'Rice & Pasta', 'ar' => 'أرز ومعكرونة'], 'children' => [
+                        ['name' => ['en' => 'White Rice', 'ar' => 'أرز أبيض']],
+                        ['name' => ['en' => 'Pasta', 'ar' => 'معكرونة']],
+                    ]],
+                    ['name' => ['en' => 'Cooking Essentials', 'ar' => 'مكونات الطبخ'], 'children' => [
+                        ['name' => ['en' => 'Oils & Vinegar', 'ar' => 'زيوت وخل']],
+                        ['name' => ['en' => 'Spices & Seasonings', 'ar' => 'بهارات وتوابل']],
+                    ]],
+                ],
+            ],
+            [
+                'name' => ['en' => 'Drinks', 'ar' => 'المشروبات'],
+                'children' => [
+                    ['name' => ['en' => 'Coffee', 'ar' => 'قهوة'], 'children' => [
+                        ['name' => ['en' => 'Ground Coffee', 'ar' => 'قهوة مطحونة']],
+                        ['name' => ['en' => 'Instant Coffee', 'ar' => 'قهوة سريعة']],
+                    ]],
+                    ['name' => ['en' => 'Tea', 'ar' => 'شاي'], 'children' => [
+                        ['name' => ['en' => 'Black Tea', 'ar' => 'شاي أسود']],
+                        ['name' => ['en' => 'Herbal Tea', 'ar' => 'شاي أعشاب']],
+                    ]],
+                    ['name' => ['en' => 'Juices', 'ar' => 'عصائر'], 'children' => [
+                        ['name' => ['en' => 'Fruit Juices', 'ar' => 'عصائر فواكه']],
+                        ['name' => ['en' => 'Vegetable Juices', 'ar' => 'عصائر خضار']],
+                    ]],
+                    ['name' => ['en' => 'Water', 'ar' => 'ماء'], 'children' => [
+                        ['name' => ['en' => 'Mineral Water', 'ar' => 'مياه معدنية']],
+                        ['name' => ['en' => 'Sparkling Water', 'ar' => 'مياه غازية']],
+                    ]],
+                ],
+            ],
+            [
+                'name' => ['en' => 'Frozen & Ready Meals', 'ar' => 'أطعمة مجمدة'],
+                'children' => [
+                    ['name' => ['en' => 'Frozen Vegetables', 'ar' => 'خضروات مجمدة'], 'children' => [
+                        ['name' => ['en' => 'Mixed Veg Packs', 'ar' => 'خليط خضروات مجمدة']],
+                        ['name' => ['en' => 'Single Veg Packs', 'ar' => 'خضروات مفردة مجمدة']],
+                    ]],
+                    ['name' => ['en' => 'Ready Meals', 'ar' => 'وجبات جاهزة'], 'children' => [
+                        ['name' => ['en' => 'Frozen Pizzas', 'ar' => 'بيتزا مجمدة']],
+                        ['name' => ['en' => 'Microwave Meals', 'ar' => 'وجبات ميكروويف']],
+                    ]],
+                ],
+            ],
+            [
+                'name' => ['en' => 'Health & Beauty', 'ar' => 'الصحة والجمال'],
+                'children' => [
+                    ['name' => ['en' => 'Skin Care', 'ar' => 'العناية بالبشرة'], 'children' => [
+                        ['name' => ['en' => 'Facial Care', 'ar' => 'العناية بالوجه']],
+                        ['name' => ['en' => 'Body Care', 'ar' => 'العناية بالجسم']],
+                    ]],
+                    ['name' => ['en' => 'Hair Care', 'ar' => 'العناية بالشعر'], 'children' => [
+                        ['name' => ['en' => 'Shampoos', 'ar' => 'شامبو']],
+                        ['name' => ['en' => 'Conditioners', 'ar' => 'بلسم']],
+                    ]],
+                    ['name' => ['en' => 'Oral Care', 'ar' => 'العناية بالفم'], 'children' => [
+                        ['name' => ['en' => 'Toothpaste', 'ar' => 'معجون اسنان']],
+                        ['name' => ['en' => 'Mouthwash', 'ar' => 'مضمضة']],
+                    ]],
+                ],
+            ],
+            [
+                'name' => ['en' => 'Electronics', 'ar' => 'إلكترونيات'],
+                'children' => [
+                    ['name' => ['en' => 'Mobile Phones', 'ar' => 'الهواتف المحمولة'], 'children' => [
+                        ['name' => ['en' => 'Smartphones', 'ar' => 'هواتف ذكية']],
+                        ['name' => ['en' => 'Feature Phones', 'ar' => 'هواتف عادية']],
+                    ]],
+                    ['name' => ['en' => 'Computers', 'ar' => 'الحواسيب'], 'children' => [
+                        ['name' => ['en' => 'Laptops', 'ar' => 'حاسبات محمولة']],
+                        ['name' => ['en' => 'Desktops', 'ar' => 'حاسبات مكتبية']],
+                    ]],
+                    ['name' => ['en' => 'Accessories', 'ar' => 'ملحقات'], 'children' => [
+                        ['name' => ['en' => 'Chargers & Cables', 'ar' => 'شواحن وكابلات']],
+                        ['name' => ['en' => 'Cases & Covers', 'ar' => 'أغطية وحافظات']],
+                    ]],
+                ],
+            ],
         ];
 
-        $totalCategories = 50;
-        $maxDepth = 4;
-        $categoriesPerParent = 2;
+        // Walk the structure and seed categories recursively
+        foreach ($structured as $node) {
+            $root = $this->seedCategoryWithChildren($node, null, $categoryImages, $categoryImagesCount);
+        }
+    }
 
-        $createdCategoriesByLevel = [];
-        $createdCount = 0;
+    private function seedCategoryWithChildren(array $node, ?Category $parent, $categoryImages, int $categoryImagesCount): Category
+    {
+        $seq = $this->sequenceCounter++;
+        $nameEn = $node['name']['en'] ?? null;
+        $nameAr = $node['name']['ar'] ?? null;
 
-        for ($level = 1; $level <= $maxDepth && $createdCount < $totalCategories; $level++) {
-            if ($level === 1) {
-                $count = min(count($realRootCategories), $totalCategories - $createdCount);
+        $category = $this->seedCategory($seq, $parent, $categoryImages, $categoryImagesCount, $nameEn, $nameAr);
 
-                for ($index = 0; $index < $count; $index++) {
-                    $name = $realRootCategories[$index];
-
-                    $createdCategoriesByLevel[1][] = $this->seedCategory(
-                        $createdCount + 1,
-                        null,
-                        $categoryImages,
-                        $categoryImagesCount,
-                        $name['en'],
-                        $name['ar']
-                    );
-
-                    $createdCount++;
-                }
-
-                // if more root slots are needed (to reach total), reuse real names with suffix
-                while ($createdCount < min($totalCategories, 20)) {
-                    $idx = $createdCount % count($realRootCategories);
-                    $name = $realRootCategories[$idx];
-
-                    $createdCategoriesByLevel[1][] = $this->seedCategory(
-                        $createdCount + 1,
-                        null,
-                        $categoryImages,
-                        $categoryImagesCount,
-                        $name['en'] . ' ' . ($createdCount + 1),
-                        $name['ar'] . ' ' . ($createdCount + 1)
-                    );
-
-                    $createdCount++;
-                }
-
-                continue;
-            }
-
-            $parents = $createdCategoriesByLevel[$level - 1] ?? [];
-
-            foreach ($parents as $parentCategory) {
-                for ($index = 1; $index <= $categoriesPerParent && $createdCount < $totalCategories; $index++) {
-                    // Build more realistic subcategory names based on the parent
-                    $parentNameEn = is_array($parentCategory->name) ? ($parentCategory->name['en'] ?? (string)$parentCategory->name) : (string)$parentCategory->name;
-                    $parentNameAr = is_array($parentCategory->name) ? ($parentCategory->name['ar'] ?? (string)$parentCategory->name) : (string)$parentCategory->name;
-
-                    // Keep subcategory display name the same as the parent (no "- Subcategory" suffix)
-                    $subEn = $parentNameEn;
-                    $subAr = $parentNameAr;
-
-                    $createdCategoriesByLevel[$level][] = $this->seedCategory(
-                        $createdCount + 1,
-                        $parentCategory,
-                        $categoryImages,
-                        $categoryImagesCount,
-                        $subEn,
-                        $subAr
-                    );
-
-                    $createdCount++;
-                }
-
-                if ($createdCount >= $totalCategories) {
-                    break 2;
-                }
+        if (! empty($node['children']) && is_array($node['children'])) {
+            foreach ($node['children'] as $child) {
+                $this->seedCategoryWithChildren($child, $category, $categoryImages, $categoryImagesCount);
             }
         }
+
+        return $category;
     }
 
     private function seedCategory(int $sequence, ?Category $parentCategory, $categoryImages, int $categoryImagesCount, string $forceEnName = null, string $forceArName = null): Category
