@@ -21,10 +21,13 @@ class CategoryWithChildNameResource extends JsonResource
             'name' => $this->getTranslation('name', app()->getLocale()),
             'slug' => $this->slug,
             'level' => $level,
-            'image' => [
-                'desktop' => $this->getFirstMediaUrl('categories-desktop'),
-                'mobile' => $this->getFirstMediaUrl('categories-mobile'),
-            ],
+            $this->mergeWhen(!request()->routeIs('navbar'), [
+                'image' => [
+                    'desktop' => $this->getFirstMediaUrl('categories-desktop'),
+                    'mobile' => $this->getFirstMediaUrl('categories-mobile'),
+                ],
+            ]),
+
             'children' => $level >= 3
                 ? []
                 : ($this->relationLoaded('children')
