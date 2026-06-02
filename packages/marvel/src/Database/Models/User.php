@@ -22,6 +22,7 @@ use Database\Factories\UserFactory;
 use Marvel\Enums\OrderStatus;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\OneTimePasswords\Models\Concerns\HasOneTimePasswords;
 
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
@@ -32,6 +33,8 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
     use SoftDeletes;
     use InteractsWithMedia;
     use HasFactory;
+    use HasOneTimePasswords;
+
 
 
     protected $guard_name = 'api';
@@ -272,6 +275,21 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         $this->setRelation('last_order', $data);
 
         return $this;
+    }
+
+    /**
+     * Backward-compatible method for verifying one-time passwords.
+     * Delegates to the Spatie one-time-passwords consumer and returns
+     * a boolean indicating whether the password was valid.
+     *
+     * @param string $password
+     * @return bool
+     */
+    public function verifyOneTimePassword(string $password): bool
+    {
+        $result = $this->consumeOneTimePassword($password);
+
+        return method_exists($result, 'isOk') ? $result->isOk() : false;
     }
 
     public function registerMediaCollections(): void

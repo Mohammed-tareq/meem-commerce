@@ -108,9 +108,6 @@ class HomeService
             ->get();
     }
 
-    /**
-     * @return list<string>
-     */
     public static function availableSections(): array
     {
         return [

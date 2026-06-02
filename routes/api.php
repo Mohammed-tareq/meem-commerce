@@ -19,8 +19,8 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
 
     //========================= home=========================//
     Route::controller(HomeController::class)->group(function () {
-    Route::get('home', 'index')->name('home');
-    Route::get('navbar', 'navData')->name('navbar');
+        Route::get('home', 'index')->name('home');
+        Route::get('navbar', 'navData')->name('navbar');
     });
 
     //======================== shops=========================//

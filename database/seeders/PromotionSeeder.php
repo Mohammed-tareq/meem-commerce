@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Promotion;
+use Marvel\Database\Models\ProductVariant;
 use Marvel\Enums\PromotionMountType;
 use Marvel\Enums\PromotionType;
 
@@ -109,9 +110,32 @@ class PromotionSeeder extends Seeder
 
         $promotion->products()->sync($requiredProductIds);
 
-        $giftProducts = collect($giftProductIds)
-            ->mapWithKeys(fn($productId) => [(int) $productId => ['quantity' => rand(1, 2)]])
-            ->all();
+        $giftProducts = [];
+
+        foreach ($giftProductIds as $productId) {
+            $variant = ProductVariant::where('product_id', $productId)->first();
+
+            if (!$variant) {
+                $variant = ProductVariant::inRandomOrder()->first();
+            }
+
+            if (!$variant) {
+                continue;
+            }
+
+            $giftProducts[(int) $productId] = [
+                'quantity' => rand(1, 2),
+                'product_variant_id' => $variant->id,
+            ];
+        }
+
+        // If no suitable variants found for the selected gifts, fall back to any available variant.
+        if (empty($giftProducts)) {
+            $fallback = ProductVariant::inRandomOrder()->first();
+            if ($fallback) {
+                $giftProducts[(int) $fallback->product_id] = ['quantity' => 1, 'product_variant_id' => $fallback->id];
+            }
+        }
 
         $promotion->giftProducts()->sync($giftProducts);
 

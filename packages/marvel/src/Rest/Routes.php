@@ -44,6 +44,7 @@ use Marvel\Http\Controllers\SettingsController;
 use Marvel\Http\Controllers\ShippingController;
 use Marvel\Http\Controllers\ShopController;
 use Marvel\Http\Controllers\SliderController;
+use Marvel\Http\Controllers\SectionController;
 use Marvel\Http\Controllers\TagController;
 use Marvel\Http\Controllers\TaxController;
 use Marvel\Http\Controllers\TypeController;
@@ -83,6 +84,7 @@ Route::get('/email/verify/{id}/{hash}', [UserController::class, 'verifyEmail'])-
 Route::middleware(['throttle:auth'])->group(function () {
     Route::post('/register', [UserController::class, 'register']);
     Route::post('/token', [UserController::class, 'token']);
+    // Route::post('/verify-login-otp', [UserController::class, 'verifyLoginOtp']);
     Route::post('/social-login-token', [UserController::class, 'socialLogin']);
 });
 Route::get('me', [UserController::class, 'me'])->middleware('auth:sanctum');
@@ -106,11 +108,11 @@ Route::middleware(['throttle:sensitive'])->group(function () {
  * OTP Routes - DISABLED
  * Uncomment if you need phone-based authentication
  */
-// Route::middleware(['throttle:otp'])->group(function () {
-//     Route::post('/send-otp-code', [UserController::class, 'sendOtpCode']);
-//     Route::post('/verify-otp-code', [UserController::class, 'verifyOtpCode']);
-//     Route::post('/otp-login', [UserController::class, 'otpLogin']);
-// });
+Route::middleware(['throttle:otp'])->group(function () {
+    Route::post('/send-otp-code', [UserController::class, 'sendUserOtp']);
+    // Route::post('/verify-otp-code', [UserController::class, 'verifyOtpCode']);
+    Route::post('/otp-login', [UserController::class, 'otpLogin']);
+});
 
 Route::get('top-authors', [AuthorController::class, 'topAuthor']);
 Route::get('top-manufacturers', [ManufacturerController::class, 'topManufacturer']);
@@ -449,11 +451,11 @@ Route::group(
         Route::apiResource('countries', CountryController::class);
         Route::get('countries/{id}/governorates', [CountryController::class, 'governorates']);
         Route::post('countries/change-status', [CountryController::class, 'bulkStatus']);
-        
+
         Route::apiResource('governorates', GovernorateController::class);
         Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities']);
         Route::post('governorates/change-status', [GovernorateController::class, 'bulkStatus']);
-        
+
         Route::apiResource('cities', CityController::class);
 
         // Route::get('shop-notification/{id}', [ShopNotificationController::class, 'show']);
@@ -565,6 +567,9 @@ Route::group(
         Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
             'only' => ['index', 'show'],
         ]);
+
+        Route::post('sections/reorder', [SectionController::class, 'reorder']);
+        Route::apiResource('sections', SectionController::class);
     }
 );
 

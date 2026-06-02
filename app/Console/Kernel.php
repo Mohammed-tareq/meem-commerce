@@ -4,6 +4,7 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Spatie\OneTimePasswords\Models\OneTimePassword;
 
 class Kernel extends ConsoleKernel
 {
@@ -31,6 +32,9 @@ class Kernel extends ConsoleKernel
         $schedule->command('cart:expire')
             ->hourly()
             ->withoutOverlapping();
+        Schedule::command('model:prune', [
+            '--model' => [OneTimePassword::class],
+        ])->daily();
     }
 
     /**

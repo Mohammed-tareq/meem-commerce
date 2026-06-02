@@ -338,9 +338,7 @@ class CreateMarvelTables extends Migration
             $table->timestamps();
         });
 
-        Schema::table('users', function (Blueprint $table) {
-            $table->boolean('is_active')->default(1);
-        });
+      
 
         Schema::create('attachments', function (Blueprint $table) {
             $table->id();

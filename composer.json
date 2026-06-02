@@ -25,6 +25,7 @@
         "predis/predis": "^3.4",
         "psr/log": "3.0.0",
         "spatie/eloquent-sortable": "^5.0",
+        "spatie/laravel-one-time-passwords": "^1.0",
         "spatie/laravel-permission": "6.0",
         "spatie/laravel-translatable": "^6.11",
         "stevebauman/purify": "6.0.2",

@@ -35,7 +35,6 @@ class DatabaseSeeder extends Seeder
             'name' => 'Shop Owner',
             'password' => Hash::make('password'),
             'is_active' => true,
-            'shop_id' => null,
             'email_verified_at' => now(),
         ]);
         $userEdit = User::firstOrCreate([
@@ -44,7 +43,6 @@ class DatabaseSeeder extends Seeder
             'name' => 'Shop Owner',
             'password' => Hash::make('password'),
             'is_active' => true,
-            'shop_id' => null,
             'email_verified_at' => now(),
         ]);
 
@@ -54,7 +52,6 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test Customer',
             'password' => Hash::make('password'),
             'is_active' => true,
-            'shop_id' => null,
             'email_verified_at' => now(),
         ]);
 
@@ -82,7 +79,7 @@ class DatabaseSeeder extends Seeder
             CartSeeder::class,
             CouponSeeder::class,
             LocationSeeder::class,
-            // PromotionSeeder::class,
+            PromotionSeeder::class,
             // ShopRelationsSeeder::class,
             WishlistSeeder::class,
         ]);

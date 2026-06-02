@@ -25,7 +25,7 @@ class ProductMiniResource extends JsonResource
             'has_discount'           => $this->has_discount,
             'discount_type'          => $this->discount_type,
             'discount_amount'        => $this->discount_amount,
-            'quantity'               => $this->quantity,
+            'quantity'               => $this->stock_quantity,
             'discount_valid'         => (bool) $this->isDiscountActive(),
             'ratings'                => $this->reviews()->avg('rating') ?? 0,
             'image'                  => [

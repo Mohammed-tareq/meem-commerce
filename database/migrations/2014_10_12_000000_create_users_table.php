@@ -20,11 +20,17 @@ class CreateUsersTable extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('type', ['admin', 'user']);
+            $table->string('phone')->nullable();
+            $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->softDeletes();
             $table->timestamps();
 
+
             $table->index('type');
+            $table->index('email');
+            $table->index('phone');
+            $table->index('is_active');
         });
     }
 
@@ -37,7 +43,10 @@ class CreateUsersTable extends Migration
     {
         Schema::dropIfExists('users');
         Schema::table('users', function (Blueprint $table) {
-            $table->dropIndex(['type']);
+            $table->dropIndex('type');
+            $table->dropIndex('email');
+            $table->dropIndex('phone');
+            $table->dropIndex('is_active');
         });
     }
 }

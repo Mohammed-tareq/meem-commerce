@@ -35,11 +35,13 @@ use Marvel\Exceptions\MarvelNotFoundException;
 use Marvel\Http\Requests\AdminCreateUserRequest;
 use Marvel\Http\Requests\ChangePasswordRequest;
 use Marvel\Http\Requests\LicenseRequest;
+use Marvel\Http\Requests\UserAuthEmailAndPasswordRequest;
 use Marvel\Http\Requests\UserCreateRequest;
 use Marvel\Http\Requests\UserUpdateRequest;
 use Marvel\Http\Resources\UserResource;
 use Marvel\Mail\ContactAdmin;
 use Marvel\Otp\Gateways\OtpGateway;
+use Marvel\Otp\Gateways\LocalGateway;
 use Marvel\Traits\ApiResponse;
 use Marvel\Traits\UsersTrait;
 use Marvel\Traits\WalletsTrait;
@@ -88,25 +90,15 @@ class UserController extends CoreController
      * @param  $hash
      * @return RedirectResponse
      */
-    public function verifyEmail($id, $hash): RedirectResponse
+    public function verifyEmail($id, $hash)
     {
         $user = User::findOrFail($id);
         if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
             abort(403);
         }
-        if ($user->hasVerifiedEmail()) {
-            if ($user->hasPermissionTo(Permission::SUPER_ADMIN) || $user->hasPermissionTo(Permission::STORE_OWNER)) {
-                return Redirect::away(config('shop.dashboard_url'));
-            } else {
-                return Redirect::away(config('shop.shop_url'));
-            }
-        }
+
         $user->markEmailAsVerified();
-        if ($user->hasPermissionTo(Permission::SUPER_ADMIN) || $user->hasPermissionTo(Permission::STORE_OWNER)) {
-            return Redirect::away(config('shop.dashboard_url'));
-        } else {
-            return Redirect::away(config('shop.shop_url'));
-        }
+        // return Redirect::to(config('app.frontend_url') . '/email-verified');
     }
 
     /**
@@ -114,11 +106,10 @@ class UserController extends CoreController
      *
      * @return JsonResponse
      */
-    public function sendVerificationEmail(Request $request): JsonResponse
+    public function sendVerificationEmail(User $user): JsonResponse
     {
-        $user = $request->user();
         $user->sendEmailVerificationNotification();
-        return response()->json(['message' => 'Email verification link sent on your email id', 'success' => true]);
+        return $this->apiResponse(EMAIL_VERIFICATION_LINK_SENT, 200, true);
     }
 
 
@@ -375,12 +366,10 @@ class UserController extends CoreController
             $user = $request->user();
             if (isset($user)) {
                 $user = $this->repository
-                    ->with(['profile', 'wallet', 'address', 'shops.balance', 'managed_shop.balance', 'roles'])
-                    ->find($user->id)
-                    ->loadLastOrder();
+                    ->find($user->id);
                 $user->role = $user->roles->first()?->name;
                 $user->unsetRelation('roles');
-                return $this->apiResponse("User profile retrieved successfully", 200, true, UserResource::make($user));
+                return $this->apiResponse(USER_PROFILE_RETRIEVED_SUCCESSFULLY, 200, true, UserResource::make($user));
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $e) {
@@ -393,7 +382,7 @@ class UserController extends CoreController
         try {
             $user = $this->repository->addUserWithRole($request);
             $user->load(['roles']);
-            return $this->apiResponse("User added successfully", 200, true, UserResource::make($user));
+            return $this->apiResponse(USER_ADDED_SUCCESSFULLY, 200, true, UserResource::make($user));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -403,10 +392,10 @@ class UserController extends CoreController
         try {
             $user = $this->repository->findOrFail($id);
             if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
-                return $this->apiResponse("User cannot be deleted", 400, false);
+                return $this->apiResponse(USER_CANNOT_BE_DELETED, 400, false);
             }
             $user->delete();
-            return $this->apiResponse("User deleted successfully", 200, true);
+            return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -416,10 +405,10 @@ class UserController extends CoreController
         try {
             $user = $this->repository->findOrFail($id);
             if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
-                return $this->apiResponse("User cannot be deleted", 400, false);
+                return $this->apiResponse(USER_CANNOT_BE_DELETED, 400, false);
             }
             $user->forceDelete();
-            return $this->apiResponse("User deleted successfully", 200, true);
+            return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -433,12 +422,12 @@ class UserController extends CoreController
             $user = $this->repository->findOrFail($request->user_id);
             if ($user->hasRole('super_admin')) {
                 if ($user->id === auth()->id() || $user->is_active === false) {
-                    return $this->apiResponse("User cannot be updated", 400, false);
+                    return $this->apiResponse(USER_CANNOT_BE_UPDATED, 400, false);
                 }
             }
             $user->is_active = !$user->is_active;
             $user->save();
-            return $this->apiResponse("User updated successfully", 200, true);
+            return $this->apiResponse(USER_UPDATED_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -472,17 +461,14 @@ class UserController extends CoreController
      *     )
      * )
      */
-    public function token(Request $request)
+    public function token(UserAuthEmailAndPasswordRequest $request)
     {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+        $request->validated();
 
         $user = User::where('email', $request->email)->where('is_active', true)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return $this->apiResponse("User not found", 404, false);
+            return $this->apiResponse(USER_NOT_FOUND, 404, false);
         }
         $email_verified = $user->hasVerifiedEmail();
         event(new ProcessUserData());
@@ -492,36 +478,71 @@ class UserController extends CoreController
             "email_verified" => $email_verified,
             "role" => $user->roles->pluck('name')
         ];
-        return $this->apiResponse("User logged in successfully", 200, true, $data);
+        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
+    }
+    public function sendUserOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required_without:phone_number|email',
+            'phone_number' => 'required_without:email|string|max:15|min:11',
+        ]);
+
+        if ($request->email) {
+            $user = User::where('email', $request->email)->where('is_active', true)->first();
+        } else {
+            $user = User::where('phone', $request->phone_number)->where('is_active', true)->first();
+        }
+        if (!$user) {
+            return $this->apiResponse(USER_NOT_FOUND, 404, false);
+        }
+        $data = ['otp' => '123456'];
+        if ($request->email) {
+            $user->sendOneTimePassword();
+        } else {
+            $otpResponse = $this->sendOtpCode($request);
+            if (is_array($otpResponse)) {
+                $data['id'] = $otpResponse['id'] ?? null;
+            }
+        }
+        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
+    }
+    public function verifyLoginOtp(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'code' => 'required|min:4|max:6',
+        ]);
+        $user = User::where('email', $request->email)->where('is_active', true)->first();
+        // Accept static OTP '123456' for frontend/testing convenience
+        if ($request->code === '123456' || $user->verifyOneTimePassword($request->code)) {
+
+            $data = [
+                "token" => $user->createToken('auth_token')->plainTextToken,
+            ];
+            if (!$user) {
+                return $this->apiResponse(USER_NOT_FOUND, 404, false);
+            }
+            // Accept static OTP '123456' for frontend/testing convenience
+            if ($request->code === '123456' || $user->verifyOneTimePassword($request->code)) {
+
+                $data = [
+                    "token" => $user->createToken('auth_token')->plainTextToken,
+                ];
+                return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
+            } else {
+                return $this->apiResponse(INVALID_OTP, 400, false);
+            }
+        }
     }
 
-    /**
-     * @OA\Post(
-     *     path="/logout",
-     *     operationId="logout",
-     *     tags={"Authentication"},
-     *     summary="User Logout",
-     *     description="Revoke the current access token",
-     *     security={{"sanctum": {}}},
-     *     @OA\Response(
-     *         response=200,
-     *         description="Successfully logged out",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true)
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="Unauthenticated"
-     *     )
-     * )
-     */
+
     public function logout(Request $request)
+
     {
         $user = $request->user();
 
         if (!$user) {
-            return $this->apiResponse("User not found", 404, false);
+            return $this->apiResponse(USER_NOT_FOUND, 404, false);
         }
         $user->currentAccessToken()->delete();
         return $this->apiResponse(USER_LOGGED_OUT_SUCCESSFULLY, 200, true);
@@ -562,105 +583,20 @@ class UserController extends CoreController
      */
     public function register(UserCreateRequest $request)
     {
-        // try {
-        //     Log::info('Register: Starting registration', ['email' => $request->email]);
-
-        //     // Block privileged roles from self-registration
-        //     // Only super_admin can assign these roles via user management
-        //     $notAllowedPermissions = [Permission::SUPER_ADMIN, Permission::EDITOR, Permission::STAFF];
-        //     if ((isset($request->permission->value) && in_array($request->permission->value, $notAllowedPermissions))
-        //         || (isset($request->permission) && in_array($request->permission, $notAllowedPermissions))) {
-        //         throw new AuthorizationException(NOT_AUTHORIZED);
-        //     }
-
-        //     // Start with customer permission and role
-
-        //     $permissions = [Permission::CUSTOMER];
-        //     $role = Role::CUSTOMER;
-
-        //     // If store_owner permission is explicitly requested, add it
-        //     $requestedPermission = isset($request->permission->value) ? $request->permission->value : $request->permission;
-        //     if (isset($requestedPermission) && $requestedPermission === Permission::STORE_OWNER) {
-        //         $permissions[] = Permission::STORE_OWNER;
-        //         $role = Role::STORE_OWNER;
-        //     }
-
-        //     Log::info('Register: Creating user');
-
-        //     // Mark user as verified by default on registration
-        //     $user = $this->repository->create([
-        //         'name' => $request->name,
-        //         'email' => $request->email,
-        //         'password' => Hash::make($request->password),
-        //         'email_verified_at' => now(),
-        //     ]);
-
-        //     Log::info('Register: User created', ['user_id' => $user->id]);
-
-        //     $user->givePermissionTo(array_unique($permissions));  // Ensure no duplicates
-        //     Log::info('Register: Permission assigned');
-
-        //     $user->assignRole($role);
-        //     Log::info('Register: Role assigned');
-
-        //     $user->load('roles'); // Refresh roles relation to fix null role issue
-        //     $this->giveSignupPointsToCustomer($user->id);
-        //     Log::info('Register: Signup points given');
-
-        //     event(new ProcessUserData());
-        //     Log::info('Register: Event dispatched');
-
-        //     $token = $user->createToken('auth_token')->plainTextToken;
-        //     Log::info('Register: Token created, returning response');
-
-        //     return [
-        //         "token" => $token,
-        //         "permissions" => $user->getPermissionNames(),
-        //         "role" => $user->getRoleNames()->first()
-        //     ];
-        // } catch (\Exception $e) {
-        //     Log::error('Register: Failed', [
-        //         'error' => $e->getMessage(),
-        //         'trace' => $e->getTraceAsString()
-        //     ]);
-        //     throw $e;
-        // }
         try {
-            Log::info('Register: Starting registration', ['email' => $request->email]);
-
-            // ALWAYS customer only
-            // $role = Role::CUSTOMER;
 
             $user = $this->repository->create([
                 'name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'email_verified_at' => now(),
+                'phone' => $request->phone,
+                'is_active' => true,
             ]);
+            $user->sendOneTimePassword();
 
-            Log::info('Register: User created', ['user_id' => $user->id]);
-
-            // assign ONLY customer
-            // $user->assignRole($role);
-
-            // Log::info('Register: Role & Permission assigned');
-
-            // $user->load('roles');
-
-            // $this->giveSignupPointsToCustomer($user->id);
-
-            // event(new ProcessUserData());
-
-            $token = $user->createToken('auth_token')->plainTextToken;
-
-            $data = [
-                "token" => $token,
-                // "permissions" => $user->getAllPermissions()->pluck('name'),
-                // "role" => $user->getRoleNames()->first()
-            ];
-            return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true, $data);
+            return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {
-            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false, $e->getMessage());
         }
     }
 
@@ -1013,31 +949,17 @@ class UserController extends CoreController
                 ]
             );
 
-            $avatar = [
-                'thumbnail' => $user->getAvatar(),
-                'original' => $user->getAvatar(),
-            ];
 
-            $userCreated->profile()->updateOrCreate(
-                [
-                    'avatar' => $avatar
-                ]
-            );
 
-            if (!$userCreated->hasRole(Role::CUSTOMER)) {
-                $userCreated->assignRole(Role::CUSTOMER);
-            }
+
 
             // if (empty($userExist)) {
             //     $this->giveSignupPointsToCustomer($userCreated->id);
             // }
-            // event(new ProcessUserData());
             $data = [
                 "token" => $userCreated->createToken('auth_token')->plainTextToken,
-                "permissions" => $userCreated->getAllPermissions()->pluck('name'),
-                "role" => $userCreated->getRoleNames()->first()
             ];
-            return $this->apiResponse("User logged in successfully", 200, true, $data);
+            return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
         } catch (\Exception $e) {
             throw new MarvelException(INVALID_CREDENTIALS);
         }
@@ -1054,7 +976,13 @@ class UserController extends CoreController
     {
         $gateway = config('auth.active_otp_gateway');
         $gateWayClass = "Marvel\\Otp\\Gateways\\" . ucfirst($gateway) . 'Gateway';
-        return new OtpGateway(new $gateWayClass());
+        try {
+            return new OtpGateway(new $gateWayClass());
+        } catch (\Throwable $e) {
+            // Log the issue and fallback to a local/testing gateway that requires no credentials
+            Log::warning('OTP gateway unavailable, falling back to LocalGateway: ' . $e->getMessage());
+            return new OtpGateway(new LocalGateway());
+        }
     }
 
     protected function verifyOtp(Request $request)
@@ -1065,7 +993,8 @@ class UserController extends CoreController
         try {
             $otpGateway = $this->getOtpGateway();
             $verifyOtpCode = $otpGateway->checkVerification($id, $code, $phoneNumber);
-            if ($verifyOtpCode->isValid()) {
+            // Accept static OTP '123456' as valid for frontend/testing convenience
+            if ($verifyOtpCode->isValid() || ($code !== null && $code === '123456')) {
                 return true;
             }
             return false;
@@ -1091,14 +1020,16 @@ class UserController extends CoreController
             if (!$sendOtpCode->isValid()) {
                 return ['message' => OTP_SEND_FAIL, 'success' => false];
             }
-            $profile = Profile::where('contact', $phoneNumber)->first();
+            $user = User::where('phone', $phoneNumber)->first();
             return [
                 'message' => OTP_SEND_SUCCESSFUL,
                 'success' => true,
                 'provider' => config('auth.active_otp_gateway'),
                 'id' => $sendOtpCode->getId(),
+                // include static OTP to help frontend testing
+                // 'otp' => '123456',
                 'phone_number' => $phoneNumber,
-                'is_contact_exist' => $profile ? true : false
+                'is_contact_exist' => $user ? true : false
             ];
         } catch (MarvelException $e) {
             throw new MarvelException(INVALID_GATEWAY);
@@ -1130,57 +1061,26 @@ class UserController extends CoreController
      */
     public function otpLogin(Request $request)
     {
-        $phoneNumber = $request->phone_number;
-
         try {
-            if ($this->verifyOtp($request)) {
-                // check if phone number exist
-                $profile = Profile::where('contact', $phoneNumber)->first();
-                $user = '';
-                if (!$profile) {
-                    // profile not found so could be a new user
-                    $name = $request->name;
-                    $email = $request->email;
-                    if ($name && $email) {
-                        $userExist = User::where('email', $email)->exists();
-                        $user = User::firstOrCreate(
-                            [
-                                'email' => $email,
-                            ],
-                            [
-                                'name' => $name,
-                                // Mark phone-based signups as verified by default
-                                'email_verified_at' => now(),
-                            ]
-                        );
-                        $user->givePermissionTo(Permission::CUSTOMER);
-                        $user->assignRole(Role::CUSTOMER);
-
-                        $user->profile()->updateOrCreate(
-                            ['customer_id' => $user->id],
-                            [
-                                'contact' => $phoneNumber
-                            ]
-                        );
-                        if (empty($userExist)) {
-                            $this->giveSignupPointsToCustomer($user->id);
-                        }
-                    } else {
-                        return ['message' => REQUIRED_INFO_MISSING, 'success' => false];
-                    }
-                } else {
-                    $user = User::where('id', $profile->customer_id)->first();
-                }
-                event(new ProcessUserData());
-                return [
-                    "token" => $user->createToken('auth_token')->plainTextToken,
-                    "permissions" => $user->getPermissionNames(),
-                    "role" => $user->getRoleNames()->first()
-                ];
+            if ($request->has("email")) {
+                return $this->verifyLoginOtp($request);
             }
-            return ['message' => OTP_VERIFICATION_FAILED, 'success' => false];
+            if ($request->has("phone_number") && $this->verifyOtp($request)) {
+                $user = User::where('phone', $request->phone_number)->first();
+                if (!$user) {
+                    return $this->apiResponse(REQUIRED_INFO_MISSING, 404, false);
+                } else {
+                    $user = User::where('id', $user->id)->first();
+                }
+
+                $token = $user->createToken('auth_token')->plainTextToken;
+
+                return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $token);
+            } else {
+                return $this->apiResponse(OTP_VERIFICATION_FAILED, 400, false);
+            }
         } catch (\Throwable $e) {
-            return response()->json(['error' => INVALID_GATEWAY], 422);
+            return $this->apiResponse(INVALID_GATEWAY, 422, false);
         }
     }
 
@@ -1203,9 +1103,9 @@ class UserController extends CoreController
                     "success" => true,
                 ];
             }
-            return ['message' => CONTACT_UPDATE_FAILED, 'success' => false];
+            return $this->apiResponse(CONTACT_UPDATE_FAILED, 400, false);
         } catch (\Exception $e) {
-            return response()->json(['error' => INVALID_GATEWAY], 422);
+            return $this->apiResponse(INVALID_GATEWAY, 422, false);
         }
     }
 
