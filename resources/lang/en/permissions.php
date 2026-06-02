@@ -4,7 +4,7 @@ return [
 
     // 🔓 Public
     'view-products' => 'View all products',
-    'view-product' => 'View product +++',
+    'view-product' => 'View product',
     'view-categories' => 'View categories',
     'view-category' => 'View category',
     'view-shops' => 'View shops',
