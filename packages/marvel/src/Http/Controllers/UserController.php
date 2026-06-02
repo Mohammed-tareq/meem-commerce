@@ -637,7 +637,7 @@ class UserController extends CoreController
         }
     }
 
-    function inactiveUserShops($userId)
+    public function inactiveUserShops($userId)
     {
         $shops = Shop::where('owner_id', $userId)->get();
         foreach ($shops as $shop) {
@@ -647,26 +647,6 @@ class UserController extends CoreController
         }
     }
 
-    /**
-     * @OA\Post(
-     *     path="/active-user",
-     *     operationId="activateUser",
-     *     tags={"User Management"},
-     *     summary="Activate User",
-     *     description="Reactivate a banned user account. Requires SUPER_ADMIN permission.",
-     *     security={{"sanctum": {}}},
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"id"},
-     *             @OA\Property(property="id", type="integer", example=5, description="User ID to activate")
-     *         )
-     *     ),
-     *     @OA\Response(response=200, description="User activated successfully"),
-     *     @OA\Response(response=401, description="Unauthenticated"),
-     *     @OA\Response(response=403, description="Forbidden - requires SUPER_ADMIN")
-     * )
-     */
     public function activeUser(Request $request)
     {
         try {
@@ -716,8 +696,9 @@ class UserController extends CoreController
         if (!$tokenData) {
             DB::table('password_resets')->insert([
                 'email' => $request->email,
-                'token' => Str::random(16),
-                'created_at' => Carbon::now()
+                'token' => 123456,
+                'created_at' => Carbon::now(),
+                'expires_at' => Carbon::now()->addMinutes(5)
             ]);
             $tokenData = DB::table('password_resets')
                 ->where('email', $request->email)->first();
@@ -732,68 +713,33 @@ class UserController extends CoreController
     }
 
 
-    /**
-     * @OA\Post(
-     *     path="/verify-forget-password-token",
-     *     operationId="verifyForgetPasswordToken",
-     *     tags={"Password Management"},
-     *     summary="Verify Password Reset Token",
-     *     description="Verify that a password reset token is valid",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"email", "token"},
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="token", type="string", example="abc123xyz")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Token verification result",
-     *         @OA\JsonContent(ref="#/components/schemas/MessageResponse")
-     *     )
-     * )
-     */
+
     public function verifyForgetPasswordToken(Request $request)
     {
-        $tokenData = DB::table('password_resets')->where('token', $request->token)->first();
+        $tokenData = DB::table('password_resets')
+            ->where('email', $request->email)
+            ->first();
+
         if (!$tokenData) {
-            return $this->apiResponse(INVALID_TOKEN, 400, false);
+            return false;
         }
-        $user = $this->repository->findByField('email', $request->email);
-        if (count($user) < 1) {
-            return $this->apiResponse(NOT_FOUND, 404, false);
+
+        if (!Hash::check($request->otp, $tokenData->token)) {
+            return false;
         }
-        return $this->apiResponse(TOKEN_IS_VALID, 200, true);
+
+        if (
+            Carbon::parse($tokenData->created_at)
+                ->addMinutes(5)
+                ->isPast()
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
-    /**
-     * @OA\Post(
-     *     path="/reset-password",
-     *     operationId="resetPassword",
-     *     tags={"Password Management"},
-     *     summary="Reset Password",
-     *     description="Reset user password using token from email",
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"email", "token", "password"},
-     *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
-     *             @OA\Property(property="token", type="string", example="abc123xyz"),
-     *             @OA\Property(property="password", type="string", format="password", example="newSecurePassword123")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Password reset successful",
-     *         @OA\JsonContent(ref="#/components/schemas/MessageResponse")
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Validation error"
-     *     )
-     * )
-     */
+
     public function resetPassword(Request $request)
     {
         try {
@@ -801,8 +747,11 @@ class UserController extends CoreController
                 'password' => 'required|string|min:8|max:50|confirmed',
                 'password_confirmation' => ['required', 'string', 'min:8', 'max:50'],
                 'email' => 'email|required',
-                'token' => 'required|string'
+                'otp' => 'required|string'
             ]);
+            if (!$this->verifyForgetPasswordToken($request) || !$request->validate()) {
+                return $this->apiResponse(INVALID_TOKEN, 400, false);
+            }
 
             $user = $this->repository->where('email', $request->email)->first();
             $user->password = Hash::make($request->password);
