@@ -62,6 +62,7 @@ class PromotionRepository extends BaseRepository
     {
         try {
             $data = $request->only($this->dataArray);
+            
             $data = $this->normalizePromotionData($data);
             $promotion = $this->create($data);
             $this->syncPromotionProducts($promotion, $request);

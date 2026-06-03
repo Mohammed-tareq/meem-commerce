@@ -19,6 +19,7 @@ class FlashSaleSeeder extends Seeder
         $flashSales = [
             [
                 'title' => ['en' => 'This Week Mega Discount', 'ar' => 'خصم ضخم هذا الأسبوع'],
+                'slug' => null,
                 'description' => ['en' => 'Save big on electronics', 'ar' => 'وفر الكثير على الإلكترونيات'],
                 'start_date' => $weekStart,
                 'end_date' => $weekEnd,
@@ -29,6 +30,7 @@ class FlashSaleSeeder extends Seeder
             ],
             [
                 'title' => ['en' => 'Fashion Week Sale', 'ar' => 'تخفيضات أسبوع الموضة'],
+                "slug" => 'fashion-week-sale',
                 'description' => ['en' => 'Special offers on clothing', 'ar' => 'عروض خاصة على الملابس'],
                 'start_date' => now(),
                 'end_date' => now()->addDays(10),
@@ -39,6 +41,7 @@ class FlashSaleSeeder extends Seeder
             ],
             [
                 'title' => ['en' => 'Ramadan Offers', 'ar' => 'عروض رمضان'],
+                "slug" => 'ramadan-offers',
                 'description' => ['en' => 'Celebrate Ramadan with discounts', 'ar' => 'احتفل برمضان مع خصومات'],
                 'start_date' => now(),
                 'end_date' => now()->addDays(15),
@@ -49,6 +52,7 @@ class FlashSaleSeeder extends Seeder
             ],
             [
                 'title' => ['en' => 'Back to School', 'ar' => 'العودة إلى المدرسة'],
+                "slug" => 'back-to-school',
                 'description' => ['en' => 'Discounts on school supplies', 'ar' => 'خصومات على مستلزمات المدارس'],
                 'start_date' => now()->addDays(5),
                 'end_date' => now()->addDays(12),
@@ -59,6 +63,7 @@ class FlashSaleSeeder extends Seeder
             ],
             [
                 'title' => ['en' => 'Black Friday', 'ar' => 'الجمعة السوداء'],
+                "slug" => 'black-friday',
                 'description' => ['en' => 'Massive discounts on electronics', 'ar' => 'خصومات ضخمة على الإلكترونيات'],
                 'start_date' => now(),
                 'end_date' => now()->addDays(32),
@@ -69,6 +74,7 @@ class FlashSaleSeeder extends Seeder
             ],
             [
                 'title' => ['en' => 'Cyber Monday', 'ar' => 'سايبر مانداي'],
+                "slug" => 'cyber-monday',
                 'description' => ['en' => 'Exclusive online deals', 'ar' => 'عروض حصرية عبر الإنترنت'],
                 'start_date' => now()->addDays(33),
                 'end_date' => now()->addDays(35),
@@ -79,6 +85,7 @@ class FlashSaleSeeder extends Seeder
             ],
             [
                 'title' => ['en' => 'Winter Clearance', 'ar' => 'تصفية الشتاء'],
+                "slug" => 'winter-clearance',
                 'description' => ['en' => 'Clearance sale on winter clothes', 'ar' => 'تخفيضات على ملابس الشتاء'],
                 'start_date' => now()->addDays(40),
                 'end_date' => now()->addDays(50),
@@ -89,6 +96,7 @@ class FlashSaleSeeder extends Seeder
             ],
             [
                 'title' => ['en' => 'Valentine’s Day', 'ar' => 'عيد الحب'],
+                "slug" => 'valentines-day',
                 'description' => ['en' => 'Romantic gifts and offers', 'ar' => 'هدايا وعروض رومانسية'],
                 'start_date' => now()->addDays(60),
                 'end_date' => now()->addDays(62),
@@ -99,6 +107,7 @@ class FlashSaleSeeder extends Seeder
             ],
             [
                 'title' => ['en' => 'Eid Al-Fitr Sale', 'ar' => 'تخفيضات عيد الفطر'],
+                "slug" => 'eid-al-fitr-sale',
                 'description' => ['en' => 'Celebrate Eid with special discounts', 'ar' => 'احتفل بالعيد مع خصومات خاصة'],
                 'start_date' => now()->addDays(70),
                 'end_date' => now()->addDays(75),
@@ -109,6 +118,7 @@ class FlashSaleSeeder extends Seeder
             ],
             [
                 'title' => ['en' => 'Summer Sale', 'ar' => 'تخفيضات الصيف'],
+                "slug" => 'summer-sale',
                 'description' => ['en' => 'Hot deals for summer', 'ar' => 'عروض ساخنة للصيف'],
                 'start_date' => now()->addDays(90),
                 'end_date' => now()->addDays(100),
@@ -120,7 +130,23 @@ class FlashSaleSeeder extends Seeder
         ];
 
         foreach ($flashSales as $index => $sale) {
-            $flashSale = FlashSale::create($sale);
+            // generate slug from title
+            $title = $sale['title'] ?? null;
+            if ($title && is_array($title)) {
+                $slug = $this->makeUniqueTranslatableSlug(FlashSale::class, $title['en'] ?? '', $title['ar'] ?? '');
+            } else {
+                $slug = null;
+            }
+
+            $data = $sale;
+            unset($data['slug']);
+
+            $flashSale = FlashSale::create($data);
+
+            if ($slug) {
+                $flashSale->setTranslations('slug', $slug);
+                $flashSale->save();
+            }
 
             if ($flashSaleImagesCount > 0 && ! $flashSale->hasMedia('flash-sales-desktop')) {
                 $image = $flashSaleImages[$index % $flashSaleImagesCount];
@@ -141,5 +167,22 @@ class FlashSaleSeeder extends Seeder
                     ->toMediaCollection('flash-sales-mobile', 'flashSales');
             }
         }
+    }
+
+    private function makeUniqueTranslatableSlug(string $modelClass, string $en, string $ar): array
+    {
+        $baseEn = Str::slug($en ?: 'item');
+        $baseAr = str_replace(' ', '-', trim($ar ?: $en));
+        $candidate = $baseEn;
+        $i = 1;
+        while ($modelClass::where('slug->en', $candidate)->exists()) {
+            $i++;
+            $candidate = $baseEn . '-' . $i;
+        }
+        $candidateAr = $baseAr;
+        if ($i > 1) {
+            $candidateAr .= '-' . $i;
+        }
+        return ['en' => $candidate, 'ar' => $candidateAr];
     }
 }

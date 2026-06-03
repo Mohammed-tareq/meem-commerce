@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\General;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Banner\BannerResource;
 use App\Services\General\BannerService;
+use Illuminate\Http\Request;
 use Marvel\Traits\ApiResponse;
 
 class BannerController extends Controller
@@ -17,15 +18,15 @@ class BannerController extends Controller
         $this->bannerService = $bannerService;
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $banners =  $this->bannerService->getBanners();
+        $banners =  $this->bannerService->getBanners($request);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  BannerResource::collection($banners));
     }
 
-    public function getBannerById($id)
+    public function getBannerBySlug($slug)
     {
-        $banner =  $this->bannerService->getBannerById($id);
+        $banner =  $this->bannerService->getBannerBySlug($slug);
         if (!$banner) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }

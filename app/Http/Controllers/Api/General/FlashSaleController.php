@@ -28,9 +28,9 @@ class FlashSaleController extends Controller
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::collection($flashSales));
     }
 
-    public function getFlashSaleById($id)
+    public function getFlashSaleBySlug($slug)
     {
-        $FlashSaleWithProducts  = $this->flashSaleService->getFlashSaleById($id);
+        $FlashSaleWithProducts  = $this->flashSaleService->getFlashSaleBySlug($slug);
         if (!$FlashSaleWithProducts) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }

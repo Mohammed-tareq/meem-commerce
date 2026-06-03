@@ -60,9 +60,9 @@ use Marvel\Http\Controllers\RefundReasonController;
 use Marvel\Http\Controllers\StoreNoticeController;
 use Marvel\Http\Controllers\TermsAndConditionsController;
 use Marvel\Http\Controllers\ComponentDataController;
+use Marvel\Http\Controllers\ContentPageController;
 use Marvel\Http\Controllers\CountryController;
 use Marvel\Http\Controllers\GovernorateController;
-use Marvel\Http\Controllers\MeemProductController;
 use Marvel\Http\Controllers\ShippingPriceController;
 
 // use Illuminate\Support\Facades\Auth;
@@ -311,6 +311,12 @@ Route::group(
 
         // Puck page builder save endpoint (with upsert)
         Route::post('puck/page', [CmsPageController::class, 'storePuckPage']);
+        Route::post('content-pages/{content_page}/attach-sections', [ContentPageController::class, 'attachSections']);
+        Route::patch('content-pages/{content_page}/toggle-active', [ContentPageController::class, 'toggleActive']);
+        Route::apiResource('content-pages', ContentPageController::class);
+        Route::post('sections/reorder', [SectionController::class, 'reorder']);
+        Route::patch('sections/{section}/toggle-active', [SectionController::class, 'toggleStatus']);
+        Route::apiResource('sections', SectionController::class);
     }
 );
 
@@ -567,9 +573,6 @@ Route::group(
         Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
             'only' => ['index', 'show'],
         ]);
-
-        Route::post('sections/reorder', [SectionController::class, 'reorder']);
-        Route::apiResource('sections', SectionController::class);
     }
 );
 
@@ -613,9 +616,7 @@ Route::group([
     Route::apiResource('resources', ResourceController::class, [
         'only' => ['update', 'destroy']
     ]);
-    Route::apiResource('meem-products', MeemProductController::class, [
-        'only' => ['store', 'update', 'destroy'],
-    ]);
+
     // Route::apiResource('coupons', CouponController::class, [
     //     'only' => ['store', 'update', 'destroy'],
     // ]);

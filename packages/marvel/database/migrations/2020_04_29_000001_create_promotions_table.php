@@ -13,6 +13,7 @@ class CreatePromotionsTable extends Migration
         Schema::create('promotions', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('slug');
             $table->string('code')->unique();
             $table->enum('type', PromotionType::getValues());
             $table->enum('type_amount', PromotionMountType::getValues());

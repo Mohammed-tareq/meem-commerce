@@ -13,7 +13,8 @@ return new class extends Migration {
     {
         Schema::create('flash_sales', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
+            $table->string('title')->unique();
+            $table->string('slug');
             $table->text('description')->nullable();
             $table->date('start_date')->default(now());
             $table->date('end_date');

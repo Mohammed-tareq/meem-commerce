@@ -11,8 +11,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
-use Carbon\Carbon;
 use Marvel\Services\Pricing\ProductPricingService;
+use Illuminate\Support\Str;
+
 
 class FlashSale extends Model implements HasMedia
 {
@@ -20,9 +21,10 @@ class FlashSale extends Model implements HasMedia
 
     protected $table = 'flash_sales';
 
-    public array $translatable = ["title", "description"];
+    public array $translatable = ["title", "description",'slug'];
     public $fillable = [
         'title',
+        'slug',
         'description',
         'start_date',
         'end_date',
@@ -101,12 +103,7 @@ class FlashSale extends Model implements HasMedia
             && (!$this->end_date || $this->end_date->gte($today));
     }
 
-    /**
-     * Scope a query to only active flash sales.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
+   
     public function scopeValid(Builder $query)
     {
         return $query->where('status', true)
@@ -139,6 +136,24 @@ class FlashSale extends Model implements HasMedia
         return  $query->where(function ($q) use ($field, $term, $locale) {
             $q->where($field . '->' . $locale, 'like', "%$term%")
                 ->orWhere($field, 'like', "%$term%");
+        });
+    }
+
+    protected static function booted()
+    {
+        static::saving(function ($flashSale) {
+
+            $title = $flashSale->title ?? [];
+
+            $flashSale->slug = [
+                'en' => isset($title['en'])
+                    ? Str::slug($title['en'])
+                    : null,
+
+                'ar' => isset($title['ar'])
+                    ? str_replace(' ', '-', trim($title['ar']))
+                    : null,
+            ];
         });
     }
 }

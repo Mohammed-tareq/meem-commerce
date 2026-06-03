@@ -15,12 +15,13 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 class Promotion extends Model implements HasMedia
 {
     use HasTranslations, InteractsWithMedia;
-    public  array $translatable = ['name'];
+    public  array $translatable = ['name','slug'];
 
     protected $table = 'promotions';
 
     public $fillable = [
         'name',
+        'slug',
         'type',
         'type_amount',
         'value',
@@ -78,6 +79,20 @@ class Promotion extends Model implements HasMedia
             if ($promotion->value !== null && ($promotion->discount === null || !$promotion->isDirty('discount'))) {
                 $promotion->discount = $promotion->value;
             }
+        });
+        static::saving(function ($promotion) {
+
+            $title = $promotion->name ?? [];
+
+            $promotion->slug = [
+                'en' => isset($title['en'])
+                    ? Str::slug($title['en'])
+                    : null,
+
+                'ar' => isset($title['ar'])
+                    ? str_replace(' ', '-', trim($title['ar']))
+                    : null,
+            ];
         });
     }
 
@@ -147,7 +162,13 @@ class Promotion extends Model implements HasMedia
                     ->orWhereDate('end_at', '>=', today());
             });
     }
-
+    public function scopeSearch($query, $field, $term, $locale)
+    {
+        return  $query->where(function ($q) use ($field, $term, $locale) {
+            $q->where($field . '->' . $locale, 'like', "%$term%")
+                ->orWhere($field, 'like', "%$term%");
+        });
+    }
 
     public function isValid(): bool
     {

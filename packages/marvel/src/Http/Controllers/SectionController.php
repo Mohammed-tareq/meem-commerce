@@ -2,10 +2,13 @@
 
 namespace Marvel\Http\Controllers;
 
-use App\Models\Section;
 use App\Http\Resources\Section\SectionResource;
 use Marvel\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Marvel\Http\Requests\StoreSectionRequest;
+use Marvel\Http\Requests\UpdateContactSectionRequest;
+use Marvel\Http\Requests\UpdateSectionRequest;
+use Marvel\Models\Section;
 
 class SectionController extends CoreController
 {
@@ -23,18 +26,11 @@ class SectionController extends CoreController
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(StoreSectionRequest $request)
     {
-        $request->validate([
-            'type'      => 'required|string',
-            'title'     => 'required|string',
-            'order'     => 'sometimes|integer',
-            'endpoint'  => 'required|string',
-            'is_active' => 'sometimes|boolean',
-        ]);
-
         try {
-            $section = Section::create($request->all());
+            $section = Section::create($request->validated());
+            $section     = $section->fresh();
             return $this->apiResponse("Section created successfully", 200, true, SectionResource::make($section));
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
@@ -57,19 +53,13 @@ class SectionController extends CoreController
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(UpdateSectionRequest $request, string $id)
     {
-        $request->validate([
-            'type'      => 'sometimes|string',
-            'title'     => 'sometimes|string',
-            'order'     => 'sometimes|integer',
-            'endpoint'  => 'sometimes|string',
-            'is_active' => 'sometimes|boolean',
-        ]);
+
 
         try {
             $section = Section::findOrFail($id);
-            $section->update($request->all());
+            $section->update($request->validated());
             return $this->apiResponse("Section updated successfully", 200, true, SectionResource::make($section));
         } catch (\Exception $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
@@ -97,7 +87,7 @@ class SectionController extends CoreController
     {
         try {
             $request->validate([
-                'sections'   => 'required|array',
+                'sections'   => 'required|array|distinct',
                 'sections.*' => 'required|exists:sections,id',
             ]);
 
@@ -107,5 +97,11 @@ class SectionController extends CoreController
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
+    }
+    public function toggleStatus(Section $section)
+    {
+        $section->is_active = !$section->is_active;
+        $section->save();
+        return $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, SectionResource::make($section));
     }
 }

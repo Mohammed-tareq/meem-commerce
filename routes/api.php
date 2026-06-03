@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\General\BannerController;
+use App\Http\Controllers\Api\General\BrandController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\General\CategoryController;
 use App\Http\Controllers\Api\General\CouponController;
@@ -11,9 +12,9 @@ use App\Http\Controllers\Api\General\OrderController;
 use App\Http\Controllers\Api\General\ProductController;
 use App\Http\Controllers\Api\General\SearchController;
 use App\Http\Controllers\Api\General\SettingController;
-use App\Http\Controllers\Api\General\ShopController;
 use App\Http\Controllers\Api\General\SliderController;
-use Illuminate\Support\Facades\Http;
+use App\Http\Controllers\Api\General\ContentPageController;
+use App\Http\Controllers\Api\General\PromotionController;
 
 Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])->group(function () {
 
@@ -23,15 +24,10 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
         Route::get('navbar', 'navData')->name('navbar');
     });
 
-    //======================== shops=========================//
-    Route::controller(ShopController::class)->group(function () {
-        Route::get('shops', 'index')->name('general-shop-index');
-        Route::get('shops/{id}', 'getShopById')->name('general-shop-show');
-    });
     //======================== categories=========================//
     Route::controller(CategoryController::class)->group(function () {
         Route::get('categories', 'index')->name('general-category-index');
-        Route::get('categories/{id}', 'getCategoryById')->name('general-category-show');
+        Route::get('categories/{slug}', 'getCategoryBySlug')->name('general-category-show');
     });
     //======================== products=========================//
     Route::controller(ProductController::class)->group(function () {
@@ -42,11 +38,7 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
         Route::put('products/reviews/{id}', 'updateProductReview')->middleware('auth:sanctum');
     });
 
-    //========================= coupons=========================//
-    Route::controller(CouponController::class)->group(function () {
-        Route::get('coupons', 'index')->name('general-coupon-index');
-        Route::post('coupons/apply', 'applyCoupon')->middleware('auth:sanctum');
-    });
+
     //========================= order=========================//
     Route::controller(OrderController::class)->group(function () {
         Route::get('orders', 'index')->middleware('auth:sanctum');
@@ -59,25 +51,60 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
 
 
 
-    //========================= faqs=========================//
-    Route::get('faqs', [FAQController::class, 'index']);
+
+
+    //========================= sliders=========================//
+    Route::get('sliders', [SliderController::class, 'index']);
 
     //========================= flash-sales=========================//
     Route::controller(FlashSaleController::class)->group(function () {
         Route::get('flash-sales', 'index')->name('general-flash-sale-index');
-        Route::get('flash-sales/{id}', 'getFlashSaleById')->name('general-flash-sale-show');
+        Route::get('flash-sales/{slug}', 'getFlashSaleBySlug')->name('general-flash-sale-show');
+    });
+
+    //======================== categories=========================//
+    Route::controller(CategoryController::class)->group(function () {
+        Route::get('categories', 'index')->name('general-category-index');
+        Route::get('categories/{slug}', 'getCategoryBySlug')->name('general-category-show');
+    });
+
+    //======================== promotions=========================//
+    Route::controller(PromotionController::class)->group(function () {
+        Route::get('promotions', 'index')->name('general-promotion-index');
+        Route::get('promotions/{slug}', 'getPromotionBySlug')->name('general-promotion-show');
     });
 
     //========================= banners=========================//
     Route::controller(BannerController::class)->group(function () {
         Route::get('banners', 'index')->name('general-banner-index');
-        Route::get('banners/{id}', 'getBannerById')->name('general-banner-show');
+        Route::get('banners/{slug}', 'getBannerBySlug')->name('general-banner-show');
+    });
+
+    //========================= coupons=========================//
+    Route::controller(CouponController::class)->group(function () {
+        Route::get('coupons', 'index')->name('general-coupon-index');
+        Route::post('coupons/apply', 'applyCoupon')->middleware('auth:sanctum');
+    });
+
+    //========================= brands=========================//
+    Route::controller(BrandController::class)->group(function () {
+        Route::get('brands', 'index')->name('general-brand-index');
+        Route::get('brands/{slug}', 'getBrandBySlug')->name('general-brand-show');
     });
 
 
+    //========================= faqs=========================//
+    Route::get('faqs', [FAQController::class, 'index']);
 
-    //========================= sliders=========================//
-    Route::get('sliders', [SliderController::class, 'index']);
+
+
+
+    //========================= content-pages=========================//
+    Route::controller(ContentPageController::class)->group(function () {
+        Route::get('content-pages', 'index')->name('general-content-page-index');
+        Route::get('content-pages/{slug}', 'show')->name('general-content-page-show');
+    });
+
 
     //======================== settings=========================//
     Route::controller(SettingController::class)->group(function () {

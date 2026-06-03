@@ -3,11 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Marvel\Enums\CouponType;
 use Marvel\Enums\DiscountType;
-use Marvel\Enums\OrderStatus;
-use Marvel\Enums\PaymentStatus;
-use Marvel\Enums\ProductStatus;
 use Marvel\Enums\ProductType;
 use Marvel\Enums\ShippingType;
 
@@ -31,7 +27,8 @@ class CreateMarvelTables extends Migration
         Schema::create('coupons', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
-            $table->string('name')->unique();
+            $table->string('name');
+            $table->string('slug');
             $table->enum('discount_type', DiscountType::getValues())->nullable();
             $table->decimal('discount', 8, 3)->nullable();
             $table->decimal('max_discount_amount', 10, 2)->nullable();
@@ -89,6 +86,7 @@ class CreateMarvelTables extends Migration
         Schema::create('banners', function (Blueprint $table) {
             $table->id();
             $table->string('title');
+            $table->string('slug');
             $table->integer('order');
             $table->text('description')->nullable();
             $table->boolean('status')->default(false);
@@ -101,6 +99,7 @@ class CreateMarvelTables extends Migration
         Schema::create('sliders', function (Blueprint $table) {
             $table->id();
             $table->string('title')->nullable();
+            $table->string('slug');
             $table->integer('order');
             $table->boolean('status')->default(false);
             $table->timestamps();
@@ -338,7 +337,7 @@ class CreateMarvelTables extends Migration
             $table->timestamps();
         });
 
-      
+
 
         Schema::create('attachments', function (Blueprint $table) {
             $table->id();

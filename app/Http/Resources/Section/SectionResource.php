@@ -17,10 +17,10 @@ class SectionResource extends JsonResource
         return [
             'id' => $this->id,
             'type' => $this->type,
-            'title' => $this->title,
+            'title' => $this->title_visible? $this->getTranslation('title',app()->getLocale()) : null,
             'order' => $this->order,
             'endpoint' => $this->endpoint,
-            'is_active' => $this->is_active,
+            'is_active' => (bool) $this->is_active,
         ];
     }
 }

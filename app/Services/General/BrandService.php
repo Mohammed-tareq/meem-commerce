@@ -2,18 +2,18 @@
 
 namespace App\Services\General;
 
-use Marvel\Database\Models\Banner;
+use Marvel\Database\Models\Brand;
 
-class BannerService
+class BrandService
 {
 
-    public function getBanners($request)
+    public function getBrands($request)
     {
         $limit = $request->get('limit', 10);
         $start_date = $request->query('start_date');
         $end_date   = $request->query('end_date');
-        
-        return Banner::active()
+
+        return Brand::active()
             ->when($start_date, function ($query) use ($start_date) {
                 $query->where('created_at', '>=', $start_date);
             })
@@ -21,12 +21,12 @@ class BannerService
                 $query->where('created_at', '<=', $end_date);
             })->orderByDesc('id')->limit($limit)->get();
     }
-    public function getBannerBySlug($slug)
+    public function getBrandBySlug($slug)
     {
-        $banner =  Banner::active()->search('slug', $slug, app()->getLocale())->first();
-        if ($banner) {
-            $banner->load('products');
+        $brand =  Brand::active()->search('slug', $slug, app()->getLocale())->first();
+        if ($brand) {
+            $brand->load('products');
         }
-        return $banner;
+        return $brand;
     }
 }

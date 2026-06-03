@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
+use Illuminate\Support\Str;
+
 
 class Brand extends Model implements HasMedia
 {
@@ -15,7 +17,7 @@ class Brand extends Model implements HasMedia
 
     protected $table = 'brands';
 
-    public array $translatable = ['name', 'details'];
+    public array $translatable = ['name', 'details', 'slug'];
 
     protected $fillable = ['name', 'details', 'slug', 'status'];
 
@@ -52,5 +54,23 @@ class Brand extends Model implements HasMedia
     public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'brand_product');
+    }
+
+    protected static function booted()
+    {
+        static::saving(function ($brand) {
+
+            $title = $brand->name ?? [];
+
+            $brand->slug = [
+                'en' => isset($title['en'])
+                    ? Str::slug($title['en'])
+                    : null,
+
+                'ar' => isset($title['ar'])
+                    ? str_replace(' ', '-', trim($title['ar']))
+                    : null,
+            ];
+        });
     }
 }

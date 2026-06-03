@@ -68,7 +68,23 @@ class BannerSeeder extends Seeder
         ];
 
         foreach ($banners as $index => $banner) {
-            $bannerModel = Banner::create($banner);
+            // generate unique translatable slug from title
+            $title = $banner['title'] ?? null;
+            if ($title && is_array($title)) {
+                $slug = $this->makeUniqueTranslatableSlug(Banner::class, $title['en'] ?? '', $title['ar'] ?? '');
+            } else {
+                $slug = null;
+            }
+
+            $data = $banner;
+            unset($data['slug']);
+
+            $bannerModel = Banner::create($data);
+
+            if ($slug) {
+                $bannerModel->setTranslations('slug', $slug);
+                $bannerModel->save();
+            }
 
             if ($bannerImagesCount > 0) {
                 $image = $bannerImages[$index % $bannerImagesCount];
@@ -87,5 +103,22 @@ class BannerSeeder extends Seeder
                     ->toMediaCollection('banners-mobile', 'banners');
             }
         }
+    }
+
+    private function makeUniqueTranslatableSlug(string $modelClass, string $en, string $ar): array
+    {
+        $baseEn = Str::slug($en ?: 'item');
+        $baseAr = str_replace(' ', '-', trim($ar ?: $en));
+        $candidate = $baseEn;
+        $i = 1;
+        while ($modelClass::where('slug->en', $candidate)->exists()) {
+            $i++;
+            $candidate = $baseEn . '-' . $i;
+        }
+        $candidateAr = $baseAr;
+        if ($i > 1) {
+            $candidateAr .= '-' . $i;
+        }
+        return ['en' => $candidate, 'ar' => $candidateAr];
     }
 }

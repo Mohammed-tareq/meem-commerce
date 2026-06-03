@@ -15,10 +15,13 @@ return new class extends Migration
             $table->id();
             $table->string('type');
             $table->string('title');
-            $table->integer('order')->default(0);
+            $table->integer('order');
             $table->string('endpoint');
+            $table->foreignId('content_page_id')->nullable()->constrained()->nullOnDelete();
             $table->boolean('is_active')->default(true);
+            $table->boolean('title_visible')->default(true);
             $table->timestamps();
+            $table->index('content_page_id');
         });
     }
 
@@ -28,5 +31,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('sections');
+        Schema::table('sections', function (Blueprint $table) {
+            $table->dropIndex(['content_page_id']);
+        });
     }
 };

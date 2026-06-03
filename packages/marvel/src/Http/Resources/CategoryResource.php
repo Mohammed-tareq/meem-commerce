@@ -22,7 +22,10 @@ class CategoryResource extends Resource
             'slug'                 => $this->slug,
             'parent_id'            => $this->parent_id,
             'level'                => $this->level,
-            'image'                => $this->getFirstMediaUrl('categories'),
+            'image'                => [
+                'desktop' => $this->getFirstMediaUrl('categories-desktop') ?: null,
+                'mobile'  => $this->getFirstMediaUrl('categories-mobile') ?: null,
+            ],
             'products_count'       => $this->whenCounted('products'),
             'details'              => $this?->getTranslation('details', app()->getLocale()),
             $this->mergeWhen(request()->routeIs('categories.show'), [

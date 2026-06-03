@@ -22,6 +22,7 @@ class Coupon extends Model implements HasMedia
 
     public $fillable = [
         'code',
+        'slug',
         'name',
         'discount_type',
         'discount',
@@ -58,6 +59,22 @@ class Coupon extends Model implements HasMedia
             } while (self::where('code', $code)->exists());
 
             $coupon->code = strtolower(preg_replace('/\s+/', '_', trim($coupon->name))) . "_" . $code;
+        });
+
+
+        static::saving(function ($coupon) {
+
+            $title = $coupon->name ?? [];
+
+            $coupon->slug = [
+                'en' => isset($title['en'])
+                    ? Str::slug($title['en'])
+                    : null,
+
+                'ar' => isset($title['ar'])
+                    ? str_replace(' ', '-', trim($title['ar']))
+                    : null,
+            ];
         });
     }
 

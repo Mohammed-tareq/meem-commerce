@@ -3,12 +3,11 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Category\CategoryHomeResource;
 use App\Http\Resources\Category\CategoryWithChildResource;
 use App\Services\General\CategoryService;
-use Marvel\Http\Resources\CategoryCollection;
 use Marvel\Traits\ApiResponse;
 use Illuminate\Http\Request;
-use Marvel\Http\Resources\CategoryResource;
 
 use const Dom\NO_DATA_ALLOWED_ERR;
 
@@ -25,12 +24,12 @@ class CategoryController extends Controller
     public function index(Request $request)
     {
         $categories = $this->categoryService->paginate($request);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, new CategoryCollection($categories));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryHomeResource::collection($categories));
     }
 
-    public function getCategoryById($id)
+    public function getCategoryBySlug($slug)
     {
-        $category = $this->categoryService->getById($id);
+        $category = $this->categoryService->getBySlug($slug);
         if (!$category) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }

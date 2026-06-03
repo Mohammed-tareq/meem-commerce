@@ -2,18 +2,18 @@
 
 namespace App\Services\General;
 
-use Marvel\Database\Models\FlashSale;
+use Marvel\Database\Models\Promotion;
 
-class FlashSaleService
+class PromotionDataService
 {
 
-    public function paginateFlashSales($request)
+    public function paginatePromotion($request)
     {
         $limit = $request->get('limit', 10);
         $start_date = $request->query('start_date');
         $end_date   = $request->query('end_date');
 
-        $query = FlashSale::query()->valid()->when($start_date, function ($query) use ($start_date) {
+        $query = Promotion::query()->valid()->when($start_date, function ($query) use ($start_date) {
             $query->where('created_at', '>=', $start_date);
             })
             ->when($end_date, function ($query) use ($end_date) {
@@ -22,12 +22,12 @@ class FlashSaleService
         return $query->orderByDesc('id')->paginate($limit);
     }
 
-    public function getFlashSaleBySlug($slug)
+    public function getPromotionBySlug($slug)
     {
-        $FlashSale = FlashSale::search('slug', $slug, app()->getLocale())->first();
-        if ($FlashSale) {
-            $FlashSale->load('products');
+        $Promotion = Promotion::search('slug', $slug, app()->getLocale())->first();
+        if ($Promotion) {
+            $Promotion->load('products');
         }
-        return $FlashSale;
+        return $Promotion;
     }
 }

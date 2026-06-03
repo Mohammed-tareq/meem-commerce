@@ -11,9 +11,17 @@ class CouponService
     public function getCoupons($request)
     {
         $name = $request->get("search", false);
-        $coupons = Coupon::valid()->with('media')->when($name, function ($query) use ($name) {
+        $limit = $request->get('limit', 10);
+        $start_date = $request->query('start_date');
+        $end_date   = $request->query('end_date');
+        $coupons = Coupon::valid()->when($name, function ($query) use ($name) {
             $query->search('name', $name, app()->getLocale());
-        })->get();
+        })->when($start_date, function ($query) use ($start_date) {
+                $query->where('created_at', '>=', $start_date);
+            })
+            ->when($end_date, function ($query) use ($end_date) {
+                $query->where('created_at', '<=', $end_date);
+            })->orderByDesc('id')->limit($limit)->get();
         return $coupons;
     }
 
