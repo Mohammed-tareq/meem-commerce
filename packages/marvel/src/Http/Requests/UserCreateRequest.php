@@ -31,7 +31,7 @@ class UserCreateRequest extends FormRequest
             'first_name'     => ['required', 'string', 'max:50', 'min:2'],
             'last_name'     => ['required', 'string', 'max:50', "min:2"],
             'email'    => ['required', 'email', 'unique:users,email', 'email:rfc,dns'],
-            'phone'    => ['required', 'string', 'max:20'],
+            'phone_number'    => ['required', 'string', 'max:20'],
             'password' => ['required', 'string', 'min:8', 'max:50', 'confirmed'],
             'password_confirmation' => ['required', 'string', 'min:8', 'max:50'],
             'policy' => ['required', 'in:1,true'],

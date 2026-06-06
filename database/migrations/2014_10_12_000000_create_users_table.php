@@ -20,7 +20,7 @@ class CreateUsersTable extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('type', ['admin', 'user']);
-            $table->string('phone')->nullable();
+            $table->string('phone_number')->unique();
             $table->boolean('is_active')->default(true);
             $table->rememberToken();
             $table->softDeletes();
@@ -29,7 +29,7 @@ class CreateUsersTable extends Migration
 
             $table->index('type');
             $table->index('email');
-            $table->index('phone');
+            $table->index('phone_number');
             $table->index('is_active');
         });
     }

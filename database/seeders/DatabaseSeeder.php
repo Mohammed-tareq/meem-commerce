@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Shop Owner',
             'password' => Hash::make('password'),
             'is_active' => true,
+            'phone_number' => '34567890',
             'email_verified_at' => now(),
         ]);
         $userEdit = User::firstOrCreate([
@@ -43,6 +44,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Shop Owner',
             'password' => Hash::make('password'),
             'is_active' => true,
+            'phone_number' => '123456790',
             'email_verified_at' => now(),
         ]);
 
@@ -52,6 +54,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Test Customer',
             'password' => Hash::make('password'),
             'is_active' => true,
+            'phone_number' => '12347890',
             'email_verified_at' => now(),
         ]);
 

@@ -465,13 +465,15 @@ class UserController extends CoreController
     {
         $request->validated();
 
-        $user = User::where('email', $request->email)->where('is_active', true)->first();
+        $user = User::where('email', $request->email)
+        ->orWhere('phone_number', $request->phone_number) // Allow login with email or phone number
+        ->where('is_active', true)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return $this->apiResponse(USER_NOT_FOUND, 404, false);
+            return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
         }
         $email_verified = $user->hasVerifiedEmail();
-        event(new ProcessUserData());
+        // event(new ProcessUserData());
         $data = [
             "token" => $user->createToken('auth_token')->plainTextToken,
             "permissions" => $user->getAllPermissions()->pluck('name'),
@@ -589,7 +591,8 @@ class UserController extends CoreController
                 'name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
-                'phone' => $request->phone,
+                'phone_number' => $request->phone_number,
+                'type' =>'user',
                 'is_active' => true,
             ]);
             $user->sendOneTimePassword();

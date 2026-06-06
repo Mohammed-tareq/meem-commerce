@@ -53,6 +53,7 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         'type',
         // Allow setting verification timestamp explicitly on creation/update
         'email_verified_at',
+        'phone_number',
     ];
 
     /**

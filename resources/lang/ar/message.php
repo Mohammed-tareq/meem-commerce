@@ -148,4 +148,5 @@ return [
     'MESSAGE.USER_LOGGED_IN_SUCCESSFULLY' => 'تم تسجيل دخول المستخدم بنجاح',
     'MESSAGE.EMAIL_VERIFICATION_LINK_SENT' => 'تم إرسال رابط تأكيد البريد الإلكتروني إلى بريدك',
     'ERROR.INVALID_OTP' => 'رمز التحقق غير صالح',
+    'INVALID_CREDENTIALS' => 'بيانات الاعتماد غير صحيحة',
 ];

@@ -148,4 +148,5 @@ return [
     'MESSAGE.USER_LOGGED_IN_SUCCESSFULLY' => 'User logged in successfully',
     'MESSAGE.EMAIL_VERIFICATION_LINK_SENT' => 'Email verification link sent on your email id',
     'ERROR.INVALID_OTP' => 'Invalid OTP',
+    'INVALID_CREDENTIALS'=>'Invalid Credentials'
 ];
