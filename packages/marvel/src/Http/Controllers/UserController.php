@@ -925,25 +925,21 @@ class UserController extends CoreController
             throw new MarvelException(PLEASE_LOGIN_USING_FACEBOOK_OR_GOOGLE);
         }
     }
+
+
     protected function getOtpGateway()
     {
-        return new OtpGateway(new LocalGateway());
+        $gateway = config('auth.active_otp_gateway');
+        $gateWayClass = "Marvel\\Otp\\Gateways\\" . ucfirst($gateway) . 'Gateway';
+        try {
+            return new OtpGateway(new $gateWayClass());
+
+        } catch (\Throwable $e) {
+            // Log the issue and fallback to a local/testing gateway that requires no credentials
+            Log::warning('OTP gateway unavailable, falling back to LocalGateway: ' . $e->getMessage());
+            return new OtpGateway(new LocalGateway());
+        }
     }
-
-    // protected function getOtpGateway()
-    // {
-    //     $gateway = config('auth.active_otp_gateway');
-    //     $gateWayClass = "Marvel\\Otp\\Gateways\\" . ucfirst($gateway) . 'Gateway';
-    //     try {
-    //         // return new OtpGateway(new $gateWayClass());
-    //         return new OtpGateway(new LocalGateway());
-
-    //     } catch (\Throwable $e) {
-    //         // Log the issue and fallback to a local/testing gateway that requires no credentials
-    //         Log::warning('OTP gateway unavailable, falling back to LocalGateway: ' . $e->getMessage());
-    //         return new OtpGateway(new LocalGateway());
-    //     }
-    // }
 
     protected function verifyOtp(Request $request)
     {
