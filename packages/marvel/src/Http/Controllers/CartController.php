@@ -6,6 +6,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Marvel\Database\Repositories\CartRepository;
 use App\Services\General\CartInventoryService;
+use Marvel\Database\Models\Cart;
 use Marvel\Http\Requests\CartCreateRequest;
 use Marvel\Http\Requests\CartUpdateRequest;
 use Marvel\Http\Resources\CartResource;
@@ -111,5 +112,22 @@ class CartController extends CoreController
 
         $this->inventoryService->releaseCart($cart, true);
         return $this->apiResponse(DELETE_CART_SUCCESSFULLY, 200, true);
+    }
+
+    public function pluckItemsToCart(Request $request)
+    {
+        $request->validate([
+            'items' => 'required|array',
+            'items.*.product_id' => 'required|exists:products,id',
+            'items.*.quantity' => 'required|integer|min:1',
+            'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
+        ]);
+       $items =  collect($request->items)
+        ->map(fn($i) => ['item' => $i])
+        ->toArray();
+        foreach($items as $item){
+           $this->repository->storeCart(new Request($item));
+        }
+        return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, CartResource::make($cart->load('items')));
     }
 }

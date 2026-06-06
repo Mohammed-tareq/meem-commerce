@@ -31,7 +31,7 @@ class SectionSeeder extends Seeder
             [
                 'type' => 'pest-product-sales',
                 'title' => ['en' => 'Pest Product Sales', 'ar' => 'مبيعات منتجات مكافحة الآفات'],
-                'endpoint' => 'product/best-sales',
+                'endpoint' => 'products/best-sales',
                 'order' => 3,
             ],
             [

@@ -715,6 +715,7 @@ Route::group([
 Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::get('cart', [CartController::class, 'index']);
     Route::post('cart', [CartController::class, 'store']);
+    Route::post('cart/bulk-items', [CartController::class, 'pluckItemsToCart']);
     Route::put('cart/update-item', [CartController::class, 'update']);
     Route::delete('cart/delete-item/{itemId}', [CartController::class, 'deleteItemFromCart']);
     Route::delete('cart/delete-items', [CartController::class, 'destroy']);

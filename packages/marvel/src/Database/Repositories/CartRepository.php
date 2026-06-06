@@ -35,6 +35,7 @@ class CartRepository extends BaseRepository
 
     public function storeCart(Request $request)
     {
+
         return $this->persistCart($request, 'add');
     }
 
@@ -52,20 +53,21 @@ class CartRepository extends BaseRepository
             if (!$userId) {
                 throw new AuthorizationException(NOT_AUTHORIZED);
             }
-
+            
             $cart = Cart::query()
-                ->where('user_id', $userId)
-                ->lockForUpdate()
-                ->first();
-
+            ->where('user_id', $userId)
+            ->lockForUpdate()
+            ->first();
+            
             if (!$cart) {
                 $cart = Cart::create([
                     'user_id' => $userId,
                     'status' => 'active',
                 ]);
             }
-
+            
             $cart->update(['status' => 'active']);
+            dd($request->all(),$cart);
 
             if ($request->filled('item')) {
                 if (!$this->syncItems($cart, $request->item ?? [], $mode)) {
