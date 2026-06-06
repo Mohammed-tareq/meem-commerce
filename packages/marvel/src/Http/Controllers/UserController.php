@@ -925,21 +925,43 @@ class UserController extends CoreController
             throw new MarvelException(PLEASE_LOGIN_USING_FACEBOOK_OR_GOOGLE);
         }
     }
-
     protected function getOtpGateway()
     {
         $gateway = config('auth.active_otp_gateway');
-        $gateWayClass = "Marvel\\Otp\\Gateways\\" . ucfirst($gateway) . 'Gateway';
-        try {
-            // return new OtpGateway(new $gateWayClass());
-            return new OtpGateway(new LocalGateway());
 
+        if ($gateway === 'local') {
+            return new OtpGateway(new LocalGateway());
+        }
+
+        try {
+            $class = "Marvel\\Otp\\Gateways\\" . ucfirst($gateway) . 'Gateway';
+
+            if (!class_exists($class)) {
+                throw new \Exception("Gateway not found: {$class}");
+            }
+
+            return new OtpGateway(new $class());
         } catch (\Throwable $e) {
-            // Log the issue and fallback to a local/testing gateway that requires no credentials
-            Log::warning('OTP gateway unavailable, falling back to LocalGateway: ' . $e->getMessage());
+            Log::warning('OTP gateway failed, fallback to LocalGateway: ' . $e->getMessage());
+
             return new OtpGateway(new LocalGateway());
         }
     }
+
+    // protected function getOtpGateway()
+    // {
+    //     $gateway = config('auth.active_otp_gateway');
+    //     $gateWayClass = "Marvel\\Otp\\Gateways\\" . ucfirst($gateway) . 'Gateway';
+    //     try {
+    //         // return new OtpGateway(new $gateWayClass());
+    //         return new OtpGateway(new LocalGateway());
+
+    //     } catch (\Throwable $e) {
+    //         // Log the issue and fallback to a local/testing gateway that requires no credentials
+    //         Log::warning('OTP gateway unavailable, falling back to LocalGateway: ' . $e->getMessage());
+    //         return new OtpGateway(new LocalGateway());
+    //     }
+    // }
 
     protected function verifyOtp(Request $request)
     {
