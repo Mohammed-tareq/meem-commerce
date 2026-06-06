@@ -19,8 +19,8 @@ class PromotionResource extends JsonResource
             "name" => $this->getTranslation('name', app()->getLocale()),
             "status" => (bool)$this->status,
             "image" => [
-                "desktop" => $this->when($this->getFirstMediaUrl('sliders-desktop'), $this->getFirstMediaUrl('sliders-desktop')),
-                "mobile" => $this->when($this->getFirstMediaUrl('sliders-mobile'), $this->getFirstMediaUrl('sliders-mobile')),
+                "desktop" => $this->when($this->getFirstMediaUrl('promotions-desktop'), $this->getFirstMediaUrl('promotions-desktop')),
+                "mobile" => $this->when($this->getFirstMediaUrl('promotions-mobile'), $this->getFirstMediaUrl('promotions-mobile')),
             ]
         ];
     }
