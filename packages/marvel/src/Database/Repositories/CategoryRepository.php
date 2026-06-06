@@ -55,7 +55,6 @@ class CategoryRepository extends BaseRepository
         try {
             DB::beginTransaction();
             $data = $request->only($this->dataArray);
-            $data['slug'] = $this->makeSlug($request);
 
             $category = $this->create($data);
 
@@ -71,8 +70,7 @@ class CategoryRepository extends BaseRepository
                 }
             }
 
-             $
-            $category->shops()->sync($request->shops_id);
+
             DB::commit();
             return $category;
         } catch (ValidationException $e) {
@@ -99,11 +97,11 @@ class CategoryRepository extends BaseRepository
                     throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
                 }
             }
-                if ($request->has('image-mobile')) {
-                    if (!$this->updateSingleImage($request, 'image-mobile', $category, 'categories-mobile', 'categories')) {
-                        throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
-                    }
+            if ($request->has('image-mobile')) {
+                if (!$this->updateSingleImage($request, 'image-mobile', $category, 'categories-mobile', 'categories')) {
+                    throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
                 }
+            }
             $category->shops()->sync($request->shops_id ?? []);
             DB::commit();
             return $this->findOrFail($category->id);

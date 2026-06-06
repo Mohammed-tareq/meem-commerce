@@ -34,15 +34,14 @@ class Banner extends Model implements HasMedia, Sortable
     {
         static::saving(function ($banner) {
 
-            $title = $banner->title ?? [];
 
             $banner->slug = [
-                'en' => isset($title['en'])
-                    ? Str::slug($title['en'])
+                'en' => $banner->getTranslation('title', 'en', false)
+                    ? Str::slug($banner->getTranslation('title', 'en'))
                     : null,
 
-                'ar' => isset($title['ar'])
-                    ? str_replace(' ', '-', trim($title['ar']))
+                'ar' => $banner->getTranslation('title', 'ar', false)
+                    ? str_replace(' ', '-', trim($banner->getTranslation('title', 'ar')))
                     : null,
             ];
         });

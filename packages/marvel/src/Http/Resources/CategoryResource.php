@@ -19,7 +19,7 @@ class CategoryResource extends Resource
         return [
             'id'                   => $this->id,
             'name'                 => $this->getTranslation('name', app()->getLocale()),
-            'slug'                 => $this->slug,
+            'slug'                 => $this->getTranslation('slug', app()->getLocale()),
             'parent_id'            => $this->parent_id,
             'level'                => $this->level,
             'image'                => [

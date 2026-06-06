@@ -56,7 +56,6 @@ class SectionController extends CoreController
     public function update(UpdateSectionRequest $request, string $id)
     {
 
-
         try {
             $section = Section::findOrFail($id);
             $section->update($request->validated());

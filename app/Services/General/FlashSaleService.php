@@ -2,7 +2,9 @@
 
 namespace App\Services\General;
 
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\FlashSale;
+use Marvel\Database\Models\Product;
 
 class FlashSaleService
 {
@@ -13,8 +15,9 @@ class FlashSaleService
         $start_date = $request->query('start_date');
         $end_date   = $request->query('end_date');
 
-        $query = FlashSale::query()->valid()->when($start_date, function ($query) use ($start_date) {
-            $query->where('created_at', '>=', $start_date);
+        $query = FlashSale::query()->valid()
+            ->when($start_date, function ($query) use ($start_date) {
+                $query->where('created_at', '>=', $start_date);
             })
             ->when($end_date, function ($query) use ($end_date) {
                 $query->where('created_at', '<=', $end_date);
@@ -29,5 +32,79 @@ class FlashSaleService
             $FlashSale->load('products');
         }
         return $FlashSale;
+    }
+    public function getFlashSalesAndHereProductsByQtySet($request)
+    {
+        $qty = $request->query('limit', 5);
+        $start_date = $request->query('start_date', '');
+        $end_date   = $request->query('end_date', '');
+
+        $flashSales = FlashSale::query()->valid()
+            ->when($start_date, function ($query) use ($start_date) {
+                $query->where('created_at', '>=', $start_date);
+            })
+            ->when($end_date, function ($query) use ($end_date) {
+                $query->where('created_at', '<=', $end_date);
+            })
+            ->with(['products' => function ($query) use ($qty) {
+                $query->limit($qty);
+            }])->get()
+            ->pluck('products')
+            ->flatten();;
+
+        return $flashSales;
+    }
+    public function getFlashSaleProductsEndingThisWeek($request)
+    {
+        $limit = $request->query('limit', 10);
+        $weekEnd = now()->endOfWeek();
+
+        $products = Product::query()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->whereNull('deleted_at')
+            ->where('status', true)
+            ->where('has_flash_sale', true)
+            ->whereExists(function ($query) use ($weekEnd) {
+                $query->select(DB::raw(1))
+                    ->from('flash_sale_products')
+                    ->join('flash_sales', 'flash_sale_products.flash_sale_id', '=', 'flash_sales.id')
+                    ->whereColumn('flash_sale_products.product_id', 'products.id')
+                    ->whereNull('flash_sales.deleted_at')
+                    ->where('flash_sales.status', true)
+                    ->whereNotNull('flash_sales.end_date')
+                    ->whereBetween('flash_sales.end_date', [today(), $weekEnd]);
+            })
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_flash_sale ?? $product->price_after_discount ?? $product->price ?? null));
+
+            return $product;
+        })->values();
+    }
+    private function moneyValue($value)
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return round((float) $value, 2);
     }
 }

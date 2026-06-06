@@ -60,15 +60,14 @@ class Brand extends Model implements HasMedia
     {
         static::saving(function ($brand) {
 
-            $title = $brand->name ?? [];
 
             $brand->slug = [
-                'en' => isset($title['en'])
-                    ? Str::slug($title['en'])
+                'en' => $brand->getTranslation('name', 'en', false)
+                    ? Str::slug($brand->getTranslation('name', 'en'))
                     : null,
 
-                'ar' => isset($title['ar'])
-                    ? str_replace(' ', '-', trim($title['ar']))
+                'ar' => $brand->getTranslation('name', 'ar', false)
+                    ? str_replace(' ', '-', trim($brand->getTranslation('name', 'ar')))
                     : null,
             ];
         });

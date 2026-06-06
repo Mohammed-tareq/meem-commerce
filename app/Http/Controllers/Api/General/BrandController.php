@@ -32,4 +32,11 @@ class BrandController extends Controller
         }
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, BrandResource::make($brand));
     }
+
+    public function getBrandsProductsByQtySet(Request $request)
+    {
+        $brandWithProducts =  $this->brandService->getBrandsProductsByQtySet($request);
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, BrandResource::collection($brandWithProducts));
+    }
 }

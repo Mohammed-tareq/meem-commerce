@@ -64,9 +64,9 @@ class HomeService
                 return BrandResource::collection($this->getBrands());
             }),
 
-            // 'parent_categories' => Cache::remember("home-parent-categories", 120, function () use ($categoryTree) {
-            //     return CategoryHomeResource::collection($categoryTree);
-            // }),
+            'parent_categories' => Cache::remember("home-parent-categories", 120, function () use ($categoryTree) {
+                return CategoryHomeResource::collection($categoryTree);
+            }),
 
             'coupons' => Cache::remember('home-latest-coupons', 120, function () {
                 return CouponResource::collection($this->getLatestValidCoupons(5));
@@ -102,7 +102,6 @@ class HomeService
     {
         return Coupon::query()
             ->valid()
-            ->with('media')
             ->orderByDesc('id')
             ->limit($limit)
             ->get();

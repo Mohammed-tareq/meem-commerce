@@ -12,7 +12,8 @@ class CategoryService
     {
         $limit = $this->getLimit($request);
         $term = trim((string) $request->get('search', ''));
-
+        $pestCategory = $request->query('pest_category', false);
+        $parent = $request->query('parent', false);
         $query = Category::query()->active()->withCount('products');
 
         if ($term !== '') {
@@ -23,18 +24,27 @@ class CategoryService
                 });
             });
         }
+        if ($parent) {
+            $query->whereNull('parent_id');
+        }
+        if ($pestCategory) {
+            $query->orderByDesc('products_count');
+        } else {
+            $query->orderByDesc('id');
+        }
 
-        return $query->orderByDesc('id')->paginate($limit);
+
+        return $query->paginate($limit);
     }
 
     public function getBySlug($slug)
     {
         return Category::query()
-        ->active()
-        ->with('products', 'children.children')
-        ->withCount('products')
-        ->where('slug->' . app()->getLocale(), $slug)
-        ->firstOrFail();
+            ->active()
+            ->with('products', 'children.children')
+            ->withCount('products')
+            ->where('slug->' . app()->getLocale(), $slug)
+            ->firstOrFail();
     }
 
     private function applyTranslatableLike(Builder $query, string $field, string $term, string $locale): void

@@ -22,6 +22,7 @@ class UpdateSectionRequest extends FormRequest
             'order' => 'sometimes|integer',
             'is_active' => 'sometimes|in:0,1',
             'title_visible' => 'sometimes|in:0,1',
+            'endpoint' => 'sometimes|string|max:255',
         ];
     }
 

@@ -31,11 +31,9 @@ class CategoryCreateRequest extends FormRequest
         return [
             'name' => ['required', 'array'],
             'name.*' => ['required', 'string', UniqueTranslationRule::for('categories', 'name')],
-            'image-desktop' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
-            'image-mobile' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],   
+            // 'image-desktop' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            // 'image-mobile' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
-            'shops_id' => ['required', 'array'],
-            'shops_id.*' => ['required', 'integer', "exists:shops,id"],
             'details'      => ['sometimes', 'string', 'min:3', 'max:2500'],
         ];
     }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\FlashSale\FlashSaleResource;
+use App\Http\Resources\Product\ProductMiniResource;
 use App\Services\General\FlashSaleService;
 use App\Services\General\ProductService;
 use Illuminate\Http\Request;
@@ -35,5 +36,18 @@ class FlashSaleController extends Controller
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::make($FlashSaleWithProducts));
+    }
+    public function getFlashSalesAndHereProductsByQtySet(Request $request)
+    {
+        $flashSalesProduct = $this->flashSaleService->getFlashSalesAndHereProductsByQtySet($request);
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($flashSalesProduct));
+    }
+
+    public function getFlashSaleProductsEndingThisWeek(Request $request)
+    {
+        $products = $this->flashSaleService->getFlashSaleProductsEndingThisWeek($request);
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($products));
     }
 }

@@ -3,8 +3,8 @@
 namespace Marvel\Http\Controllers;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ContentPageResource;
-use App\Http\Resources\SectionResource;
+use App\Http\Resources\Pages\ContentPageResource;
+use App\Http\Resources\Pages\SectionResource;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -44,8 +44,7 @@ class ContentPageController extends Controller
     public function update(UpdateContentPageRequest $request, ContentPage $content_page)
     {
         return DB::transaction(function () use ($request, $content_page) {
-
-            $content_page->update($request->only(['title', 'is_active']));
+            $content_page->update($request->only(['title', 'is_active' ]));
             $content_page->load('sections');
 
             return  $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, ContentPageResource::make($content_page));

@@ -32,4 +32,6 @@ class BannerController extends Controller
         }
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, BannerResource::make($banner));
     }
+
+
 }

@@ -103,7 +103,7 @@ class FlashSale extends Model implements HasMedia
             && (!$this->end_date || $this->end_date->gte($today));
     }
 
-   
+
     public function scopeValid(Builder $query)
     {
         return $query->where('status', true)
@@ -145,13 +145,14 @@ class FlashSale extends Model implements HasMedia
 
             $title = $flashSale->title ?? [];
 
+
             $flashSale->slug = [
-                'en' => isset($title['en'])
-                    ? Str::slug($title['en'])
+                'en' => $flashSale->getTranslation('title', 'en', false)
+                    ? Str::slug($flashSale->getTranslation('title', 'en'))
                     : null,
 
-                'ar' => isset($title['ar'])
-                    ? str_replace(' ', '-', trim($title['ar']))
+                'ar' => $flashSale->getTranslation('title', 'ar', false)
+                    ? str_replace(' ', '-', trim($flashSale->getTranslation('title', 'ar')))
                     : null,
             ];
         });

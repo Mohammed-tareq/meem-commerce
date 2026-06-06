@@ -19,7 +19,7 @@ class FlashSaleResource extends JsonResource
             'id' => $this->id,
             'name' => $this->getTranslation('title', app()->getLocale()),
             'discription' => $this?->getTranslation('description', app()->getLocale()),
-            'slug' => $this->slug,
+            'slug' => $this->getTranslation('slug', app()->getLocale()),
             'start_date' => $this->start_date,
             'image'                  =>  [
                 'desktop' => $this->getFirstMediaUrl('flash-sales-desktop'),

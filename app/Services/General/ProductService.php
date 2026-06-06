@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Marvel\Database\Models\Category;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Review;
 use Marvel\Traits\MediaManager;
@@ -21,9 +22,9 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()->active()
-            ->with(['shops', 'categories', 'variations', 'media'])
-            ->withAvg(['reviews' => fn (Builder $builder) => $builder->approved()], 'rating')
-            ->withCount(['reviews' => fn (Builder $builder) => $builder->approved()]);
+            ->with(['categories', 'variations'])
+            ->withAvg(['reviews' => fn(Builder $builder) => $builder->approved()], 'rating')
+            ->withCount(['reviews' => fn(Builder $builder) => $builder->approved()]);
 
         $this->applyProductFilters($query, $request);
         if ($term !== '') {
@@ -40,9 +41,9 @@ class ProductService
         $term = trim((string) $request->get('search', ''));
 
         $query = Product::query()
-            ->with(['shops', 'categories', 'media'])
-            ->withAvg(['reviews' => fn (Builder $builder) => $builder->approved()], 'rating')
-            ->withCount(['reviews' => fn (Builder $builder) => $builder->approved()]);
+            ->with('categories')
+            ->withAvg(['reviews' => fn(Builder $builder) => $builder->approved()], 'rating')
+            ->withCount(['reviews' => fn(Builder $builder) => $builder->approved()]);
 
         $this->applyProductFilters($query, $request);
         $this->applyFlashSaleFilter($query);
@@ -61,11 +62,10 @@ class ProductService
             ->with([
                 'categories',
                 'variations',
-                'media',
-                'reviews' => fn ($builder) => $builder->approved()->with('user'),
+                'reviews' => fn($builder) => $builder->approved()->with('user'),
             ])
-            ->withAvg(['reviews' => fn ($builder) => $builder->approved()], 'rating')
-            ->withCount(['reviews' => fn ($builder) => $builder->approved()])
+            ->withAvg(['reviews' => fn($builder) => $builder->approved()], 'rating')
+            ->withCount(['reviews' => fn($builder) => $builder->approved()])
             ->find($id);
 
         if (!$product) {
@@ -75,6 +75,112 @@ class ProductService
         $product->setRelation('related_products', $this->fetchRelated($product, $limit));
 
         return $product;
+    }
+    public function getDiscountEndingTodayOrLowStockProducts($limit = 10)
+    {
+        $products = Product::query()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->with('reviews')
+            ->whereNull('deleted_at')
+            ->where('status', true)
+            ->where('has_discount', true)
+            ->where('has_flash_sale', false)
+            ->where(function ($query) {
+                $query->whereDate('end_date', today())
+                    ->orWhereBetween('quantity', [1, 9]);
+            })
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
+
+            return $product;
+        })->filter(fn(Product $product) => $product->isDiscountActive())->values();
+    }
+    public function getAllDiscountProducts( $limit = 10)
+    {
+        $products = Product::query()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->with(['reviews', 'media'])
+            ->whereNull('deleted_at')
+            ->where('status', true)
+            ->where('has_discount', true)
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
+
+            return $product;
+        })->filter(fn(Product $product) => $product->isDiscountActive())->values();
+    }
+
+    public function getNewArrivals(int $limit = 10)
+    {
+        $products = Product::query()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->with(['reviews', 'media'])
+            ->whereNull('deleted_at')
+            ->where('status', true)
+            ->where('has_flash_sale', false)
+            ->whereDate('created_at', '>=', now()->subDays(15))
+            ->orderByDesc('created_at')
+            ->limit($limit)
+            ->get();
+
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
+
+            return $product;
+        })->values();
     }
 
 
@@ -129,6 +235,30 @@ class ProductService
         }
     }
 
+    public function getBestProductSales($limit = 10)
+    {
+        return Product::query()
+            ->active()
+            ->with(['categories', 'variations'])
+            ->orderByDesc('sold_quantity')
+            ->limit($limit)
+            ->get();
+    }
+
+    public function getProductForParentCategory($limit = 10)
+    {
+        $ParentCategories = Category::query()->whereNull('parent_id')->pluck('id');
+        return Product::query()
+            ->active()
+            ->with(['categories', 'variations'])
+            ->whereHas('categories', function (Builder $query) use ($ParentCategories) {
+                $query->whereIn('categories.id', $ParentCategories);
+            })
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+    }
+
     private function fetchRelated(Product $product, int $limit = 10)
     {
         $categories = $product->categories->pluck('id');
@@ -139,7 +269,7 @@ class ProductService
 
         return Product::query()
             ->active()
-            ->with(['categories', 'variations', 'media'])
+            ->with(['categories', 'variations'])
             ->whereHas('categories', function (Builder $query) use ($categories) {
                 $query->whereIn('categories.id', $categories);
             })
@@ -342,4 +472,14 @@ class ProductService
 
         return min($limit, 100);
     }
+    private function moneyValue($value)
+    {
+        if ($value === null || $value === '') {
+            return null;
+        }
+
+        return round((float) $value, 2);
+    }
+
+
 }

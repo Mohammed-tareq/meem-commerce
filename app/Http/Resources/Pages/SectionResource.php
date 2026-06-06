@@ -12,7 +12,7 @@ class SectionResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type,
             'title' => $this->title_visible ? $this->title : null,
-            'endpoint' => $this->endpoint,
+            'endpoint' =>"general/" . $this->endpoint,
             'order' => $this->order,
         ];
     }

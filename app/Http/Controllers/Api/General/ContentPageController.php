@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\ContentPageResource;
+use App\Http\Resources\Pages\ContentPageResource;
 use Marvel\Models\ContentPage ;
 use Marvel\Traits\ApiResponse;
 

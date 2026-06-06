@@ -20,7 +20,7 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
 
     //========================= home=========================//
     Route::controller(HomeController::class)->group(function () {
-        Route::get('home', 'index')->name('home');
+        // Route::get('home', 'index')->name('home');
         Route::get('navbar', 'navData')->name('navbar');
     });
 
@@ -32,6 +32,11 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     //======================== products=========================//
     Route::controller(ProductController::class)->group(function () {
         Route::get('products', 'index');
+        Route::get('products/best-sales', 'getBestProductSales');
+        Route::get('products/discount-ending-today-or-low-stock', 'getDiscountEndingTodayOrLowStockProducts');
+        Route::get('products/new-arrivals', 'getNewArrivals');
+        Route::get('products/all-discount-products', 'getAllDiscountProducts');
+        Route::get('products/parent-category', 'getProductForParentCategory');
         Route::get('products/{id}', 'getProductById');
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', 'addProductReview')->middleware('auth:sanctum');
@@ -59,6 +64,8 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     //========================= flash-sales=========================//
     Route::controller(FlashSaleController::class)->group(function () {
         Route::get('flash-sales', 'index')->name('general-flash-sale-index');
+        Route::get('flash-sales-with-products', 'getFlashSalesAndHereProductsByQtySet')->name('general-flash-sale-with-products');
+        Route::get('flash-sales-ending-this-week', 'getFlashSaleProductsEndingThisWeek')->name('general-flash-sale-ending-this-week');
         Route::get('flash-sales/{slug}', 'getFlashSaleBySlug')->name('general-flash-sale-show');
     });
 
@@ -89,6 +96,7 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     //========================= brands=========================//
     Route::controller(BrandController::class)->group(function () {
         Route::get('brands', 'index')->name('general-brand-index');
+        Route::get('brands-with-products', 'getBrandsProductsByQtySet')->name('general-brand-with-products');
         Route::get('brands/{slug}', 'getBrandBySlug')->name('general-brand-show');
     });
 

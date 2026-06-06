@@ -7,18 +7,18 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Cviebrock\EloquentSluggable\Sluggable;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
+use Str;
 
 class Category extends Model implements HasMedia
 {
-    use HasTranslations, Sluggable, InteractsWithMedia;
+    use HasTranslations, InteractsWithMedia;
 
 
     protected $table = 'categories';
-    public array $translatable = ['name', 'details'];
+    public array $translatable = ['name', 'details', 'slug'];
 
     public $fillable = ['name', 'details', 'slug', 'parent_id', 'level', 'status'];
 
@@ -33,18 +33,24 @@ class Category extends Model implements HasMedia
         static::saving(function (self $category) {
             app(CategoryHierarchyService::class)->syncHierarchy($category);
         });
+        static::saving(function ($category) {
+
+
+            $category->slug = [
+                'en' => $category->getTranslation('name', 'en', false)
+                    ? Str::slug($category->getTranslation('name', 'en'))
+                    : null,
+
+                'ar' => $category->getTranslation('name', 'ar', false)
+                    ? str_replace(' ', '-', trim($category->getTranslation('name', 'ar')))
+                    : null,
+            ];
+        });
     }
 
 
 
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'name'
-            ]
-        ];
-    }
+
 
 
     public  function scopeActive($query)
