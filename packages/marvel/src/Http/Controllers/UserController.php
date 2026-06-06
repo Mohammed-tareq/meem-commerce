@@ -927,25 +927,7 @@ class UserController extends CoreController
     }
     protected function getOtpGateway()
     {
-        $gateway = config('auth.active_otp_gateway');
-
-        if ($gateway === 'local') {
-            return new OtpGateway(new LocalGateway());
-        }
-
-        try {
-            $class = "Marvel\\Otp\\Gateways\\" . ucfirst($gateway) . 'Gateway';
-
-            if (!class_exists($class)) {
-                throw new \Exception("Gateway not found: {$class}");
-            }
-
-            return new OtpGateway(new $class());
-        } catch (\Throwable $e) {
-            Log::warning('OTP gateway failed, fallback to LocalGateway: ' . $e->getMessage());
-
-            return new OtpGateway(new LocalGateway());
-        }
+        return new OtpGateway(new LocalGateway());
     }
 
     // protected function getOtpGateway()
