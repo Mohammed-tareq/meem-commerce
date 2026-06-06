@@ -594,7 +594,7 @@ class UserController extends CoreController
                 'type' => 'user',
                 'is_active' => true,
             ]);
-            if($request->hasFile('avatar')) {
+            if ($request->hasFile('avatar')) {
                 $user->addMedia($request->file('avatar'))->toMediaCollection('avatar');
             }
             $user->sendOneTimePassword();
@@ -931,7 +931,9 @@ class UserController extends CoreController
         $gateway = config('auth.active_otp_gateway');
         $gateWayClass = "Marvel\\Otp\\Gateways\\" . ucfirst($gateway) . 'Gateway';
         try {
-            return new OtpGateway(new $gateWayClass());
+            // return new OtpGateway(new $gateWayClass());
+            return new OtpGateway(new LocalGateway());
+
         } catch (\Throwable $e) {
             // Log the issue and fallback to a local/testing gateway that requires no credentials
             Log::warning('OTP gateway unavailable, falling back to LocalGateway: ' . $e->getMessage());
