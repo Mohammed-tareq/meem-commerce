@@ -122,12 +122,13 @@ class CartController extends CoreController
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
         ]);
-       $items =  collect($request->items)
-        ->map(fn($i) => ['item' => $i])
-        ->toArray();
-        foreach($items as $item){
-           $this->repository->storeCart(new Request($item));
+        
+        foreach ($request->items as $item) {
+            $tempRequest = clone $request;
+            $tempRequest->replace(['item' => $item]);
+            $this->repository->storeCart($tempRequest);
         }
+        $cart = auth()->user()->cart;
         return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, CartResource::make($cart->load('items')));
     }
 }

@@ -67,7 +67,6 @@ class CartRepository extends BaseRepository
             }
             
             $cart->update(['status' => 'active']);
-            dd($request->all(),$cart);
 
             if ($request->filled('item')) {
                 if (!$this->syncItems($cart, $request->item ?? [], $mode)) {
@@ -106,34 +105,29 @@ class CartRepository extends BaseRepository
 
         $inventoryService = app(CartInventoryService::class);
 
-        if ($product->isSimple()) {
-            if ($variantId) {
+        if ($variantId) {
+            $variant = $product->variations()->whereKey($variantId)->first();
+            if (!$variant) {
                 throw new Exception(INVALID_ITEM_DATA);
             }
 
-            if ($product->available_stock < $quantity) {
-                throw new Exception('Product exceeds available stock.');
+            if ($variant->available_stock < $quantity) {
+                throw new Exception('Quantity exceeds available stock.');
             }
 
-            $inventoryService->reserveItem($cart, $product, null, $quantity, $mode, $attributes);
+            $inventoryService->reserveItem($cart, $product, $variant, $quantity, $mode, $attributes);
             return true;
         }
 
-        if (!$variantId) {
+        if ($product->product_type === 'variable') {
             throw new Exception(INVALID_ITEM_DATA);
         }
 
-        $variant = $product->variations()->whereKey($variantId)->first();
-        if (!$variant) {
-            throw new Exception(INVALID_ITEM_DATA);
+        if ($product->available_stock < $quantity) {
+            throw new Exception('Product exceeds available stock.');
         }
 
-        if ($variant->available_stock < $quantity) {
-            throw new Exception('Quantity exceeds available stock.');
-        }
-
-        $inventoryService->reserveItem($cart, $product, $variant, $quantity, $mode, $attributes);
-
+        $inventoryService->reserveItem($cart, $product, null, $quantity, $mode, $attributes);
         return true;
     }
 }
