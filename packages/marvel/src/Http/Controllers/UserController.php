@@ -466,8 +466,8 @@ class UserController extends CoreController
         $request->validated();
 
         $user = User::where('email', $request->email)
-        ->orWhere('phone_number', $request->phone_number) // Allow login with email or phone number
-        ->where('is_active', true)->first();
+            ->orWhere('phone_number', $request->phone_number) // Allow login with email or phone number
+            ->where('is_active', true)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
@@ -492,7 +492,7 @@ class UserController extends CoreController
         if ($request->email) {
             $user = User::where('email', $request->email)->where('is_active', true)->first();
         } else {
-            $user = User::where('phone', $request->phone_number)->where('is_active', true)->first();
+            $user = User::where('phone_number', $request->phone_number)->where('is_active', true)->first();
         }
         if (!$user) {
             return $this->apiResponse(USER_NOT_FOUND, 404, false);
@@ -539,7 +539,6 @@ class UserController extends CoreController
 
 
     public function logout(Request $request)
-
     {
         $user = $request->user();
 
@@ -586,15 +585,18 @@ class UserController extends CoreController
     public function register(UserCreateRequest $request)
     {
         try {
-
+            $request->validated();
             $user = $this->repository->create([
                 'name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'phone_number' => $request->phone_number,
-                'type' =>'user',
+                'type' => 'user',
                 'is_active' => true,
             ]);
+            if($request->hasFile('avatar')) {
+                $user->addMedia($request->file('avatar'))->toMediaCollection('avatar');
+            }
             $user->sendOneTimePassword();
 
             return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true);

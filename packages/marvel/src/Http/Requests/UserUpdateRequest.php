@@ -30,11 +30,9 @@ class UserUpdateRequest extends FormRequest
         return [
             'name'    => ['string', 'max:255'],
             'email'   => ['email', 'unique:users'],
-            'image'   => ['nullable', 'image', 'mimes:jpeg,png,jpg,webp'],
-            'shop_id' => ['nullable', 'exists:Marvel\Database\Models\Shop,id'],
+            'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             'profile' => ['array'],
             'address' => ['array'],
-            // 'shop' => ['array'],
         ];
     }
 

@@ -33,7 +33,8 @@ class ProductController extends Controller
     public function getProductById(Request $request)
     {
         $id = trim($request->route('id'));
-        $product =  $this->productService->getProductById($id);
+        $limit = $request->integer('limit', 10);
+        $product =  $this->productService->getProductById($id,$limit);
         if (!$product) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }

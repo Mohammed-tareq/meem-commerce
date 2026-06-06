@@ -55,7 +55,7 @@ class ProductService
         return $query->orderByDesc('id')->paginate($limit);
     }
 
-    public function getProductById($id, $limit = 10)
+    public function getProductById($id,$limit = 10)
     {
         $product = Product::query()
             ->active()
