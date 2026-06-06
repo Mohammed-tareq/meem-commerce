@@ -1022,7 +1022,7 @@ class UserController extends CoreController
                 return $this->verifyLoginOtp($request);
             }
             if ($request->has("phone_number") && $this->verifyOtp($request)) {
-                $user = User::where('phone', $request->phone_number)->first();
+                $user = User::where('phone_number', $request->phone_number)->first();
                 if (!$user) {
                     return $this->apiResponse(REQUIRED_INFO_MISSING, 404, false);
                 } else {
