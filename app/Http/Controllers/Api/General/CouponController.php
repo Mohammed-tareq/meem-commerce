@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Coupons\CouponResource;
 use App\Services\General\CouponService;
 use Marvel\Traits\ApiResponse;
 use Illuminate\Http\Request;
-use Marvel\Http\Resources\CouponResource;
 
 class CouponController extends Controller
 {

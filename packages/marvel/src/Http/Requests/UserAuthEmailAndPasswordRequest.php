@@ -28,7 +28,7 @@ class UserAuthEmailAndPasswordRequest extends FormRequest
     {
         return [
             'email' => 'required_without:phone_number|email',
-            'phone_number' => 'required_without:email|string|max:15|min:11',
+            'phone_number' => 'required_without:email|string|max:15|min:8',
             'password' => 'required|string|min:6',
         ];
     }

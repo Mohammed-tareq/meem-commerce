@@ -79,20 +79,5 @@ class CouponSeeder extends Seeder
         }
     }
 
-    private function makeUniqueTranslatableSlug(string $modelClass, string $en, string $ar): array
-    {
-        $baseEn = Str::slug($en ?: 'item');
-        $baseAr = str_replace(' ', '-', trim($ar ?: $en));
-        $candidate = $baseEn;
-        $i = 1;
-        while ($modelClass::where('slug->en', $candidate)->exists()) {
-            $i++;
-            $candidate = $baseEn . '-' . $i;
-        }
-        $candidateAr = $baseAr;
-        if ($i > 1) {
-            $candidateAr .= '-' . $i;
-        }
-        return ['en' => $candidate, 'ar' => $candidateAr];
-    }
+    
 }

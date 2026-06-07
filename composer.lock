@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0754b87dc8050f5022b22f886c2f178b",
+    "content-hash": "9ba9ea0d379303db381c45cf04157247",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -3546,45 +3546,40 @@
         },
         {
             "name": "laravel/scout",
-            "version": "v11.2.0",
+            "version": "v10.0.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/scout.git",
-                "reference": "5a267813fe0d7bca58b993c3bae592b2c814591e"
+                "reference": "f145cf42da20a76681f1010d50420b2fcec1cda0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/scout/zipball/5a267813fe0d7bca58b993c3bae592b2c814591e",
-                "reference": "5a267813fe0d7bca58b993c3bae592b2c814591e",
+                "url": "https://api.github.com/repos/laravel/scout/zipball/f145cf42da20a76681f1010d50420b2fcec1cda0",
+                "reference": "f145cf42da20a76681f1010d50420b2fcec1cda0",
                 "shasum": ""
             },
             "require": {
-                "illuminate/bus": "^9.0|^10.0|^11.0|^12.0|^13.0",
-                "illuminate/contracts": "^9.0|^10.0|^11.0|^12.0|^13.0",
-                "illuminate/database": "^9.0|^10.0|^11.0|^12.0|^13.0",
-                "illuminate/http": "^9.0|^10.0|^11.0|^12.0|^13.0",
-                "illuminate/pagination": "^9.0|^10.0|^11.0|^12.0|^13.0",
-                "illuminate/queue": "^9.0|^10.0|^11.0|^12.0|^13.0",
-                "illuminate/support": "^9.0|^10.0|^11.0|^12.0|^13.0",
-                "php": "^8.0",
-                "symfony/console": "^6.0|^7.0|^8.0"
-            },
-            "conflict": {
-                "algolia/algoliasearch-client-php": "<3.2.0|>=5.0.0"
+                "illuminate/bus": "^9.0|^10.0",
+                "illuminate/contracts": "^9.0|^10.0",
+                "illuminate/database": "^9.0|^10.0",
+                "illuminate/http": "^9.0|^10.0",
+                "illuminate/pagination": "^9.0|^10.0",
+                "illuminate/queue": "^9.0|^10.0",
+                "illuminate/support": "^9.0|^10.0",
+                "php": "^8.0"
             },
             "require-dev": {
-                "algolia/algoliasearch-client-php": "^3.2|^4.0",
+                "algolia/algoliasearch-client-php": "^3.2",
                 "meilisearch/meilisearch-php": "^1.0",
                 "mockery/mockery": "^1.0",
-                "orchestra/testbench": "^7.31|^8.36|^9.15|^10.8|^11.0",
+                "orchestra/testbench": "^7.0|^8.0",
                 "php-http/guzzle7-adapter": "^1.0",
                 "phpstan/phpstan": "^1.10",
-                "typesense/typesense-php": "^4.9.3"
+                "phpunit/phpunit": "^9.3"
             },
             "suggest": {
                 "algolia/algoliasearch-client-php": "Required to use the Algolia engine (^3.2).",
-                "meilisearch/meilisearch-php": "Required to use the Meilisearch engine (^1.0).",
-                "typesense/typesense-php": "Required to use the Typesense engine (^4.9)."
+                "meilisearch/meilisearch-php": "Required to use the Meilisearch engine (^1.0)."
             },
             "type": "library",
             "extra": {
@@ -3594,7 +3589,7 @@
                     ]
                 },
                 "branch-alias": {
-                    "dev-master": "11.x-dev"
+                    "dev-master": "10.x-dev"
                 }
             },
             "autoload": {
@@ -3622,7 +3617,7 @@
                 "issues": "https://github.com/laravel/scout/issues",
                 "source": "https://github.com/laravel/scout"
             },
-            "time": "2026-05-13T15:50:06+00:00"
+            "time": "2023-03-02T16:04:16+00:00"
         },
         {
             "name": "laravel/serializable-closure",

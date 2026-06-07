@@ -2,6 +2,7 @@
 
 namespace App\Services\General;
 
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -55,7 +56,7 @@ class ProductService
         return $query->orderByDesc('id')->paginate($limit);
     }
 
-    public function getProductById($id,$limit = 10)
+    public function getProductById($id, $limit = 10)
     {
         $product = Product::query()
             ->active()
@@ -85,6 +86,8 @@ class ProductService
                 'slug',
                 'price',
                 'quantity',
+                'stock_quantity',
+                'reserved_quantity',
                 'has_flash_sale',
                 'has_discount',
                 'discount_type',
@@ -95,26 +98,49 @@ class ProductService
                 'price_after_discount',
                 'price_after_flash_sale',
             ])
-            ->with('reviews')
             ->whereNull('deleted_at')
             ->where('status', true)
-            ->where('has_discount', true)
-            ->where('has_flash_sale', false)
             ->where(function ($query) {
-                $query->whereDate('end_date', today())
-                    ->orWhereBetween('quantity', [1, 9]);
+                $query->where(function ($q) {
+                    $q->where('has_discount', true)
+                        ->where('has_flash_sale', false)
+                        ->whereDate('end_date', today());
+                })
+                    ->orWhere(function ($q) {
+                        $q->whereBetween('quantity', [1, 9]);
+                    });
             })
-            ->orderByDesc('id')
+            ->latest('id')
             ->limit($limit)
             ->get();
 
-        return $products->map(function (Product $product) {
-            $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
+        return $products
+            ->filter(fn (Product $product) => !$product->has_discount || $product->isDiscountActive())
+            ->map(function (Product $product) {
+                $product->setAttribute(
+                    'current_price',
+                    $this->moneyValue(
+                        $product->price_after_discount ?? $product->price
+                    )
+                );
 
-            return $product;
-        })->filter(fn(Product $product) => $product->isDiscountActive())->values();
+                if (
+                    $product->has_discount &&
+                    $product->end_date &&
+                    Carbon::parse($product->end_date)->isToday()
+                ) {
+                    $product->setAttribute('badge', 'discount_ending_today');
+                } elseif (
+                    $product->quantity >= 1 &&
+                    $product->quantity <= 9
+                ) {
+                    $product->setAttribute('badge', 'low_stock');
+                }
+
+                return $product;
+            })->values();
     }
-    public function getAllDiscountProducts( $limit = 10)
+    public function getAllDiscountProducts($limit = 10)
     {
         $products = Product::query()
             ->select([

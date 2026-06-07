@@ -63,18 +63,9 @@ class Product extends Model implements HasMedia
     public function toSearchableArray()
     {
         return [
-
             'id' => $this->id,
-
             'name' => $this->name,
-
             'description' => $this->description,
-
-            'price' => $this->price,
-
-            'brand_id' => $this->brand_id,
-
-            'category_id' => $this->category_id,
         ];
     }
 
