@@ -71,9 +71,9 @@ class SectionSeeder extends Seeder
                 'order' => 9,
             ],
             [
-                'type' => 'flash-sale-week',
+                'type' => 'flash-sale-today',
                 'title' => ['en' => 'Flash Sale Days', 'ar' => 'أيام عروض الفلاش'],
-                'endpoint' => 'flash-sales-ending-this-week',
+                'endpoint' => 'flash-sales-today',
                 'order' => 10,
             ],
             [

@@ -32,6 +32,7 @@ class ProductMiniResource extends JsonResource
                 'thumbnail'  => $this->getFirstMediaUrl('products'),
                 'original' => $this->getMediaImages('products'),
             ],
+            'badges' => $this->badges[0],
         ];
     }
 

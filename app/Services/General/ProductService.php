@@ -80,65 +80,48 @@ class ProductService
     public function getDiscountEndingTodayOrLowStockProducts($limit = 10)
     {
         $products = Product::query()
-            ->select([
-                'id',
-                'name',
-                'slug',
-                'price',
-                'quantity',
-                'stock_quantity',
-                'reserved_quantity',
-                'has_flash_sale',
-                'has_discount',
-                'discount_type',
-                'discount_amount',
-                'discount_status',
-                'start_date',
-                'end_date',
-                'price_after_discount',
-                'price_after_flash_sale',
-            ])
-            ->whereNull('deleted_at')
             ->where('status', true)
             ->where(function ($query) {
+
                 $query->where(function ($q) {
                     $q->where('has_discount', true)
-                        ->where('has_flash_sale', false)
                         ->whereDate('end_date', today());
                 })
                     ->orWhere(function ($q) {
-                        $q->whereBetween('quantity', [1, 9]);
+                        $q->whereBetween('stock_quantity', [1, 9]);
                     });
             })
-            ->latest('id')
+
             ->limit($limit)
             ->get();
 
-        return $products
-            ->filter(fn (Product $product) => !$product->has_discount || $product->isDiscountActive())
-            ->map(function (Product $product) {
-                $product->setAttribute(
-                    'current_price',
-                    $this->moneyValue(
-                        $product->price_after_discount ?? $product->price
-                    )
-                );
+        return $products->map(function (Product $product) {
 
-                if (
-                    $product->has_discount &&
-                    $product->end_date &&
-                    Carbon::parse($product->end_date)->isToday()
-                ) {
-                    $product->setAttribute('badge', 'discount_ending_today');
-                } elseif (
-                    $product->quantity >= 1 &&
-                    $product->quantity <= 9
-                ) {
-                    $product->setAttribute('badge', 'low_stock');
-                }
+            $product->setAttribute(
+                'current_price',
+                $this->moneyValue(
+                    $product->price_after_discount ?? $product->price
+                )
+            );
 
-                return $product;
-            })->values();
+            $badges = [];
+
+            if (
+                $product->has_discount &&
+                $product->end_date &&
+                Carbon::parse($product->end_date)->isToday()
+            ) {
+                $badges[] = 'discount_ending_today';
+            }
+
+            if ($product->quantity >= 1 && $product->quantity <= 9) {
+                $badges[] = 'low_stock';
+            }
+
+            $product->setAttribute('badges', $badges);
+
+            return $product;
+        })->values();
     }
     public function getAllDiscountProducts($limit = 10)
     {
