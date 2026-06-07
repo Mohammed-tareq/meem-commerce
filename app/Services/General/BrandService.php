@@ -37,10 +37,10 @@ class BrandService
         $end_date   = $request->query('end_date', '');
 
         $banners = Brand::active()
-            ->when($start_date, function ($query) use ($start_date) {
+            ->when(!empty($start_date), function ($query) use ($start_date) {
                 $query->where('created_at', '>=', $start_date);
             })
-            ->when($end_date, function ($query) use ($end_date) {
+            ->when(!empty($end_date), function ($query) use ($end_date) {
                 $query->where('created_at', '<=', $end_date);
             })
             ->with(['products' => function ($query) use ($qty) {

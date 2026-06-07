@@ -27,6 +27,7 @@ class BrandResource extends JsonResource
             $this->mergeWhen(request()->routeIs('general-brand-with-products'), [
                 'products' => ProductMiniResource::collection($this->products),
             ]),
+            // dd('hi'),
 
         ];
     }

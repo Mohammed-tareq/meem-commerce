@@ -33,7 +33,7 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     Route::controller(ProductController::class)->group(function () {
         Route::get('products', 'index');
         Route::get('products/best-sales', 'getBestProductSales');
-        Route::get('products/discount-ending-today-or-low-stock', 'getDiscountEndingTodayOrLowStockProducts');
+        Route::get('products/discount-ending-today-or-low-stock', 'getDiscountEndingTodayOrLowStockProducts')->name('product-discount-ending-today-or-low-stock');
         Route::get('products/new-arrivals', 'getNewArrivals');
         Route::get('products/all-discount-products', 'getAllDiscountProducts');
         Route::get('products/parent-category', 'getProductForParentCategory');
