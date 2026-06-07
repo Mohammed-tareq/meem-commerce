@@ -66,6 +66,7 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
         Route::get('flash-sales', 'index')->name('general-flash-sale-index');
         Route::get('flash-sales-with-products', 'getFlashSalesAndHereProductsByQtySet')->name('general-flash-sale-with-products');
         Route::get('flash-sales-ending-this-week', 'getFlashSaleProductsEndingThisWeek')->name('general-flash-sale-ending-this-week');
+        Route::get('flash-sales-today', 'getFlashSaleProductsEndingToday')->name('general-flash-sale-ending-today');
         Route::get('flash-sales/{slug}', 'getFlashSaleBySlug')->name('general-flash-sale-show');
     });
 

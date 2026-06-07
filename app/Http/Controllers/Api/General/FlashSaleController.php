@@ -50,4 +50,10 @@ class FlashSaleController extends Controller
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($products));
     }
+    public function getFlashSaleProductsEndingToday(Request $request)
+    {
+        $products = $this->flashSaleService->getFlashSaleProductsEndingToday($request);
+
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($products));
+    }
 }
