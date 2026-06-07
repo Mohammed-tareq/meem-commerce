@@ -114,7 +114,7 @@ class ProductService
                 $badges[] = 'discount_ending_today';
             }
 
-            if ($product->quantity >= 1 && $product->quantity <= 9) {
+            if ($product->stock_quantity >= 1 && $product->stock_quantity <= 9) {
                 $badges[] = 'low_stock';
             }
 
