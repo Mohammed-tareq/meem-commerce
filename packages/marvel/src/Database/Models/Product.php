@@ -18,11 +18,12 @@ use Marvel\Services\Pricing\ProductPricingService;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\Translatable\HasTranslations;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Laravel\Scout\Searchable;
 
 
 class Product extends Model implements HasMedia
 {
-    use HasTranslations, SoftDeletes, Sluggable, Excludable, InteractsWithMedia;
+    use HasTranslations, SoftDeletes, Sluggable, Excludable, InteractsWithMedia, Searchable;
 
     protected $table = 'products';
     protected $fillable = [
@@ -59,7 +60,23 @@ class Product extends Model implements HasMedia
     public $hideMeta = true;
 
 
+    public function toSearchableArray()
+    {
+        return [
 
+            'id' => $this->id,
+
+            'name' => $this->name,
+
+            'description' => $this->description,
+
+            'price' => $this->price,
+
+            'brand_id' => $this->brand_id,
+
+            'category_id' => $this->category_id,
+        ];
+    }
 
 
     protected $casts = [
