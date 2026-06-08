@@ -7,6 +7,7 @@ use Illuminate\Http\Resources\Json\ResourceCollection;
 use App\Http\Resources\Product\ProductMiniResource;
 
 class ProductCollection extends ResourceCollection
+
 {
     public function toArray(Request $request)
     {
