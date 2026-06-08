@@ -8,12 +8,7 @@ use App\Http\Resources\Product\ProductMiniResource;
 
 class ProductCollection extends ResourceCollection
 {
-    /**
-     * Transform the resource collection into an array.
-     *
-     * @return array<int|string, mixed>
-     */
-    public function toArray(Request $request): array
+    public function toArray(Request $request)
     {
         return [
             "data" => ProductMiniResource::collection($this->collection),
@@ -32,4 +27,4 @@ class ProductCollection extends ResourceCollection
             ]
         ];
     }
-}
+} 
