@@ -16,6 +16,7 @@ use Marvel\Traits\ApiResponse;
 
 class ProductController extends Controller
 {
+    
     use ApiResponse;
     private ProductService $productService;
     protected $productStrategyResolver;
