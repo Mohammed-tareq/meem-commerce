@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
 
-use App\Http\Resources\Product\ProductCollection;
 use App\Http\Resources\Product\ProductMiniResource;
 use App\Http\Resources\Product\ProductResource;
 use App\Services\General\ProductEngine\ProductStrategyResolver;
@@ -13,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Marvel\Http\Requests\ReviewCreateRequest;
 use Marvel\Http\Requests\ReviewUpdateRequest;
+use Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Traits\ApiResponse;
 
 class ProductController extends Controller
