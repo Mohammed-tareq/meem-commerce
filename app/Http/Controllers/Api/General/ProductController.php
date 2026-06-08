@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Product\ProductCollection;
 use App\Http\Resources\Product\ProductMiniResource;
 use App\Http\Resources\Product\ProductResource;
 use App\Services\General\ProductEngine\ProductStrategyResolver;
