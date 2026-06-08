@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
-use App\Services\General\FaqService;
+use App\Services\General\faqService;
 use Marvel\Http\Resources\FaqResource;
 use Marvel\Traits\ApiResponse;
 
@@ -11,7 +11,7 @@ class FAQController extends Controller
 {
     use ApiResponse;
     private $faqService;
-    public function __construct(FaqService $faqService)
+    public function __construct(faqService $faqService)
     {
         $this->faqService = $faqService;
     }
