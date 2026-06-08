@@ -4,14 +4,17 @@ namespace App\Http\Resources\Product;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
-use App\Http\Resources\Product\ProductMiniResource;
 
 class ProductCollection extends ResourceCollection
-    
 {
-    public function toArray(Request $request)
+    /**
+     * Transform the resource collection into an array.
+     *
+     * @return array<int|string, mixed>
+     */
+    public function toArray(Request $request): array
     {
-        return [
+         return [
             "data" => ProductMiniResource::collection($this->collection),
             "links" => [
                 "current_page" => $this->currentPage(),
@@ -28,4 +31,4 @@ class ProductCollection extends ResourceCollection
             ]
         ];
     }
-} 
+}
