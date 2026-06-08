@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Marvel\Http\Requests\ReviewCreateRequest;
 use Marvel\Http\Requests\ReviewUpdateRequest;
+use Marvel\Http\Resources\product\ProductCollectionMini;
 use Marvel\Traits\ApiResponse;
 
 class ProductController extends Controller
@@ -33,7 +34,7 @@ class ProductController extends Controller
         $data = Cache::remember('products_index', 60, function () use ($request) {
             return $this->productService->paginate($request);
         });
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, new ProductCollection($data));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, new ProductCollectionMini($data));
     }
 
     public function getProductsType(Request $request)
