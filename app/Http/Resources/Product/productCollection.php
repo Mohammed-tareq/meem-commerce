@@ -4,6 +4,7 @@ namespace App\Http\Resources\Product;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
+use App\Http\Resources\Product\ProductMiniResource;
 
 class ProductCollection extends ResourceCollection
 {
