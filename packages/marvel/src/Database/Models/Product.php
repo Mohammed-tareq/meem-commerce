@@ -23,7 +23,7 @@ use Laravel\Scout\Searchable;
 
 class Product extends Model implements HasMedia
 {
-    use HasTranslations, SoftDeletes, Sluggable, Excludable, InteractsWithMedia, Searchable;
+    use HasTranslations, SoftDeletes, Excludable, InteractsWithMedia, Searchable;
 
     protected $table = 'products';
     protected $fillable = [
@@ -56,7 +56,7 @@ class Product extends Model implements HasMedia
         'price_after_flash_sale',
         'discount_status',
     ];
-    public array $translatable = ['name', 'description'];
+    public array $translatable = ['name', 'description', 'slug'];
     public $hideMeta = true;
 
 
@@ -86,19 +86,6 @@ class Product extends Model implements HasMedia
         'final_price',
     ];
 
-    /**
-     * Return the sluggable configuration array for this model.
-     *
-     * @return array
-     */
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'name'
-            ]
-        ];
-    }
 
     protected static function boot()
     {
@@ -109,6 +96,19 @@ class Product extends Model implements HasMedia
             if (empty($product->sku)) {
                 $product->sku = 'PRD-' . Str::uuid();
             }
+        });
+        static::saving(function ($product) {
+
+
+            $product->slug = [
+                'en' => $product->getTranslation('name', 'en', false)
+                    ? Str::slug($product->getTranslation('name', 'en'))
+                    : null,
+
+                'ar' => $product->getTranslation('name', 'ar', false)
+                    ? str_replace(' ', '-', trim($product->getTranslation('name', 'ar')))
+                    : null,
+            ];
         });
     }
 
@@ -524,5 +524,12 @@ class Product extends Model implements HasMedia
     public function setQuantityAttribute($value): void
     {
         $this->attributes['stock_quantity'] = (int) $value;
+    }
+    public function scopeSearch($query, $field, $term, $locale)
+    {
+        return $query->where(function ($q) use ($field, $term, $locale) {
+            $q->where($field . '->' . $locale, 'like', "%$term%")
+                ->orWhere($field, 'like', "%$term%");
+        });
     }
 }

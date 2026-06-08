@@ -288,7 +288,10 @@ class CategorySeeder extends Seeder
         $existing = Category::where('slug->en', $slugEn)->first();
         if (! $existing) {
             $category = Category::create([
-                'slug' => $slugEn,
+                'slug' => [
+                    'ar' => $nameAr,
+                    'en' => $nameEn,
+                ],
                 'name' => [
                     'ar' => $nameAr,
                     'en' => $nameEn,
@@ -301,7 +304,10 @@ class CategorySeeder extends Seeder
             ]);
         } else {
             $existing->update([
-                'slug' => $slugEn,
+                'slug' => [
+                    'ar' => $slugAr,
+                    'en' => $slugEn,
+                ],
                 'name' => [
                     'ar' => $nameAr,
                     'en' => $nameEn,

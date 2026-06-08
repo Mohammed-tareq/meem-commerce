@@ -7,7 +7,9 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
+use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Review;
 use Marvel\Traits\MediaManager;
@@ -56,10 +58,11 @@ class ProductService
         return $query->orderByDesc('id')->paginate($limit);
     }
 
-    public function getProductById($id, $limit = 10)
+    public function getProductBySlug($slug, $limit = 10)
     {
         $product = Product::query()
             ->active()
+            ->search('slug', $slug, app()->getLocale())
             ->with([
                 'categories',
                 'variations',
@@ -67,7 +70,7 @@ class ProductService
             ])
             ->withAvg(['reviews' => fn($builder) => $builder->approved()], 'rating')
             ->withCount(['reviews' => fn($builder) => $builder->approved()])
-            ->find($id);
+            ->first();
 
         if (!$product) {
             return null;
@@ -77,8 +80,9 @@ class ProductService
 
         return $product;
     }
-    public function getDiscountEndingTodayOrLowStockProducts($limit = 10)
+    public function getDiscountEndingTodayOrLowStockProducts($request)
     {
+        $limit = $request->query('limit', 10);
         $products = Product::query()
             ->where('status', true)
             ->where(function ($query) {
@@ -123,8 +127,122 @@ class ProductService
             return $product;
         })->values();
     }
-    public function getAllDiscountProducts($limit = 10)
+    public function getFlashSalesAndHereProductsByQtySet($request)
     {
+        $qty = $request->query('limit', 5);
+        $start_date = $request->query('start_date', '');
+        $end_date = $request->query('end_date', '');
+
+        $flashSales = FlashSale::query()->valid()
+            ->when($start_date, function ($query) use ($start_date) {
+                $query->where('created_at', '>=', $start_date);
+            })
+            ->when($end_date, function ($query) use ($end_date) {
+                $query->where('created_at', '<=', $end_date);
+            })
+            ->with([
+                'products' => function ($query) use ($qty) {
+                    $query->limit($qty);
+                }
+            ])->get()
+            ->pluck('products')
+            ->flatten();
+
+        return $flashSales;
+    }
+    public function getFlashSaleProductsEndingThisWeek($request)
+    {
+        $limit = $request->query('limit', 10);
+        $weekEnd = now()->endOfWeek();
+
+        $products = Product::query()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->whereNull('deleted_at')
+            ->where('status', true)
+            ->where('has_flash_sale', true)
+            ->whereExists(function ($query) use ($weekEnd) {
+                $query->select(DB::raw(1))
+                    ->from('flash_sale_products')
+                    ->join('flash_sales', 'flash_sale_products.flash_sale_id', '=', 'flash_sales.id')
+                    ->whereColumn('flash_sale_products.product_id', 'products.id')
+                    ->whereNull('flash_sales.deleted_at')
+                    ->where('flash_sales.status', true)
+                    ->whereNotNull('flash_sales.end_date')
+                    ->whereBetween('flash_sales.end_date', [today(), $weekEnd]);
+            })
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_flash_sale ?? $product->price_after_discount ?? $product->price ?? null));
+
+            return $product;
+        })->values();
+    }
+    public function getFlashSaleProductsEndingToday($request)
+    {
+        $limit = $request->query('limit', 10);
+        $today = today();
+
+        $products = Product::query()
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->whereNull('deleted_at')
+            ->where('status', true)
+            ->where('has_flash_sale', true)
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('flash_sale_products')
+                    ->join('flash_sales', 'flash_sale_products.flash_sale_id', '=', 'flash_sales.id')
+                    ->whereColumn('flash_sale_products.product_id', 'products.id')
+                    ->whereNull('flash_sales.deleted_at')
+                    ->where('flash_sales.status', true)
+                    ->whereNotNull('flash_sales.end_date')
+                    ->whereDate('flash_sales.end_date', today());
+            })
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_flash_sale ?? $product->price_after_discount ?? $product->price ?? null));
+
+            return $product;
+        })->values();
+    }
+    public function getAllDiscountProducts($request)
+    {
+        $limit = $request->query('limit', 10);
         $products = Product::query()
             ->select([
                 'id',
@@ -157,8 +275,32 @@ class ProductService
         })->filter(fn(Product $product) => $product->isDiscountActive())->values();
     }
 
-    public function getNewArrivals(int $limit = 10)
+    public function getBrandsProductsByQtySet($request)
     {
+        $qty = $request->query('limit', 10);
+        // $qtyBrand = $request->query('limit_brand', 10);
+        $start_date = $request->query('start_date', '');
+        $end_date   = $request->query('end_date', '');
+
+        $brands = Brand::active()
+            ->when(!empty($start_date), function ($query) use ($start_date) {
+                $query->where('created_at', '>=', $start_date);
+            })
+            ->when(!empty($end_date), function ($query) use ($end_date) {
+                $query->where('created_at', '<=', $end_date);
+            })
+            ->with(['products' => function ($query) use ($qty) {
+                $query->limit($qty);
+            }])
+            ->get()
+            ->pluck('products')
+            ->flatten();
+
+        return $brands;
+    }
+    public function getNewArrivals($request)
+    {
+        $limit = $request->get('limit', 10);
         $products = Product::query()
             ->select([
                 'id',
@@ -244,8 +386,10 @@ class ProductService
         }
     }
 
-    public function getBestProductSales($limit = 10)
+    public function getBestProductSales($request)
     {
+        $limit = $request->get('limit', 10);
+
         return Product::query()
             ->active()
             ->with(['categories', 'variations'])
@@ -254,8 +398,11 @@ class ProductService
             ->get();
     }
 
-    public function getProductForParentCategory($limit = 10)
+    public function getProductForParentCategory($request)
     {
+
+        dd($request->all());
+        $limit = $request->integer('limit', 10);
         $ParentCategories = Category::query()->whereNull('parent_id')->pluck('id');
         return Product::query()
             ->active()
@@ -489,6 +636,4 @@ class ProductService
 
         return round((float) $value, 2);
     }
-
-
 }

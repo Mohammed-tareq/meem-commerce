@@ -149,4 +149,5 @@ return [
     'MESSAGE.EMAIL_VERIFICATION_LINK_SENT' => 'تم إرسال رابط تأكيد البريد الإلكتروني إلى بريدك',
     'ERROR.INVALID_OTP' => 'رمز التحقق غير صالح',
     'INVALID_CREDENTIALS' => 'بيانات الاعتماد غير صحيحة',
+    'INVALID_PRODUCT_TYPE' => 'نوع المنتج غير صالح',
 ];

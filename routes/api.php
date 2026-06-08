@@ -32,12 +32,13 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     //======================== products=========================//
     Route::controller(ProductController::class)->group(function () {
         Route::get('products', 'index');
+        Route::get('products/section', 'getProductsType');
         Route::get('products/best-sales', 'getBestProductSales');
         Route::get('products/discount-ending-today-or-low-stock', 'getDiscountEndingTodayOrLowStockProducts')->name('product-discount-ending-today-or-low-stock');
         Route::get('products/new-arrivals', 'getNewArrivals');
         Route::get('products/all-discount-products', 'getAllDiscountProducts');
         Route::get('products/parent-category', 'getProductForParentCategory');
-        Route::get('products/{id}', 'getProductById');
+        Route::get('products/{slug}', 'getProductBySlug')->name('general-product-show');
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', 'addProductReview')->middleware('auth:sanctum');
         Route::put('products/reviews/{id}', 'updateProductReview')->middleware('auth:sanctum');
@@ -142,6 +143,22 @@ Route::get('/enum-types', function () {
 });
 
 
+
+Route::get('product-type', function () {
+    return [
+
+        'index',
+        'best_product_sales',
+        'brands_product',
+        'new_arrivals',
+        'all_product_discounts',
+        'product_discount_today_or_low_qty',
+        'flash_sales_product',
+        'flash_sales_end_today',
+        'product_for_parent_category',
+        'flash_sales_end_week',
+    ];
+});
 Route::get('check-card-payment', function () {
     return [
         'CardNumber' => '2223000000000007',

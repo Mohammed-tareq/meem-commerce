@@ -17,7 +17,7 @@ class ProductMiniResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->getTranslation('name', app()->getLocale()),
-            // 'slug'                   => $this->getTranslation('slug', app()->getLocale()),
+            'slug'                   => $this->getTranslation('slug', app()->getLocale()),
             'price' => $this->roundMoney($this->price),
             'current_price' => $this->roundMoney($this->getRawOrComputedValue('current_price')),
             'price_after_discount' => $this->roundMoney($this->getRawOrComputedValue('price_after_discount')),
