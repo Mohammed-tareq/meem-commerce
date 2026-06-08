@@ -3,10 +3,10 @@
 namespace App\Http\Resources\Product;
 
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\ResourceCollection;
 use App\Http\Resources\Product\ProductMiniResource;
+use Marvel\Http\Resources\product\ProductCollection as MarvelProductCollection;
 
-class ProductCollection extends ResourceCollection
+class ProductCollection extends MarvelProductCollection
 {
 
     public function toArray($request)
