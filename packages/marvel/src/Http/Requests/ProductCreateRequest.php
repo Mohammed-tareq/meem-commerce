@@ -65,6 +65,7 @@ class ProductCreateRequest extends FormRequest
             'in_stock'                     => ["required", 'in:1,0'],
             'has_discount'                 => ["required", 'in:true,false,1,0'],
             'has_flash_sale'               => ["required", 'in:true,false,1,0'],
+            'is_fast_shipping_available'   => ['nullable', 'boolean'],
             'flash_sale_id'                => ['required_if:has_flash_sale,1', 'exists:flash_sales,id'],
             'discount_type'                => ['required_if:has_discount,1', Rule::in($discountTypes)],
             'discount_amount'              => ['required_if:has_discount,1', 'numeric', 'min:1'],

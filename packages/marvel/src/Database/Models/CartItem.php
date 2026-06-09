@@ -22,6 +22,7 @@ class   CartItem extends Model
         'attributes',
         'is_gift',
         'promotion_id',
+        'shipping_method',
     ];
     protected $casts = [
         'attributes' => 'array',

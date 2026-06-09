@@ -82,6 +82,9 @@ final class Permission extends Enum
     public const UPDATE_GOVERNORATE = 'update-governorate';
     public const DELETE_GOVERNORATE = 'delete-governorate';
 
+    public const VIEW_FAST_SHIPPING = 'view-fast-shipping';
+    public const UPDATE_FAST_SHIPPING = 'update-fast-shipping';
+
     public const VIEW_COUNTRY = 'view-country';
     public const CREATE_COUNTRY = 'create-country';
     public const UPDATE_COUNTRY = 'update-country';

@@ -22,6 +22,7 @@ class GovernorateUpdateRequest extends FormRequest
             'name.en' => ['sometimes', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('governorates')->ignore($this->route('governorate'))],
             'name.ar' => ['sometimes', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('governorates')->ignore($this->route('governorate'))],
             'status' => ['nullable', 'boolean'],
+            'is_fast_shipping_enabled' => ['nullable', 'boolean'],
             'shipping_price' => ['sometimes', 'array'],
             'shipping_price.price' => ['sometimes', 'numeric'],
             'shipping_price.estimated_days' => ['sometimes', 'integer'],
