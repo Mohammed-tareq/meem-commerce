@@ -148,5 +148,10 @@ return [
     'MESSAGE.USER_LOGGED_IN_SUCCESSFULLY' => 'User logged in successfully',
     'MESSAGE.EMAIL_VERIFICATION_LINK_SENT' => 'Email verification link sent on your email id',
     'ERROR.INVALID_OTP' => 'Invalid OTP',
-    'INVALID_CREDENTIALS'=>'Invalid Credentials'
+    'INVALID_CREDENTIALS'=>'Invalid Credentials',
+    'MESSAGE.FAST_SHIPPING_NOT_AVAILABLE' => 'Fast shipping is not currently available',
+    'MESSAGE.FAST_SHIPPING_OUTSIDE_HOURS' => 'Fast shipping is only available during working hours',
+    'MESSAGE.FAST_SHIPPING_GOVERNORATE_DISABLED' => 'Fast shipping is not available in your governorate',
+    'MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE' => 'One or more products are not eligible for fast shipping',
+    'MESSAGE.FAST_SHIPPING_MIXED_CART' => 'Cannot mix fast shipping and scheduled shipping items in the same order'
 ];

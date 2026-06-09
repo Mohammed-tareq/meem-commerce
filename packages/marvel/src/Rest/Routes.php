@@ -62,6 +62,7 @@ use Marvel\Http\Controllers\TermsAndConditionsController;
 use Marvel\Http\Controllers\ComponentDataController;
 use Marvel\Http\Controllers\ContentPageController;
 use Marvel\Http\Controllers\CountryController;
+use Marvel\Http\Controllers\FastShippingController;
 use Marvel\Http\Controllers\GovernorateController;
 use Marvel\Http\Controllers\ShippingPriceController;
 
@@ -435,6 +436,7 @@ Route::group(
         Route::apiResource('products', ProductController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
+        Route::put('products/{id}/fast-shipping', [ProductController::class, 'toggleFastShipping']);
         Route::apiResource('resources', ResourceController::class, [
             'only' => ['store']
         ]);
@@ -461,6 +463,7 @@ Route::group(
         Route::apiResource('governorates', GovernorateController::class);
         Route::get('governorates/{id}/cities', [GovernorateController::class, 'cities']);
         Route::post('governorates/change-status', [GovernorateController::class, 'bulkStatus']);
+        Route::put('governorates/{id}/fast-shipping', [GovernorateController::class, 'toggleFastShipping']);
 
         Route::apiResource('cities', CityController::class);
 
@@ -641,6 +644,8 @@ Route::group([
     Route::apiResource('settings', SettingsController::class, [
         'only' => ['update'],
     ]);
+    Route::get('fast-shipping/settings', [FastShippingController::class, 'getSettings']);
+    Route::put('fast-shipping/settings', [FastShippingController::class, 'updateSettings']);
     Route::apiResource('users', UserController::class);
     Route::apiResource('authors', AuthorController::class, [
         'only' => ['update', 'destroy'],

@@ -155,4 +155,36 @@ class GovernorateController extends CoreController
         $count = $this->repository->bulkStatus($request->input('ids', []), (bool) $request->input('status'));
         return $this->apiResponse(BULK_STATUS_UPDATED_SUCCESSFULLY, 200, true);
     }
+
+    /**
+     * @OA\Put(
+     *     path="/api/governorates/{id}/fast-shipping",
+     *     tags={"Governorates"},
+     *     summary="Toggle fast shipping for a governorate",
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="is_fast_shipping_enabled", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Fast shipping status updated")
+     * )
+     */
+    public function toggleFastShipping(Request $request, int $id): JsonResponse
+    {
+        $governorate = $this->repository->findById($id);
+
+        if (!$governorate) {
+            return $this->apiResponse(NOT_FOUND, 404, false);
+        }
+
+        $validated = $request->validate([
+            'is_fast_shipping_enabled' => ['required', 'boolean'],
+        ]);
+
+        $governorate = $this->repository->update($governorate, $validated);
+
+        return $this->apiResponse(GOVERNORATE_UPDATED_SUCCESSFULLY, 200, true, GovernorateResource::make($governorate));
+    }
 }

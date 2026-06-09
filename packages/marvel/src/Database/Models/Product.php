@@ -44,6 +44,7 @@ class Product extends Model implements HasMedia
         'length',
         'weight',
         'has_flash_sale',
+        'is_fast_shipping_available',
         'has_discount',
         'pieces',
         'banner_id',
@@ -74,6 +75,7 @@ class Product extends Model implements HasMedia
         'discount_status' => 'boolean',
         'has_discount' => 'boolean',
         'has_flash_sale' => 'boolean',
+        'is_fast_shipping_available' => 'boolean',
         'stock_quantity' => 'integer',
         'reserved_quantity' => 'integer',
         'sold_quantity' => 'integer',
@@ -471,6 +473,11 @@ class Product extends Model implements HasMedia
                 $builder->where('in_stock', true)
                     ->orWhereRaw('(COALESCE(stock_quantity, 0) - COALESCE(reserved_quantity, 0)) > 0');
             });
+    }
+
+    public function scopeFastShippingAvailable($query)
+    {
+        return $query->where('is_fast_shipping_available', true);
     }
 
     public function scopeFlashSaleWithinOneWeek($query)
