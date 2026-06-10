@@ -86,7 +86,7 @@ class DatabaseSeeder extends Seeder
             // ShopRelationsSeeder::class,
             WishlistSeeder::class,
             ContentPageSeeder::class,
-            SectionSeeder::class,
+            // SectionSeeder::class,
         ]);
     }
 }

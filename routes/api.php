@@ -15,6 +15,7 @@ use App\Http\Controllers\Api\General\SettingController;
 use App\Http\Controllers\Api\General\SliderController;
 use App\Http\Controllers\Api\General\ContentPageController;
 use App\Http\Controllers\Api\General\PromotionController;
+use Illuminate\Support\Facades\Mail;
 
 Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])->group(function () {
 
@@ -33,11 +34,6 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     Route::controller(ProductController::class)->group(function () {
         Route::get('products', 'index');
         Route::get('products/section', 'getProductsType');
-        Route::get('products/best-sales', 'getBestProductSales');
-        Route::get('products/discount-ending-today-or-low-stock', 'getDiscountEndingTodayOrLowStockProducts')->name('product-discount-ending-today-or-low-stock');
-        Route::get('products/new-arrivals', 'getNewArrivals');
-        Route::get('products/all-discount-products', 'getAllDiscountProducts');
-        Route::get('products/parent-category', 'getProductForParentCategory');
         Route::get('products/{slug}', 'getProductBySlug')->name('general-product-show');
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', 'addProductReview')->middleware('auth:sanctum');
@@ -65,9 +61,6 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     //========================= flash-sales=========================//
     Route::controller(FlashSaleController::class)->group(function () {
         Route::get('flash-sales', 'index')->name('general-flash-sale-index');
-        Route::get('flash-sales-with-products', 'getFlashSalesAndHereProductsByQtySet')->name('general-flash-sale-with-products');
-        Route::get('flash-sales-ending-this-week', 'getFlashSaleProductsEndingThisWeek')->name('general-flash-sale-ending-this-week');
-        Route::get('flash-sales-today', 'getFlashSaleProductsEndingToday')->name('general-flash-sale-ending-today');
         Route::get('flash-sales/{slug}', 'getFlashSaleBySlug')->name('general-flash-sale-show');
     });
 
@@ -165,4 +158,14 @@ Route::get('check-card-payment', function () {
         'CardExpiryMonthand year' => '01/39',
         'CardCVV' => '100',
     ];
+});
+Route::get('/test-mail', function () {
+
+    Mail::raw('Brevo Test Mail', function ($message) {
+
+        $message->to('mohtareq1999m@email.com')
+                ->subject('Test Email');
+    });
+
+    return 'sent';
 });

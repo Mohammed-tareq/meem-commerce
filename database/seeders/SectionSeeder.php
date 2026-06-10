@@ -109,9 +109,9 @@ class SectionSeeder extends Seeder
         ];
 
         foreach ($items as $item) {
-            $section = Section::updateOrCreate([
+            $section = Section::create([
                 'type' => $item['type'],
-            ], [
+
                 'endpoint' => $item['endpoint'] ?? null,
                 'order' => $item['order'] ?? 0,
                 'is_active' => true,
