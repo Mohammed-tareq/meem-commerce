@@ -16,8 +16,9 @@ use App\Http\Controllers\Api\General\SliderController;
 use App\Http\Controllers\Api\General\ContentPageController;
 use App\Http\Controllers\Api\General\PromotionController;
 use Illuminate\Support\Facades\Mail;
+//'throttle:general'
 
-Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])->group(function () {
+Route::prefix('general')->middleware(['api', 'check-lang'])->group(function () {
 
     //========================= home=========================//
     Route::controller(HomeController::class)->group(function () {

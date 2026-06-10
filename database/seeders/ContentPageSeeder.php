@@ -36,7 +36,7 @@ class ContentPageSeeder extends Seeder
             [
                 'type' => 'best_product_sales',
                 'title' => ['en' => 'Best Product Sales', 'ar' => 'أفضل مبيعات المنتجات'],
-                'endpoint' => 'products?type=best_product_sales',
+                'endpoint' => 'products/section?type=best_product_sales',
                 'order' => 3,
             ],
             [
@@ -48,7 +48,7 @@ class ContentPageSeeder extends Seeder
             [
                 'type' => 'flash_sales_product',
                 'title' => ['en' => 'Flash Sales Products', 'ar' => 'منتجات عروض الفلاش'],
-                'endpoint' => 'products?type=flash_sales_product',
+                'endpoint' => 'products/section?type=flash_sales_product',
                 'order' => 5,
             ],
             [
@@ -60,13 +60,13 @@ class ContentPageSeeder extends Seeder
             [
                 'type' => 'brands_product',
                 'title' => ['en' => 'Brands Products', 'ar' => 'منتجات العلامات التجارية'],
-                'endpoint' => 'products?type=brands_product',
+                'endpoint' => 'products/section?type=brands_product',
                 'order' => 7,
             ],
             [
                 'type' => 'product_discount_today_or_low_qty',
                 'title' => ['en' => 'Product Discount Days', 'ar' => 'أيام خصم المنتجات'],
-                'endpoint' => 'products?type=product_discount_today_or_low_qty',
+                'endpoint' => 'products/section?type=product_discount_today_or_low_qty',
                 'order' => 8,
             ],
             [
@@ -78,13 +78,13 @@ class ContentPageSeeder extends Seeder
             [
                 'type' => 'flash_sales_end_today',
                 'title' => ['en' => 'Flash Sale Days', 'ar' => 'أيام عروض الفلاش'],
-                'endpoint' => 'products?type=flash_sales_end_today',
+                'endpoint' => 'products/section?type=flash_sales_end_today',
                 'order' => 10,
             ],
             [
                 'type' => 'flash_sales_end_week',
                 'title' => ['en' => 'Flash Sale Days', 'ar' => 'أيام عروض الفلاش'],
-                'endpoint' => 'products?type=flash_sales_end_week',
+                'endpoint' => 'products/section?type=flash_sales_end_week',
                 'order' => 10,
             ],
             [
@@ -96,19 +96,19 @@ class ContentPageSeeder extends Seeder
             [
                 'type' => 'product_for_parent_category',
                 'title' => ['en' => 'Product For Parent', 'ar' => 'منتجات للتصنيف الرئيسي'],
-                'endpoint' => 'products?type=product_for_parent_category',
+                'endpoint' => 'products/section?type=product_for_parent_category',
                 'order' => 12,
             ],
             [
                 'type' => 'new_arrivals',
                 'title' => ['en' => 'New Arrivals', 'ar' => 'وصل حديثاً'],
-                'endpoint' => 'products?type=new_arrivals',
+                'endpoint' => 'products/section?type=new_arrivals',
                 'order' => 13,
             ],
             [
                 'type' => 'all_product_discounts',
                 'title' => ['en' => 'All Discount Product', 'ar' => 'كل المنتجات المخفضة'],
-                'endpoint' => 'products?type=all_product_discounts',
+                'endpoint' => 'products/section?type=all_product_discounts',
                 'order' => 14,
             ],
         ];
