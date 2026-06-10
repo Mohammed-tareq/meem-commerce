@@ -34,7 +34,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 2,
             ],
             [
-                'type' => 'best-product-sales',
+                'type' => 'best_product_sales',
                 'title' => ['en' => 'Best Product Sales', 'ar' => 'أفضل مبيعات المنتجات'],
                 'endpoint' => 'products?type=best_product_sales',
                 'order' => 3,
