@@ -148,6 +148,7 @@ return [
     'MESSAGE.USER_LOGGED_IN_SUCCESSFULLY' => 'تم تسجيل دخول المستخدم بنجاح',
     'MESSAGE.EMAIL_VERIFICATION_LINK_SENT' => 'تم إرسال رابط تأكيد البريد الإلكتروني إلى بريدك',
     'ERROR.INVALID_OTP' => 'رمز التحقق غير صالح',
-    'INVALID_CREDENTIALS' => 'بيانات الاعتماد غير صحيحة',
-    'INVALID_PRODUCT_TYPE' => 'نوع المنتج غير صالح',
+    'ERROR.INVALID_PRODUCT_TYPE' => 'نوع المنتج غير صالح',
+    'ERROR.ACCOUNT_CREATED_BUT_OTP_FAILED' => 'تم إنشاء الحساب بنجاح ولكن تعذر إرسال رمز التحقق',
+    'ERROR.USER_NOT_VERIFIED' => 'الحساب غير مفعل',
 ];

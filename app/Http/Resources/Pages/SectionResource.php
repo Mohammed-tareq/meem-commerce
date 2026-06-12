@@ -12,8 +12,18 @@ class SectionResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type,
             'title' => $this->title_visible ? $this->title : null,
-            'endpoint' =>"general/" . $this->endpoint,
+            'endpoint' => $this->buildEndpoint(),
             'order' => $this->order,
+            'setting' => $this->setting,
         ];
+    }
+    private function buildEndpoint(): string
+    {
+        $params = array_merge(
+            ['type' => $this->type],
+            $this->setting['back'] ?? []
+        );
+
+        return 'general/products/section?' . http_build_query($params);
     }
 }

@@ -148,6 +148,7 @@ return [
     'MESSAGE.USER_LOGGED_IN_SUCCESSFULLY' => 'User logged in successfully',
     'MESSAGE.EMAIL_VERIFICATION_LINK_SENT' => 'Email verification link sent on your email id',
     'ERROR.INVALID_OTP' => 'Invalid OTP',
-    'INVALID_CREDENTIALS'=>'Invalid Credentials',
-    'INVALID_PRODUCT_TYPE' => 'Invalid product type',
+    'ERROR.INVALID_PRODUCT_TYPE' => 'Invalid product type',
+    'ERROR.ACCOUNT_CREATED_BUT_OTP_FAILED' => 'Account created but OTP failed',
+    'ERROR.USER_NOT_VERIFIED' => 'User is not verified',
 ];

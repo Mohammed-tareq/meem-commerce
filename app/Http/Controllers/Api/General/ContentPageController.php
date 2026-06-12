@@ -13,13 +13,18 @@ class ContentPageController extends Controller
     use ApiResponse;
     public function index()
     {
-        $pages = Cache::remember('content_pages', 60 * 60 * 24, function () {
-            return ContentPage::with([
-                'sections' => function ($query) {
-                    $query->where('is_active', true);
-                }
-            ])->paginate(15);
-        });
+        // $pages = Cache::remember('content_pages', 60 * 60 * 24, function () {
+        //     return ContentPage::with([
+        //         'sections' => function ($query) {
+        //             $query->where('is_active', true);
+        //         }
+        //     ])->paginate(15);
+        // });
+        $pages = ContentPage::with([
+            'sections' => function ($query) {
+                $query->where('is_active', true);
+            }
+        ])->paginate(15);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ContentPageResource::collection($pages));
     }
 
@@ -32,6 +37,4 @@ class ContentPageController extends Controller
         });
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ContentPageResource::make($content_page));
     }
-
-
 }
