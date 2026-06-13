@@ -29,11 +29,17 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-
-        $data = Cache::remember('products_index', 60, function () use ($request) {
-            return $this->productService->paginate($request);
+        $cacheKey = 'products_index_' . md5(json_encode($request->all()) . '_' . app()->getLocale());
+        $responseData = Cache::remember($cacheKey, 60, function () use ($request) {
+            $query = $this->productService->buildFilteredBaseQuery($request);
+            $filters = $this->productService->getDynamicFilters(clone $query);
+            $data = $query->orderByDesc('id')->paginate($this->productService->getLimit($request));
+            $collection = new ProductCollectionMini($data);
+            $collectionArray = $collection->toArray($request);
+            $collectionArray['filters'] = $filters;
+            return $collectionArray;
         });
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, new ProductCollectionMini($data));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
     }
 
     public function getProductsType(Request $request)

@@ -2,10 +2,12 @@
 
 namespace App\Http\Resources\Product;
 
+use App\Traits\HasProductFilters;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductMiniResource extends JsonResource
 {
+    use HasProductFilters;
     /**
      * Transform the resource into an array.
      *
@@ -34,6 +36,10 @@ class ProductMiniResource extends JsonResource
             ],
             $this->mergeWhen(request()->routeIs('product-discount-ending-today-or-low-stock'), [
                 'badges' => $this->badges[0] ?? null,
+            ]),
+
+            $this->mergeWhen(!request()->routeIs('general-product-show'), [
+                'filters' => $this->getProductFilters($this->resource),
             ]),
         ];
     }

@@ -286,7 +286,7 @@ class Product extends Model implements HasMedia
      */
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'category_product');
+        return $this->belongsToMany(Category::class, 'category_product','product_id','category_id');
     }
 
     /**
@@ -294,7 +294,7 @@ class Product extends Model implements HasMedia
      */
     public function brands(): BelongsToMany
     {
-        return $this->belongsToMany(Brand::class, 'brand_product');
+        return $this->belongsToMany(Brand::class, 'brand_product','product_id','brand_id');
     }
 
     /**
@@ -531,5 +531,10 @@ class Product extends Model implements HasMedia
             $q->where($field . '->' . $locale, 'like', "%$term%")
                 ->orWhere($field, 'like', "%$term%");
         });
+    }
+
+    public function scopeFilter($query, array $filters)
+    {
+        return app(\App\Services\General\ProductFilter::class)->apply($query, $filters);
     }
 }

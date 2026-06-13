@@ -2,11 +2,13 @@
 
 namespace App\Http\Resources\Product;
 
+use App\Traits\HasProductFilters;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
 {
+    use HasProductFilters;
     /**
      * Transform the resource into an array.
      *
@@ -47,6 +49,9 @@ class ProductResource extends JsonResource
             "variants"                => $this->whenLoaded('variations', fn() => $this->getVariants()),
             'reviews'                 => ReviewResource::collection($this->whenLoaded('reviews')),
             $this->mergeWhen($this->relationLoaded('related_products'), fn() => ['related_products' => ProductMiniResource::collection($this->related_products)]),
+            $this->mergeWhen(!request()->routeIs('general-product-show'), [
+                'filters' => $this->getProductFilters($this->resource),
+            ]),
         ];
     }
 
