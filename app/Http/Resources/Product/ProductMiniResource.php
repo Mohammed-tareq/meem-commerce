@@ -38,9 +38,9 @@ class ProductMiniResource extends JsonResource
                 'badges' => $this->badges[0] ?? null,
             ]),
 
-            // $this->mergeWhen(!request()->routeIs('general-product-show'), [
-            //     'filters' => $this->getProductFilters($this->resource),
-            // ]),
+            $this->mergeWhen(!request()->routeIs('general-product-show'), [
+                'filters' => $this->getProductFilters($this->resource),
+            ]),
         ];
     }
 
