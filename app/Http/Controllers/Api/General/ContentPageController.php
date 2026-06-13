@@ -23,7 +23,9 @@ class ContentPageController extends Controller
         $pages = ContentPage::with([
             'sections' => function ($query) {
                 $query->where('is_active', true);
-            }
+            },
+            'sections.items.entity',
+            'sections.items.action'
         ])->paginate(15);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ContentPageResource::collection($pages));
     }

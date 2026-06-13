@@ -39,4 +39,9 @@ class Section extends Model implements Sortable
     {
         return $this->belongsTo(ContentPage::class);
     }
+
+    public function items()
+    {
+        return $this->hasMany(SectionItem::class)->orderBy('order');
+    }
 }
