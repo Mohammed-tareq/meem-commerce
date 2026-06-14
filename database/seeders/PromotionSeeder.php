@@ -146,14 +146,11 @@ class PromotionSeeder extends Seeder
     {
         $applyTo = $attributes['apply_to'] ?? 'specific_products';
 
-        // generate translatable slug from name or title
         $titleOrName = $attributes['name'] ?? $attributes['title'] ?? null;
-        $slug = null;
         if ($titleOrName && is_array($titleOrName)) {
-            $slug = $this->makeUniqueTranslatableSlug(Promotion::class, $titleOrName['en'] ?? '', $titleOrName['ar'] ?? '');
+            $attributes['slug'] = $this->makeUniqueSlug($titleOrName['en'] ?? '');
         }
 
-        // create without slug (to avoid sluggable receiving arrays)
         $model = Promotion::create(array_merge([
             'code' => $this->generatePromotionCode($applyTo),
             'limiter' => rand(25, 250),
@@ -163,30 +160,22 @@ class PromotionSeeder extends Seeder
             'status' => true,
         ], $attributes));
 
-        if ($slug) {
-            $model->setTranslations('slug', $slug);
-            $model->save();
-        }
-
         return $model;
     }
 
-    private function makeUniqueTranslatableSlug(string $modelClass, string $en, string $ar): array
+    private function makeUniqueSlug(string $name): string
     {
-        $baseEn = Str::slug($en ?: 'item');
-        $baseAr = str_replace(' ', '-', trim($ar ?: $en));
-        $candidate = $baseEn;
+        $base = Str::slug($name ?: 'item');
+        $candidate = $base;
         $i = 1;
-        while ($modelClass::where('slug->en', $candidate)->exists()) {
+        while (Promotion::where('slug', $candidate)->exists()) {
             $i++;
-            $candidate = $baseEn . '-' . $i;
+            $candidate = $base . '-' . $i;
         }
-        $candidateAr = $baseAr;
-        if ($i > 1) {
-            $candidateAr .= '-' . $i;
-        }
-        return ['en' => $candidate, 'ar' => $candidateAr];
+        return $candidate;
     }
+
+
 
     private function generatePromotionCode(string $applyTo, int $length = 10): string
     {

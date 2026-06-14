@@ -19,11 +19,10 @@ class SectionResource extends JsonResource
     }
     private function buildEndpoint(): string
     {
-        $params = array_merge(
-            ['type' => $this->type],
-            $this->setting['back'] ?? []
-        );
+        $params = [
+            ...($this->setting['back'] ?? [])
+        ];
 
-        return 'general/products/section?' . http_build_query($params);
+        return 'general/' . $this->type . '?' . http_build_query($params);
     }
 }

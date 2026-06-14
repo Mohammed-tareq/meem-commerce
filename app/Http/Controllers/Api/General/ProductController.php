@@ -29,7 +29,17 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
+        $type = $request->query('type', '');
+        if (!empty($type)) {
+            $handler = $this->productStrategyResolver->resolve($type);
+            $data = Cache::remember('products_' . $type, 60, function () use ($handler, $request) {
+                return $handler->getProducts($request);
+            });
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($data));
+        }
+
         $cacheKey = 'products_index_' . md5(json_encode($request->all()) . '_' . app()->getLocale());
+
         $responseData = Cache::remember($cacheKey, 60, function () use ($request) {
             $query = $this->productService->buildFilteredBaseQuery($request);
             $filters = $this->productService->getDynamicFilters(clone $query);
@@ -39,21 +49,8 @@ class ProductController extends Controller
             $collectionArray['filters'] = $filters;
             return $collectionArray;
         });
+
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
-    }
-
-    public function getProductsType(Request $request)
-    {
-        $type = $request->query('type', ''); // default to 'index' if no type is provided
-        if (empty($type)) {
-            return $this->apiResponse(INVALID_PRODUCT_TYPE, 400, false);
-        }
-        $handler = $this->productStrategyResolver->resolve($type);
-
-        $data = Cache::remember('products_' . $type, 60, function () use ($handler, $request) {
-            return $handler->getProducts($request);
-        });
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($data));
     }
 
     public function getProductBySlug(Request $request)
@@ -88,40 +85,35 @@ class ProductController extends Controller
 
     public function getBestProductSales(Request $request)
     {
-        $limit = $request->integer('limit', 10);
-        $products =  $this->productService->getBestProductSales($limit);
+        $products =  $this->productService->getBestProductSales($request);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($products));
     }
 
     public function getDiscountEndingTodayOrLowStockProducts(Request $request)
     {
-        $limit = $request->integer('limit', 10);
-        $products =  $this->productService->getDiscountEndingTodayOrLowStockProducts($limit);
+        $products =  $this->productService->getDiscountEndingTodayOrLowStockProducts($request);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($products));
     }
 
     public function getNewArrivals(Request $request)
     {
-        $limit = $request->integer('limit', 10);
-        $products =  $this->productService->getNewArrivals($limit);
+        $products =  $this->productService->getNewArrivals($request);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($products));
     }
 
     public function getAllDiscountProducts(Request $request)
     {
-        $limit = $request->integer('limit', 10);
-        $products =  $this->productService->getAllDiscountProducts($limit);
+        $products =  $this->productService->getAllDiscountProducts($request);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($products));
     }
 
     public function getProductForParentCategory(Request $request)
     {
-        $limit = $request->integer('limit', 10);
-        $products =  $this->productService->getProductForParentCategory($limit);
+        $products =  $this->productService->getProductForParentCategory($request);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($products));
     }

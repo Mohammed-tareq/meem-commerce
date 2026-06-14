@@ -21,7 +21,7 @@ class CategoryRepository extends BaseRepository
      * @var array
      */
     protected $fieldSearchable = [
-        'name'        => 'like',
+        'name' => 'like',
     ];
 
     protected $dataArray = [
@@ -54,6 +54,7 @@ class CategoryRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
+            $request['slug'] = $this->makeSlug($request);
             $data = $request->only($this->dataArray);
 
             $category = $this->create($data);
@@ -87,6 +88,7 @@ class CategoryRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
+
             $data = $request->only($this->dataArray);
             if (isset($data['name'])) {
                 $data['slug'] = $this->makeSlug($request, 'slug', $category->id);

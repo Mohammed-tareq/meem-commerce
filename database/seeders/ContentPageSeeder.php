@@ -43,17 +43,17 @@ class ContentPageSeeder extends Seeder
                 'order' => 2,
                 'setting' => [
                     'front' => ['columns_count' => 8, 'shape' => 'circle'],
-                    'back' => ['limit' => 8, 'type' => 'featured']
+                    'back' => ['limit' => 8]
                 ]
             ],
             [
-                'type' => 'best_product_sales',
+                'type' => 'products',
                 'title' => ['en' => 'Best Product Sales', 'ar' => 'أفضل مبيعات المنتجات'],
-                'endpoint' => 'products/section?type=best_product_sales',
+                'endpoint' => 'products',
                 'order' => 3,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => false],
-                    'back' => ['limit' => 10, 'sort_by' => 'highest_sales']
+                    'back' => ['limit' => 10, 'type'=>'best_product_sales']
                 ]
             ],
             [
@@ -67,13 +67,13 @@ class ContentPageSeeder extends Seeder
                 ]
             ],
             [
-                'type' => 'flash_sales_product',
+                'type' => 'products',
                 'title' => ['en' => 'Flash Sales Products', 'ar' => 'منتجات عروض الفلاش'],
-                'endpoint' => 'products/section?type=flash_sales_product',
+                'endpoint' => 'products',
                 'order' => 5,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => true, 'timer_end_at' => '2026-07-01 00:00:00'],
-                    'back' => ['limit' => 10, 'has_stock_only' => true]
+                    'back' => ['limit' => 10, 'type'=>'flash_sales_product']
                 ]
             ],
             [
@@ -87,23 +87,23 @@ class ContentPageSeeder extends Seeder
                 ]
             ],
             [
-                'type' => 'brands_product',
+                'type' => 'products',
                 'title' => ['en' => 'Brands Products', 'ar' => 'منتجات العلامات التجارية'],
-                'endpoint' => 'products/section?type=brands_product',
+                'endpoint' => 'products',
                 'order' => 7,
                 'setting' => [
                     'front' => ['columns_count' => 5],
-                    'back' => ['limit' => 10]
+                    'back' => ['limit' => 10, 'type'=>'brands_product']
                 ]
             ],
             [
-                'type' => 'product_discount_today_or_low_qty',
+                'type' => 'products',
                 'title' => ['en' => 'Product Discount Days', 'ar' => 'أيام خصم المنتجات'],
-                'endpoint' => 'products/section?type=product_discount_today_or_low_qty',
+                'endpoint' => 'products',
                 'order' => 8,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'badge_text' => 'LOW STOCK'],
-                    'back' => ['limit' => 10, 'min_discount' => 15]
+                    'back' => ['limit' => 10, 'type'=>'product_discount_today_or_low_qty']
                 ]
             ],
             [
@@ -117,23 +117,23 @@ class ContentPageSeeder extends Seeder
                 ]
             ],
             [
-                'type' => 'flash_sales_end_today',
+                'type' => 'products',
                 'title' => ['en' => 'Flash Sale Days', 'ar' => 'أيام عروض الفلاش'],
-                'endpoint' => 'products/section?type=flash_sales_end_today',
+                'endpoint' => 'products',
                 'order' => 10,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => true],
-                    'back' => ['limit' => 10, 'timeframe' => 'today']
+                    'back' => ['limit' => 10, 'type'=>'flash_sales_end_today']
                 ]
             ],
             [
-                'type' => 'flash_sales_end_week',
+                'type' => 'products',
                 'title' => ['en' => 'Flash Sale Days', 'ar' => 'أيام عروض الفلاش'],
-                'endpoint' => 'products/section?type=flash_sales_end_week',
+                'endpoint' => 'products',
                 'order' => 10,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => true],
-                    'back' => ['limit' => 10, 'timeframe' => 'week']
+                    'back' => ['limit' => 10, 'type'=>'flash_sales_end_week']
                 ]
             ],
             [
@@ -147,33 +147,33 @@ class ContentPageSeeder extends Seeder
                 ]
             ],
             [
-                'type' => 'product_for_parent_category',
+                'type' => 'products',
                 'title' => ['en' => 'Product For Parent', 'ar' => 'منتجات للتصنيف الرئيسي'],
-                'endpoint' => 'products/section?type=product_for_parent_category',
+                'endpoint' => 'products',
                 'order' => 12,
                 'setting' => [
                     'front' => ['columns_count' => 5],
-                    'back' => ['limit' => 10, 'category_level' => 'parent']
+                    'back' => ['limit' => 10, 'type'=>'product_for_parent_category']
                 ]
             ],
             [
-                'type' => 'new_arrivals',
+                'type' => 'products',
                 'title' => ['en' => 'New Arrivals', 'ar' => 'وصل حديثاً'],
-                'endpoint' => 'products/section?type=new_arrivals',
+                'endpoint' => 'products',
                 'order' => 13,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'badge_text' => 'NEW'],
-                    'back' => ['limit' => 10, 'sort_by' => 'latest_created']
+                    'back' => ['limit' => 10, 'type'=>'new_arrivals']
                 ]
             ],
             [
-                'type' => 'all_product_discounts',
+                'type' => 'products',
                 'title' => ['en' => 'All Discount Product', 'ar' => 'كل المنتجات المخفضة'],
-                'endpoint' => 'all_product_discounts',
+                'endpoint' => 'products',
                 'order' => 14,
                 'setting' => [
                     'front' => ['columns_count' => 5],
-                    'back' => ['limit' => 10, 'has_discount' => true]
+                    'back' => ['limit' => 10, 'type'=>'all_product_discounts']
                 ]
             ],
         ];

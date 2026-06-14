@@ -21,7 +21,7 @@ class FlashSale extends Model implements HasMedia
 
     protected $table = 'flash_sales';
 
-    public array $translatable = ["title", "description",'slug'];
+    public array $translatable = ["title", "description"];
     public $fillable = [
         'title',
         'slug',
@@ -139,22 +139,5 @@ class FlashSale extends Model implements HasMedia
         });
     }
 
-    protected static function booted()
-    {
-        static::saving(function ($flashSale) {
-
-            $title = $flashSale->title ?? [];
-
-
-            $flashSale->slug = [
-                'en' => $flashSale->getTranslation('title', 'en', false)
-                    ? Str::slug($flashSale->getTranslation('title', 'en'))
-                    : null,
-
-                'ar' => $flashSale->getTranslation('title', 'ar', false)
-                    ? str_replace(' ', '-', trim($flashSale->getTranslation('title', 'ar')))
-                    : null,
-            ];
-        });
-    }
+    
 }

@@ -62,7 +62,8 @@ class PromotionRepository extends BaseRepository
     {
         try {
             $data = $request->only($this->dataArray);
-            
+            $data['slug'] = $this->makeSlug($request);
+
             $data = $this->normalizePromotionData($data);
             $promotion = $this->create($data);
             $this->syncPromotionProducts($promotion, $request);
@@ -94,6 +95,7 @@ class PromotionRepository extends BaseRepository
 
             $data = $request->only($this->dataArray);
             $data = $this->normalizePromotionData($data);
+            $data['slug'] = $this->makeSlug($request, 'slug', $promotion->id);
             $promotion->update($data);
             $this->syncPromotionProducts($promotion, $request);
 

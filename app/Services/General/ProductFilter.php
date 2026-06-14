@@ -7,15 +7,18 @@ use Marvel\Database\Models\Attribute;
 use Marvel\Database\Models\AttributeValue;
 use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
+use Marvel\Database\Models\FlashSale;
+use Marvel\Database\Models\Promotion;
 
 class ProductFilter
 {
     private function resolveIds(string $modelClass, array $values): array
     {
-        return $modelClass::where(function ($q) use ($values) {
+        $locale = app()->getLocale();
+        return $modelClass::where(function ($q) use ($values, $locale) {
             foreach ($values as $val) {
-                $q->orWhere('name', 'like', '%' . $val . '%')
-                  ->orWhere('slug', 'like', '%' . $val . '%');
+                $q->orWhere("name->{$locale}", $val)
+                  ->orWhere("slug->{$locale}", $val);
             }
         })->pluck('id')->toArray();
     }
@@ -40,7 +43,33 @@ class ProductFilter
             }
         }
 
-        // 3. Filter by Price
+        // 3. Filter by Promotion (query-only, not in available filters)
+        if (!empty($filters['promotion'])) {
+            $promoSlugs = is_array($filters['promotion']) ? $filters['promotion'] : explode(',', $filters['promotion']);
+            $query->whereHas('promotions', function ($q) use ($promoSlugs) {
+                $q->reorder()->where(function ($sub) use ($promoSlugs) {
+                    foreach ($promoSlugs as $slug) {
+                        $sub->orWhere('promotions.slug', $slug);
+                    }
+                });
+            });
+        }
+
+        // 4. Filter by Flash Sale (query-only, not in available filters)
+        if (!empty($filters['flash_sale'])) {
+            $fsSlugs = is_array($filters['flash_sale']) ? $filters['flash_sale'] : explode(',', $filters['flash_sale']);
+            $locale = app()->getLocale();
+            $query->whereHas('flash_sales', function ($q) use ($fsSlugs, $locale) {
+                $q->where(function ($sub) use ($fsSlugs, $locale) {
+                    foreach ($fsSlugs as $slug) {
+                        $sub->orWhere("flash_sales.title->{$locale}", $slug)
+                            ->orWhere('flash_sales.slug', $slug);
+                    }
+                });
+            });
+        }
+
+        // 6. Filter by Price
         $minPrice = $filters['minPrice'] ?? $filters['price_min'] ?? null;
         $maxPrice = $filters['maxPrice'] ?? $filters['price_max'] ?? null;
         if ($minPrice !== null || $maxPrice !== null) {
@@ -63,7 +92,7 @@ class ProductFilter
             });
         }
 
-        // 4. Filter by Dimensions
+        // 7. Filter by Dimensions
         $dimensions = ['height', 'width', 'length', 'weight'];
         foreach ($dimensions as $dimension) {
             if (!empty($filters[$dimension])) {
@@ -77,7 +106,7 @@ class ProductFilter
             }
         }
 
-        // 5. Dynamic Attribute Filters
+        // 8. Dynamic Attribute Filters
         $attributeSlugs = Attribute::pluck('slug')->toArray();
 
         foreach ($filters as $key => $value) {
@@ -85,11 +114,12 @@ class ProductFilter
             if (in_array($lowerKey, $attributeSlugs) && !empty($value)) {
                 $attrValues = is_array($value) ? $value : explode(',', $value);
 
+                $locale = app()->getLocale();
                 $attrValueIds = AttributeValue::whereHas('attribute', fn($q) => $q->where('slug', $lowerKey))
-                    ->where(function ($q) use ($attrValues) {
+                    ->where(function ($q) use ($attrValues, $locale) {
                         foreach ($attrValues as $val) {
-                            $q->orWhere('value', 'like', '%' . $val . '%')
-                              ->orWhere('slug', 'like', '%' . $val . '%');
+                            $q->orWhere("value->{$locale}", $val)
+                              ->orWhere("slug->{$locale}", $val);
                         }
                     })
                     ->pluck('id')

@@ -34,7 +34,6 @@ Route::prefix('general')->middleware(['api', 'check-lang'])->group(function () {
     //======================== products=========================//
     Route::controller(ProductController::class)->group(function () {
         Route::get('products', 'index');
-        Route::get('products/section', 'getProductsType');
         Route::get('products/{slug}', 'getProductBySlug')->name('general-product-show');
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', 'addProductReview')->middleware('auth:sanctum');

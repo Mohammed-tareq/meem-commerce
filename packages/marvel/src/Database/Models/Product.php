@@ -436,6 +436,14 @@ class Product extends Model implements HasMedia
     }
 
     /**
+     * @return BelongsToMany
+     */
+    public function promotions(): BelongsToMany
+    {
+        return $this->belongsToMany(Promotion::class, 'promotion_product', 'product_id', 'promotion_id');
+    }
+
+    /**
      * flash_sale_requests
      *
      * @return BelongsToMany

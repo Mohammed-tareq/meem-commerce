@@ -413,7 +413,6 @@ class ProductService
     public function getProductForParentCategory($request)
     {
 
-        dd($request->all());
         $limit = $request->integer('limit', 10);
         $ParentCategories = Category::query()->whereNull('parent_id')->pluck('id');
         return Product::query()
