@@ -37,7 +37,7 @@ class ContentPageSeeder extends Seeder
                 ]
             ],
             [
-                'type' => 'best-category',
+                'type' => 'categories',
                 'title' => ['en' => 'Best Category', 'ar' => 'أفضل التصنيفات'],
                 'endpoint' => 'categories',
                 'order' => 2,
@@ -77,7 +77,7 @@ class ContentPageSeeder extends Seeder
                 ]
             ],
             [
-                'type' => 'brand',
+                'type' => 'brands',
                 'title' => ['en' => 'Brand', 'ar' => 'العلامة التجارية'],
                 'endpoint' => 'brands',
                 'order' => 6,
@@ -137,7 +137,7 @@ class ContentPageSeeder extends Seeder
                 ]
             ],
             [
-                'type' => 'parent_category',
+                'type' => 'categories',
                 'title' => ['en' => 'Parent Category', 'ar' => 'التصنيف الرئيسي'],
                 'endpoint' => 'categories',
                 'order' => 11,
