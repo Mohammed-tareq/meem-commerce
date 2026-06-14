@@ -5,6 +5,7 @@ namespace App\Exceptions;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Lang;
 use Spatie\Permission\Exceptions\GuardDoesNotMatch;
@@ -142,6 +143,11 @@ class Handler extends ExceptionHandler
         } elseif ($exception instanceof WildcardPermissionNotProperlyFormatted) {
             $statusCode = 400;
             $message = $this->messageForWildcardPermissionNotProperlyFormatted($exception);
+        }
+        // Handle AuthenticationException (unauthenticated)
+        elseif ($exception instanceof AuthenticationException) {
+            $statusCode = 401;
+            $message = 'Unauthenticated';
         }
         // Handle AuthorizationException
         elseif ($exception instanceof AuthorizationException) {

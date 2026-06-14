@@ -44,6 +44,10 @@ class ProductController extends Controller
         $responseData = Cache::remember($cacheKey, 60, function () use ($request) {
             $query = $this->productService->buildFilteredBaseQuery($request);
             $filters = $this->productService->getDynamicFilters(clone $query);
+            $orderPrice = $request->query('order_price');
+            if (in_array($orderPrice, ['asc', 'desc'])) {
+                $query->orderBy('price', $orderPrice);
+            }
             $data = $query->orderByDesc('id')->paginate($this->productService->getLimit($request));
             $collection = new ProductCollectionMini($data);
             $collectionArray = $collection->toArray($request);
