@@ -474,9 +474,9 @@ class UserController extends CoreController
             return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
         }
         $email_verified = $user->hasVerifiedEmail();
-        if (!$email_verified) {
-            return $this->apiResponse(USER_NOT_VERIFIED, 404, false);
-        }
+        // if (!$email_verified) {
+        //     return $this->apiResponse(USER_NOT_VERIFIED, 404, false);
+        // }
         // event(new ProcessUserData());
         $data = [
             "token" => $user->createToken('auth_token')->plainTextToken,
