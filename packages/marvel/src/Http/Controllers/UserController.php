@@ -626,14 +626,15 @@ class UserController extends CoreController
 
             DB::commit();
             try {
-                throw new MarvelException('tesds');
                 $user->sendOneTimePassword();
-                return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true);
+                $data = ['otp_status' => true];
+                return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true, $data);
             } catch (\Exception $mailException) {
                 $data = [
                     'requires_resend' => true,
                     'email' => $user->email,
                     'phone_number' => $user->phone_number,
+                    'otp_status' => false
                 ];
 
                 return $this->apiResponse(ACCOUNT_CREATED_BUT_OTP_FAILED, 201, true, $data);
@@ -774,8 +775,8 @@ class UserController extends CoreController
 
         if (
             Carbon::parse($tokenData->created_at)
-            ->addMinutes(5)
-            ->isPast()
+                ->addMinutes(5)
+                ->isPast()
         ) {
             return false;
         }
