@@ -5,7 +5,7 @@ namespace App\Services\General;
 use App\Http\Resources\Banner\BannerResource;
 use App\Http\Resources\Brand\BrandResource;
 use App\Http\Resources\Category\CategoryHomeResource;
-use App\Http\Resources\Category\CategoryWithChildNameResource;
+use App\Http\Resources\Category\CategoryNavbarResource;
 use App\Http\Resources\Coupons\CouponResource;
 use App\Http\Resources\FlashSale\FlashSaleResource;
 use App\Http\Resources\Product\ProductMiniResource;
@@ -28,7 +28,7 @@ class HomeService
     public function getNavData()
     {
         return Cache::remember("home-nav-bar", 120, function () {
-            return CategoryWithChildNameResource::collection($this->getCategoryWithChildren());
+            return CategoryNavbarResource::collection($this->getCategoryWithChildren());
         });
     }
     public function getHomeData(?int $parentCategoryId = null, ?array $sections = null)
@@ -401,7 +401,9 @@ class HomeService
             ->whereNull('parent_id')
             ->withCount('products')
             ->with(['children' => function ($query) {
-                $query->active()->withCount('products');
+                $query->active()->withCount('products')->with(['children' => function ($q) {
+                    $q->active()->withCount('products');
+                }]);
             }])
             ->orderByDesc('products_count')
             ->get();
