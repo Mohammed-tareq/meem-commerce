@@ -24,9 +24,15 @@ class CategoryWithChildResource extends JsonResource
                 'mobile' =>   $this->getFirstMediaUrl('categories-mobile'),
             ],
             'products_count'       => $this->whenCounted('products'),
-            'details'              => $this?->getTranslation('details', app()->getLocale()),
-            'children' => CategoryWithChildResource::collection($this->whenLoaded('children')),
-            'products' => ProductMiniResource::collection($this->whenLoaded('products'))
+            $this->mergeWhen($this->getTranslation('details', app()->getLocale()), [
+                'details' => $this->getTranslation('details', app()->getLocale()),
+            ]),
+            $this->mergeWhen($this->whenLoaded('children') && $this->children->isNotEmpty(), [
+                'children' => CategoryHomeResource::collection($this->children),
+            ]),
+            $this->mergeWhen($this->whenLoaded('products') && $this->products->isNotEmpty(), [
+                'products' => ProductMiniResource::collection($this->products),
+            ])
         ];
     }
 }

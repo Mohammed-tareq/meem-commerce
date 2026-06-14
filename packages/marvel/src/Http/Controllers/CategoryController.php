@@ -285,7 +285,7 @@ class CategoryController extends CoreController
             $category = $this->repository->with(['parent', 'shops', 'products'])
                 ->withCount('products')
                 ->where('id', $id)->firstOrFail();
-            app(CategoryHierarchyService::class)->loadRecursiveTree($category, true);
+            app(CategoryHierarchyService::class)->loadDirectChildren($category, true);
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryResource::make($category));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);

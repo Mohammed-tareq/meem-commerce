@@ -276,22 +276,15 @@ class CategorySeeder extends Seeder
         $slug = Str::slug($baseEn) . '-' . $sequence;
         $slugEn = $slug;
         $i = 1;
-        while (Category::where('slug->en', $slugEn)->exists()) {
+        while (Category::where('slug', $slugEn)->exists()) {
             $i++;
             $slugEn = $slug . '-' . $i;
         }
-        $slugAr = str_replace(' ', '-', trim($baseAr));
-        if ($i > 1) {
-            $slugAr .= '-' . $i;
-        }
 
-        $existing = Category::where('slug->en', $slugEn)->first();
+        $existing = Category::where('slug', $slugEn)->first();
         if (! $existing) {
             $category = Category::create([
-                'slug' => [
-                    'ar' => $nameAr,
-                    'en' => $nameEn,
-                ],
+                'slug' => $slugEn,
                 'name' => [
                     'ar' => $nameAr,
                     'en' => $nameEn,
@@ -304,10 +297,7 @@ class CategorySeeder extends Seeder
             ]);
         } else {
             $existing->update([
-                'slug' => [
-                    'ar' => $slugAr,
-                    'en' => $slugEn,
-                ],
+                'slug' => $slugEn,
                 'name' => [
                     'ar' => $nameAr,
                     'en' => $nameEn,
@@ -320,9 +310,6 @@ class CategorySeeder extends Seeder
             ]);
             $category = $existing;
         }
-
-        // set full translatable slug JSON after create/update (avoid relying on HasTranslations)
-        $category->setAttribute('slug', json_encode(['en' => $slugEn, 'ar' => $slugAr]));
         $category->save();
 
         if ($categoryImagesCount > 0 && ! $category->hasMedia('categories-desktop')) {

@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Controllers;
 
+use App\Http\Resources\Pages\SectionResource as PagesSectionResource;
 use App\Http\Resources\Section\SectionResource;
 use Marvel\Traits\ApiResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class SectionController extends CoreController
     public function index()
     {
         $sections = Section::orderBy('order')->get();
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, SectionResource::collection($sections));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PagesSectionResource::collection($sections));
     }
 
     /**
@@ -31,7 +32,7 @@ class SectionController extends CoreController
         try {
             $section = Section::create($request->validated());
             $section     = $section->fresh();
-            return $this->apiResponse("Section created successfully", 200, true, SectionResource::make($section));
+            return $this->apiResponse("Section created successfully", 200, true, PagesSectionResource::make($section));
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -44,7 +45,7 @@ class SectionController extends CoreController
     {
         try {
             $section = Section::findOrFail($id);
-            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, SectionResource::make($section));
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
         } catch (\Exception $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
@@ -59,7 +60,7 @@ class SectionController extends CoreController
         try {
             $section = Section::findOrFail($id);
             $section->update($request->validated());
-            return $this->apiResponse("Section updated successfully", 200, true, SectionResource::make($section));
+            return $this->apiResponse("Section updated successfully", 200, true, PagesSectionResource::make($section));
         } catch (\Exception $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
@@ -101,6 +102,6 @@ class SectionController extends CoreController
     {
         $section->is_active = !$section->is_active;
         $section->save();
-        return $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, SectionResource::make($section));
+        return $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
     }
 }

@@ -117,6 +117,19 @@ class CategoryHierarchyService
         return $categories;
     }
 
+    public function loadDirectChildren(Category $category, bool $activeOnly = false): Category
+    {
+        $query = $category->children()->withCount('products');
+
+        if ($activeOnly) {
+            $query->active();
+        }
+
+        $category->setRelation('children', $query->orderBy('id')->get());
+
+        return $category;
+    }
+
     public function loadRecursiveTree(Category $category, bool $activeOnly = false): Category
     {
         $this->loadRecursiveChildren(collect([$category]), $activeOnly);

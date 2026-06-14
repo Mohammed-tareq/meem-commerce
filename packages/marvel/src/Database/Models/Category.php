@@ -18,7 +18,7 @@ class Category extends Model implements HasMedia
 
 
     protected $table = 'categories';
-    public array $translatable = ['name', 'details', 'slug'];
+    public array $translatable = ['name', 'details'];
 
     public $fillable = ['name', 'details', 'slug', 'parent_id', 'level', 'status'];
 
@@ -34,17 +34,17 @@ class Category extends Model implements HasMedia
             app(CategoryHierarchyService::class)->syncHierarchy($category);
         });
         static::saving(function ($category) {
+            $enName = $category->getTranslation('name', 'en', false);
+            $category->slug = $enName ? Str::slug($enName) : null;
+        });
 
-
-            $category->slug = [
-                'en' => $category->getTranslation('name', 'en', false)
-                    ? Str::slug($category->getTranslation('name', 'en'))
-                    : null,
-
-                'ar' => $category->getTranslation('name', 'ar', false)
-                    ? str_replace(' ', '-', trim($category->getTranslation('name', 'ar')))
-                    : null,
-            ];
+        static::retrieved(function ($category) {
+            if (is_string($category->slug) && str_starts_with($category->slug, '{')) {
+                $decoded = json_decode($category->slug, true);
+                if (is_array($decoded) && isset($decoded['en'])) {
+                    $category->slug = $decoded['en'];
+                }
+            }
         });
     }
 

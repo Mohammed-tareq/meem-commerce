@@ -15,10 +15,14 @@ class ProductFilter
     private function resolveIds(string $modelClass, array $values): array
     {
         $locale = app()->getLocale();
-        return $modelClass::where(function ($q) use ($values, $locale) {
+        return $modelClass::where(function ($q) use ($values, $locale, $modelClass) {
             foreach ($values as $val) {
-                $q->orWhere("name->{$locale}", $val)
-                  ->orWhere("slug->{$locale}", $val);
+                $q->orWhere("name->{$locale}", $val);
+                if ($modelClass === Category::class) {
+                    $q->orWhere('slug', $val);
+                } else {
+                    $q->orWhere("slug->{$locale}", $val);
+                }
             }
         })->pluck('id')->toArray();
     }
@@ -107,10 +111,14 @@ class ProductFilter
         }
 
         // 8. Dynamic Attribute Filters
+        $reservedFilterKeys = ['brand', 'category', 'promotion', 'flash_sale', 'minprice', 'maxprice', 'price_min', 'price_max', 'search', 'limit', 'rating_min', 'rating_max', 'height', 'width', 'length', 'weight'];
         $attributeSlugs = Attribute::pluck('slug')->toArray();
 
         foreach ($filters as $key => $value) {
             $lowerKey = strtolower($key);
+            if (in_array($lowerKey, $reservedFilterKeys)) {
+                continue;
+            }
             if (in_array($lowerKey, $attributeSlugs) && !empty($value)) {
                 $attrValues = is_array($value) ? $value : explode(',', $value);
 

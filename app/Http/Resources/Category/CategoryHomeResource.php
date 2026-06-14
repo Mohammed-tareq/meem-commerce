@@ -23,9 +23,8 @@ class CategoryHomeResource extends JsonResource
                 'mobile' =>   $this->getFirstMediaUrl('categories-mobile'),
             ],
             'products_count'       => $this->whenCounted('products'),
-            'details'              => $this?->getTranslation('details', app()->getLocale()),
-            $this->mergeWhen(request()->routeIs('home'), [
-                'parent' => $this->parent?->getTranslation('name', app()->getLocale()),
+            $this->mergeWhen($this->getTranslation('details', app()->getLocale()), [
+                'details' => $this->getTranslation('details', app()->getLocale()),
             ]),
         ];
     }

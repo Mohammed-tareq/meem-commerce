@@ -28,11 +28,11 @@ class CategoryWithChildNameResource extends JsonResource
                 ],
             ]),
 
-            'children' => $level >= 3
+            'children' => $level >= 2
                 ? []
                 : ($this->relationLoaded('children')
                     ? $this->children->map(function ($child) {
-                        return self::make($child);
+                        return (new CategoryHomeResource($child))->toArray($request);
                     })->values()
                     : []),
         ];

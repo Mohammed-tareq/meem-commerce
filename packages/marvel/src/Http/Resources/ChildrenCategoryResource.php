@@ -16,17 +16,13 @@ class ChildrenCategoryResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'name'                 => $this->getTranslation('name',app()->getLocale()),
+            'name'                 => $this->getTranslation('name', app()->getLocale()),
             'slug'                 => $this->slug,
             'products_count'       => $this->whenCounted('products'),
-            'image'                => $this->getMedia('categories')?->map(function ($media) {
-                                        return [
-                                            'id' => $media->id,
-                                            'url' => $media->getUrl(),
-                                        ];
-                                    }),
-            // 'language'             => $this->language,
-            // 'translated_languages' => $this->translated_languages,
+            'image'                => [
+                'desktop' => $this->getFirstMediaUrl('categories-desktop') ?: null,
+                'mobile'  => $this->getFirstMediaUrl('categories-mobile') ?: null,
+            ],
         ];
     }
 }

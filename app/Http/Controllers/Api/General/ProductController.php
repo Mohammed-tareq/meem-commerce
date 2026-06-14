@@ -9,6 +9,7 @@ use App\Services\General\ProductEngine\ProductStrategyResolver;
 use App\Services\General\ProductService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Marvel\Database\Models\Category;
 use Marvel\Http\Requests\ReviewCreateRequest;
 use Marvel\Http\Requests\ReviewUpdateRequest;
 use Marvel\Http\Resources\product\ProductCollectionMini;
@@ -50,7 +51,48 @@ class ProductController extends Controller
             return $collectionArray;
         });
 
+        $responseData['category'] = $this->resolveCategoryForResponse($request);
+
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
+    }
+
+    private function resolveCategoryForResponse(Request $request): ?array
+    {
+        $categoryFilter = $request->query('category');
+        if (empty($categoryFilter)) {
+            return null;
+        }
+
+        $categoryNames = is_array($categoryFilter) ? $categoryFilter : explode(',', $categoryFilter);
+        $value = trim($categoryNames[0]);
+        if (empty($value)) {
+            return [];
+        }
+
+        $category = Category::query()
+            ->active()
+            ->with(['children' => function ($query) {
+                $query->active();
+            }])
+            ->where(function ($q) use ($value) {
+                $q->where('slug', $value)
+                  ->orWhere('name->' . app()->getLocale(), $value);
+            })
+            ->first();
+
+        if (!$category) {
+            return [];
+        }
+
+        return $category->children->map(fn($child) => [
+            'id'    => $child->id,
+            'name'  => $child->getTranslation('name', app()->getLocale()),
+            'slug'  => $child->slug,
+            'image' => [
+                'desktop' => $child->getFirstMediaUrl('categories-desktop'),
+                'mobile'  => $child->getFirstMediaUrl('categories-mobile'),
+            ],
+        ])->values()->toArray();
     }
 
     public function getProductBySlug(Request $request)

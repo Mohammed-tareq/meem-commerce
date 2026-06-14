@@ -41,9 +41,11 @@ class CategoryService
     {
         return Category::query()
             ->active()
-            ->with('products', 'children.children')
+            ->with(['products', 'children' => function ($query) {
+                $query->active()->withCount('products');
+            }])
             ->withCount('products')
-            ->where('slug->' . app()->getLocale(), $slug)
+            ->where('slug', $slug)
             ->firstOrFail();
     }
 

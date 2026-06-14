@@ -346,7 +346,6 @@ class CartInventoryService
         if ($quantity < 1) {
             return;
         }
-
         $reservedQuantity = (int) ($stock->reserved_quantity ?? 0);
         $physicalQuantity = (int) ($stock->stock_quantity ?? 0);
 

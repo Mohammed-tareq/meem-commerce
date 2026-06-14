@@ -374,9 +374,11 @@ class HomeService
             return collect();
         }
 
-        $this->hierarchyService->loadRecursiveTree($parent, true);
-
-        return $parent->children;
+        return $parent->children()
+            ->active()
+            ->withCount('products')
+            ->orderBy('id')
+            ->get();
     }
 
 
@@ -394,13 +396,15 @@ class HomeService
 
     private function getCategoryWithChildren(): Collection
     {
-        $categories = Category::query()
+        return Category::query()
             ->active()
             ->whereNull('parent_id')
             ->withCount('products')
+            ->with(['children' => function ($query) {
+                $query->active()->withCount('products');
+            }])
+            ->orderByDesc('products_count')
             ->get();
-
-        return $this->hierarchyService->loadRecursiveChildren($categories, true);
     }
 
     private function moneyValue($value)
