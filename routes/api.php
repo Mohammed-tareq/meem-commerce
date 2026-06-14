@@ -43,10 +43,10 @@ Route::prefix('general')->middleware(['api', 'check-lang'])->group(function () {
 
     //========================= order=========================//
     Route::controller(OrderController::class)->group(function () {
-        Route::get('orders', 'index')->middleware('auth:sanctum');
+        Route::get('orders', 'index')->middleware(['auth:sanctum', 'check-email']);
         //========================= checkout =========================//
-        Route::get('checkout/promotions', 'eligiblePromotions')->middleware('auth:sanctum');
-        Route::post('checkout', 'checkout')->middleware('auth:sanctum');
+        Route::get('checkout/promotions', 'eligiblePromotions')->middleware(['auth:sanctum', 'check-email']);
+        Route::post('checkout', 'checkout')->middleware(['auth:sanctum', 'check-email']);
         Route::get('checkout/callback', 'checkoutCallback')->name('api.checkout.callback');
         Route::get('checkout/error', 'checkoutErrorCallback')->name('api.checkout.errorCallback');
     });

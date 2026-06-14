@@ -151,4 +151,5 @@ return [
     'ERROR.INVALID_PRODUCT_TYPE' => 'Invalid product type',
     'ERROR.ACCOUNT_CREATED_BUT_OTP_FAILED' => 'Account created but OTP failed',
     'ERROR.USER_NOT_VERIFIED' => 'User is not verified',
+    "PLEASE_VERIFY_YOUR_EMAIL" => 'Please Verifiy Your Email'
 ];

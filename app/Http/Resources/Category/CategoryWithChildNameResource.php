@@ -31,7 +31,7 @@ class CategoryWithChildNameResource extends JsonResource
             'children' => $level >= 2
                 ? []
                 : ($this->relationLoaded('children')
-                    ? $this->children->map(function ($child) {
+                    ? $this->children->map(function ($child) use ($request) {
                         return (new CategoryHomeResource($child))->toArray($request);
                     })->values()
                     : []),

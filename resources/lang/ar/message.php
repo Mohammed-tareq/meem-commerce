@@ -151,4 +151,5 @@ return [
     'ERROR.INVALID_PRODUCT_TYPE' => 'نوع المنتج غير صالح',
     'ERROR.ACCOUNT_CREATED_BUT_OTP_FAILED' => 'تم إنشاء الحساب بنجاح ولكن تعذر إرسال رمز التحقق',
     'ERROR.USER_NOT_VERIFIED' => 'الحساب غير مفعل',
+    "PLEASE_VERIFY_YOUR_EMAIL" => "يرجى تفعيل من بريدك الإلكتروني",
 ];
