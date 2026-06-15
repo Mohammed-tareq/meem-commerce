@@ -29,6 +29,7 @@ class  PromotionController extends Controller
         if (!$PromotionWithProducts) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
+        
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PromotionResource::make($PromotionWithProducts));
     }
 }
