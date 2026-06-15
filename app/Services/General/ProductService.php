@@ -38,6 +38,38 @@ class ProductService
         return $query;
     }
 
+    public function buildScoutSearchQuery(Request $request): ?Builder
+    {
+        $term = trim((string) $request->get('search', ''));
+
+        if ($term === '') {
+            return null;
+        }
+
+        try {
+            $scoutIds = Product::search($term)->keys()->toArray();
+        } catch (Exception $e) {
+            return null;
+        }
+
+        $query = Product::query()->active()
+            ->with(['categories', 'variations', 'brands'])
+            ->withAvg(['reviews' => fn(Builder $b) => $b->approved()], 'rating')
+            ->withCount(['reviews' => fn(Builder $b) => $b->approved()]);
+
+        $this->applyProductFilters($query, $request);
+
+        if (!empty($scoutIds)) {
+            $query->whereIn('products.id', $scoutIds);
+            $idOrder = implode(',', array_map('intval', $scoutIds));
+            $query->orderByRaw("FIELD(products.id, {$idOrder})");
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query;
+    }
+
     public function paginate(Request $request)
     {
         $limit = $this->getLimit($request);

@@ -8,7 +8,6 @@ use App\Http\Resources\Product\ProductResource;
 use App\Services\General\ProductEngine\ProductStrategyResolver;
 use App\Services\General\ProductService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 use Marvel\Database\Models\Category;
 use Marvel\Http\Requests\ReviewCreateRequest;
 use Marvel\Http\Requests\ReviewUpdateRequest;
@@ -100,7 +99,7 @@ class ProductController extends Controller
     //     return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
     // }
 
-     public function index(Request $request)
+    public function index(Request $request)
     {
         $type = $request->query('type', '');
         if (!empty($type)) {
@@ -146,13 +145,21 @@ class ProductController extends Controller
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
         }
 
-        $query = $this->productService->buildFilteredBaseQuery($request);
-        $filters = $this->productService->getDynamicFilters(clone $query);
-        $orderPrice = $request->query('order_price');
-        if (in_array($orderPrice, ['asc', 'desc'])) {
-            $query->orderBy('price', $orderPrice);
+        $scoutQuery = $this->productService->buildScoutSearchQuery($request);
+
+        if ($scoutQuery !== null) {
+            $data = $scoutQuery->paginate($this->productService->getLimit($request));
+            $filters = $this->productService->getDynamicFilters(clone $scoutQuery);
+        } else {
+            $query = $this->productService->buildFilteredBaseQuery($request);
+            $filters = $this->productService->getDynamicFilters(clone $query);
+            $orderPrice = $request->query('order_price');
+            if (in_array($orderPrice, ['asc', 'desc'])) {
+                $query->orderBy('price', $orderPrice);
+            }
+            $data = $query->orderByDesc('id')->paginate($this->productService->getLimit($request));
         }
-        $data = $query->orderByDesc('id')->paginate($this->productService->getLimit($request));
+
         $collection = new ProductCollectionMini($data);
         $responseData = $collection->toArray($request);
         $responseData['filters'] = $filters;
