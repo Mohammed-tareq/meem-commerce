@@ -60,6 +60,7 @@ class DatabaseSeeder extends Seeder
 
         $user->assignRole("super_admin");
         $userEdit->assignRole("editor");
+        $customer->assignRole("customer");
 
         // if ($seedDemoData) {
         //     User::factory(10000)->create();

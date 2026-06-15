@@ -11,7 +11,7 @@ class FlashSaleSeeder extends Seeder
 {
     public function run(): void
     {
-        $flashSaleImages = collect(File::files(public_path('images/banners')));
+        $flashSaleImages = collect(File::files(public_path('images/flash')));
         $flashSaleImagesCount = $flashSaleImages->count();
         $weekStart = now()->startOfWeek();
         $weekEnd = now()->endOfWeek();

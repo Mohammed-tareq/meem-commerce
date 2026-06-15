@@ -18,7 +18,7 @@ class ChildrenCategoryResource extends Resource
             'id'                   => $this->id,
             'name'                 => $this->getTranslation('name', app()->getLocale()),
             'slug'                 => $this->slug,
-            'products_count'       => $this->whenCounted('products'),
+            'products_count'       => (int) ($this->products_count ?? $this->products()->count()),
             'image'                => [
                 'desktop' => $this->getFirstMediaUrl('categories-desktop') ?: null,
                 'mobile'  => $this->getFirstMediaUrl('categories-mobile') ?: null,

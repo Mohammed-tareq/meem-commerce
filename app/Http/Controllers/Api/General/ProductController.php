@@ -32,11 +32,51 @@ class ProductController extends Controller
     {
         $type = $request->query('type', '');
         if (!empty($type)) {
-            $handler = $this->productStrategyResolver->resolve($type);
-            $data = Cache::remember('products_' . $type, 60, function () use ($handler, $request) {
-                return $handler->getProducts($request);
+            $cacheKey = 'products_type_' . $type . '_' . md5(json_encode($request->all()) . '_' . app()->getLocale());
+
+            $responseData = Cache::remember($cacheKey, 60, function () use ($request, $type) {
+                $handler = $this->productStrategyResolver->resolve($type);
+                $data = $handler->getProducts($request);
+
+                $productIds = $data instanceof \Illuminate\Pagination\LengthAwarePaginator
+                    ? $data->getCollection()->pluck('id')
+                    : $data->pluck('id');
+
+                $filters = [];
+                if ($productIds->isNotEmpty()) {
+                    $query = \Marvel\Database\Models\Product::query()->whereIn('id', $productIds);
+                    $filters = $this->productService->getDynamicFilters($query);
+                }
+
+                if ($data instanceof \Illuminate\Pagination\LengthAwarePaginator) {
+                    $collection = new ProductCollectionMini($data);
+                    $result = $collection->toArray($request);
+                } else {
+                    $total = $data->count();
+                    $result = [
+                        'data' => ProductMiniResource::collection($data),
+                        'links' => [
+                            'current_page' => 1,
+                            'from' => $total > 0 ? 1 : null,
+                            'to' => $total,
+                            'last_page' => 1,
+                            'path' => $request->url(),
+                            'per_page' => $total,
+                            'total' => $total,
+                            'next_page_url' => null,
+                            'prev_page_url' => null,
+                            'last_page_url' => $request->fullUrlWithQuery(['page' => 1]),
+                            'first_page_url' => $request->fullUrlWithQuery(['page' => 1]),
+                        ],
+                    ];
+                }
+
+                $result['filters'] = $filters;
+                return $result;
             });
-            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ProductMiniResource::collection($data));
+
+            $responseData['category'] = $this->resolveCategoryForResponse($request);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
         }
 
         $cacheKey = 'products_index_' . md5(json_encode($request->all()) . '_' . app()->getLocale());

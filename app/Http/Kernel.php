@@ -42,7 +42,8 @@ class Kernel extends HttpKernel
         'api' => [
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
-            \App\Http\Middleware\CheckLangMiddleware::class
+            \App\Http\Middleware\CheckLangMiddleware::class,
+            'cache.api',
         ],
     ];
 
@@ -66,6 +67,7 @@ class Kernel extends HttpKernel
         'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
         'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+        'cache.api' => \App\Http\Middleware\CacheApiResponse::class,
         'check-lang' => \App\Http\Middleware\CheckLangMiddleware::class,
         'check-email' => \App\Http\Middleware\VirifiyEmailMiddleware::class,
     ];

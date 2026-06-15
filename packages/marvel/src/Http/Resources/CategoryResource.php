@@ -25,7 +25,7 @@ class CategoryResource extends Resource
                 'desktop' => $this->getFirstMediaUrl('categories-desktop') ?: null,
                 'mobile'  => $this->getFirstMediaUrl('categories-mobile') ?: null,
             ],
-            'products_count'       => $this->whenCounted('products'),
+            'products_count'       => (int) ($this->products_count ?? $this->products()->count()),
             $this->mergeWhen($this->getTranslation('details', app()->getLocale()), [
                 'details' => $this->getTranslation('details', app()->getLocale()),
             ]),

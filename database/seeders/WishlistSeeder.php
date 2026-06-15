@@ -3,48 +3,33 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Marvel\Database\Models\Wishlist;
+use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
+use Marvel\Database\Models\User;
+use Marvel\Database\Models\Wishlist;
 
 class WishlistSeeder extends Seeder
 {
     public function run()
     {
-        $variantIds = [
-            2 => ProductVariant::where('product_id', 2)->value('id'),
-            4 => ProductVariant::where('product_id', 4)->value('id'),
-        ];
+        $customer = User::where('email', 'test@g.com')->first();
+        if (!$customer) {
+            return;
+        }
 
-        $wishlistData = [
-            [
-                'user_id' => 3,
-                'product_id' => 1,
-                'product_variant_id' => null,
-            ],
-            [
-                'user_id' => 3,
-                'product_id' => 2,
-                'product_variant_id' => $variantIds[2] ?? null,
-            ],
-            [
-                'user_id' => 3,
-                'product_id' => 3,
-                'product_variant_id' => null,
-            ],
-            [
-                'user_id' => 3,
-                'product_id' => 4,
-                'product_variant_id' => $variantIds[4] ?? null,
-            ],
-            [
-                'user_id' => 3,
-                'product_id' => 5,
-                'product_variant_id' => null,
-            ],
-        ];
+        $products = Product::inRandomOrder()->take(5)->get();
+        if ($products->isEmpty()) {
+            return;
+        }
 
-        foreach ($wishlistData as $data) {
-            Wishlist::create($data);
+        foreach ($products as $product) {
+            $variant = ProductVariant::where('product_id', $product->id)->first();
+
+            Wishlist::create([
+                'user_id' => $customer->id,
+                'product_id' => $product->id,
+                'product_variant_id' => $variant?->id,
+            ]);
         }
     }
 }

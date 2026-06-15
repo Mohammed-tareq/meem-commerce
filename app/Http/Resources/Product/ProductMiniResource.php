@@ -19,7 +19,7 @@ class ProductMiniResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->getTranslation('name', app()->getLocale()),
-            'slug'                   => $this->getTranslation('slug', app()->getLocale()),
+            'slug' => $this->slug,
             'price' => $this->roundMoney($this->price),
             'current_price' => $this->roundMoney($this->getRawOrComputedValue('current_price')),
             'price_after_discount' => $this->roundMoney($this->getRawOrComputedValue('price_after_discount')),
@@ -29,18 +29,11 @@ class ProductMiniResource extends JsonResource
             'discount_amount' => $this->discount_amount,
             'quantity' => $this->stock_quantity,
             'discount_valid' => (bool) $this->isDiscountActive(),
-            'ratings' => $this->reviews()->avg('rating') ?? 0,
+            'ratings' => (float) ($this->reviews_avg_rating ?? $this->reviews()->avg('rating') ?? 0),
             'image' => [
                 'thumbnail' => $this->getFirstMediaUrl('products'),
                 'original' => $this->getMediaImages('products'),
             ],
-            $this->mergeWhen(request()->routeIs('product-discount-ending-today-or-low-stock'), [
-                'badges' => $this->badges[0] ?? null,
-            ]),
-
-            $this->mergeWhen(!request()->routeIs('general-product-show'), [
-                'filters' => $this->getProductFilters($this->resource),
-            ]),
         ];
     }
 
