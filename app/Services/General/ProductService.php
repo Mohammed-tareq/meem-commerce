@@ -601,6 +601,15 @@ class ProductService
             return $filters;
         }
 
+        $displayLabels = [
+            'brand'    => ['en' => 'Brand', 'ar' => 'العلامة التجارية'],
+            'category' => ['en' => 'Category', 'ar' => 'الفئة'],
+            'height'   => ['en' => 'Height', 'ar' => 'الارتفاع'],
+            'width'    => ['en' => 'Width', 'ar' => 'العرض'],
+            'length'   => ['en' => 'Length', 'ar' => 'الطول'],
+            'weight'   => ['en' => 'Weight', 'ar' => 'الوزن'],
+        ];
+
         $brands = Brand::active()
             ->whereHas('products', fn($q) => $q->whereIn('products.id', $filteredIds))
             ->get()
@@ -609,7 +618,11 @@ class ProductService
             ->values()
             ->toArray();
         if (!empty($brands)) {
-            $filters['brand'] = $brands;
+            $filters[] = [
+                'display' => $displayLabels['brand'][app()->getLocale()],
+                'key'     => 'brand',
+                'data'    => $brands,
+            ];
         }
 
         $categories = Category::active()
@@ -620,7 +633,11 @@ class ProductService
             ->values()
             ->toArray();
         if (!empty($categories)) {
-            $filters['category'] = $categories;
+            $filters[] = [
+                'display' => $displayLabels['category'][app()->getLocale()],
+                'key'     => 'category',
+                'data'    => $categories,
+            ];
         }
 
         $dimensions = ['height', 'width', 'length', 'weight'];
@@ -640,7 +657,11 @@ class ProductService
             sort($values, SORT_NATURAL | SORT_FLAG_CASE);
 
             if (!empty($values)) {
-                $filters[$column] = $values;
+                $filters[] = [
+                    'display' => $displayLabels[$column][app()->getLocale()],
+                    'key'     => $column,
+                    'data'    => $values,
+                ];
             }
         }
 
@@ -648,7 +669,11 @@ class ProductService
         foreach ($attributes as $attribute) {
             $values = $attribute->values->map(fn($v) => $v->value)->filter()->values()->toArray();
             if (!empty($values)) {
-                $filters[$attribute->slug] = $values;
+                $filters[] = [
+                    'display' => $attribute->getTranslations('name'),
+                    'key'     => $attribute->slug,
+                    'data'    => $values,
+                ];
             }
         }
 

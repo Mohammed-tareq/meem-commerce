@@ -19,8 +19,8 @@ class PromotionSeeder extends Seeder
     public function run(): void
     {
         $productIds = Product::query()->pluck('id')->all();
-        $promotionImages = File::exists(public_path('images/banner'))
-            ? collect(File::files(public_path('images/banner')))
+        $promotionImages = File::exists(public_path('images/flash'))
+            ? collect(File::files(public_path('images/flash')))
             : collect();
 
         $promotions = [
