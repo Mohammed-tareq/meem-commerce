@@ -27,6 +27,16 @@ class ProductFilter
         })->pluck('id')->toArray();
     }
 
+    public function expandWithDescendants(array $ids): array
+    {
+        $allIds = $ids;
+        $children = Category::whereIn('parent_id', $ids)->pluck('id')->toArray();
+        if (!empty($children)) {
+            $allIds = array_merge($allIds, $this->expandWithDescendants($children));
+        }
+        return array_unique($allIds);
+    }
+
     public function apply(Builder $query, array $filters): Builder
     {
         // 1. Filter by Brand
@@ -38,12 +48,13 @@ class ProductFilter
             }
         }
 
-        // 2. Filter by Category
+        // 2. Filter by Category (includes all descendant categories recursively)
         if (!empty($filters['category'])) {
             $categoryNames = is_array($filters['category']) ? $filters['category'] : explode(',', $filters['category']);
             $categoryIds = $this->resolveIds(Category::class, $categoryNames);
             if (!empty($categoryIds)) {
-                $query->whereHas('categories', fn($q) => $q->whereIn('categories.id', $categoryIds));
+                $expandedIds = $this->expandWithDescendants($categoryIds);
+                $query->whereHas('categories', fn($q) => $q->whereIn('categories.id', $expandedIds));
             }
         }
 
