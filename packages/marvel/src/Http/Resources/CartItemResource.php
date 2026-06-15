@@ -2,7 +2,9 @@
 
 namespace Marvel\Http\Resources;
 
+use App\Http\Resources\Product\ProductMiniResource;
 use Illuminate\Http\Request;
+use Marvel\Http\Resources\ProductVariantResource;
 
 class CartItemResource extends Resource
 {
@@ -10,14 +12,20 @@ class CartItemResource extends Resource
     {
         return [
             'id' => $this->id,
-            'product_id' => $this->product_id,
-            'product_variant_id' => $this->product_variant_id,
+            // 'product_id' => $this->product_id,
+            // 'product_variant_id' => $this->product_variant_id,
             'quantity' => $this->quantity,
-            'reserved_quantity' => $this->reserved_quantity,
+            // 'reserved_quantity' => $this->reserved_quantity,
             'price' => $this->price,
             'total_price' => $this->total_price,
             'attributes' => $this?->attributes,
-            // 'product' => ProductResource::make($this->whenLoaded('product')),
+            'product' => [
+                'id' => $this->product->id,
+                'name' => $this->product->name,
+                'slug' => $this->product->slug,
+                'thumbnail' => $this->product->getFirstMediaUrl('products'),
+            ],
+
         ];
     }
 }

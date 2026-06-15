@@ -40,6 +40,11 @@ class CartInventoryService
             }
 
             $price = $variant ? $variant->current_price : $product->current_price;
+
+            if ($variant && !$variant->relationLoaded('attributeProducts')) {
+                $variant->load('attributeProducts.attributeValue.attribute');
+            }
+
             $payload = [
                 'product_id' => $product->id,
                 'product_variant_id' => $variant?->id,
@@ -47,7 +52,7 @@ class CartInventoryService
                 'reserved_quantity' => $desiredQuantity,
                 'price' => $price,
                 'total_price' => $price * $desiredQuantity,
-                'attributes' => $variant ? $attributes : null,
+                'attributes' => $variant ? $this->getVariantAttributes($variant) : ($attributes ?: null),
             ];
 
             if ($item) {
@@ -236,7 +241,7 @@ class CartInventoryService
         return DB::transaction(function () use ($cart) {
             $cart = Cart::whereKey($cart->id)
                 ->lockForUpdate()
-                ->with(['items.product', 'items.productVariant'])->firstOrFail();
+                ->with(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute'])->firstOrFail();
             foreach ($cart->items as $item) {
                 $this->syncCartItemReservation($item);
             }
@@ -252,7 +257,7 @@ class CartInventoryService
         return Cart::query()
             ->where('user_id', $user->id)
             ->where('status', 'active')
-            ->with(['items.product', 'items.productVariant'])
+            ->with(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute'])
             ->first();
     }
 
@@ -392,5 +397,15 @@ class CartInventoryService
     private function getAvailableStock($stock): int
     {
         return max(0, (int) ($stock->stock_quantity ?? 0) - (int) ($stock->reserved_quantity ?? 0));
+    }
+
+    private function getVariantAttributes(ProductVariant $variant): array
+    {
+        return $variant->attributeProducts->map(function ($ap) {
+            return [
+                'attribute' => $ap->attributeValue?->attribute?->name,
+                'value' => $ap->attributeValue?->value,
+            ];
+        })->toArray();
     }
 }

@@ -97,19 +97,7 @@ class Product extends Model implements HasMedia
                 $product->sku = 'PRD-' . Str::uuid();
             }
         });
-        static::saving(function ($product) {
-
-
-            $product->slug = [
-                'en' => $product->getTranslation('name', 'en', false)
-                    ? Str::slug($product->getTranslation('name', 'en'))
-                    : null,
-
-                'ar' => $product->getTranslation('name', 'ar', false)
-                    ? str_replace(' ', '-', trim($product->getTranslation('name', 'ar')))
-                    : null,
-            ];
-        });
+       
     }
 
 

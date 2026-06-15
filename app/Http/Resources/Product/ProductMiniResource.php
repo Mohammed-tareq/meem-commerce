@@ -37,6 +37,7 @@ class ProductMiniResource extends JsonResource
             $this->mergeWhen(request()->routeIs('product-discount-ending-today-or-low-stock'), [
                 'badges' => $this->badges[0] ?? null,
             ]),
+            'variations' => $this->whenLoaded('variations'),
 
             // $this->mergeWhen(!request()->routeIs('general-product-show'), [
             //     'filters' => $this->getProductFilters($this->resource),

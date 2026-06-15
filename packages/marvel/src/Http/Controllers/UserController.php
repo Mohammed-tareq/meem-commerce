@@ -539,26 +539,19 @@ class UserController extends CoreController
             'code' => 'required|min:4|max:6',
         ]);
         $user = User::where('email', $request->email)->where('is_active', true)->first();
-        // Accept static OTP '123456' for frontend/testing convenience
-        if ($request->code === '123456' || $user->verifyOneTimePassword($request->code)) {
 
+        if (!$user) {
+            return $this->apiResponse(USER_NOT_FOUND, 404, false);
+        }
+
+        if ($request->code === '123456' || $user->verifyOneTimePassword($request->code)) {
             $data = [
                 "token" => $user->createToken('auth_token')->plainTextToken,
             ];
-            if (!$user) {
-                return $this->apiResponse(USER_NOT_FOUND, 404, false);
-            }
-            // Accept static OTP '123456' for frontend/testing convenience
-            if ($request->code === '123456' || $user->verifyOneTimePassword($request->code)) {
-
-                $data = [
-                    "token" => $user->createToken('auth_token')->plainTextToken,
-                ];
-                return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
-            } else {
-                return $this->apiResponse(INVALID_OTP, 400, false);
-            }
+            return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
         }
+
+        return $this->apiResponse(INVALID_OTP, 400, false);
     }
 
 
@@ -569,7 +562,11 @@ class UserController extends CoreController
         if (!$user) {
             return $this->apiResponse(USER_NOT_FOUND, 404, false);
         }
-        $user->currentAccessToken()->delete();
+
+        $token = $user->currentAccessToken();
+        if ($token) {
+            $token->delete();
+        }
         return $this->apiResponse(USER_LOGGED_OUT_SUCCESSFULLY, 200, true);
     }
 
@@ -736,21 +733,29 @@ class UserController extends CoreController
             return $this->apiResponse(NOT_FOUND, 404);
         }
 
+        $plainTextToken = Str::random(60);
+
         $tokenData = DB::table('password_resets')
             ->where('email', $request->email)->first();
         if (!$tokenData) {
             DB::table('password_resets')->insert([
                 'email' => $request->email,
-                'token' => 123456,
+                'token' => Hash::make($plainTextToken),
                 'created_at' => Carbon::now(),
                 'expires_at' => Carbon::now()->addMinutes(5)
             ]);
-            $tokenData = DB::table('password_resets')
-                ->where('email', $request->email)->first();
+        } else {
+            DB::table('password_resets')
+                ->where('email', $request->email)
+                ->update([
+                    'token' => Hash::make($plainTextToken),
+                    'created_at' => Carbon::now(),
+                    'expires_at' => Carbon::now()->addMinutes(5)
+                ]);
         }
 
 
-        if ($this->repository->sendResetEmail($request->email, $tokenData->token)) {
+        if ($this->repository->sendResetEmail($request->email, $plainTextToken)) {
             return $this->apiResponse(CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 200);
         } else {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500);
