@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Slider\SliderResource;
 use App\Services\General\SliderService;
 use Illuminate\Http\Request;
-use Marvel\Http\Resources\SliderResource;
 use Marvel\Traits\ApiResponse;
 
 class SliderController extends Controller

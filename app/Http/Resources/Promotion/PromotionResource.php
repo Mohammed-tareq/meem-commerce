@@ -20,8 +20,8 @@ class PromotionResource extends JsonResource
             'slug' => $this->slug,
             "status" => (bool)$this->status,
             "image" => [
-                "desktop" => $this->when($this->getFirstMediaUrl('promotions-desktop'), $this->getFirstMediaUrl('promotions-desktop')),
-                "mobile" => $this->when($this->getFirstMediaUrl('promotions-mobile'), $this->getFirstMediaUrl('promotions-mobile')),
+                "desktop" => $this->getFirstMediaUrl('promotions-desktop'),
+                "mobile" => $this->getFirstMediaUrl('promotions-mobile'),
             ]
         ];
     }

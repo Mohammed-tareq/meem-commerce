@@ -8,7 +8,7 @@ use App\Services\General\PromotionDataService;
 use Illuminate\Http\Request;
 use Marvel\Traits\ApiResponse;
 
-class PromotionController extends Controller
+class  PromotionController extends Controller
 {
      use ApiResponse;
     private PromotionDataService $promotionService;
