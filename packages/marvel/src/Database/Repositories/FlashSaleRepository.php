@@ -75,6 +75,7 @@ class FlashSaleRepository extends BaseRepository
         try {
             // only admin can create flash deals
             DB::beginTransaction();
+            $request['slug'] = $this->makeSlug($request);
             $data = $request->only($this->dataArray);
             $flash_sale = $this->create($data);
 
@@ -112,6 +113,7 @@ class FlashSaleRepository extends BaseRepository
             // only admin can update flash deals
             DB::beginTransaction();
             $flash_sale = $this->findOrFail($id);
+            $request['slug'] = $this->makeSlug($request, 'slug', $flash_sale->id);
             $flash_sale->update($request->except('image-desktop', 'image-mobile'));
 
             if ($request->hasFile('image-desktop')) {

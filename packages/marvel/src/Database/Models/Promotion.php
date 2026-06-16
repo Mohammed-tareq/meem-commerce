@@ -2,6 +2,7 @@
 
 namespace Marvel\Database\Models;
 
+use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Model;
@@ -14,8 +15,8 @@ use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Promotion extends Model implements HasMedia
 {
-    use HasTranslations, InteractsWithMedia;
-    public  array $translatable = ['name','slug'];
+    use HasTranslations, InteractsWithMedia ,Sluggable;
+    public  array $translatable = ['name'];
 
     protected $table = 'promotions';
 
@@ -53,12 +54,27 @@ class Promotion extends Model implements HasMedia
         'product_id' => 'integer',
     ];
 
+
+    /**
+     * Return the sluggable configuration array.
+     *
+     * @return array
+     */
+    public function sluggable(): array
+    {
+        return [
+            'slug' => [
+                'source' => 'name',
+            ],
+        ];
+    }
+    
     protected static function boot()
     {
         parent::boot();
 
         static::addGlobalScope('order', function (Builder $builder) {
-            $builder->orderBy('created_at', 'desc');
+            $builder->orderBy('promotions.created_at', 'desc');
         });
 
         static::creating(function (self $promotion) {
@@ -80,20 +96,7 @@ class Promotion extends Model implements HasMedia
                 $promotion->discount = $promotion->value;
             }
         });
-        static::saving(function ($promotion) {
-
-            $title = $promotion->name ?? [];
-
-            $promotion->slug = [
-                'en' => isset($title['en'])
-                    ? Str::slug($title['en'])
-                    : null,
-
-                'ar' => isset($title['ar'])
-                    ? str_replace(' ', '-', trim($title['ar']))
-                    : null,
-            ];
-        });
+        
     }
 
     public function products(): BelongsToMany
@@ -164,10 +167,7 @@ class Promotion extends Model implements HasMedia
     }
     public function scopeSearch($query, $field, $term, $locale)
     {
-        return  $query->where(function ($q) use ($field, $term, $locale) {
-            $q->where($field . '->' . $locale, 'like', "%$term%")
-                ->orWhere($field, 'like', "%$term%");
-        });
+        return $query->where($field, 'like', "%$term%");
     }
 
     public function isValid(): bool

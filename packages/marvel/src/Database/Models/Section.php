@@ -26,12 +26,14 @@ class Section extends Model implements Sortable
         'is_active',
         'content_page_id',
         'title_visible',
+        'setting',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'order' => 'integer',
         'title_visible' => 'boolean',
+        'setting' => 'array',
     ];
     public function contentPage()
     {

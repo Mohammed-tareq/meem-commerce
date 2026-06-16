@@ -11,7 +11,7 @@ class FlashSaleSeeder extends Seeder
 {
     public function run(): void
     {
-        $flashSaleImages = collect(File::files(public_path('images/banners')));
+        $flashSaleImages = collect(File::files(public_path('images/flash')));
         $flashSaleImagesCount = $flashSaleImages->count();
         $weekStart = now()->startOfWeek();
         $weekEnd = now()->endOfWeek();
@@ -130,23 +130,13 @@ class FlashSaleSeeder extends Seeder
         ];
 
         foreach ($flashSales as $index => $sale) {
-            // generate slug from title
-            $title = $sale['title'] ?? null;
-            if ($title && is_array($title)) {
-                $slug = $this->makeUniqueTranslatableSlug(FlashSale::class, $title['en'] ?? '', $title['ar'] ?? '');
-            } else {
-                $slug = null;
+            if (empty($sale['slug'])) {
+                $title = $sale['title'] ?? [];
+                $en = is_array($title) ? ($title['en'] ?? '') : $title;
+                $sale['slug'] = $this->makeUniqueSlug($en);
             }
 
-            $data = $sale;
-            unset($data['slug']);
-
-            $flashSale = FlashSale::create($data);
-
-            if ($slug) {
-                $flashSale->setTranslations('slug', $slug);
-                $flashSale->save();
-            }
+            $flashSale = FlashSale::create($sale);
 
             if ($flashSaleImagesCount > 0 && ! $flashSale->hasMedia('flash-sales-desktop')) {
                 $image = $flashSaleImages[$index % $flashSaleImagesCount];
@@ -169,20 +159,15 @@ class FlashSaleSeeder extends Seeder
         }
     }
 
-    private function makeUniqueTranslatableSlug(string $modelClass, string $en, string $ar): array
+    private function makeUniqueSlug(string $name): string
     {
-        $baseEn = Str::slug($en ?: 'item');
-        $baseAr = str_replace(' ', '-', trim($ar ?: $en));
-        $candidate = $baseEn;
+        $base = Str::slug($name ?: 'item');
+        $candidate = $base;
         $i = 1;
-        while ($modelClass::where('slug->en', $candidate)->exists()) {
+        while (FlashSale::where('slug', $candidate)->exists()) {
             $i++;
-            $candidate = $baseEn . '-' . $i;
+            $candidate = $base . '-' . $i;
         }
-        $candidateAr = $baseAr;
-        if ($i > 1) {
-            $candidateAr .= '-' . $i;
-        }
-        return ['en' => $candidate, 'ar' => $candidateAr];
+        return $candidate;
     }
 }

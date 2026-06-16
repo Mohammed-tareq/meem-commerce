@@ -14,7 +14,17 @@ class CategoryService
         $term = trim((string) $request->get('search', ''));
         $pestCategory = $request->query('pest_category', false);
         $parent = $request->query('parent', false);
+        $categoriesId = $request->query('categoriesId');
+        $order = $request->query('order', 'desc');
         $query = Category::query()->active()->withCount('products');
+
+        if (!empty($categoriesId)) {
+            $ids = is_array($categoriesId) ? $categoriesId : explode(',', $categoriesId);
+            $ids = array_filter($ids, 'is_numeric');
+            if (!empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
+        }
 
         if ($term !== '') {
             $query->where(function (Builder $builder) use ($term) {
@@ -28,9 +38,9 @@ class CategoryService
             $query->whereNull('parent_id');
         }
         if ($pestCategory) {
-            $query->orderByDesc('products_count');
+            $query->orderBy('products_count', $order);
         } else {
-            $query->orderByDesc('id');
+            $query->orderBy('id', $order);
         }
 
 
@@ -41,9 +51,11 @@ class CategoryService
     {
         return Category::query()
             ->active()
-            ->with('products', 'children.children')
+            ->with(['products', 'children' => function ($query) {
+                $query->active()->withCount('products');
+            }])
             ->withCount('products')
-            ->where('slug->' . app()->getLocale(), $slug)
+            ->where('slug', $slug)
             ->firstOrFail();
     }
 

@@ -2,11 +2,13 @@
 
 namespace App\Http\Resources\Product;
 
+use App\Traits\HasProductFilters;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductResource extends JsonResource
 {
+    use HasProductFilters;
     /**
      * Transform the resource into an array.
      *
@@ -24,12 +26,12 @@ class ProductResource extends JsonResource
             'price_after_discount'    => $this->roundMoney($this->price_after_discount),
             'price_after_flash_sale'  => $this->roundMoney($this->price_after_flash_sale),
             'discount_type'          => $this->discount_type,
-            'discount_amount'        => $this->discount_amount,
+            'discount_amount'        => $this->roundMoney($this->discount_amount),
             'start_date'             => $this->start_date,
             'end_date'               => $this->end_date,
             'sku'                    => $this->sku,
-            'quantity'               => $this->quantity,
-            'sold_quantity'          => $this->sold_quantity ?? 0,
+            'quantity'               => (int) $this->quantity,
+            'sold_quantity'          => (int) ($this->sold_quantity ?? 0),
             'in_stock'               => $this->in_stock,
             'status'                 => (bool)$this->status,
             'product_type'           => $this->product_type,
@@ -47,6 +49,9 @@ class ProductResource extends JsonResource
             "variants"                => $this->whenLoaded('variations', fn() => $this->getVariants()),
             'reviews'                 => ReviewResource::collection($this->whenLoaded('reviews')),
             $this->mergeWhen($this->relationLoaded('related_products'), fn() => ['related_products' => ProductMiniResource::collection($this->related_products)]),
+            $this->mergeWhen(!request()->routeIs('general-product-show'), [
+                'filters' => $this->getProductFilters($this->resource),
+            ]),
         ];
     }
 
@@ -67,7 +72,7 @@ class ProductResource extends JsonResource
                 'id' => $variant->id,
                 'price' => $this->roundMoney($variant->price),
                 'current_price' => $this->roundMoney($variant->current_price),
-                'quantity' => $variant->quantity,
+                'quantity' => (int) $variant->quantity,
                 'height' => $variant->height,
                 'width' => $variant->width,
                 'length' => $variant->length,

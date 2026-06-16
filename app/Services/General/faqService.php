@@ -4,7 +4,7 @@ namespace App\Services\General;
 
 use Marvel\Database\Models\Faqs;
 
-class FaqService
+class faqService
 {
 
     public function getfaqs()

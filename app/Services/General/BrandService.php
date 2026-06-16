@@ -12,14 +12,26 @@ class BrandService
         $limit = $request->get('limit', 10);
         $start_date = $request->query('start_date');
         $end_date   = $request->query('end_date');
+        $brandsId = $request->query('brandsId');
+        $order = $request->query('order', 'desc');
 
-        return Brand::active()
+        $query = Brand::active()
             ->when($start_date, function ($query) use ($start_date) {
                 $query->where('created_at', '>=', $start_date);
             })
             ->when($end_date, function ($query) use ($end_date) {
                 $query->where('created_at', '<=', $end_date);
-            })->orderByDesc('id')->limit($limit)->get();
+            });
+
+        if (!empty($brandsId)) {
+            $ids = is_array($brandsId) ? $brandsId : explode(',', $brandsId);
+            $ids = array_filter($ids, 'is_numeric');
+            if (!empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
+        }
+
+        return $query->orderBy('id', $order)->limit($limit)->get();
     }
     public function getBrandBySlug($slug)
     {
@@ -36,19 +48,21 @@ class BrandService
         $start_date = $request->query('start_date', '');
         $end_date   = $request->query('end_date', '');
 
-        $banners = Brand::active()
-            ->when($start_date, function ($query) use ($start_date) {
+        $brands = Brand::active()
+            ->when(!empty($start_date), function ($query) use ($start_date) {
                 $query->where('created_at', '>=', $start_date);
             })
-            ->when($end_date, function ($query) use ($end_date) {
+            ->when(!empty($end_date), function ($query) use ($end_date) {
                 $query->where('created_at', '<=', $end_date);
             })
             ->with(['products' => function ($query) use ($qty) {
                 $query->limit($qty);
             }])
             ->limit($qtyBrand)
-            ->get();
+            ->get()
+            ->pluck('products')
+            ->flatten();
 
-        return $banners;
+        return $brands;
     }
 }

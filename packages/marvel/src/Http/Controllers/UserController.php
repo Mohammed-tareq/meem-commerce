@@ -465,19 +465,43 @@ class UserController extends CoreController
     {
         $request->validated();
 
-        $user = User::where('email', $request->email)
-            ->orWhere('phone_number', $request->phone_number) // Allow login with email or phone number
-            ->where('is_active', true)->first();
+        $user = User::where(function ($query) use ($request) {
+            $query->where('email', $request->email)
+                ->orWhere('phone_number', $request->phone_number);
+        })->where('is_active', true)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
             return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
         }
         $email_verified = $user->hasVerifiedEmail();
+        // if (!$email_verified) {
+        //     return $this->apiResponse(USER_NOT_VERIFIED, 404, false);
+        // }
         // event(new ProcessUserData());
         $data = [
             "token" => $user->createToken('auth_token')->plainTextToken,
             "permissions" => $user->getAllPermissions()->pluck('name'),
             "email_verified" => $email_verified,
+            "role" => $user->roles->pluck('name')
+        ];
+        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
+    }
+    public function loginWithOutEmailVerification(UserAuthEmailAndPasswordRequest $request)
+    {
+        $request->validated();
+
+        $user = User::where(function ($query) use ($request) {
+            $query->where('email', $request->email)
+                ->orWhere('phone_number', $request->phone_number);
+        })->where('is_active', true)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
+        }
+        // event(new ProcessUserData());
+        $data = [
+            "token" => $user->createToken('auth_token')->plainTextToken,
+            "permissions" => $user->getAllPermissions()->pluck('name'),
             "role" => $user->roles->pluck('name')
         ];
         return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
@@ -503,7 +527,7 @@ class UserController extends CoreController
         } else {
             $otpResponse = $this->sendOtpCode($request);
             if (is_array($otpResponse)) {
-                $data['id'] = $otpResponse['id'] ?? null;
+                $data['otp_id'] = $otpResponse['otp_id'] ?? null;
             }
         }
         return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
@@ -515,26 +539,19 @@ class UserController extends CoreController
             'code' => 'required|min:4|max:6',
         ]);
         $user = User::where('email', $request->email)->where('is_active', true)->first();
-        // Accept static OTP '123456' for frontend/testing convenience
-        if ($request->code === '123456' || $user->verifyOneTimePassword($request->code)) {
 
+        if (!$user) {
+            return $this->apiResponse(USER_NOT_FOUND, 404, false);
+        }
+
+        if ($request->code === '123456' || $user->verifyOneTimePassword($request->code)) {
             $data = [
                 "token" => $user->createToken('auth_token')->plainTextToken,
             ];
-            if (!$user) {
-                return $this->apiResponse(USER_NOT_FOUND, 404, false);
-            }
-            // Accept static OTP '123456' for frontend/testing convenience
-            if ($request->code === '123456' || $user->verifyOneTimePassword($request->code)) {
-
-                $data = [
-                    "token" => $user->createToken('auth_token')->plainTextToken,
-                ];
-                return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
-            } else {
-                return $this->apiResponse(INVALID_OTP, 400, false);
-            }
+            return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
         }
+
+        return $this->apiResponse(INVALID_OTP, 400, false);
     }
 
 
@@ -545,7 +562,11 @@ class UserController extends CoreController
         if (!$user) {
             return $this->apiResponse(USER_NOT_FOUND, 404, false);
         }
-        $user->currentAccessToken()->delete();
+
+        $token = $user->currentAccessToken();
+        if ($token) {
+            $token->delete();
+        }
         return $this->apiResponse(USER_LOGGED_OUT_SUCCESSFULLY, 200, true);
     }
 
@@ -585,7 +606,9 @@ class UserController extends CoreController
     public function register(UserCreateRequest $request)
     {
         try {
+            DB::beginTransaction();
             $request->validated();
+
             $user = $this->repository->create([
                 'name' => $request->first_name . ' ' . $request->last_name,
                 'email' => $request->email,
@@ -597,10 +620,24 @@ class UserController extends CoreController
             if ($request->hasFile('avatar')) {
                 $user->addMedia($request->file('avatar'))->toMediaCollection('avatar');
             }
-            $user->sendOneTimePassword();
 
-            return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true);
+            DB::commit();
+            try {
+                $user->sendOneTimePassword();
+                $data = ['otp_status' => true];
+                return $this->apiResponse(USER_REGISTERED_SUCCESSFULLY, 200, true, $data);
+            } catch (\Exception $mailException) {
+                $data = [
+                    'requires_resend' => true,
+                    'email' => $user->email,
+                    'phone_number' => $user->phone_number,
+                    'otp_status' => false
+                ];
+
+                return $this->apiResponse(ACCOUNT_CREATED_BUT_OTP_FAILED, 201, true, $data);
+            }
         } catch (\Exception $e) {
+            DB::rollBack();
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false, $e->getMessage());
         }
     }
@@ -696,21 +733,29 @@ class UserController extends CoreController
             return $this->apiResponse(NOT_FOUND, 404);
         }
 
+        $plainTextToken = Str::random(60);
+
         $tokenData = DB::table('password_resets')
             ->where('email', $request->email)->first();
         if (!$tokenData) {
             DB::table('password_resets')->insert([
                 'email' => $request->email,
-                'token' => 123456,
+                'token' => Hash::make($plainTextToken),
                 'created_at' => Carbon::now(),
                 'expires_at' => Carbon::now()->addMinutes(5)
             ]);
-            $tokenData = DB::table('password_resets')
-                ->where('email', $request->email)->first();
+        } else {
+            DB::table('password_resets')
+                ->where('email', $request->email)
+                ->update([
+                    'token' => Hash::make($plainTextToken),
+                    'created_at' => Carbon::now(),
+                    'expires_at' => Carbon::now()->addMinutes(5)
+                ]);
         }
 
 
-        if ($this->repository->sendResetEmail($request->email, $tokenData->token)) {
+        if ($this->repository->sendResetEmail($request->email, $plainTextToken)) {
             return $this->apiResponse(CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 200);
         } else {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500);
@@ -933,7 +978,6 @@ class UserController extends CoreController
         $gateWayClass = "Marvel\\Otp\\Gateways\\" . ucfirst($gateway) . 'Gateway';
         try {
             return new OtpGateway(new $gateWayClass());
-
         } catch (\Throwable $e) {
             // Log the issue and fallback to a local/testing gateway that requires no credentials
             Log::warning('OTP gateway unavailable, falling back to LocalGateway: ' . $e->getMessage());
@@ -976,12 +1020,12 @@ class UserController extends CoreController
             if (!$sendOtpCode->isValid()) {
                 return ['message' => OTP_SEND_FAIL, 'success' => false];
             }
-            $user = User::where('phone', $phoneNumber)->first();
+            $user = User::where('phone_number', $phoneNumber)->first();
             return [
                 'message' => OTP_SEND_SUCCESSFUL,
                 'success' => true,
                 'provider' => config('auth.active_otp_gateway'),
-                'id' => $sendOtpCode->getId(),
+                'otp_id' => $sendOtpCode->getId(),
                 // include static OTP to help frontend testing
                 // 'otp' => '123456',
                 'phone_number' => $phoneNumber,

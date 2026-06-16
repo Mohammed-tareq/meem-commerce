@@ -29,7 +29,7 @@ class AppServiceProvider extends ServiceProvider
         if (!\App::environment('local')) {
             $this->app['request']->server->set('HTTPS', true);
         }
-        
 
+        ini_set('serialize_precision', -1);
     }
 }

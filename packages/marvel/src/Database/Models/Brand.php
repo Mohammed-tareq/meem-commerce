@@ -13,7 +13,7 @@ use Illuminate\Support\Str;
 
 class Brand extends Model implements HasMedia
 {
-    use HasTranslations, Sluggable, InteractsWithMedia;
+    use HasTranslations, InteractsWithMedia;
 
     protected $table = 'brands';
 
@@ -21,14 +21,7 @@ class Brand extends Model implements HasMedia
 
     protected $fillable = ['name', 'details', 'slug', 'status'];
 
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'name'
-            ]
-        ];
-    }
+
 
     public function scopeActive($query)
     {
@@ -53,7 +46,7 @@ class Brand extends Model implements HasMedia
      */
     public function products(): BelongsToMany
     {
-        return $this->belongsToMany(Product::class, 'brand_product');
+        return $this->belongsToMany(Product::class, 'brand_product', 'brand_id', 'product_id');
     }
 
     protected static function booted()

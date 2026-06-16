@@ -16,8 +16,10 @@ use App\Http\Controllers\Api\General\SettingController;
 use App\Http\Controllers\Api\General\SliderController;
 use App\Http\Controllers\Api\General\ContentPageController;
 use App\Http\Controllers\Api\General\PromotionController;
+use Illuminate\Support\Facades\Mail;
+//'throttle:general'
 
-Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])->group(function () {
+Route::prefix('general')->middleware(['api', 'check-lang'])->group(function () {
 
     //========================= home=========================//
     Route::controller(HomeController::class)->group(function () {
@@ -33,12 +35,7 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     //======================== products=========================//
     Route::controller(ProductController::class)->group(function () {
         Route::get('products', 'index');
-        Route::get('products/best-sales', 'getBestProductSales');
-        Route::get('products/discount-ending-today-or-low-stock', 'getDiscountEndingTodayOrLowStockProducts');
-        Route::get('products/new-arrivals', 'getNewArrivals');
-        Route::get('products/all-discount-products', 'getAllDiscountProducts');
-        Route::get('products/parent-category', 'getProductForParentCategory');
-        Route::get('products/{id}', 'getProductById');
+        Route::get('products/{slug}', 'getProductBySlug')->name('general-product-show');
         //========================= product reviews =========================//
         Route::post('products/{id}/reviews', 'addProductReview')->middleware('auth:sanctum');
         Route::put('products/reviews/{id}', 'updateProductReview')->middleware('auth:sanctum');
@@ -47,10 +44,10 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
 
     //========================= order=========================//
     Route::controller(OrderController::class)->group(function () {
-        Route::get('orders', 'index')->middleware('auth:sanctum');
+        Route::get('orders', 'index')->middleware(['auth:sanctum', 'check-email']);
         //========================= checkout =========================//
-        Route::get('checkout/promotions', 'eligiblePromotions')->middleware('auth:sanctum');
-        Route::post('checkout', 'checkout')->middleware('auth:sanctum');
+        Route::get('checkout/promotions', 'eligiblePromotions')->middleware(['auth:sanctum', 'check-email']);
+        Route::post('checkout', 'checkout')->middleware(['auth:sanctum', 'check-email']);
         Route::get('checkout/callback', 'checkoutCallback')->name('api.checkout.callback');
         Route::get('checkout/error', 'checkoutErrorCallback')->name('api.checkout.errorCallback');
     });
@@ -73,9 +70,6 @@ Route::prefix('general')->middleware(['api', 'throttle:general', 'check-lang'])-
     //========================= flash-sales=========================//
     Route::controller(FlashSaleController::class)->group(function () {
         Route::get('flash-sales', 'index')->name('general-flash-sale-index');
-        Route::get('flash-sales-with-products', 'getFlashSalesAndHereProductsByQtySet')->name('general-flash-sale-with-products');
-        Route::get('flash-sales-ending-this-week', 'getFlashSaleProductsEndingThisWeek')->name('general-flash-sale-ending-this-week');
-        Route::get('flash-sales-today', 'getFlashSaleProductsEndingToday')->name('general-flash-sale-ending-today');
         Route::get('flash-sales/{slug}', 'getFlashSaleBySlug')->name('general-flash-sale-show');
     });
 
@@ -151,10 +145,36 @@ Route::get('/enum-types', function () {
 });
 
 
+
+Route::get('product-type', function () {
+    return [
+
+        'index',
+        'best_product_sales',
+        'brands_product',
+        'new_arrivals',
+        'all_product_discounts',
+        'product_discount_today_or_low_qty',
+        'flash_sales_product',
+        'flash_sales_end_today',
+        'product_for_parent_category',
+        'flash_sales_end_week',
+    ];
+});
 Route::get('check-card-payment', function () {
     return [
         'CardNumber' => '2223000000000007',
         'CardExpiryMonthand year' => '01/39',
         'CardCVV' => '100',
     ];
+});
+Route::get('/test-mail', function () {
+
+    Mail::raw('Brevo Test Mail', function ($message) {
+
+        $message->to('mohtareq1999m@email.com')
+                ->subject('Test Email');
+    });
+
+    return 'sent';
 });

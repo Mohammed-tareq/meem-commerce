@@ -154,4 +154,8 @@ return [
     'MESSAGE.FAST_SHIPPING_GOVERNORATE_DISABLED' => 'Fast shipping is not available in your governorate',
     'MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE' => 'One or more products are not eligible for fast shipping',
     'MESSAGE.FAST_SHIPPING_MIXED_CART' => 'Cannot mix fast shipping and scheduled shipping items in the same order'
+    'ERROR.INVALID_PRODUCT_TYPE' => 'Invalid product type',
+    'ERROR.ACCOUNT_CREATED_BUT_OTP_FAILED' => 'Account created but OTP failed',
+    'ERROR.USER_NOT_VERIFIED' => 'User is not verified',
+    "PLEASE_VERIFY_YOUR_EMAIL" => 'Please Verifiy Your Email'
 ];

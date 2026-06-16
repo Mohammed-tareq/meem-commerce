@@ -20,8 +20,8 @@ class CouponRepository extends BaseRepository
      * @var array
      */
     protected $fieldSearchable = [
-        'code'        => 'like',
-        'name'        => 'like',
+        'code' => 'like',
+        'name' => 'like',
 
     ];
 
@@ -73,6 +73,7 @@ class CouponRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
+            $request['slug'] = $this->makeSlug($request);
             $coupon = $this->create($request->except('image-desktop', 'image-mobile'));
 
             if ($request->hasFile('image-desktop')) {
@@ -143,7 +144,7 @@ class CouponRepository extends BaseRepository
                 throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_CART_YOU_HAVE_ALREADY_APPLIED_A_COUPON);
             }
 
-            return  $cart->update(['coupon' => $coupon->code]);
+            return $cart->update(['coupon' => $coupon->code]);
         }
         return $cart->update(['coupon' => $coupon->code]);
     }

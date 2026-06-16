@@ -15,11 +15,11 @@ class BrandResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-             return [
+        return [
             'id'          => $this->id,
             'name'       => $this->getTranslation('name', app()->getLocale()),
             'slug'       => $this->getTranslation('slug', app()->getLocale()),
-            'image'       =>[
+            'image'       => [
                 'desktop' => $this?->getFirstMediaUrl('brands-desktop'),
                 'mobile' => $this?->getFirstMediaUrl('brands-mobile'),
             ],

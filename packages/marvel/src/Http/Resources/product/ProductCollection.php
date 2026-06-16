@@ -8,12 +8,7 @@ use Marvel\Http\Resources\ProductResource;
 
 class ProductCollection extends ResourceCollection
 {
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  Request  $request
-     * @return array
-     */
+    
     public function toArray($request)
     {
         return [
@@ -33,4 +28,4 @@ class ProductCollection extends ResourceCollection
             ]
         ];
     }
-}
+} 

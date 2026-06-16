@@ -15,29 +15,23 @@ class CategoryResource extends Resource
      */
     public function toArray(Request $request)
     {
-
         return [
             'id'                   => $this->id,
             'name'                 => $this->getTranslation('name', app()->getLocale()),
-            'slug'                 => $this->getTranslation('slug', app()->getLocale()),
+            'slug'                 => $this->slug,
             'parent_id'            => $this->parent_id,
             'level'                => $this->level,
             'image'                => [
                 'desktop' => $this->getFirstMediaUrl('categories-desktop') ?: null,
                 'mobile'  => $this->getFirstMediaUrl('categories-mobile') ?: null,
             ],
-            'products_count'       => $this->whenCounted('products'),
-            'details'              => $this?->getTranslation('details', app()->getLocale()),
-            $this->mergeWhen(request()->routeIs('categories.show'), [
-                'children' => CategoryResource::collection($this->whenLoaded('children')),
+            'products_count'       => (int) ($this->products_count ?? $this->products()->count()),
+            $this->mergeWhen($this->getTranslation('details', app()->getLocale()), [
+                'details' => $this->getTranslation('details', app()->getLocale()),
             ]),
-            $this->mergeWhen(request()->routeIs('home'), [
-                'parent' => $this->parent?->getTranslation('name', app()->getLocale()),
+            $this->mergeWhen($this->relationLoaded('children') && $this->children->isNotEmpty(), [
+                'children' => ChildrenCategoryResource::collection($this->children),
             ]),
-            $this->mergeWhen(request()->routeIs('general-category-show'), [
-                'product' => $this->parent?->getTranslation('name', app()->getLocale()),
-            ]),
-
         ];
     }
 }

@@ -46,7 +46,12 @@ class SettingSeeder extends Seeder
             ]);
         }
 
-        $settingImages = collect(File::files(public_path('images/shops')));
+        $settingImages = File::exists(public_path('images/settings'))
+            ? collect(File::files(public_path('images/settings')))
+            : collect(File::exists(public_path('images/shops'))
+                ? collect(File::files(public_path('images/shops')))
+                : collect());
+
         $settingImagesCount = $settingImages->count();
 
         if ($settingImagesCount > 0) {

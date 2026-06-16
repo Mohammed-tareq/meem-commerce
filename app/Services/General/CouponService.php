@@ -14,6 +14,8 @@ class CouponService
         $limit = $request->get('limit', 10);
         $start_date = $request->query('start_date');
         $end_date   = $request->query('end_date');
+        $couponsId = $request->query('couponsId');
+        $order = $request->query('order', 'desc');
         $coupons = Coupon::valid()->when($name, function ($query) use ($name) {
             $query->search('name', $name, app()->getLocale());
         })->when($start_date, function ($query) use ($start_date) {
@@ -21,8 +23,17 @@ class CouponService
             })
             ->when($end_date, function ($query) use ($end_date) {
                 $query->where('created_at', '<=', $end_date);
-            })->orderByDesc('id')->limit($limit)->get();
-        return $coupons;
+            });
+
+        if (!empty($couponsId)) {
+            $ids = is_array($couponsId) ? $couponsId : explode(',', $couponsId);
+            $ids = array_filter($ids, 'is_numeric');
+            if (!empty($ids)) {
+                $coupons->whereIn('id', $ids);
+            }
+        }
+
+        return $coupons->orderBy('id', $order)->limit($limit)->get();
     }
 
     public function calcPrice(Coupon $coupon, $price)

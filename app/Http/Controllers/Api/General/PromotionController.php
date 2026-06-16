@@ -8,7 +8,7 @@ use App\Services\General\PromotionDataService;
 use Illuminate\Http\Request;
 use Marvel\Traits\ApiResponse;
 
-class PromotionController extends Controller
+class  PromotionController extends Controller
 {
      use ApiResponse;
     private PromotionDataService $promotionService;
@@ -29,6 +29,7 @@ class PromotionController extends Controller
         if (!$PromotionWithProducts) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
+        
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PromotionResource::make($PromotionWithProducts));
     }
 }

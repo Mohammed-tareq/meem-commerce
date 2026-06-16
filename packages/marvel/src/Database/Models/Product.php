@@ -23,7 +23,7 @@ use Laravel\Scout\Searchable;
 
 class Product extends Model implements HasMedia
 {
-    use HasTranslations, SoftDeletes, Sluggable, Excludable, InteractsWithMedia, Searchable;
+    use HasTranslations, SoftDeletes, Excludable, InteractsWithMedia, Searchable;
 
     protected $table = 'products';
     protected $fillable = [
@@ -57,16 +57,23 @@ class Product extends Model implements HasMedia
         'price_after_flash_sale',
         'discount_status',
     ];
-    public array $translatable = ['name', 'description'];
+    public array $translatable = ['name', 'description', 'slug'];
     public $hideMeta = true;
 
 
     public function toSearchableArray()
     {
+        $nameTranslations = $this->getTranslations('name');
+        $descriptionTranslations = $this->getTranslations('description');
+
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'name_en' => $nameTranslations['en'] ?? $this->name,
+            'name_ar' => $nameTranslations['ar'] ?? $this->name,
             'description' => $this->description,
+            'description_en' => $descriptionTranslations['en'] ?? $this->description,
+            'description_ar' => $descriptionTranslations['ar'] ?? $this->description,
         ];
     }
 
@@ -88,19 +95,6 @@ class Product extends Model implements HasMedia
         'final_price',
     ];
 
-    /**
-     * Return the sluggable configuration array for this model.
-     *
-     * @return array
-     */
-    public function sluggable(): array
-    {
-        return [
-            'slug' => [
-                'source' => 'name'
-            ]
-        ];
-    }
 
     protected static function boot()
     {
@@ -112,6 +106,7 @@ class Product extends Model implements HasMedia
                 $product->sku = 'PRD-' . Str::uuid();
             }
         });
+       
     }
 
 
@@ -288,7 +283,7 @@ class Product extends Model implements HasMedia
      */
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'category_product');
+        return $this->belongsToMany(Category::class, 'category_product','product_id','category_id');
     }
 
     /**
@@ -296,7 +291,7 @@ class Product extends Model implements HasMedia
      */
     public function brands(): BelongsToMany
     {
-        return $this->belongsToMany(Brand::class, 'brand_product');
+        return $this->belongsToMany(Brand::class, 'brand_product','product_id','brand_id');
     }
 
     /**
@@ -438,6 +433,14 @@ class Product extends Model implements HasMedia
     }
 
     /**
+     * @return BelongsToMany
+     */
+    public function promotions(): BelongsToMany
+    {
+        return $this->belongsToMany(Promotion::class, 'promotion_product', 'product_id', 'promotion_id');
+    }
+
+    /**
      * flash_sale_requests
      *
      * @return BelongsToMany
@@ -531,5 +534,17 @@ class Product extends Model implements HasMedia
     public function setQuantityAttribute($value): void
     {
         $this->attributes['stock_quantity'] = (int) $value;
+    }
+    public function scopeSearch($query, $field, $term, $locale)
+    {
+        return $query->where(function ($q) use ($field, $term, $locale) {
+            $q->where($field . '->' . $locale, 'like', "%$term%")
+                ->orWhere($field, 'like', "%$term%");
+        });
+    }
+
+    public function scopeFilter($query, array $filters)
+    {
+        return app(\App\Services\General\ProductFilter::class)->apply($query, $filters);
     }
 }

@@ -11,6 +11,7 @@ class AttributeSeeder extends Seeder
         $attributes = [
             [
                 'name' => ['ar' => 'لون', 'en' => 'Color'],
+                'slug' => 'color',
                 'values' => [
                     ['value' => ['ar' => 'أحمر', 'en' => 'Red']],
                     ['value' => ['ar' => 'أزرق', 'en' => 'Blue']],
@@ -22,6 +23,7 @@ class AttributeSeeder extends Seeder
             ],
             [
                 'name' => ['ar' => 'المقاس', 'en' => 'Size'],
+                'slug' => 'size',
                 'values' => [
                     ['value' => ['ar' => 'صغير', 'en' => 'Small']],
                     ['value' => ['ar' => 'متوسط', 'en' => 'Medium']],
@@ -31,6 +33,7 @@ class AttributeSeeder extends Seeder
             ],
             [
                 'name' => ['ar' => 'الخامة', 'en' => 'Material'],
+                'slug' => 'material',
                 'values' => [
                     ['value' => ['ar' => 'قطن', 'en' => 'Cotton']],
                     ['value' => ['ar' => 'صوف', 'en' => 'Wool']],
@@ -41,6 +44,7 @@ class AttributeSeeder extends Seeder
             ],
             [
                 'name' => ['ar' => 'الموسم', 'en' => 'Season'],
+                'slug'=> 'season',
                 'values' => [
                     ['value' => ['ar' => 'صيفي', 'en' => 'Summer']],
                     ['value' => ['ar' => 'شتوي', 'en' => 'Winter']],
@@ -50,6 +54,7 @@ class AttributeSeeder extends Seeder
             ],
             [
                 'name' => ['ar' => 'الستايل', 'en' => 'Style'],
+                'slug'=> 'style',
                 'values' => [
                     ['value' => ['ar' => 'كاجوال', 'en' => 'Casual']],
                     ['value' => ['ar' => 'رسمي', 'en' => 'Formal']],
@@ -59,6 +64,7 @@ class AttributeSeeder extends Seeder
             ],
             [
                 'name' => ['ar' => 'البراند', 'en' => 'Brand'],
+                'slug' => 'brand',
                 'values' => [
                     ['value' => ['ar' => 'نايك', 'en' => 'Nike']],
                     ['value' => ['ar' => 'أديداس', 'en' => 'Adidas']],
@@ -71,11 +77,13 @@ class AttributeSeeder extends Seeder
         foreach ($attributes as $attr) {
             $attribute = \Marvel\Database\Models\Attribute::create([
                 'name'=> $attr['name'],
+                'slug' => $attr['slug'],
             ]);
             foreach ($attr['values'] as $value) {
                 \Marvel\Database\Models\AttributeValue::create([
                     'attribute_id' => $attribute->id,
                     'value' => $value['value'],
+                    'slug' => \Illuminate\Support\Str::slug($value['value']['en']),
                 ]);
             }
         }

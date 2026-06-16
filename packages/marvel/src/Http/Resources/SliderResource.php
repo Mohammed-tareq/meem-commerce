@@ -21,8 +21,8 @@ class SliderResource extends Resource
             "title" => $this->getTranslation('title', app()->getLocale()),
             "status" => (bool)$this->status,
             "image" => [
-                "desktop" => $this->when($this->getFirstMediaUrl('sliders-desktop'), $this->getFirstMediaUrl('slider-image-desktop')),
-                "mobile" => $this->when($this->getFirstMediaUrl('sliders-mobile'), $this->getFirstMediaUrl('slider-image-mobile')),
+                "desktop" => $this->getFirstMediaUrl('sliders-desktop') ?: $this->getFirstMediaUrl('slider-image-desktop'),
+                "mobile" => $this->getFirstMediaUrl('sliders-mobile') ?: $this->getFirstMediaUrl('slider-image-mobile'),
             ]
         ];
     }

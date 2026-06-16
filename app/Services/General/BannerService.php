@@ -12,14 +12,26 @@ class BannerService
         $limit = $request->get('limit', 10);
         $start_date = $request->query('start_date');
         $end_date   = $request->query('end_date');
+        $bannersId = $request->query('bannersId');
+        $order = $request->query('order', 'desc');
 
-        return Banner::active()
+        $query = Banner::active()
             ->when($start_date, function ($query) use ($start_date) {
                 $query->where('created_at', '>=', $start_date);
             })
             ->when($end_date, function ($query) use ($end_date) {
                 $query->where('created_at', '<=', $end_date);
-            })->orderByDesc('id')->limit($limit)->get();
+            });
+
+        if (!empty($bannersId)) {
+            $ids = is_array($bannersId) ? $bannersId : explode(',', $bannersId);
+            $ids = array_filter($ids, 'is_numeric');
+            if (!empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
+        }
+
+        return $query->orderBy('id', $order)->limit($limit)->get();
     }
     public function getBannerBySlug($slug)
     {

@@ -80,7 +80,7 @@ class CartRepository extends BaseRepository
 
             DB::commit();
 
-            return $cart->load(['items.product', 'items.productVariant']);
+            return $cart->load(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute']);
         } catch (AuthorizationException $e) {
             DB::rollBack();
             throw new HttpException(401, $e->getMessage());

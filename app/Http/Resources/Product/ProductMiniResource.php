@@ -2,10 +2,12 @@
 
 namespace App\Http\Resources\Product;
 
+use App\Traits\HasProductFilters;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class ProductMiniResource extends JsonResource
 {
+    use HasProductFilters;
     /**
      * Transform the resource into an array.
      *
@@ -15,24 +17,23 @@ class ProductMiniResource extends JsonResource
     public function toArray($request): array
     {
         return [
-            'id'                     => $this->id,
-            'name'                   => $this->getTranslation('name', app()->getLocale()),
-            // 'slug'                   => $this->getTranslation('slug', app()->getLocale()),
-            'price'                  => $this->roundMoney($this->price),
-            'current_price'          => $this->roundMoney($this->getRawOrComputedValue('current_price')),
-            'price_after_discount'   => $this->roundMoney($this->getRawOrComputedValue('price_after_discount')),
+            'id' => $this->id,
+            'name' => $this->getTranslation('name', app()->getLocale()),
+            'slug' => $this->slug,
+            'price' => $this->roundMoney($this->price),
+            'current_price' => $this->roundMoney($this->getRawOrComputedValue('current_price')),
+            'price_after_discount' => $this->roundMoney($this->getRawOrComputedValue('price_after_discount')),
             'price_after_flash_sale' => $this->roundMoney($this->getRawOrComputedValue('price_after_flash_sale')),
-            'has_discount'           => $this->has_discount,
-            'discount_type'          => $this->discount_type,
-            'discount_amount'        => $this->discount_amount,
-            'quantity'               => $this->stock_quantity,
-            'discount_valid'         => (bool) $this->isDiscountActive(),
-            'ratings'                => $this->reviews()->avg('rating') ?? 0,
-            'image'                  => [
-                'thumbnail'  => $this->getFirstMediaUrl('products'),
+            'has_discount' => $this->has_discount,
+            'discount_type' => $this->discount_type,
+            'discount_amount' => $this->roundMoney($this->discount_amount),
+            'quantity' => (int) $this->stock_quantity,
+            'discount_valid' => (bool) $this->isDiscountActive(),
+            'ratings' => round((float) ($this->reviews_avg_rating ?? $this->reviews()->avg('rating') ?? 0), 2),
+            'image' => [
+                'thumbnail' => $this->getFirstMediaUrl('products'),
                 'original' => $this->getMediaImages('products'),
             ],
-            'badges' => $this->badges[0],
         ];
     }
 

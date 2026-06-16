@@ -24,9 +24,10 @@ class Attribute extends Model
      */
     public function sluggable(): array
     {
+        $name = $this->name['en'] ?? $this->name;
         return [
             'slug' => [
-                'source' => 'name'
+                'source' => $name
             ]
         ];
     }

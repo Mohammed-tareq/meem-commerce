@@ -154,4 +154,8 @@ return [
     'MESSAGE.FAST_SHIPPING_GOVERNORATE_DISABLED' => 'الشحن السريع غير متاح في محافظتك',
     'MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE' => 'منتج أو أكثر غير مؤهل للشحن السريع',
     'MESSAGE.FAST_SHIPPING_MIXED_CART' => 'لا يمكن خلط الشحن السريع مع الشحن المجدول في نفس الطلب',
+    'ERROR.INVALID_PRODUCT_TYPE' => 'نوع المنتج غير صالح',
+    'ERROR.ACCOUNT_CREATED_BUT_OTP_FAILED' => 'تم إنشاء الحساب بنجاح ولكن تعذر إرسال رمز التحقق',
+    'ERROR.USER_NOT_VERIFIED' => 'الحساب غير مفعل',
+    "PLEASE_VERIFY_YOUR_EMAIL" => "يرجى تفعيل من بريدك الإلكتروني",
 ];

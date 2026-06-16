@@ -28,7 +28,7 @@ class CartController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ?? 15;
-        $query = $this->repository->with(['items.product', 'items.productVariant']);
+        $query = $this->repository->with(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute']);
         $user = $request->user();
 
         if ($user) {
@@ -53,7 +53,7 @@ class CartController extends CoreController
 
     public function show(Request $request, $id)
     {
-        $cart = $this->repository->with(['items.product', 'items.productVariant'])->findOrFail($id);
+        $cart = $this->repository->with(['items.product', 'items.productVariant.attributeProducts.attributeValue.attribute'])->findOrFail($id);
         $user = $request->user();
 
         if ($user && (int) $cart->user_id !== (int) $user->id) {

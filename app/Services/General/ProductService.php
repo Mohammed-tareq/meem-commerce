@@ -7,7 +7,10 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
+use Marvel\Database\Models\Attribute;
+use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Review;
 use Marvel\Traits\MediaManager;
@@ -17,57 +20,102 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class ProductService
 {
     use MediaManager;
-    public function paginate(Request $request)
-    {
-        $limit = $this->getLimit($request);
-        $term = trim((string) $request->get('search', ''));
 
+    public function buildFilteredBaseQuery(Request $request): Builder
+    {
         $query = Product::query()->active()
-            ->with(['categories', 'variations'])
+            ->with(['categories', 'variations', 'brands'])
             ->withAvg(['reviews' => fn(Builder $builder) => $builder->approved()], 'rating')
             ->withCount(['reviews' => fn(Builder $builder) => $builder->approved()]);
 
         $this->applyProductFilters($query, $request);
+        $this->applyIdsFilter($query, $request, 'productsId');
+
+        $term = trim((string) $request->get('search', ''));
         if ($term !== '') {
             $this->applyProductSearch($query, $term, app()->getLocale());
         }
 
-        return $query->orderByDesc('id')->paginate($limit);
+        return $query;
     }
 
+    public function buildScoutSearchQuery(Request $request): ?Builder
+    {
+        $term = trim((string) $request->get('search', ''));
+
+        if ($term === '') {
+            return null;
+        }
+
+        try {
+            $scoutIds = Product::search($term)->keys()->toArray();
+        } catch (Exception $e) {
+            return null;
+        }
+
+        $query = Product::query()->active()
+            ->with(['categories', 'variations', 'brands'])
+            ->withAvg(['reviews' => fn(Builder $b) => $b->approved()], 'rating')
+            ->withCount(['reviews' => fn(Builder $b) => $b->approved()]);
+
+        $this->applyProductFilters($query, $request);
+        $this->applyIdsFilter($query, $request, 'productsId');
+
+        if (!empty($scoutIds)) {
+            $query->whereIn('products.id', $scoutIds);
+            $idOrder = implode(',', array_map('intval', $scoutIds));
+            $query->orderByRaw("FIELD(products.id, {$idOrder})");
+        } else {
+            $query->whereRaw('1 = 0');
+        }
+
+        return $query;
+    }
+
+    public function paginate(Request $request)
+    {
+        $limit = $this->getLimit($request);
+        $order = $request->query('order', 'desc');
+        $query = $this->buildFilteredBaseQuery($request);
+
+        return $query->orderBy('id', $order)->paginate($limit);
+    }
 
     public function paginateFlashSales(Request $request)
     {
         $limit = $this->getLimit($request);
-        $term = trim((string) $request->get('search', ''));
+        $order = $request->query('order', 'desc');
 
         $query = Product::query()
-            ->with('categories')
+            ->with(['categories', 'variations', 'brands'])
             ->withAvg(['reviews' => fn(Builder $builder) => $builder->approved()], 'rating')
             ->withCount(['reviews' => fn(Builder $builder) => $builder->approved()]);
 
         $this->applyProductFilters($query, $request);
         $this->applyFlashSaleFilter($query);
 
+        $term = trim((string) $request->get('search', ''));
         if ($term !== '') {
             $this->applyProductSearch($query, $term, app()->getLocale());
         }
 
-        return $query->orderByDesc('id')->paginate($limit);
+        return $query->orderBy('id', $order)->paginate($limit);
     }
 
-    public function getProductById($id, $limit = 10)
+    public function getProductBySlug($slug, $limit = 10)
     {
         $product = Product::query()
             ->active()
+            ->search('slug', $slug, app()->getLocale())
             ->with([
                 'categories',
                 'variations',
+                'brands',
                 'reviews' => fn($builder) => $builder->approved()->with('user'),
             ])
             ->withAvg(['reviews' => fn($builder) => $builder->approved()], 'rating')
             ->withCount(['reviews' => fn($builder) => $builder->approved()])
-            ->find($id);
+            ->first();
 
         if (!$product) {
             return null;
@@ -77,9 +125,11 @@ class ProductService
 
         return $product;
     }
-    public function getDiscountEndingTodayOrLowStockProducts($limit = 10)
+    public function getDiscountEndingTodayOrLowStockProducts($request)
     {
+        $limit = $request->query('limit', 10);
         $products = Product::query()
+            ->with(['categories', 'variations', 'brands'])
             ->where('status', true)
             ->where(function ($query) {
 
@@ -114,7 +164,7 @@ class ProductService
                 $badges[] = 'discount_ending_today';
             }
 
-            if ($product->quantity >= 1 && $product->quantity <= 9) {
+            if ($product->stock_quantity >= 1 && $product->stock_quantity <= 9) {
                 $badges[] = 'low_stock';
             }
 
@@ -123,8 +173,124 @@ class ProductService
             return $product;
         })->values();
     }
-    public function getAllDiscountProducts($limit = 10)
+    public function getFlashSalesAndHereProductsByQtySet($request)
     {
+        $qty = $request->query('limit', 5);
+        $start_date = $request->query('start_date', '');
+        $end_date = $request->query('end_date', '');
+
+        $flashSales = FlashSale::query()->valid()
+            ->when($start_date, function ($query) use ($start_date) {
+                $query->where('created_at', '>=', $start_date);
+            })
+            ->when($end_date, function ($query) use ($end_date) {
+                $query->where('created_at', '<=', $end_date);
+            })
+            ->with([
+                'products' => function ($query) use ($qty) {
+                    $query->limit($qty);
+                }
+            ])->get()
+            ->pluck('products')
+            ->flatten();
+
+        return $flashSales;
+    }
+    public function getFlashSaleProductsEndingThisWeek($request)
+    {
+        $limit = $request->query('limit', 10);
+        $weekEnd = now()->endOfWeek();
+
+        $products = Product::query()
+            ->with(['categories', 'variations', 'brands'])
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->whereNull('deleted_at')
+            ->where('status', true)
+            ->where('has_flash_sale', true)
+            ->whereExists(function ($query) use ($weekEnd) {
+                $query->select(DB::raw(1))
+                    ->from('flash_sale_products')
+                    ->join('flash_sales', 'flash_sale_products.flash_sale_id', '=', 'flash_sales.id')
+                    ->whereColumn('flash_sale_products.product_id', 'products.id')
+                    ->whereNull('flash_sales.deleted_at')
+                    ->where('flash_sales.status', true)
+                    ->whereNotNull('flash_sales.end_date')
+                    ->whereBetween('flash_sales.end_date', [today(), $weekEnd]);
+            })
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_flash_sale ?? $product->price_after_discount ?? $product->price ?? null));
+
+            return $product;
+        })->values();
+    }
+    public function getFlashSaleProductsEndingToday($request)
+    {
+        $limit = $request->query('limit', 10);
+        $today = today();
+
+        $products = Product::query()
+            ->with(['categories', 'variations', 'brands'])
+            ->select([
+                'id',
+                'name',
+                'slug',
+                'price',
+                'quantity',
+                'has_flash_sale',
+                'has_discount',
+                'discount_type',
+                'discount_amount',
+                'discount_status',
+                'start_date',
+                'end_date',
+                'price_after_discount',
+                'price_after_flash_sale',
+            ])
+            ->whereNull('deleted_at')
+            ->where('status', true)
+            ->where('has_flash_sale', true)
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('flash_sale_products')
+                    ->join('flash_sales', 'flash_sale_products.flash_sale_id', '=', 'flash_sales.id')
+                    ->whereColumn('flash_sale_products.product_id', 'products.id')
+                    ->whereNull('flash_sales.deleted_at')
+                    ->where('flash_sales.status', true)
+                    ->whereNotNull('flash_sales.end_date')
+                    ->whereDate('flash_sales.end_date', today());
+            })
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
+
+        return $products->map(function (Product $product) {
+            $product->setAttribute('current_price', $this->moneyValue($product->price_after_flash_sale ?? $product->price_after_discount ?? $product->price ?? null));
+
+            return $product;
+        })->values();
+    }
+    public function getAllDiscountProducts($request)
+    {
+        $limit = $request->query('limit', 10);
         $products = Product::query()
             ->select([
                 'id',
@@ -142,7 +308,7 @@ class ProductService
                 'price_after_discount',
                 'price_after_flash_sale',
             ])
-            ->with(['reviews', 'media'])
+            ->with(['reviews', 'media', 'categories', 'variations', 'brands'])
             ->whereNull('deleted_at')
             ->where('status', true)
             ->where('has_discount', true)
@@ -157,8 +323,32 @@ class ProductService
         })->filter(fn(Product $product) => $product->isDiscountActive())->values();
     }
 
-    public function getNewArrivals(int $limit = 10)
+    public function getBrandsProductsByQtySet($request)
     {
+        $qty = $request->query('limit', 10);
+        // $qtyBrand = $request->query('limit_brand', 10);
+        $start_date = $request->query('start_date', '');
+        $end_date   = $request->query('end_date', '');
+
+        $brands = Brand::active()
+            ->when(!empty($start_date), function ($query) use ($start_date) {
+                $query->where('created_at', '>=', $start_date);
+            })
+            ->when(!empty($end_date), function ($query) use ($end_date) {
+                $query->where('created_at', '<=', $end_date);
+            })
+            ->with(['products' => function ($query) use ($qty) {
+                $query->with(['categories', 'variations', 'brands'])->limit($qty);
+            }])
+            ->get()
+            ->pluck('products')
+            ->flatten();
+
+        return $brands;
+    }
+    public function getNewArrivals($request)
+    {
+        $limit = $request->get('limit', 10);
         $products = Product::query()
             ->select([
                 'id',
@@ -176,7 +366,7 @@ class ProductService
                 'price_after_discount',
                 'price_after_flash_sale',
             ])
-            ->with(['reviews', 'media'])
+            ->with(['reviews', 'media', 'categories', 'variations', 'brands'])
             ->whereNull('deleted_at')
             ->where('status', true)
             ->where('has_flash_sale', false)
@@ -244,22 +434,26 @@ class ProductService
         }
     }
 
-    public function getBestProductSales($limit = 10)
+    public function getBestProductSales($request)
     {
+        $limit = $request->get('limit', 10);
+
         return Product::query()
             ->active()
-            ->with(['categories', 'variations'])
+            ->with(['categories', 'variations', 'brands'])
             ->orderByDesc('sold_quantity')
             ->limit($limit)
             ->get();
     }
 
-    public function getProductForParentCategory($limit = 10)
+    public function getProductForParentCategory($request)
     {
+
+        $limit = $request->integer('limit', 10);
         $ParentCategories = Category::query()->whereNull('parent_id')->pluck('id');
         return Product::query()
             ->active()
-            ->with(['categories', 'variations'])
+            ->with(['categories', 'variations', 'brands'])
             ->whereHas('categories', function (Builder $query) use ($ParentCategories) {
                 $query->whereIn('categories.id', $ParentCategories);
             })
@@ -278,7 +472,7 @@ class ProductService
 
         return Product::query()
             ->active()
-            ->with(['categories', 'variations'])
+            ->with(['categories', 'variations', 'brands'])
             ->whereHas('categories', function (Builder $query) use ($categories) {
                 $query->whereIn('categories.id', $categories);
             })
@@ -290,56 +484,7 @@ class ProductService
 
     private function applyProductFilters(Builder $query, Request $request): void
     {
-        $priceMin = $request->get('price_min');
-        $priceMax = $request->get('price_max');
-
-        if ($priceMin !== null && $priceMax !== null) {
-            $query->whereBetween('price', [$priceMin, $priceMax]);
-        } elseif ($priceMin !== null) {
-            $query->where('price', '>=', $priceMin);
-        } elseif ($priceMax !== null) {
-            $query->where('price', '<=', $priceMax);
-        }
-
-        $categoryId = $request->get('category');
-        if ($categoryId !== null) {
-            $query->whereHas('categories', function (Builder $builder) use ($categoryId) {
-                $builder->where('categories.id', $categoryId);
-            });
-        }
-
-        $shopId = $request->get('shop');
-        if ($shopId !== null) {
-            $query->whereHas('shops', function (Builder $builder) use ($shopId) {
-                $builder->where('shops.id', $shopId);
-            });
-        }
-
-        $filters = $request->get('attributes', []);
-
-        if (is_array($filters) && count($filters) > 0) {
-            $locale = app()->getLocale();
-            foreach ($filters as $attributeName => $valueNames) {
-                if (empty($valueNames)) {
-                    continue;
-                }
-                $valueNames = is_array($valueNames) ? $valueNames : [$valueNames];
-                $query->whereHas('variations.attributeProducts.attributeValue', function (Builder $builder) use ($attributeName, $valueNames, $locale) {
-                    $builder->where(function (Builder $q) use ($attributeName, $valueNames, $locale) {
-                        $q->whereHas('attribute', function (Builder $attributeBuilder) use ($attributeName, $locale) {
-                            $this->applyTranslatableLike($attributeBuilder, 'name', $attributeName, $locale);
-                        });
-                        $q->where(function (Builder $valueBuilder) use ($valueNames, $locale) {
-                            foreach ($valueNames as $valueName) {
-                                $valueBuilder->orWhere(function (Builder $valueQuery) use ($valueName, $locale) {
-                                    $this->applyTranslatableLike($valueQuery, 'value', $valueName, $locale);
-                                });
-                            }
-                        });
-                    });
-                });
-            }
-        }
+        $query->filter($request->all());
 
         $this->applyDimensionFilters($query, $request);
 
@@ -472,7 +617,19 @@ class ProductService
         });
     }
 
-    private function getLimit(Request $request): int
+    private function applyIdsFilter(Builder $query, Request $request, string $paramName): void
+    {
+        $ids = $request->query($paramName);
+        if (!empty($ids)) {
+            $ids = is_array($ids) ? $ids : explode(',', $ids);
+            $ids = array_filter($ids, 'is_numeric');
+            if (!empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
+        }
+    }
+
+    public function getLimit(Request $request): int
     {
         $limit = (int) $request->get('limit', 15);
         if ($limit <= 0) {
@@ -481,6 +638,96 @@ class ProductService
 
         return min($limit, 100);
     }
+
+    public function getDynamicFilters(Builder $query): array
+    {
+        $filters = [];
+
+        $filteredIds = (clone $query)->select('products.id')->pluck('id');
+
+        if ($filteredIds->isEmpty()) {
+            return $filters;
+        }
+
+        $displayLabels = [
+            'brand'    => ['en' => 'Brand', 'ar' => 'العلامة التجارية'],
+            'category' => ['en' => 'Category', 'ar' => 'الفئة'],
+            'height'   => ['en' => 'Height', 'ar' => 'الارتفاع'],
+            'width'    => ['en' => 'Width', 'ar' => 'العرض'],
+            'length'   => ['en' => 'Length', 'ar' => 'الطول'],
+            'weight'   => ['en' => 'Weight', 'ar' => 'الوزن'],
+        ];
+
+        $brands = Brand::active()
+            ->whereHas('products', fn($q) => $q->whereIn('products.id', $filteredIds))
+            ->get()
+            ->map(fn($b) => $b->name)
+            ->filter()
+            ->values()
+            ->toArray();
+        if (!empty($brands)) {
+            $filters[] = [
+                'display' => $displayLabels['brand'][app()->getLocale()],
+                'key'     => 'brand',
+                'data'    => $brands,
+            ];
+        }
+
+        $categories = Category::active()
+            ->whereHas('products', fn($q) => $q->whereIn('products.id', $filteredIds))
+            ->get()
+            ->map(fn($c) => $c->name)
+            ->filter()
+            ->values()
+            ->toArray();
+        if (!empty($categories)) {
+            $filters[] = [
+                'display' => $displayLabels['category'][app()->getLocale()],
+                'key'     => 'category',
+                'data'    => $categories,
+            ];
+        }
+
+        $dimensions = ['height', 'width', 'length', 'weight'];
+        foreach ($dimensions as $column) {
+            $productValues = (clone $query)
+                ->whereNotNull($column)->where($column, '!=', '')
+                ->distinct()->pluck($column)->toArray();
+
+            $variantValues = DB::table('product_variants')
+                ->whereIn('product_id', $filteredIds)
+                ->whereNotNull($column)->where($column, '!=', '')
+                ->distinct()->pluck($column)->toArray();
+
+            $values = array_values(array_unique(array_merge($productValues, $variantValues)));
+            $values = array_map('strval', $values);
+            $values = array_values(array_filter($values, fn($v) => $v !== ''));
+            sort($values, SORT_NATURAL | SORT_FLAG_CASE);
+
+            if (!empty($values)) {
+                $filters[] = [
+                    'display' => $displayLabels[$column][app()->getLocale()],
+                    'key'     => $column,
+                    'data'    => $values,
+                ];
+            }
+        }
+
+        $attributes = Attribute::with(['values' => fn($q) => $q->whereHas('productVariants', fn($pq) => $pq->whereIn('product_id', $filteredIds))])->get();
+        foreach ($attributes as $attribute) {
+            $values = $attribute->values->map(fn($v) => $v->value)->filter()->values()->toArray();
+            if (!empty($values)) {
+                $filters[] = [
+                    'display' => $attribute->getTranslations('name'),
+                    'key'     => $attribute->slug,
+                    'data'    => $values,
+                ];
+            }
+        }
+
+        return $filters;
+    }
+
     private function moneyValue($value)
     {
         if ($value === null || $value === '') {
@@ -489,6 +736,4 @@ class ProductService
 
         return round((float) $value, 2);
     }
-
-
 }
