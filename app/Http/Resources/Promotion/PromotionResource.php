@@ -22,7 +22,10 @@ class PromotionResource extends JsonResource
             "image" => [
                 "desktop" => $this->getFirstMediaUrl('promotions-desktop'),
                 "mobile" => $this->getFirstMediaUrl('promotions-mobile'),
-            ]
+            ],
+            $this->mergeWhen($this->relationLoaded('products'), [
+                'products' => \App\Http\Resources\Product\ProductMiniResource::collection($this->products),
+            ]),
         ];
     }
 }

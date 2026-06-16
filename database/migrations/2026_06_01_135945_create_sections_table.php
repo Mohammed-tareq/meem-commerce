@@ -20,6 +20,7 @@ return new class extends Migration
             $table->foreignId('content_page_id')->nullable()->constrained()->nullOnDelete();
             $table->boolean('is_active')->default(true);
             $table->boolean('title_visible')->default(true);
+            $table->boolean('with_product')->default(false);
             $table->json('setting')->nullable();
             $table->index('content_page_id');
             $table->timestamps();

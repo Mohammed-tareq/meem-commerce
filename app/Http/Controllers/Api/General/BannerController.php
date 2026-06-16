@@ -20,6 +20,9 @@ class BannerController extends Controller
 
     public function index(Request $request)
     {
+        if ($slug = $request->query('slug')) {
+            return $this->getBannerBySlug($slug);
+        }
         $banners =  $this->bannerService->getBanners($request);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  BannerResource::collection($banners));
     }

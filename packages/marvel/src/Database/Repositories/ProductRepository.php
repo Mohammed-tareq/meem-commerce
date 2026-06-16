@@ -115,7 +115,7 @@ class ProductRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
-            $product = Product::find($id);
+            $product = Product::findOrFail($id);
             $variants = $request->input('variants', []);
 
 

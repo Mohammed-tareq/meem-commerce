@@ -18,7 +18,7 @@ class BannerResource extends JsonResource
         return [
             'id'          => $this->id,
             'title'       => $this->getTranslation('title', app()->getLocale()),
-            'slug'       => $this->getTranslation('slug', app()->getLocale()),
+            'slug'       => $this->slug,
             'description' => $this->getTranslation('description', app()->getLocale()),
             'image'       => [
                 'desktop' => $this?->getFirstMediaUrl('banners-desktop'),

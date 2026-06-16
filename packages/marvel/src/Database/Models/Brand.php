@@ -17,7 +17,7 @@ class Brand extends Model implements HasMedia
 
     protected $table = 'brands';
 
-    public array $translatable = ['name', 'details', 'slug'];
+    public array $translatable = ['name', 'details'];
 
     protected $fillable = ['name', 'details', 'slug', 'status'];
 
@@ -52,17 +52,8 @@ class Brand extends Model implements HasMedia
     protected static function booted()
     {
         static::saving(function ($brand) {
-
-
-            $brand->slug = [
-                'en' => $brand->getTranslation('name', 'en', false)
-                    ? Str::slug($brand->getTranslation('name', 'en'))
-                    : null,
-
-                'ar' => $brand->getTranslation('name', 'ar', false)
-                    ? str_replace(' ', '-', trim($brand->getTranslation('name', 'ar')))
-                    : null,
-            ];
+            $enName = $brand->getTranslation('name', 'en', false);
+            $brand->slug = $enName ? Str::slug($enName) : null;
         });
     }
 }

@@ -4,6 +4,7 @@ namespace Marvel\Database\Repositories;
 
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Marvel\Database\Models\Promotion;
 use Marvel\Database\Models\ProductVariant;
@@ -81,6 +82,7 @@ class PromotionRepository extends BaseRepository
 
             return $promotion;
         } catch (Exception $e) {
+            Log::error('Promotion store failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             throw new MarvelBadRequestException(COULD_NOT_CREATE_THE_RESOURCE);
         }
     }
@@ -113,6 +115,7 @@ class PromotionRepository extends BaseRepository
         } catch (MarvelBadRequestException $e) {
             throw $e;
         } catch (Exception $e) {
+            Log::error('Promotion update failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             throw new MarvelBadRequestException(COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }

@@ -277,10 +277,7 @@ class ProductSeeder extends Seeder
                         'en' => $productNameEn,
                         'ar' => $productNameAr,
                     ],
-                    'slug' => [
-                        'en' => Str::slug($productNameEn) . '-' . Str::random(5),
-                        'ar' => Str::slug($productNameAr) . '-' . Str::random(5),
-                    ],
+                    'slug' => Str::slug($productNameEn) . '-' . Str::random(5),
                     'description' => [
                         'en' => 'Fresh and high-quality ' . $productNameEn . ' delivered to your doorstep.',
                         'ar' => $productNameAr . ' طازجة وعالية الجودة يتم توصيلها إلى باب منزلك.',

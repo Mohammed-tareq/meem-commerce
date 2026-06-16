@@ -34,12 +34,12 @@ class SliderRepository extends BaseRepository
             DB::beginTransaction();
             $slider = $this->create($request->except('image_desktop', 'image_mobile'));
             if ($request->has('image_desktop')) {
-                if (!$this->uploadSingleImage($request, 'image', $slider, 'slider-image-desktop', 'sliders')) {
+                if (!$this->uploadSingleImage($request, 'image_desktop', $slider, 'slider-image-desktop', 'sliders')) {
                     throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
                 }
             }
             if ($request->has('image_mobile')) {
-                if (!$this->uploadSingleImage($request, 'image', $slider, 'slider-image-mobile', 'sliders')) {
+                if (!$this->uploadSingleImage($request, 'image_mobile', $slider, 'slider-image-mobile', 'sliders')) {
                     throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
                 }
             }

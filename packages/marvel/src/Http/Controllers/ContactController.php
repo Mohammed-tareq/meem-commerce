@@ -67,7 +67,7 @@ class ContactController extends CoreController
             $contact = $this->repository->markAsRead($id);
 
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ContactResource::make($contact));
-        } catch (MarvelException $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
         }
     }
@@ -78,7 +78,7 @@ class ContactController extends CoreController
             $contact = $this->repository->ReplayContact($request, $id);
 
             return $this->apiResponse('Replay sent successfully', 200, true, ContactResource::make($contact));
-        } catch (MarvelException $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
         }
     }
@@ -90,7 +90,7 @@ class ContactController extends CoreController
             $this->repository->findOrFail($id)->delete();
 
             return $this->apiResponse('Contact deleted successfully', 200, true);
-        } catch (MarvelException $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
         }
     }
@@ -102,8 +102,8 @@ class ContactController extends CoreController
             $this->repository->deleteAllContacts();
 
             return $this->apiResponse('All contacts deleted successfully', 200, true);
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
+        } catch (\Exception $e) {
+            return $this->apiResponse(COULD_NOT_DELETE_THE_RESOURCE, 500, false);
         }
     }
     public function deleteAllReadContacts()
@@ -112,8 +112,8 @@ class ContactController extends CoreController
             $this->repository->deleteAllReadContacts();
 
             return $this->apiResponse('All read contacts deleted successfully', 200, true);
-        } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
+        } catch (\Exception $e) {
+            return $this->apiResponse(COULD_NOT_DELETE_THE_RESOURCE, 500, false);
         }
     }
 }

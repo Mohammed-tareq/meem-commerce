@@ -26,6 +26,7 @@ class Section extends Model implements Sortable
         'is_active',
         'content_page_id',
         'title_visible',
+        'with_product',
         'setting',
     ];
 
@@ -33,6 +34,7 @@ class Section extends Model implements Sortable
         'is_active' => 'boolean',
         'order' => 'integer',
         'title_visible' => 'boolean',
+        'with_product' => 'boolean',
         'setting' => 'array',
     ];
     public function contentPage()

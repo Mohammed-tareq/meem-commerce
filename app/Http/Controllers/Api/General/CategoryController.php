@@ -23,6 +23,9 @@ class CategoryController extends Controller
 
     public function index(Request $request)
     {
+        if ($slug = $request->query('slug')) {
+            return $this->getCategoryBySlug($slug);
+        }
         $categories = $this->categoryService->paginate($request);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryHomeResource::collection($categories));
     }

@@ -3,15 +3,18 @@
 namespace Marvel\Http\Controllers;
 
 use CodeZero\UniqueTranslation\UniqueTranslationRule;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Marvel\Database\Models\Role;
 use Marvel\Database\Models\User;
+use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Resources\PermissionResource;
 use Marvel\Http\Resources\RoleResource;
 use Marvel\Http\Resources\UserResource;
 use Marvel\Traits\ApiResponse;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Marvel\Enums\Permission as PermissionEnum;
 
 class RoleAndPermissionController extends CoreController
@@ -87,6 +90,8 @@ class RoleAndPermissionController extends CoreController
             ]);
 
             return $this->apiResponse('Role updated successfully', 200, true, RoleResource::make($role));
+        } catch (RoleDoesNotExist|ModelNotFoundException $e) {
+            throw new MarvelException(NOT_FOUND);
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -98,6 +103,8 @@ class RoleAndPermissionController extends CoreController
             $role = Role::findById($id, 'api');
             $role->delete();
             return $this->apiResponse('Role deleted successfully', 200, true, null);
+        } catch (RoleDoesNotExist|ModelNotFoundException $e) {
+            throw new MarvelException(NOT_FOUND);
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -174,6 +181,8 @@ class RoleAndPermissionController extends CoreController
             $role->syncPermissions($permissions)->load('permissions');
 
             return $this->apiResponse('Permission assigned successfully', 200, true, RoleResource::make($role));
+        } catch (RoleDoesNotExist|ModelNotFoundException $e) {
+            throw new MarvelException(NOT_FOUND);
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }

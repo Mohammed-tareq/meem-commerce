@@ -56,7 +56,7 @@ class Product extends Model implements HasMedia
         'price_after_flash_sale',
         'discount_status',
     ];
-    public array $translatable = ['name', 'description', 'slug'];
+    public array $translatable = ['name', 'description'];
     public $hideMeta = true;
 
 

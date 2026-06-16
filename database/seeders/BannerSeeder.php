@@ -17,84 +17,58 @@ class BannerSeeder extends Seeder
         $banners = [
             [
                 'title' => ['en' => 'Summer Sale', 'ar' => 'تخفيضات الصيف'],
-                'slug' => ['en' => 'summer-sale', 'ar' => 'تخفيضات-الصيف'],
                 'description' => ['en' => 'Up to 50% off on all items', 'ar' => 'خصومات تصل إلى 50% على جميع المنتجات'],
                 'status' => true,
             ],
             [
                 'title' => ['en' => 'New Collection', 'ar' => 'المجموعة الجديدة'],
-                'slug' => ['en' => 'new-collection', 'ar' => 'المجموعة-الجديدة'],
                 'description' => ['en' => 'Discover our latest fashion trends', 'ar' => 'اكتشف أحدث صيحات الموضة لدينا'],
                 'status' => true,
             ],
             [
                 'title' => ['en' => 'Ramadan Offers', 'ar' => 'عروض رمضان'],
-                'slug' => ['en' => 'ramadan-offers', 'ar' => 'عروض-رمضان'],
                 'description' => ['en' => 'Special discounts during Ramadan', 'ar' => 'خصومات خاصة خلال شهر رمضان'],
                 'status' => false,
             ],
             [
                 'title' => ['en' => 'Winter Clearance', 'ar' => 'تصفية الشتاء'],
-                'slug' => ['en' => 'winter-clearance', 'ar' => 'تصفية-الشتاء'],
                 'description' => ['en' => 'Clearance sale on winter clothes', 'ar' => 'تخفيضات على ملابس الشتاء'],
                 'status' => true,
             ],
             [
                 'title' => ['en' => 'Black Friday Deals', 'ar' => 'عروض الجمعة السوداء'],
-                'slug' => ['en' => 'black-friday-deals', 'ar' => 'عروض-الجمعة-السوداء'],
-                'description' => ['en' => 'Massive discounts on electronics', 'ar' => 'خصومات ضخمة على الإلكترونيات'],
+                    'description' => ['en' => 'Massive discounts on electronics', 'ar' => 'خصومات ضخمة على الإلكترونيات'],
                 'status' => true,
             ],
             [
                 'title' => ['en' => 'Back to School', 'ar' => 'العودة إلى المدرسة'],
-                'slug' => ['en' => 'back-to-school', 'ar' => 'العودة-إلى-المدرسة'],
                 'description' => ['en' => 'Special offers on school supplies', 'ar' => 'عروض خاصة على مستلزمات المدارس'],
                 'status' => true,
             ],
             [
                 'title' => ['en' => 'Flash Sale', 'ar' => 'تخفيضات سريعة'],
-                'slug' => ['en' => 'flash-sale', 'ar' => 'تخفيضات-سريعة'],
                 'description' => ['en' => 'Limited time flash sale', 'ar' => 'تخفيضات لفترة محدودة'],
                 'status' => false,
             ],
             [
                 'title' => ['en' => 'Valentine’s Day', 'ar' => 'عيد الحب'],
-                'slug' => ['en' => 'valentines-day', 'ar' => 'عيد-الحب'],
                 'description' => ['en' => 'Romantic gifts and offers', 'ar' => 'هدايا وعروض رومانسية'],
                 'status' => true,
             ],
             [
                 'title' => ['en' => 'Eid Al-Fitr Sale', 'ar' => 'تخفيضات عيد الفطر'],
-                'slug' => ['en' => 'eid-al-fitra-sale', 'ar' => 'تخفيضات-عيد-الفطر'],
                 'description' => ['en' => 'Celebrate Eid with special discounts', 'ar' => 'احتفل بالعيد مع خصومات خاصة'],
                 'status' => true,
             ],
             [
                 'title' => ['en' => 'Cyber Monday', 'ar' => 'سايبر مانداي'],
-                'slug' => ['en' => 'cyber-monday', 'ar' => 'سايبر-مانداي'],
                 'description' => ['en' => 'Exclusive online deals', 'ar' => 'عروض حصرية عبر الإنترنت'],
                 'status' => true,
             ],
         ];
 
         foreach ($banners as $index => $banner) {
-            // generate unique translatable slug from title
-            $title = $banner['title'] ?? null;
-            if ($title && is_array($title)) {
-                $slug = $this->makeUniqueTranslatableSlug(Banner::class, $title['en'] ?? '', $title['ar'] ?? '');
-            } else {
-                $slug = null;
-            }
-
-            $data = $banner;
-            unset($data['slug']);
-
-            $bannerModel = Banner::create($data);
-
-            if ($slug) {
-                $bannerModel->setTranslations('slug', $slug);
-                $bannerModel->save();
-            }
+            $bannerModel = Banner::create($banner);
 
             if ($bannerImagesCount > 0) {
                 $image = $bannerImages[$index % $bannerImagesCount];
@@ -115,20 +89,5 @@ class BannerSeeder extends Seeder
         }
     }
 
-    private function makeUniqueTranslatableSlug(string $modelClass, string $en, string $ar): array
-    {
-        $baseEn = Str::slug($en ?: 'item');
-        $baseAr = str_replace(' ', '-', trim($ar ?: $en));
-        $candidate = $baseEn;
-        $i = 1;
-        while ($modelClass::where('slug->en', $candidate)->exists()) {
-            $i++;
-            $candidate = $baseEn . '-' . $i;
-        }
-        $candidateAr = $baseAr;
-        if ($i > 1) {
-            $candidateAr .= '-' . $i;
-        }
-        return ['en' => $candidate, 'ar' => $candidateAr];
-    }
+   
 }

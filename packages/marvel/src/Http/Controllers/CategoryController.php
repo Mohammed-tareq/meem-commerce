@@ -378,8 +378,10 @@ class CategoryController extends CoreController
                 'message' => 'Category deleted successfully',
                 'status' => true
             ]);
-        } catch (MarvelException $e) {
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
+        } catch (\Illuminate\Database\QueryException $e) {
+            throw new MarvelException('Cannot delete category with existing associated resources');
         }
     }
 

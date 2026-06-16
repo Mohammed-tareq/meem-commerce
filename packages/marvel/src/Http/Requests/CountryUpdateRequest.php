@@ -17,7 +17,6 @@ class CountryUpdateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes', 'array'],
             'name.en' => ['sometimes', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('countries')->ignore($this->route('country'))],
             'name.ar' => ['sometimes', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('countries')->ignore($this->route('country'))],
             'phone_code' => ['nullable', 'string', 'max:5'],

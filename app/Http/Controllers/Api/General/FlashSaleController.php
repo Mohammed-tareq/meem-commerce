@@ -24,6 +24,9 @@ class FlashSaleController extends Controller
 
     public function index(Request $request)
     {
+        if ($slug = $request->query('slug')) {
+            return $this->getFlashSaleBySlug($slug);
+        }
         $flashSales = $this->flashSaleService->paginateFlashSales($request);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FlashSaleResource::collection($flashSales));

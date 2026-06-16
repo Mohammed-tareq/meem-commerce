@@ -4,6 +4,7 @@ namespace Marvel\Database\Repositories;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Marvel\Database\Models\Brand;
 use Marvel\Traits\MediaManager;
 use Prettus\Repository\Criteria\RequestCriteria;
@@ -69,7 +70,8 @@ class BrandRepository extends BaseRepository
             return $brand;
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new HttpException(500, $e->getMessage());
+            Log::error('Brand save failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            throw new HttpException(500, COULD_NOT_CREATE_THE_RESOURCE);
         }
     }
 
@@ -96,7 +98,8 @@ class BrandRepository extends BaseRepository
             return $this->findOrFail($brand->id);
         } catch (\Exception $e) {
             DB::rollBack();
-            throw new HttpException(500, $e->getMessage());
+            Log::error('Brand update failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
+            throw new HttpException(500, COULD_NOT_UPDATE_THE_RESOURCE);
         }
     }
 }

@@ -21,6 +21,9 @@ class BrandController extends Controller
 
     public function index(Request $request)
     {
+        if ($slug = $request->query('slug')) {
+            return $this->getBrandBySlug($slug);
+        }
         $brands =  $this->brandService->getBrands($request);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  BrandResource::collection($brands));
     }

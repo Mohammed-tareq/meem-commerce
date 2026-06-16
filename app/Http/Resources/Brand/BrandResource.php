@@ -18,13 +18,13 @@ class BrandResource extends JsonResource
         return [
             'id'          => $this->id,
             'name'       => $this->getTranslation('name', app()->getLocale()),
-            'slug'       => $this->getTranslation('slug', app()->getLocale()),
+            'slug'       => $this->slug,
             'image'       => [
                 'desktop' => $this?->getFirstMediaUrl('brands-desktop'),
                 'mobile' => $this?->getFirstMediaUrl('brands-mobile'),
             ],
             "status"   => (bool)$this->status,
-            $this->mergeWhen(request()->routeIs('general-brand-with-products'), [
+            $this->mergeWhen($this->relationLoaded('products'), [
                 'products' => ProductMiniResource::collection($this->products),
             ]),
 

@@ -30,11 +30,14 @@ class ContentPageController extends Controller
 
     public function show($slug)
     {
-        $content_page = Cache::remember('content_page_' . $slug, 60 * 60 * 24, function () use ($slug) {
-            return ContentPage::where('slug', $slug)->with('sections', function ($query) {
-                $query->where('is_active', true);
-            })->firstOrFail();
-        });
+        // $content_page = Cache::remember('content_page_' . $slug, 60 * 60 * 24, function () use ($slug) {
+        //     return ContentPage::where('slug', $slug)->with('sections', function ($query) {
+        //         $query->where('is_active', true);
+        //     })->firstOrFail();
+        // });
+        $content_page = ContentPage::where('slug', $slug)->with('sections', function ($query) {
+            $query->where('is_active', true);
+        })->firstOrFail();
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ContentPageResource::make($content_page));
     }
 }

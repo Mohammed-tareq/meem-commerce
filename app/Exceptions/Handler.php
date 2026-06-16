@@ -20,6 +20,7 @@ use Spatie\Permission\Exceptions\WildcardPermissionNotProperlyFormatted;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
+use Illuminate\Database\QueryException;
 use Throwable;
 use Illuminate\Http\Response;
 
@@ -103,7 +104,7 @@ class Handler extends ExceptionHandler
         // Handle ModelNotFoundException
         if ($exception instanceof ModelNotFoundException) {
             $statusCode = 404;
-            $message = $exception->getMessage() ?: 'Resource Not Found';
+            $message = 'Resource Not Found';
         }
         // Handle NotFoundHttpException
         elseif ($exception instanceof NotFoundHttpException) {
@@ -164,6 +165,14 @@ class Handler extends ExceptionHandler
         elseif ($exception instanceof HttpException) {
             $statusCode = $exception->getStatusCode();
             $message = $exception->getMessage() ?: 'HTTP Exception';
+        }
+        // Handle QueryException (SQL errors)
+        elseif ($exception instanceof QueryException) {
+            $statusCode = 409;
+            $message = 'Database error occurred. Please check your request and try again.';
+            if (app()->environment('local')) {
+                $message .= ' ' . $exception->getMessage();
+            }
         }
         // Handle other exceptions
         else {

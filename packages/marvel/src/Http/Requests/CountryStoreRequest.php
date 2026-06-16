@@ -17,7 +17,6 @@ class CountryStoreRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'array'],
             'name.en' => ['required', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('countries')],
             'name.ar' => ['required', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('countries')],
             'phone_code' => ['nullable', 'string', 'max:5'],

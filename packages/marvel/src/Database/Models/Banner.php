@@ -27,23 +27,14 @@ class Banner extends Model implements HasMedia, Sortable
         'status',
         'order',
     ];
-    public $translatable = ['title', 'description', 'slug'];
+    public $translatable = ['title', 'description'];
 
 
     protected static function booted()
     {
         static::saving(function ($banner) {
-
-
-            $banner->slug = [
-                'en' => $banner->getTranslation('title', 'en', false)
-                    ? Str::slug($banner->getTranslation('title', 'en'))
-                    : null,
-
-                'ar' => $banner->getTranslation('title', 'ar', false)
-                    ? str_replace(' ', '-', trim($banner->getTranslation('title', 'ar')))
-                    : null,
-            ];
+            $enTitle = $banner->getTranslation('title', 'en', false);
+            $banner->slug = $enTitle ? Str::slug($enTitle) : null;
         });
     }
 

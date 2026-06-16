@@ -20,8 +20,8 @@ class Faqs extends Model
 
 
     public $fillable = [
-        // 'user_id',
-        // 'shop_id',
+        'user_id',
+        'shop_id',
         'faq_title',
         'faq_description',
         'faq_type',
@@ -29,39 +29,15 @@ class Faqs extends Model
         'status',
     ];
 
-    /**
-     * Return the sluggable configuration array for this model.
-     *
-     * @return array
-     */
-    // public function sluggable(): array
-    // {
-    //     return [
-    //         'slug' => [
-    //             'source' => 'faq_title',
-    //         ]
-    //     ];
-    // }
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
-    // public function scopeWithUniqueSlugConstraints(Builder $query, Model $model): Builder
-    // {
-    //     return $query->where('language', $model->language);
-    // }
-    /**
-     * @return BelongsTo
-     */
-    // public function user(): BelongsTo
-    // {
-    //     return $this->belongsTo(User::class);
-    // }
-
-    // /**
-    //  * @return BelongsTo
-    //  */
-    // public function shop(): BelongsTo
-    // {
-    //     return $this->belongsTo(Shop::class);
-    // }
+    public function shop(): BelongsTo
+    {
+        return $this->belongsTo(Shop::class);
+    }
 
     public function scopeActive (Builder $query): Builder
     {

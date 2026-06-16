@@ -652,6 +652,7 @@ Route::group([
     Route::post('users/unblock-user', [UserController::class, 'activeUser']);
     Route::apiResource('taxes', TaxController::class);
     Route::apiResource('shippings', ShippingController::class);
+    Route::apiResource('shipping-prices', ShippingPriceController::class);
     Route::post('approve-shop', [ShopController::class, 'approveShop']);
     Route::post('disapprove-shop', [ShopController::class, 'disApproveShop']);
     Route::post('approve-withdraw', [WithdrawController::class, 'approveWithdraw']);

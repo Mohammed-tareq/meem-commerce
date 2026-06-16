@@ -6,6 +6,7 @@ use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Marvel\Models\Section;
 
 class UpdateSectionRequest extends FormRequest
 {
@@ -22,8 +23,36 @@ class UpdateSectionRequest extends FormRequest
             'order' => 'sometimes|integer',
             'is_active' => 'sometimes|in:0,1',
             'title_visible' => 'sometimes|in:0,1',
+            'with_product' => 'sometimes|boolean',
             'endpoint' => 'sometimes|string|max:255',
+            'setting' => 'nullable|array',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $withProduct = $this->input('with_product');
+
+            if (is_null($withProduct)) {
+                $sectionId = $this->route('section');
+                if ($sectionId) {
+                    $section = Section::find($sectionId);
+                    $withProduct = $section ? $section->with_product : false;
+                }
+            }
+
+            if ($withProduct) {
+                $setting = $this->input('setting', []);
+                $back = $setting['back'] ?? [];
+                $allowedKeys = ['slug'];
+                $extraKeys = array_diff(array_keys($back), $allowedKeys);
+
+                if (!empty($extraKeys)) {
+                    $validator->errors()->add('setting.back', 'When with_product is true, only "slug" is allowed in setting.back.');
+                }
+            }
+        });
     }
 
     public function failedValidation(Validator $validator)

@@ -17,7 +17,7 @@ class Slider extends Model implements HasMedia, Sortable
     use InteractsWithMedia, SortableTrait, SoftDeletes, HasTranslations;
     protected $table = 'sliders';
 
-    public array $translatable = ['title', 'slug'];
+    public array $translatable = ['title'];
     public $sortable = [
         'order_column_name' => 'order',
         'sort_when_creating' => true,
@@ -25,6 +25,7 @@ class Slider extends Model implements HasMedia, Sortable
 
     public $fillable = [
         'title',
+        'slug',
         'order',
         'status'
     ];
@@ -32,18 +33,8 @@ class Slider extends Model implements HasMedia, Sortable
     protected static function booted()
     {
         static::saving(function ($slider) {
-
-            $title = $slider->title ?? [];
-
-            $slider->slug = [
-                'en' => isset($title['en'])
-                    ? Str::slug($title['en'])
-                    : null,
-
-                'ar' => isset($title['ar'])
-                    ? str_replace(' ', '-', trim($title['ar']))
-                    : null,
-            ];
+            $enTitle = $slider->getTranslation('title', 'en', false);
+            $slider->slug = $enTitle ? Str::slug($enTitle) : null;
         });
     }
 

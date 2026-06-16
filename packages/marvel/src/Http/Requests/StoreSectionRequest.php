@@ -20,6 +20,24 @@ class StoreSectionRequest extends FormRequest
             'title.*' => ['required', 'string', 'max:50', UniqueTranslationRule::for('sections', 'title')],
             'endpoint' => 'nullable|string',
             'is_active' => 'nullable|in:0,1',
+            'with_product' => 'required|boolean',
+            'setting' => 'nullable|array',
         ];
+    }
+
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->input('with_product')) {
+                $setting = $this->input('setting', []);
+                $back = $setting['back'] ?? [];
+                $allowedKeys = ['slug'];
+                $extraKeys = array_diff(array_keys($back), $allowedKeys);
+
+                if (!empty($extraKeys)) {
+                    $validator->errors()->add('setting.back', 'When with_product is true, only "slug" is allowed in setting.back.');
+                }
+            }
+        });
     }
 }

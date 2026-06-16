@@ -18,10 +18,20 @@ class  PromotionController extends Controller
         $this->promotionService = $promotionService;
     }
 
-    public function index( Request $request)
+    public function index(Request $request)
     {
-        $promotions =  $this->promotionService->paginatePromotion($request);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true,  PromotionResource::collection($promotions));
+        if ($slug = $request->query('slug')) {
+            $promotion = $this->promotionService->getPromotionBySlug($slug);
+            if (!$promotion) {
+                return $this->apiResponse(NOT_FOUND, 404, false);
+            }
+            if ($request->boolean('with_product') && $promotion->relationLoaded('products')) {
+                $promotion->setRelation('products', $promotion->products->take(1));
+            }
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PromotionResource::make($promotion));
+        }
+        $promotions = $this->promotionService->paginatePromotion($request);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PromotionResource::collection($promotions));
     }
     public function getPromotionBySlug($slug)
     {
