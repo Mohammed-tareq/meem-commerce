@@ -23,7 +23,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 0,
                 'setting' => [
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
-                    'back' => ['limit' => 5]
+                    'back' => ['limit' => 5, 'bannersId' => []]
                 ]
             ],
             [
@@ -33,7 +33,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 1,
                 'setting' => [
                     'front' => ['columns_count' => 4],
-                    'back' => ['limit' => 4]
+                    'back' => ['limit' => 4, 'promotionsId' => []]
                 ]
             ],
             [
@@ -43,7 +43,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 2,
                 'setting' => [
                     'front' => ['columns_count' => 8, 'shape' => 'circle'],
-                    'back' => ['limit' => 8]
+                    'back' => ['limit' => 8, 'categoriesId' => [1,2,3]]
                 ]
             ],
             [
@@ -53,7 +53,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 3,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => false],
-                    'back' => ['limit' => 10, 'type'=>'best_product_sales']
+                    'back' => ['limit' => 10, 'type'=>'best_product_sales', 'productsId' => []]
                 ]
             ],
             [
@@ -63,7 +63,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 4,
                 'setting' => [
                     'front' => ['theme' => 'dark', 'show_timer' => true],
-                    'back' => ['status' => 'active']
+                    'back' => ['status' => 'active', 'flashSalesId' => []]
                 ]
             ],
             [
@@ -73,7 +73,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 5,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => true, 'timer_end_at' => '2026-07-01 00:00:00'],
-                    'back' => ['limit' => 10, 'type'=>'flash_sales_product']
+                    'back' => ['limit' => 10, 'type'=>'flash_sales_product', 'productsId' => []]
                 ]
             ],
             [
@@ -83,7 +83,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 6,
                 'setting' => [
                     'front' => ['columns_count' => 6],
-                    'back' => ['limit' => 6]
+                    'back' => ['limit' => 6, 'brandsId' => []]
                 ]
             ],
             [
@@ -93,7 +93,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 7,
                 'setting' => [
                     'front' => ['columns_count' => 5],
-                    'back' => ['limit' => 10, 'type'=>'brands_product']
+                    'back' => ['limit' => 10, 'type'=>'brands_product', 'productsId' => []]
                 ]
             ],
             [
@@ -103,7 +103,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 8,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'badge_text' => 'LOW STOCK'],
-                    'back' => ['limit' => 10, 'type'=>'product_discount_today_or_low_qty']
+                    'back' => ['limit' => 10, 'type'=>'product_discount_today_or_low_qty', 'productsId' => []]
                 ]
             ],
             [
@@ -113,7 +113,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 9,
                 'setting' => [
                     'front' => ['layout' => 'grid'],
-                    'back' => ['only_valid' => true]
+                    'back' => ['only_valid' => true, 'couponsId' => []]
                 ]
             ],
             [
@@ -123,7 +123,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 10,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => true],
-                    'back' => ['limit' => 10, 'type'=>'flash_sales_end_today']
+                    'back' => ['limit' => 10, 'type'=>'flash_sales_end_today', 'productsId' => []]
                 ]
             ],
             [
@@ -133,7 +133,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 10,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => true],
-                    'back' => ['limit' => 10, 'type'=>'flash_sales_end_week']
+                    'back' => ['limit' => 10, 'type'=>'flash_sales_end_week', 'productsId' => []]
                 ]
             ],
             [
@@ -143,7 +143,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 11,
                 'setting' => [
                     'front' => ['layout' => 'list'],
-                    'back' => ['parent_only' => true]
+                    'back' => ['parent_only' => true, 'categoriesId' => []]
                 ]
             ],
             [
@@ -153,7 +153,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 12,
                 'setting' => [
                     'front' => ['columns_count' => 5],
-                    'back' => ['limit' => 10, 'type'=>'product_for_parent_category']
+                    'back' => ['limit' => 10, 'type'=>'product_for_parent_category', 'productsId' => []]
                 ]
             ],
             [
@@ -163,7 +163,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 13,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'badge_text' => 'NEW'],
-                    'back' => ['limit' => 10, 'type'=>'new_arrivals']
+                    'back' => ['limit' => 10, 'type'=>'new_arrivals', 'productsId' => []]
                 ]
             ],
             [
@@ -173,7 +173,7 @@ class ContentPageSeeder extends Seeder
                 'order' => 14,
                 'setting' => [
                     'front' => ['columns_count' => 5],
-                    'back' => ['limit' => 10, 'type'=>'all_product_discounts']
+                    'back' => ['limit' => 10, 'type'=>'all_product_discounts', 'productsId' => []]
                 ]
             ],
         ];

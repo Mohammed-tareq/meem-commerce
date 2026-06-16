@@ -26,10 +26,10 @@ class ProductMiniResource extends JsonResource
             'price_after_flash_sale' => $this->roundMoney($this->getRawOrComputedValue('price_after_flash_sale')),
             'has_discount' => $this->has_discount,
             'discount_type' => $this->discount_type,
-            'discount_amount' => $this->discount_amount,
-            'quantity' => $this->stock_quantity,
+            'discount_amount' => $this->roundMoney($this->discount_amount),
+            'quantity' => (int) $this->stock_quantity,
             'discount_valid' => (bool) $this->isDiscountActive(),
-            'ratings' => (float) ($this->reviews_avg_rating ?? $this->reviews()->avg('rating') ?? 0),
+            'ratings' => round((float) ($this->reviews_avg_rating ?? $this->reviews()->avg('rating') ?? 0), 2),
             'image' => [
                 'thumbnail' => $this->getFirstMediaUrl('products'),
                 'original' => $this->getMediaImages('products'),

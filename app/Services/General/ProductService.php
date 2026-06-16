@@ -29,6 +29,7 @@ class ProductService
             ->withCount(['reviews' => fn(Builder $builder) => $builder->approved()]);
 
         $this->applyProductFilters($query, $request);
+        $this->applyIdsFilter($query, $request, 'productsId');
 
         $term = trim((string) $request->get('search', ''));
         if ($term !== '') {
@@ -58,6 +59,7 @@ class ProductService
             ->withCount(['reviews' => fn(Builder $b) => $b->approved()]);
 
         $this->applyProductFilters($query, $request);
+        $this->applyIdsFilter($query, $request, 'productsId');
 
         if (!empty($scoutIds)) {
             $query->whereIn('products.id', $scoutIds);
@@ -73,14 +75,16 @@ class ProductService
     public function paginate(Request $request)
     {
         $limit = $this->getLimit($request);
+        $order = $request->query('order', 'desc');
         $query = $this->buildFilteredBaseQuery($request);
 
-        return $query->orderByDesc('id')->paginate($limit);
+        return $query->orderBy('id', $order)->paginate($limit);
     }
 
     public function paginateFlashSales(Request $request)
     {
         $limit = $this->getLimit($request);
+        $order = $request->query('order', 'desc');
 
         $query = Product::query()
             ->with(['categories', 'variations', 'brands'])
@@ -95,7 +99,7 @@ class ProductService
             $this->applyProductSearch($query, $term, app()->getLocale());
         }
 
-        return $query->orderByDesc('id')->paginate($limit);
+        return $query->orderBy('id', $order)->paginate($limit);
     }
 
     public function getProductBySlug($slug, $limit = 10)
@@ -611,6 +615,18 @@ class ProductService
             $q->where($field . '->' . $locale, 'like', "%$term%")
                 ->orWhere($field, 'like', "%$term%");
         });
+    }
+
+    private function applyIdsFilter(Builder $query, Request $request, string $paramName): void
+    {
+        $ids = $request->query($paramName);
+        if (!empty($ids)) {
+            $ids = is_array($ids) ? $ids : explode(',', $ids);
+            $ids = array_filter($ids, 'is_numeric');
+            if (!empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
+        }
     }
 
     public function getLimit(Request $request): int

@@ -102,6 +102,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $type = $request->query('type', '');
+        $order = $request->query('order', 'desc');
         if (!empty($type)) {
             $handler = $this->productStrategyResolver->resolve($type);
             $data = $handler->getProducts($request);
@@ -157,7 +158,7 @@ class ProductController extends Controller
             if (in_array($orderPrice, ['asc', 'desc'])) {
                 $query->orderBy('price', $orderPrice);
             }
-            $data = $query->orderByDesc('id')->paginate($this->productService->getLimit($request));
+            $data = $query->orderBy('id', $order)->paginate($this->productService->getLimit($request));
         }
 
         $collection = new ProductCollectionMini($data);
