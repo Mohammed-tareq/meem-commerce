@@ -314,6 +314,7 @@ Route::group(
         Route::patch('content-pages/{content_page}/toggle-active', [ContentPageController::class, 'toggleActive']);
         Route::apiResource('content-pages', ContentPageController::class);
         Route::post('sections/reorder', [SectionController::class, 'reorder']);
+        Route::get('sections/types', [SectionController::class, 'getTypeSection']);
         Route::patch('sections/{section}/toggle-active', [SectionController::class, 'toggleStatus']);
         Route::apiResource('sections', SectionController::class);
     }

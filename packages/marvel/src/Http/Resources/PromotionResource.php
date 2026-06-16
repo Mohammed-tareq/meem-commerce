@@ -11,6 +11,7 @@ class PromotionResource extends Resource
         return [
             'id' => $this->id,
             'name' => $this->name,
+            'slug' =>$this->slug,
             'type' => $this->typeByLang(),
             'discount_type' => $this->type_amount,
             'value' => $this->value,

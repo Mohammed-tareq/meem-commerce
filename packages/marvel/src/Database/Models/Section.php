@@ -9,7 +9,7 @@ use Spatie\Translatable\HasTranslations;
 
 class Section extends Model implements Sortable
 {
-    use SortableTrait , HasTranslations;
+    use SortableTrait, HasTranslations;
 
     protected $table = 'sections';
     public array $translatable = ['title'];

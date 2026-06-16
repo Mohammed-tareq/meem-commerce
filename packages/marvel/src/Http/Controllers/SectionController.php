@@ -20,7 +20,7 @@ class SectionController extends CoreController
      */
     public function index()
     {
-        $sections = Section::orderBy('order')->get();
+        $sections = Section::ordered()->get();
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, PagesSectionResource::collection($sections));
     }
 
@@ -31,7 +31,6 @@ class SectionController extends CoreController
     {
         try {
             $section = Section::create($request->validated());
-            $section     = $section->fresh();
             return $this->apiResponse("Section created successfully", 200, true, PagesSectionResource::make($section));
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
@@ -87,8 +86,8 @@ class SectionController extends CoreController
     {
         try {
             $request->validate([
-                'sections'   => 'required|array|distinct',
-                'sections.*' => 'required|exists:sections,id',
+                'sections'   => 'required|array',
+                'sections.*' => 'required|integer|distinct|exists:sections,id',
             ]);
 
             Section::setNewOrder($request->sections);
@@ -103,5 +102,11 @@ class SectionController extends CoreController
         $section->is_active = !$section->is_active;
         $section->save();
         return $this->apiResponse(UPDATE_DATA_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
+    }
+
+    public function getTypeSection()
+    {
+        $types = Section::get()->pluck('type')->unique();
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $types);
     }
 }
