@@ -30,7 +30,7 @@ class AdminCreateUserRequest extends FormRequest
             'roles' => 'required|array',
             'roles.*' => 'integer|exists:roles,id',
             "name" => "required",
-            "email" => "required|email",
+            "email" => "required|email|unique:users,email",
             "password" => "required|min:6|confirmed|max:50",
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp',
             'is_active' => 'boolean',

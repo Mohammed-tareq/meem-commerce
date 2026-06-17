@@ -95,7 +95,7 @@ class FlashSaleRepository extends BaseRepository
             return $flash_sale;
         } catch (Exception $th) {
             DB::rollBack();
-            throw new Exception(SOMETHING_WENT_WRONG, $th->getMessage());
+            throw new HttpException(500, SOMETHING_WENT_WRONG);
         }
     }
 
@@ -134,7 +134,7 @@ class FlashSaleRepository extends BaseRepository
             return $flash_sale;
         } catch (Exception $e) {
             DB::rollBack();
-            throw new Exception(SOMETHING_WENT_WRONG, $e->getMessage());
+            throw new HttpException(500, SOMETHING_WENT_WRONG);
         }
     }
 

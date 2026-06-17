@@ -5,6 +5,7 @@ namespace Marvel\Http\Controllers;
 use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Marvel\Database\Models\Role;
 use Marvel\Database\Models\User;
@@ -105,6 +106,8 @@ class RoleAndPermissionController extends CoreController
             return $this->apiResponse('Role deleted successfully', 200, true, null);
         } catch (RoleDoesNotExist|ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
+        } catch (\Illuminate\Database\QueryException $e) {
+            return $this->apiResponse('Cannot delete role with assigned users', 409, false);
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -143,7 +146,10 @@ class RoleAndPermissionController extends CoreController
             $user->load('roles', 'permissions');
 
             return $this->apiResponse('Role removed successfully', 200, true);
+        } catch (ModelNotFoundException $e) {
+            throw new MarvelException(NOT_FOUND);
         } catch (\Exception $e) {
+            Log::error('removeRoleFromUser failed: ' . $e->getMessage(), ['userId' => $userId]);
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }

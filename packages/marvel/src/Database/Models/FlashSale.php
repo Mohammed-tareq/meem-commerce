@@ -133,9 +133,14 @@ class FlashSale extends Model implements HasMedia
     }
     public function scopeSearch($query, $field, $term, $locale)
     {
-        return  $query->where(function ($q) use ($field, $term, $locale) {
-            $q->where($field . '->' . $locale, 'like', "%$term%")
-                ->orWhere($field, 'like', "%$term%");
+        return $query->where(function ($q) use ($field, $term, $locale) {
+            $translatable = $this->translatable ?? [];
+            if (in_array($field, $translatable)) {
+                $q->where($field . '->' . $locale, 'like', "%$term%")
+                    ->orWhere($field, 'like', "%$term%");
+            } else {
+                $q->where($field, 'like', "%$term%");
+            }
         });
     }
 

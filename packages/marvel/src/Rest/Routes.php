@@ -217,9 +217,9 @@ Route::apiResource('shops', ShopController::class, [
 Route::apiResource('settings', SettingsController::class, [
     'only' => ['index'],
 ]);
-// Route::apiResource('reviews', ReviewController::class, [
-//     'only' => ['index', 'show'],
-// ]);
+Route::apiResource('reviews', ReviewController::class, [
+    'only' => ['index', 'show'],
+]);
 Route::apiResource('questions', QuestionController::class, [
     'only' => ['index', 'show'],
 ]);

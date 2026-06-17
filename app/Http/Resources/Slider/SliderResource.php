@@ -17,6 +17,7 @@ class SliderResource extends JsonResource
         return [
             "id" => $this->id,
             "title" => $this->getTranslation('title', app()->getLocale()),
+            "slug" => $this->slug,
             "status" => (bool)$this->status,
             "image" => [
                 "desktop" => $this->getFirstMediaUrl('sliders-desktop'),
