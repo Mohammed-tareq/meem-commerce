@@ -11,6 +11,8 @@ use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Promotion;
 use Marvel\Database\Models\Slider;
+use Marvel\Database\Models\SectionType;
+use Marvel\Database\Models\SectionTypeSetting;
 use Marvel\Models\ContentPage;
 
 class ContentPageSeeder extends Seeder
@@ -224,6 +226,35 @@ class ContentPageSeeder extends Seeder
         ];
 
         $page->sections()->delete();
-        $page->sections()->createMany($items);
+
+        $createdTypes = [];
+        foreach ($items as $item) {
+            $settingData = $item['setting'] ?? [];
+            unset($item['setting']);
+
+            $page->sections()->create($item);
+
+            if (!in_array($item['type'], $createdTypes)) {
+                $sectionType = SectionType::firstOrCreate(['type' => $item['type']]);
+
+                SectionTypeSetting::where('section_type_id', $sectionType->id)->delete();
+
+                if ($front = $settingData['front'] ?? null) {
+                    SectionTypeSetting::create([
+                        'section_type_id' => $sectionType->id,
+                        'setting_key' => 'front',
+                        'value' => $front,
+                    ]);
+                }
+                if ($back = $settingData['back'] ?? []) {
+                    SectionTypeSetting::create([
+                        'section_type_id' => $sectionType->id,
+                        'setting_key' => 'back',
+                        'value' => $back,
+                    ]);
+                }
+                $createdTypes[] = $item['type'];
+            }
+        }
     }
 }

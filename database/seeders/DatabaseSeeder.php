@@ -77,6 +77,7 @@ class DatabaseSeeder extends Seeder
             BrandSeeder::class,
             ContactSeeder::class,
             ProductSeeder::class,
+            SliderProductSeeder::class,
             ReviewSeeder::class,
             ProductVariantSeeder::class,
             BrandProductSeeder::class,
@@ -87,7 +88,7 @@ class DatabaseSeeder extends Seeder
             // ShopRelationsSeeder::class,
             WishlistSeeder::class,
             ContentPageSeeder::class,
-            // SectionSeeder::class,
+            SectionSeeder::class,
         ]);
     }
 }

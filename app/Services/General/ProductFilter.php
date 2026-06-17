@@ -10,6 +10,7 @@ use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Promotion;
+use Marvel\Database\Models\Slider;
 
 class ProductFilter
 {
@@ -96,6 +97,19 @@ class ProductFilter
             }
         }
 
+        // 5b. Filter by Slider
+        if (!empty($filters['slider'])) {
+            $sliderSlugs = is_array($filters['slider']) ? $filters['slider'] : explode(',', $filters['slider']);
+            $sliderIds = Slider::where(function ($q) use ($sliderSlugs) {
+                foreach ($sliderSlugs as $slug) {
+                    $q->orWhere('slug', $slug);
+                }
+            })->pluck('id')->toArray();
+            if (!empty($sliderIds)) {
+                $query->whereHas('sliders', fn($q) => $q->whereIn('sliders.id', $sliderIds));
+            }
+        }
+
         // 6. Filter by Price
         $minPrice = $filters['minPrice'] ?? $filters['price_min'] ?? null;
         $maxPrice = $filters['maxPrice'] ?? $filters['price_max'] ?? null;
@@ -134,7 +148,7 @@ class ProductFilter
         }
 
         // 8. Dynamic Attribute Filters
-        $reservedFilterKeys = ['brand', 'category', 'promotion', 'flash_sale', 'banner', 'minprice', 'maxprice', 'price_min', 'price_max', 'search', 'limit', 'rating', 'rating_min', 'rating_max', 'height', 'width', 'length', 'weight', 'categoriesid', 'brandsid', 'promotionsid', 'flashsalesid', 'bannersid', 'couponsid'];
+        $reservedFilterKeys = ['brand', 'category', 'promotion', 'flash_sale', 'banner', 'slider', 'minprice', 'maxprice', 'price_min', 'price_max', 'search', 'limit', 'rating', 'rating_min', 'rating_max', 'height', 'width', 'length', 'weight', 'categoriesid', 'brandsid', 'promotionsid', 'flashsalesid', 'bannersid', 'slidersid', 'couponsid'];
         $attributeSlugs = Attribute::pluck('slug')->toArray();
 
         foreach ($filters as $key => $value) {

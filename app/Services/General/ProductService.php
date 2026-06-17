@@ -14,6 +14,7 @@ use Marvel\Database\Models\Attribute;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Review;
+use Marvel\Database\Models\Slider;
 use Marvel\Traits\MediaManager;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -652,6 +653,7 @@ class ProductService
             'flashSalesId' => 'flash_sales',
             'bannersId'    => null,
             'couponsId'    => 'coupons',
+            'slidersId'    => 'sliders',
         ];
 
         foreach ($relations as $param => $relation) {
@@ -696,6 +698,7 @@ class ProductService
             'brand'    => ['en' => 'Brand', 'ar' => 'العلامة التجارية'],
             'category' => ['en' => 'Category', 'ar' => 'الفئة'],
             'banner'   => ['en' => 'Banner', 'ar' => 'اللافتة'],
+            'slider'   => ['en' => 'Slider', 'ar' => 'السلايدر'],
             'height'   => ['en' => 'Height', 'ar' => 'الارتفاع'],
             'width'    => ['en' => 'Width', 'ar' => 'العرض'],
             'length'   => ['en' => 'Length', 'ar' => 'الطول'],
@@ -745,6 +748,21 @@ class ProductService
                 'display' => $displayLabels['banner'][app()->getLocale()],
                 'key'     => 'banner',
                 'data'    => $banners,
+            ];
+        }
+
+        $sliders = Slider::active()
+            ->whereHas('products', fn($q) => $q->whereIn('products.id', $filteredIds))
+            ->get()
+            ->map(fn($s) => $s->slug)
+            ->filter()
+            ->values()
+            ->toArray();
+        if (!empty($sliders)) {
+            $filters[] = [
+                'display' => $displayLabels['slider'][app()->getLocale()],
+                'key'     => 'slider',
+                'data'    => $sliders,
             ];
         }
 

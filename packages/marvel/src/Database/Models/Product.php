@@ -447,6 +447,14 @@ class Product extends Model implements HasMedia
     }
 
     /**
+     * @return BelongsToMany
+     */
+    public function sliders(): BelongsToMany
+    {
+        return $this->belongsToMany(Slider::class, 'slider_product');
+    }
+
+    /**
      * flash_sale_requests
      *
      * @return BelongsToMany

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Slider;
 
+use App\Http\Resources\Product\ProductMiniResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,7 +23,10 @@ class SliderResource extends JsonResource
             "image" => [
                 "desktop" => $this->getFirstMediaUrl('sliders-desktop'),
                 "mobile" => $this->getFirstMediaUrl('sliders-mobile'),
-            ]
+            ],
+            "products" => $this->whenLoaded('products', function () {
+                return ProductMiniResource::collection($this->products);
+            }),
         ];
     }
 }

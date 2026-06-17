@@ -56,7 +56,10 @@ Route::prefix('general')->middleware(['api', 'check-lang'])->group(function () {
 
 
     //========================= sliders=========================//
-    Route::get('sliders', [SliderController::class, 'index']);
+    Route::controller(SliderController::class)->group(function () {
+        Route::get('sliders', 'index');
+        Route::get('sliders/{slug}', 'getSliderBySlug');
+    });
 
     //========================= flash-sales=========================//
     Route::controller(FlashSaleController::class)->group(function () {

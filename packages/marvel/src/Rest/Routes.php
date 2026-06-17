@@ -45,6 +45,7 @@ use Marvel\Http\Controllers\ShippingController;
 use Marvel\Http\Controllers\ShopController;
 use Marvel\Http\Controllers\SliderController;
 use Marvel\Http\Controllers\SectionController;
+use Marvel\Http\Controllers\SectionTypeController;
 use Marvel\Http\Controllers\TagController;
 use Marvel\Http\Controllers\TaxController;
 use Marvel\Http\Controllers\TypeController;
@@ -235,7 +236,7 @@ Route::apiResource('manufacturers', ManufacturerController::class, [
 Route::apiResource('banners', BannerController::class, [
     'only' => ['index', 'show'],
 ]);
-Route::apiResource('sliders', BannerController::class, [
+Route::apiResource('sliders', SliderController::class, [
     'only' => ['index'],
 ]);
 Route::post('orders/checkout/verify', [CheckoutController::class, 'verify']);
@@ -317,6 +318,9 @@ Route::group(
         Route::get('sections/types', [SectionController::class, 'getTypeSection']);
         Route::patch('sections/{section}/toggle-active', [SectionController::class, 'toggleStatus']);
         Route::apiResource('sections', SectionController::class);
+        Route::apiResource('section-types', SectionTypeController::class);
+        Route::post('section-types/{type}/settings', [SectionTypeController::class, 'updateSettings']);
+        Route::get('section-types/{type}/settings', [SectionTypeController::class, 'settings']);
     }
 );
 

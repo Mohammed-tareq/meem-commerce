@@ -19,13 +19,14 @@ class UpdateSectionRequest extends FormRequest
     {
         return [
             'title' => 'sometimes|array',
-            'title.*' => ['sometimes', 'string', 'max:50' , UniqueTranslationRule::for('sections', 'title')->ignore($this->route('section'))],
+            'title.*' => ['sometimes', 'string', 'max:50'],
             'order' => 'sometimes|integer',
             'is_active' => 'sometimes|in:0,1',
             'title_visible' => 'sometimes|in:0,1',
             'with_product' => 'sometimes|boolean',
-            'endpoint' => 'sometimes|string|max:255',
             'setting' => 'nullable|array',
+            'setting.front' => 'nullable|array',
+            'setting.back' => 'nullable|array',
         ];
     }
 
@@ -35,10 +36,9 @@ class UpdateSectionRequest extends FormRequest
             $withProduct = $this->input('with_product');
 
             if (is_null($withProduct)) {
-                $sectionId = $this->route('section');
-                if ($sectionId) {
-                    $section = Section::find($sectionId);
-                    $withProduct = $section ? $section->with_product : false;
+                $section = $this->route('section');
+                if ($section) {
+                    $withProduct = $section->with_product ?? false;
                 }
             }
 

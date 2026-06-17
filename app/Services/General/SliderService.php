@@ -33,4 +33,13 @@ class SliderService
 
         return $sliders->orderBy('id', $order)->limit($limit)->get();
     }
+
+    public function getSliderBySlug($slug)
+    {
+        $slider = Slider::active()->where('slug', $slug)->first();
+        if ($slider) {
+            $slider->load('products');
+        }
+        return $slider;
+    }
 }

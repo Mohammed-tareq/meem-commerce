@@ -18,10 +18,13 @@ class StoreSectionRequest extends FormRequest
             'type' => 'required|string|max:100',
             'title' => 'required|array',
             'title.*' => ['required', 'string', 'max:50', UniqueTranslationRule::for('sections', 'title')],
-            'endpoint' => 'nullable|string',
             'is_active' => 'nullable|in:0,1',
-            'with_product' => 'required|boolean',
+            'title_visible' => 'nullable|in:0,1',
+            'order' => 'nullable|integer',
+            'with_product' => 'required|in:0,1',
             'setting' => 'nullable|array',
+            'setting.front' => 'nullable|array',
+            'setting.back' => 'nullable|array',
         ];
     }
 
