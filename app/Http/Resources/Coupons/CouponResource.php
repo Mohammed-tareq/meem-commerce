@@ -17,6 +17,7 @@ class CouponResource extends JsonResource
         return [
             'id'          => $this->id,
             'name'       => $this->getTranslation('name', app()->getLocale()),
+            'slug' => $this->slug,
             'image'       => [
                 'desktop' => $this?->getFirstMediaUrl('coupons-desktop'),
                 'mobile' => $this?->getFirstMediaUrl('coupons-mobile'),
