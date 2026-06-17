@@ -50,9 +50,10 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Sliders', 'ar' => 'سلايدر'],
                 'endpoint' => 'sliders',
                 'order' => 0,
-                'with_product' => true,
+                'with_product' => false,
                 'setting' => [
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                    'back' => []
                 ]
             ],
             [
@@ -60,10 +61,10 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Promotions', 'ar' => 'عروض'],
                 'endpoint' => 'promotions',
                 'order' => 1,
-                'with_product' => true,
+                'with_product' => false,
                 'setting' => [
                     'front' => ['columns_count' => 4],
-                    'back' => ['slug' => $firstPromotionSlug]
+                    'back' => []
                 ]
             ],
             [
@@ -74,7 +75,7 @@ class ContentPageSeeder extends Seeder
                 'with_product' => false,
                 'setting' => [
                     'front' => ['columns_count' => 8, 'shape' => 'circle'],
-                    'back' => ['limit' => 8, 'categoriesId' => $activeCategories]
+                    'back' => []
                 ]
             ],
             [
@@ -96,7 +97,7 @@ class ContentPageSeeder extends Seeder
                 'with_product' => false,
                 'setting' => [
                     'front' => ['theme' => 'dark', 'show_timer' => true],
-                    'back' => ['status' => 'active', 'flashSalesId' => $validFlashSales]
+                    'back' => ['status' => 'active', 'flashSalesId' => $validFlashSales],
                 ]
             ],
             [

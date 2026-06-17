@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Category;
+use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Enums\DiscountType;
@@ -36,6 +37,7 @@ class ProductSeeder extends Seeder
             });
             $allCategoriesById = Category::all()->keyBy('id');
             $banners = Banner::pluck('id')->toArray();
+            $couponIds = Coupon::pluck('id')->toArray();
 
             $skuCategoryMap = [
                 'VEG' => 'Vegetables & Fruits',
@@ -329,6 +331,13 @@ class ProductSeeder extends Seeder
 
                 if ($flashSale) {
                     $product->flash_sales()->attach($flashSale->id);
+                }
+
+                // coupon assignment
+                if (!empty($couponIds)) {
+                    $couponCount = rand(1, min(3, count($couponIds)));
+                    $attachedCoupons = (array) array_rand(array_flip($couponIds), $couponCount);
+                    $product->coupons()->attach($attachedCoupons);
                 }
 
                 // category assignment - match to specific sub-category + all ancestors

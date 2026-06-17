@@ -5,6 +5,7 @@ namespace App\Services\General;
 use Illuminate\Database\Eloquent\Builder;
 use Marvel\Database\Models\Attribute;
 use Marvel\Database\Models\AttributeValue;
+use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\FlashSale;
@@ -15,14 +16,10 @@ class ProductFilter
     private function resolveIds(string $modelClass, array $values): array
     {
         $locale = app()->getLocale();
-        return $modelClass::where(function ($q) use ($values, $locale, $modelClass) {
+        return $modelClass::where(function ($q) use ($values, $locale) {
             foreach ($values as $val) {
-                $q->orWhere("name->{$locale}", $val);
-                if ($modelClass === Category::class) {
-                    $q->orWhere('slug', $val);
-                } else {
-                    $q->orWhere("slug->{$locale}", $val);
-                }
+                $q->orWhere("name->{$locale}", $val)
+                  ->orWhere('slug', $val);
             }
         })->pluck('id')->toArray();
     }
@@ -84,6 +81,21 @@ class ProductFilter
             });
         }
 
+        // 5. Filter by Banner
+        if (!empty($filters['banner'])) {
+            $bannerSlugs = is_array($filters['banner']) ? $filters['banner'] : explode(',', $filters['banner']);
+            $locale = app()->getLocale();
+            $bannerIds = Banner::where(function ($q) use ($bannerSlugs, $locale) {
+                foreach ($bannerSlugs as $slug) {
+                    $q->orWhere("title->{$locale}", $slug)
+                      ->orWhere('slug', $slug);
+                }
+            })->pluck('id')->toArray();
+            if (!empty($bannerIds)) {
+                $query->whereIn('products.banner_id', $bannerIds);
+            }
+        }
+
         // 6. Filter by Price
         $minPrice = $filters['minPrice'] ?? $filters['price_min'] ?? null;
         $maxPrice = $filters['maxPrice'] ?? $filters['price_max'] ?? null;
@@ -122,7 +134,7 @@ class ProductFilter
         }
 
         // 8. Dynamic Attribute Filters
-        $reservedFilterKeys = ['brand', 'category', 'promotion', 'flash_sale', 'minprice', 'maxprice', 'price_min', 'price_max', 'search', 'limit', 'rating_min', 'rating_max', 'height', 'width', 'length', 'weight'];
+        $reservedFilterKeys = ['brand', 'category', 'promotion', 'flash_sale', 'banner', 'minprice', 'maxprice', 'price_min', 'price_max', 'search', 'limit', 'rating', 'rating_min', 'rating_max', 'height', 'width', 'length', 'weight', 'categoriesid', 'brandsid', 'promotionsid', 'flashsalesid', 'bannersid', 'couponsid'];
         $attributeSlugs = Attribute::pluck('slug')->toArray();
 
         foreach ($filters as $key => $value) {

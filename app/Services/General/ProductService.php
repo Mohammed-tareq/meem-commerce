@@ -7,6 +7,7 @@ use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\Attribute;
@@ -30,6 +31,7 @@ class ProductService
 
         $this->applyProductFilters($query, $request);
         $this->applyIdsFilter($query, $request, 'productsId');
+        $this->applyRelationIdsFilters($query, $request);
 
         $term = trim((string) $request->get('search', ''));
         if ($term !== '') {
@@ -60,6 +62,7 @@ class ProductService
 
         $this->applyProductFilters($query, $request);
         $this->applyIdsFilter($query, $request, 'productsId');
+        $this->applyRelationIdsFilters($query, $request);
 
         if (!empty($scoutIds)) {
             $query->whereIn('products.id', $scoutIds);
@@ -497,6 +500,17 @@ class ProductService
                 $builder->whereBetween('rating', [$min, $max]);
             });
         }
+
+        $rating = $request->get('rating');
+        if ($rating !== null) {
+            $query->whereIn('products.id', function ($sub) use ($rating) {
+                $sub->select('product_id')
+                    ->from('reviews')
+                    ->where('approved', true)
+                    ->groupBy('product_id')
+                    ->havingRaw('ROUND(AVG(rating), 1) >= ?', [(float) $rating]);
+            });
+        }
     }
 
     private function applyDimensionFilters(Builder $query, Request $request): void
@@ -629,6 +643,35 @@ class ProductService
         }
     }
 
+    private function applyRelationIdsFilters(Builder $query, Request $request): void
+    {
+        $relations = [
+            'categoriesId' => 'categories',
+            'brandsId'     => 'brands',
+            'promotionsId' => 'promotions',
+            'flashSalesId' => 'flash_sales',
+            'bannersId'    => null,
+            'couponsId'    => 'coupons',
+        ];
+
+        foreach ($relations as $param => $relation) {
+            $ids = $request->query($param);
+            if (empty($ids)) {
+                continue;
+            }
+            $ids = is_array($ids) ? $ids : explode(',', $ids);
+            $ids = array_filter($ids, 'is_numeric');
+            if (empty($ids)) {
+                continue;
+            }
+            if ($relation === null) {
+                $query->whereIn('products.banner_id', $ids);
+            } else {
+                $query->whereHas($relation, fn($q) => $q->whereIn("{$relation}.id", $ids));
+            }
+        }
+    }
+
     public function getLimit(Request $request): int
     {
         $limit = (int) $request->get('limit', 15);
@@ -652,10 +695,12 @@ class ProductService
         $displayLabels = [
             'brand'    => ['en' => 'Brand', 'ar' => 'العلامة التجارية'],
             'category' => ['en' => 'Category', 'ar' => 'الفئة'],
+            'banner'   => ['en' => 'Banner', 'ar' => 'اللافتة'],
             'height'   => ['en' => 'Height', 'ar' => 'الارتفاع'],
             'width'    => ['en' => 'Width', 'ar' => 'العرض'],
             'length'   => ['en' => 'Length', 'ar' => 'الطول'],
             'weight'   => ['en' => 'Weight', 'ar' => 'الوزن'],
+            'rating'   => ['en' => 'Rating', 'ar' => 'التقييم'],
         ];
 
         $brands = Brand::active()
@@ -688,6 +733,21 @@ class ProductService
             ];
         }
 
+        $banners = Banner::active()
+            ->whereHas('products', fn($q) => $q->whereIn('products.id', $filteredIds))
+            ->get()
+            ->map(fn($b) => $b->slug)
+            ->filter()
+            ->values()
+            ->toArray();
+        if (!empty($banners)) {
+            $filters[] = [
+                'display' => $displayLabels['banner'][app()->getLocale()],
+                'key'     => 'banner',
+                'data'    => $banners,
+            ];
+        }
+
         $dimensions = ['height', 'width', 'length', 'weight'];
         foreach ($dimensions as $column) {
             $productValues = (clone $query)
@@ -711,6 +771,24 @@ class ProductService
                     'data'    => $values,
                 ];
             }
+        }
+
+        $ratingValues = Review::approved()
+            ->whereIn('product_id', $filteredIds)
+            ->select('product_id', DB::raw('ROUND(AVG(rating)) as avg_rating'))
+            ->groupBy('product_id')
+            ->get()
+            ->pluck('avg_rating')
+            ->unique()
+            ->sort()
+            ->values()
+            ->toArray();
+        if (!empty($ratingValues)) {
+            $filters[] = [
+                'display' => $displayLabels['rating'][app()->getLocale()],
+                'key'     => 'rating',
+                'data'    => $ratingValues,
+            ];
         }
 
         $attributes = Attribute::with(['values' => fn($q) => $q->whereHas('productVariants', fn($pq) => $pq->whereIn('product_id', $filteredIds))])->get();

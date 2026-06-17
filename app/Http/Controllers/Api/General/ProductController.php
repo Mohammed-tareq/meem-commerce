@@ -141,7 +141,7 @@ class ProductController extends Controller
             }
 
             $responseData['filters'] = $filters;
-            $responseData['category'] = $this->resolveCategoryForResponse($request);
+            $responseData['categories'] = $this->getCollectionCategories($productIds);
 
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
         }
@@ -149,7 +149,7 @@ class ProductController extends Controller
         $scoutQuery = $this->productService->buildScoutSearchQuery($request);
 
         if ($scoutQuery !== null) {
-            $data = $scoutQuery->paginate($this->productService->getLimit($request));
+            $data = $scoutQuery->orderBy('id', $order)->paginate($this->productService->getLimit($request));
             $filters = $this->productService->getDynamicFilters(clone $scoutQuery);
         } else {
             $query = $this->productService->buildFilteredBaseQuery($request);
@@ -161,51 +161,37 @@ class ProductController extends Controller
             $data = $query->orderBy('id', $order)->paginate($this->productService->getLimit($request));
         }
 
+        $productIds = $data->getCollection()->pluck('id');
         $collection = new ProductCollectionMini($data);
         $responseData = $collection->toArray($request);
         $responseData['filters'] = $filters;
-        $responseData['category'] = $this->resolveCategoryForResponse($request);
+        $responseData['categories'] = $this->getCollectionCategories($productIds);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $responseData);
     }
 
-    private function resolveCategoryForResponse(Request $request): ?array
+    private function getCollectionCategories($productIds): array
     {
-        $categoryFilter = $request->query('category');
-        if (empty($categoryFilter)) {
-            return null;
-        }
-
-        $categoryNames = is_array($categoryFilter) ? $categoryFilter : explode(',', $categoryFilter);
-        $value = trim($categoryNames[0]);
-        if (empty($value)) {
+        if ($productIds->isEmpty()) {
             return [];
         }
 
-        $category = Category::query()
+        return Category::query()
             ->active()
-            ->with(['children' => function ($query) {
-                $query->active();
-            }])
-            ->where(function ($q) use ($value) {
-                $q->where('slug', $value)
-                  ->orWhere('name->' . app()->getLocale(), $value);
-            })
-            ->first();
-
-        if (!$category) {
-            return [];
-        }
-
-        return $category->children->map(fn($child) => [
-            'id'    => $child->id,
-            'name'  => $child->getTranslation('name', app()->getLocale()),
-            'slug'  => $child->slug,
-            'image' => [
-                'desktop' => $child->getFirstMediaUrl('categories-desktop'),
-                'mobile'  => $child->getFirstMediaUrl('categories-mobile'),
-            ],
-        ])->values()->toArray();
+            ->whereNotNull('parent_id')
+            ->whereHas('products', fn($q) => $q->whereIn('products.id', $productIds))
+            ->get()
+            ->map(fn($cat) => [
+                'id'    => $cat->id,
+                'name'  => $cat->getTranslation('name', app()->getLocale()),
+                'slug'  => $cat->slug,
+                'image' => [
+                    'desktop' => $cat->getFirstMediaUrl('categories-desktop'),
+                    'mobile'  => $cat->getFirstMediaUrl('categories-mobile'),
+                ],
+            ])
+            ->values()
+            ->toArray();
     }
 
     public function getProductBySlug(Request $request)
