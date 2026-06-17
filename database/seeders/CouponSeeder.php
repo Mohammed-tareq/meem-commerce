@@ -44,10 +44,7 @@ class CouponSeeder extends Seeder
             $discountType = $couponData['discount_type'];
             $discount = $couponData['discount'];
 
-            $slug = [
-                'en' => Str::slug($couponData['name']['en']),
-                'ar' => str_replace(' ', '-', trim($couponData['name']['ar'])),
-            ];
+            $slug = Str::slug($couponData['name']['en']);
 
             // Insert directly via query builder to avoid model events that set arrays on attributes
             $code = $couponData['code'];
@@ -55,7 +52,7 @@ class CouponSeeder extends Seeder
             $insert = [
                 'code' => $code,
                 'name' => json_encode($couponData['name']),
-                'slug' => json_encode($slug),
+                'slug' => $slug,
                 'border_color' => sprintf('#%06x', mt_rand(0, 0xFFFFFF)),
                 'borderless' => (bool) rand(0, 1),
                 'discount' => $discount,

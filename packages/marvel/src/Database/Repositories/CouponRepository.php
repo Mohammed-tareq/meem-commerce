@@ -73,7 +73,6 @@ class CouponRepository extends BaseRepository
     {
         try {
             DB::beginTransaction();
-            $request['slug'] = $this->makeSlug($request);
             $coupon = $this->create($request->except('image-desktop', 'image-mobile'));
 
             if ($request->hasFile('image-desktop')) {

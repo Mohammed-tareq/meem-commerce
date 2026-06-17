@@ -58,23 +58,14 @@ class Coupon extends Model implements HasMedia
                 $code = strtoupper(Str::random(10));
             } while (self::where('code', $code)->exists());
 
-            $coupon->code = strtolower(preg_replace('/\s+/', '_', trim($coupon->name))) . "_" . $code;
+            $enName = $coupon->getTranslation('name', 'en', false);
+            $coupon->code = strtolower(preg_replace('/\s+/', '_', trim($enName ?? 'coupon'))) . "_" . $code;
         });
 
 
         static::saving(function ($coupon) {
-
-            $title = $coupon->name ?? [];
-
-            $coupon->slug = [
-                'en' => isset($title['en'])
-                    ? Str::slug($title['en'])
-                    : null,
-
-                'ar' => isset($title['ar'])
-                    ? str_replace(' ', '-', trim($title['ar']))
-                    : null,
-            ];
+            $enName = $coupon->getTranslation('name', 'en', false);
+            $coupon->slug = $enName ? Str::slug($enName) : null;
         });
     }
 

@@ -10,6 +10,7 @@ use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\Promotion;
+use Marvel\Database\Models\Slider;
 use Marvel\Models\ContentPage;
 
 class ContentPageSeeder extends Seeder
@@ -24,6 +25,7 @@ class ContentPageSeeder extends Seeder
         ]);
 
         $firstBannerSlug = Banner::active()->value('slug');
+        $firstSliderSlug = Slider::active()->value('slug');
         $activePromotions = Promotion::active()->valid()->get();
         $firstPromotionSlug = $activePromotions->first()?->slug;
         $activeCategories = Category::active()->limit(8)->pluck('id')->toArray();
@@ -37,6 +39,17 @@ class ContentPageSeeder extends Seeder
                 'type' => 'banners',
                 'title' => ['en' => 'Banners', 'ar' => 'بنرات'],
                 'endpoint' => 'banners',
+                'order' => 0,
+                'with_product' => true,
+                'setting' => [
+                    'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                    'back' => ['slug' => $firstBannerSlug]
+                ]
+            ],
+            [
+                'type' => 'sliders',
+                'title' => ['en' => 'Sliders', 'ar' => 'سلايدر'],
+                'endpoint' => 'sliders',
                 'order' => 0,
                 'with_product' => true,
                 'setting' => [
