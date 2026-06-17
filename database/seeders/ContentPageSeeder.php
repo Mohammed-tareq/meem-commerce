@@ -25,7 +25,6 @@ class ContentPageSeeder extends Seeder
         ]);
 
         $firstBannerSlug = Banner::active()->value('slug');
-        $firstSliderSlug = Slider::active()->value('slug');
         $activePromotions = Promotion::active()->valid()->get();
         $firstPromotionSlug = $activePromotions->first()?->slug;
         $activeCategories = Category::active()->limit(8)->pluck('id')->toArray();
@@ -54,7 +53,6 @@ class ContentPageSeeder extends Seeder
                 'with_product' => true,
                 'setting' => [
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
-                    'back' => ['slug' => $firstBannerSlug]
                 ]
             ],
             [
