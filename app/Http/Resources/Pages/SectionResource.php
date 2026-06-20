@@ -40,7 +40,7 @@ class SectionResource extends JsonResource
         ];
     }
 
-    private function buildEndpoint(array $settings): string
+    private function buildEndpoint(?array $settings): string
     {
         $params = $settings['back'] ?? [];
 
