@@ -101,6 +101,7 @@ class PermissionSeeder extends Seeder
             'create-manufacturer',
             'update-contact',
             'delete-contact',
+            'delete-read-contacts',
             'view-analytics',
             'view-low-stock-products',
             'view-draft-products',

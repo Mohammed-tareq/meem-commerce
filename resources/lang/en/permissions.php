@@ -39,6 +39,7 @@ return [
     'create-slider' => 'Create slider',
     'update-slider' => 'Update slider',
     'delete-slider' => 'Delete slider',
+    'view-attributes' => 'View attributes',
 
     // 👤 Customer
     'view-profile' => 'View profile',
@@ -158,6 +159,7 @@ return [
     'view-contacts' => 'View contacts',
     'update-contact' => 'Update contact',
     'delete-contact' => 'Delete contact',
+    'delete-read-contacts' => 'Delete read contacts',
     'approve-reviews' => 'Approve reviews',
     'delete-reviews' => 'Delete reviews',
     'view-country' => 'View countries',

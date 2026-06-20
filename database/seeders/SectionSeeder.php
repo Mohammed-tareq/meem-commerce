@@ -15,11 +15,7 @@ class SectionSeeder extends Seeder
                 'type' => 'banners',
                 'front' => ['autoplay' => true, 'slider_speed' => 5000],
                 'back'  => [
-                    'start_date' => '2026-06-01',
-                    'end_date' => '2026-06-20',
-                    'limit' => 10,
-                    'brandsId' => [],
-                    'order' => 'desc',
+                   "slug"=> "summer-sale",
                 ],
             ],
             [

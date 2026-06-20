@@ -53,6 +53,7 @@ final class Permission extends Enum
     public const CREATE_ROLES = 'create-roles';
     public const UPDATE_ROLES = 'update-roles';
     public const DELETE_ROLES = 'delete-roles';
+    public const VIEW_ROLES = 'view-roles';
 
     public const ASSIGN_ROLE = 'assign-role';
     public const REMOVE_ROLE = 'remove-role';
@@ -124,6 +125,7 @@ final class Permission extends Enum
     public const CREATE_MANUFACTURER = 'create-manufacturer';
     public const UPDATE_CONTACT = 'update-contact';
     public const DELETE_CONTACT = 'delete-contact';
+    public const DELETE_READ_CONTACTS = 'delete-read-contacts';
     public const VIEW_ANALYTICS = 'view-analytics';
     public const VIEW_LOW_STOCK_PRODUCTS = 'view-low-stock-products';
     public const VIEW_DRAFT_PRODUCTS = 'view-draft-products';

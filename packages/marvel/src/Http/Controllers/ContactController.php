@@ -3,6 +3,7 @@
 namespace Marvel\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Marvel\Database\Models\Contact;
 use Marvel\Database\Repositories\ContactRepository;
 use Marvel\Enums\Permission;
 use Marvel\Exceptions\MarvelException;
@@ -24,28 +25,26 @@ class ContactController extends CoreController
         $this->middleware('permission:' . Permission::VIEW_CONTACTS, ['only' => ['index']]);
         $this->middleware('permission:' . Permission::UPDATE_CONTACT, ['only' => ['show', 'sendReplay']]);
         $this->middleware('permission:' . Permission::DELETE_CONTACT, ['only' => ['destroy', 'deleteAll']]);
+        $this->middleware('permission:' . Permission::DELETE_READ_CONTACTS, ['only' => ['deleteAllReadContacts']]);
     }
 
     public function index(Request $request)
     {
         $limit = $request->limit ?? 15;
-        $read = $request->query('read', false);
-        $unread = $request->query('unread', false);
-        $replay = $request->query('replay', false);
 
-        $contactsQuery = $this->repository;
+        $query = Contact::query();
 
-        if ($read) {
-            $contactsQuery = $contactsQuery->read();
+        if ($request->boolean('read')) {
+            $query->read();
         }
-        if ($unread) {
-            $contactsQuery = $contactsQuery->unread();
+        if ($request->boolean('unread')) {
+            $query->unread();
         }
-        if ($replay) {
-            $contactsQuery = $contactsQuery->replay();
+        if ($request->boolean('replay')) {
+            $query->replay();
         }
 
-        $contacts = $contactsQuery->paginate($limit);
+        $contacts = $query->paginate($limit);
         $data = new ContactCollection($contacts);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
@@ -55,7 +54,7 @@ class ContactController extends CoreController
     {
         try {
             $contact = $this->repository->saveContact($request);
-            return $this->apiResponse('Contact created successfully', 201, true, ContactResource::make($contact));
+            return $this->apiResponse(CONTACT_CREATED_SUCCESSFULLY, 201, true, ContactResource::make($contact));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }
@@ -77,7 +76,7 @@ class ContactController extends CoreController
         try {
             $contact = $this->repository->ReplayContact($request, $id);
 
-            return $this->apiResponse('Replay sent successfully', 200, true, ContactResource::make($contact));
+            return $this->apiResponse(REPLAY_SENT_SUCCESSFULLY, 200, true, ContactResource::make($contact));
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -89,7 +88,7 @@ class ContactController extends CoreController
         try {
             $this->repository->findOrFail($id)->delete();
 
-            return $this->apiResponse('Contact deleted successfully', 200, true);
+            return $this->apiResponse(CONTACT_DELETED_SUCCESSFULLY, 200, true);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -101,7 +100,7 @@ class ContactController extends CoreController
         try {
             $this->repository->deleteAllContacts();
 
-            return $this->apiResponse('All contacts deleted successfully', 200, true);
+            return $this->apiResponse(ALL_CONTACTS_DELETED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {
             return $this->apiResponse(COULD_NOT_DELETE_THE_RESOURCE, 500, false);
         }
@@ -111,7 +110,7 @@ class ContactController extends CoreController
         try {
             $this->repository->deleteAllReadContacts();
 
-            return $this->apiResponse('All read contacts deleted successfully', 200, true);
+            return $this->apiResponse(ALL_READ_CONTACTS_DELETED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {
             return $this->apiResponse(COULD_NOT_DELETE_THE_RESOURCE, 500, false);
         }

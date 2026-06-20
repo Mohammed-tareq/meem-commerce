@@ -10,6 +10,7 @@ class CategoryNavbarResource extends JsonResource
     public function toArray(Request $request): array
     {
         $level = (int) ($this->level ?? 0);
+        $maxLevel = (int) $request->query('level', 3);
 
         return [
             'id' => $this->id,
@@ -20,7 +21,7 @@ class CategoryNavbarResource extends JsonResource
                 'desktop' => $this->getFirstMediaUrl('categories-desktop'),
                 'mobile' => $this->getFirstMediaUrl('categories-mobile'),
             ],
-            'children' => $level >= 3
+            'children' => $level >= $maxLevel
                 ? []
                 : ($this->relationLoaded('children')
                     ? $this->children->map(function ($child) use ($request) {

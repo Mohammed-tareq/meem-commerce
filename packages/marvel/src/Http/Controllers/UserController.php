@@ -131,11 +131,8 @@ class UserController extends CoreController
     {
         $limit = $request->limit ? $request->limit : 15;
         $admins = $this->repository
-            ->with(['profile', 'address', 'permissions'])
-            ->where('is_active', true)
-            ->whereHas('permissions', function ($query) {
-                $query->where('name', Permission::SUPER_ADMIN);
-            })
+            ->with(['permissions'])
+            ->where('type', 'admin')
             ->paginate($limit);
         return $admins;
         // return UserResource::collection($admins);

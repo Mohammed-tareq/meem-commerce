@@ -30,9 +30,12 @@ class HomeController extends Controller
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
-    public function navData()
+    public function navData(Request $request)
     {
-        $data = $this->homeService->getNavData();
+        $level = $request->integer('level');
+        $level = $level > 0 ? $level : null;
+
+        $data = $this->homeService->getNavData($level);
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }

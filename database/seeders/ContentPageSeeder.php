@@ -45,11 +45,7 @@ class ContentPageSeeder extends Seeder
                 'setting' => [
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
                     'back' => [
-                        'start_date' => '2026-06-01',
-                        'end_date' => '2026-06-20',
-                        'limit' => 10,
-                        'brandsId' => $activeBrands,
-                        'order' => 'desc',
+                        "slug" => $firstProductSlug,
                     ],
                 ]
             ],

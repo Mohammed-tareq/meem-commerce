@@ -25,9 +25,11 @@ class HomeService
 {
     public function __construct(private readonly CategoryHierarchyService $hierarchyService) {}
 
-    public function getNavData()
+    public function getNavData(?int $level = null)
     {
-        return Cache::remember("home-nav-bar", 120, function () {
+        $cacheKey = $level !== null ? "home-nav-bar:level:{$level}" : "home-nav-bar";
+
+        return Cache::remember($cacheKey, 120, function () {
             return CategoryNavbarResource::collection($this->getCategoryWithChildren());
         });
     }

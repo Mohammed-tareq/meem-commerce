@@ -29,10 +29,10 @@ return [
     'create-flash-sale' => 'إنشاء فلاش سيل',
     'update-flash-sale' => 'تعديل فلاش سيل',
     'delete-flash-sale' => 'حذف فلاش سيل',
-    'view-sliders' => 'عرض الشاشات المنزلقة',
-    'create-sliders' => 'إنشاء شاشة منزلقة',
-    'update-sliders' => 'تعديل شاشة منزلقة',
-    'delete-sliders' => 'حذف شاشة منزلقة',
+    'view-slider' => 'عرض الشاشات المنزلقة',
+    'create-slider' => 'إنشاء شاشة منزلقة',
+    'update-slider' => 'تعديل شاشة منزلقة',
+    'delete-slider' => 'حذف شاشة منزلقة',
 
     // 👤 Customer
     'view-profile' => 'عرض الملف الشخصي',
@@ -160,6 +160,7 @@ return [
     'view-contacts' => 'عرض جهات الاتصال',
     'update-contact' => 'تعديل جهة اتصال',
     'delete-contact' => 'حذف جهة اتصال',
+    'delete-read-contacts' => 'حذف جهات الاتصال المقروءة',
     'approve-reviews' => 'الموافقة على التقييمات',
     'delete-reviews' => 'حذف التقييمات',
     'view-country' => 'عرض الدول',
@@ -174,6 +175,7 @@ return [
     'create-governorate' => "إنشاء محافظة",
     'update-governorate' => 'تعديل محافظة',
     'delete-governorate' => 'مسح محافظة',
+    'view-attributes' => 'عرض الخصائص',
     'manage-shipping-prices' => 'إدارة أسعار الشحن',
 
 
