@@ -31,8 +31,22 @@ class PromotionController extends CoreController
     {
         $limit = $request->limit ?? 15;
         $promotions = $this->repository->paginate($limit)->withQueryString();
-        $data = formatAPIResourcePaginate(PromotionResource::collection($promotions)->response()->getData(true));
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
+        $promotionData = PromotionResource::collection($promotions)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $promotionData['data'] ?? [],
+            "page" => $promotionData['meta']['current_page'] ?? 0,
+            "current_page" => $promotionData['meta']['current_page'] ?? 0,
+            "from" => $promotionData['meta']['from'] ?? 0,
+            "to" => $promotionData['meta']['to'] ?? 0,
+            "last_page" => $promotionData['meta']['last_page'] ?? 0,
+            "path" => $promotionData['meta']['path'] ?? "",
+            "per_page" => $promotionData['meta']['per_page'] ?? 0,
+            "total" => $promotionData['meta']['total'] ?? 0,
+            "next_page_url" => $promotionData['links']['next'] ?? "",
+            "prev_page_url" => $promotionData['links']['prev'] ?? "",
+            "last_page_url" => $promotionData['links']['last'] ?? "",
+            "first_page_url" => $promotionData['links']['first'] ?? "",
+        ]);
     }
 
     public function store(PromotionRequest $request)

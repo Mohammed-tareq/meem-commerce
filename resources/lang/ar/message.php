@@ -191,4 +191,5 @@ return [
     'ERROR.MISSING_PAYMENT_ID' => 'معرّف الدفع مفقود',
     'ERROR.INVALID_PAYMENT_RESPONSE' => 'استجابة دفع غير صالحة',
     'MESSAGE.PAYMENT_SUCCESSFUL' => 'تم الدفع بنجاح',
+    'MESSAGE.BRANDS_REORDERED_SUCCESSFULLY' => 'تمت إعادة ترتيب العلامات التجارية بنجاح',
 ];

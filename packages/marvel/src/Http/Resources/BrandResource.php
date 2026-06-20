@@ -16,7 +16,7 @@ class BrandResource extends Resource
     {
         return [
             'id' => $this->id,
-            'name' => $this->getTranslation('name', app()->getLocale()),
+            'name' =>request()->routeIs('brands.index') ? $this->getTranslation('name', app()->getLocale()) :$this->getRawOriginal('name'),
             'slug' => $this->slug,
             'image' => [
                 'desktop' => $this->getFirstMediaUrl('brands-desktop'),
@@ -24,6 +24,17 @@ class BrandResource extends Resource
             ],
             'details' => $this->getTranslation('details', app()->getLocale()),
             'status' => (bool) $this->status,
+            $this->mergeWhen($this->relationLoaded('products'), [
+                'products' => $this->products->map(fn($product) => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'status' => $product->status,
+                    'image' => [
+                        'thumbnail' => $product->getFirstMediaUrl('products'),
+                    ],
+                ]),
+            ]),
         ];
     }
 }

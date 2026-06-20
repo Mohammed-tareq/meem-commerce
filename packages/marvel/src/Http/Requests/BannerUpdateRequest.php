@@ -38,6 +38,8 @@ class BannerUpdateRequest extends FormRequest
            "image_desktop"=> "sometimes | image | mimes:jpeg,png,jpg,gif | max:2048",
            "image_mobile"=> "sometimes | image | mimes:jpeg,png,jpg,gif | max:2048",
            "status"=> "sometimes | in:0,1",
+           "products"=> "sometimes|array",
+           "products.*"=> "exists:products,id",
         ];
     }
 

@@ -604,6 +604,7 @@ Route::group([
     Route::apiResource('categories', CategoryController::class);
     Route::get('categories-parent', [CategoryController::class, 'fetchOnlyParent']);
     Route::apiResource('brands', BrandController::class);
+    Route::put('brands/reorder', [BrandController::class, 'reorder']);
 
     Route::apiResource('delivery-times', DeliveryTimeController::class, [
         'only' => ['store', 'update', 'destroy']

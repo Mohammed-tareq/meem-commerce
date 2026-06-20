@@ -2,24 +2,30 @@
 
 namespace Marvel\Database\Models;
 
-use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 use Illuminate\Support\Str;
 
 
-class Brand extends Model implements HasMedia
+class Brand extends Model implements HasMedia, Sortable
 {
-    use HasTranslations, InteractsWithMedia;
+    use HasTranslations, InteractsWithMedia, SortableTrait;
 
     protected $table = 'brands';
 
     public array $translatable = ['name', 'details'];
 
-    protected $fillable = ['name', 'details', 'slug', 'status'];
+    public $sortable = [
+        'order_column_name' => 'order',
+        'sort_when_creating' => true,
+    ];
+
+    protected $fillable = ['name', 'details', 'slug', 'status', 'order'];
 
 
 

@@ -79,7 +79,22 @@ class CouponController extends CoreController
         $limit = $request->limit ?? 15;
         $query = $this->fetchCoupons($request);
         $coupons = $query->paginate($limit)->withQueryString();
-        return formatAPIResourcePaginate(CouponResource::collection($coupons)->response()->getData(true));
+        $couponData = CouponResource::collection($coupons)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $couponData['data'] ?? [],
+            "page" => $couponData['meta']['current_page'] ?? 0,
+            "current_page" => $couponData['meta']['current_page'] ?? 0,
+            "from" => $couponData['meta']['from'] ?? 0,
+            "to" => $couponData['meta']['to'] ?? 0,
+            "last_page" => $couponData['meta']['last_page'] ?? 0,
+            "path" => $couponData['meta']['path'] ?? "",
+            "per_page" => $couponData['meta']['per_page'] ?? 0,
+            "total" => $couponData['meta']['total'] ?? 0,
+            "next_page_url" => $couponData['links']['next'] ?? "",
+            "prev_page_url" => $couponData['links']['prev'] ?? "",
+            "last_page_url" => $couponData['links']['last'] ?? "",
+            "first_page_url" => $couponData['links']['first'] ?? "",
+        ]);
     }
     public function fetchCoupons(Request $request)
     {

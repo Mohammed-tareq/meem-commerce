@@ -26,8 +26,22 @@ class BannerController extends CoreController
     public function index()
     {
         $banners = $this->repository->getBanners();
-        $data = BannerResource::collection($banners)->response()->getData(true);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true, formatAPIResourcePaginate($data));
+        $bannerData = BannerResource::collection($banners)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $bannerData['data'] ?? [],
+            "page" => $bannerData['meta']['current_page'] ?? 0,
+            "current_page" => $bannerData['meta']['current_page'] ?? 0,
+            "from" => $bannerData['meta']['from'] ?? 0,
+            "to" => $bannerData['meta']['to'] ?? 0,
+            "last_page" => $bannerData['meta']['last_page'] ?? 0,
+            "path" => $bannerData['meta']['path'] ?? "",
+            "per_page" => $bannerData['meta']['per_page'] ?? 0,
+            "total" => $bannerData['meta']['total'] ?? 0,
+            "next_page_url" => $bannerData['links']['next'] ?? "",
+            "prev_page_url" => $bannerData['links']['prev'] ?? "",
+            "last_page_url" => $bannerData['links']['last'] ?? "",
+            "first_page_url" => $bannerData['links']['first'] ?? "",
+        ]);
     }
 
     /**
@@ -37,6 +51,7 @@ class BannerController extends CoreController
     {
         try{
             $banner = $this->repository->createBanner($request);
+            $banner->load('products');
             return $this->apiResponse(BANNER_CREATED_SUCCESSFULLY,200, true, BannerResource::make($banner));
         }catch(\Exception $e){
             return $this->apiResponse(SOMETHING_WENT_WRONG,500, false);
@@ -63,6 +78,7 @@ class BannerController extends CoreController
     {
         try{
             $banner = $this->repository->updateBanner($request, $id);
+            $banner->load('products');
             return $this->apiResponse(BANNER_UPDATED_SUCCESSFULLY,200, true, BannerResource::make($banner));
         }catch(\Exception $e){
             return $this->apiResponse($e->getMessage(),500, false);

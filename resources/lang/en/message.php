@@ -191,4 +191,5 @@ return [
     'ERROR.MISSING_PAYMENT_ID' => 'Missing payment id',
     'ERROR.INVALID_PAYMENT_RESPONSE' => 'Invalid payment response',
     'MESSAGE.PAYMENT_SUCCESSFUL' => 'Payment successful',
+    'MESSAGE.BRANDS_REORDERED_SUCCESSFULLY' => 'Brands reordered successfully',
 ];

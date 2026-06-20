@@ -35,6 +35,9 @@ class BannerRepository extends BaseRepository
 
             DB::beginTransaction();
             $banner = $this->create($request->except('image_desktop', 'image_mobile'));
+            if ($request->has('products')) {
+                $banner->products()->sync($request->products);
+            }
             if ($request->has('image_desktop') || $request->has('image_mobile')) {
                 if ($request->has('image_desktop')) {
                     if (!$this->uploadSingleImage($request, 'image_desktop', $banner, 'banners', 'banners')) {
@@ -61,6 +64,9 @@ class BannerRepository extends BaseRepository
             DB::beginTransaction();
             $banner = $this->findOrFail($id);
             $banner->update($request->except('image_desktop', 'image_mobile'));
+            if ($request->has('products')) {
+                $banner->products()->sync($request->products);
+            }
             if ($request->has('image_desktop')) {
                 if (!$this->updateSingleImage($request, 'image_desktop', $banner, 'banners-desktop', 'banners')) {
                     throw new HttpException(422, 'Banner image upload failed, please check the file format or size.');

@@ -78,6 +78,8 @@ class BannerCreateRequest extends FormRequest
                 "max:2048",
             ],
             "status" => ["sometimes", "in:0,1"],
+            "products" => "sometimes|array",
+            "products.*" => "exists:products,id",
         ];
     }
 

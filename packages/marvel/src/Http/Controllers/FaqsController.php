@@ -90,8 +90,22 @@ class FaqsController extends CoreController
         $faqs = $this->fetchFAQs($request)
             //            ->where('language', $language)
             ->paginate($limit)->withQueryString();
-        $data = FaqResource::collection($faqs)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $faqData = FaqResource::collection($faqs)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $faqData['data'] ?? [],
+            "page" => $faqData['meta']['current_page'] ?? 0,
+            "current_page" => $faqData['meta']['current_page'] ?? 0,
+            "from" => $faqData['meta']['from'] ?? 0,
+            "to" => $faqData['meta']['to'] ?? 0,
+            "last_page" => $faqData['meta']['last_page'] ?? 0,
+            "path" => $faqData['meta']['path'] ?? "",
+            "per_page" => $faqData['meta']['per_page'] ?? 0,
+            "total" => $faqData['meta']['total'] ?? 0,
+            "next_page_url" => $faqData['links']['next'] ?? "",
+            "prev_page_url" => $faqData['links']['prev'] ?? "",
+            "last_page_url" => $faqData['links']['last'] ?? "",
+            "first_page_url" => $faqData['links']['first'] ?? "",
+        ]);
     }
 
 

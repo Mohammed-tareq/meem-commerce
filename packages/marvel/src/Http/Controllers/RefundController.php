@@ -21,6 +21,7 @@ use Marvel\Exceptions\MarvelException;
 use Marvel\Http\Requests\RefundRequest;
 use Marvel\Http\Resources\GetSingleRefundResource;
 use Marvel\Http\Resources\RefundResource;
+use Marvel\Traits\ApiResponse;
 use Marvel\Traits\WalletsTrait;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
@@ -45,6 +46,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
  */
 class RefundController extends CoreController
 {
+    use ApiResponse;
     use WalletsTrait;
 
     public $repository;
@@ -81,8 +83,22 @@ class RefundController extends CoreController
     {
         $limit = $request->limit;
         $refunds = $this->fetchRefunds($request)->paginate($limit);
-        $data = RefundResource::collection($refunds)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        $refundData = RefundResource::collection($refunds)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $refundData['data'] ?? [],
+            "page" => $refundData['meta']['current_page'] ?? 0,
+            "current_page" => $refundData['meta']['current_page'] ?? 0,
+            "from" => $refundData['meta']['from'] ?? 0,
+            "to" => $refundData['meta']['to'] ?? 0,
+            "last_page" => $refundData['meta']['last_page'] ?? 0,
+            "path" => $refundData['meta']['path'] ?? "",
+            "per_page" => $refundData['meta']['per_page'] ?? 0,
+            "total" => $refundData['meta']['total'] ?? 0,
+            "next_page_url" => $refundData['links']['next'] ?? "",
+            "prev_page_url" => $refundData['links']['prev'] ?? "",
+            "last_page_url" => $refundData['links']['last'] ?? "",
+            "first_page_url" => $refundData['links']['first'] ?? "",
+        ]);
     }
 
     public function fetchRefunds(Request $request)

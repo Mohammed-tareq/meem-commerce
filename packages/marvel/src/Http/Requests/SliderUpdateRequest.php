@@ -28,9 +28,9 @@ class SliderUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'title.*' => 'required|array',
-            'title.en' => ['required', 'string', UniqueTranslationRule::for('sliders', 'title')->ignore($this->slider)],
-            'title.ar' => ['required', 'string', UniqueTranslationRule::for('sliders', 'title')->ignore($this->slider)],
+            'title' => 'sometimes|array',
+            'title.en' => ['sometimes', 'string', UniqueTranslationRule::for('sliders', 'title')->ignore($this->slider)],
+            'title.ar' => ['sometimes', 'string', UniqueTranslationRule::for('sliders', 'title')->ignore($this->slider)],
             "image_desktop" => "sometimes | image | mimes:jpeg,png,jpg,gif | max:2048",
             "image_mobile" => "sometimes | image | mimes:jpeg,png,jpg,gif | max:2048",
             "status" => "sometimes | in:1,0",

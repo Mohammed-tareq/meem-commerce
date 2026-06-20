@@ -55,6 +55,10 @@ class BrandRepository extends BaseRepository
 
             $brand = $this->create($data);
 
+            if ($request->has('products')) {
+                $brand->products()->sync($request->products);
+            }
+
             if ($request->has('image-desktop')) {
                 if (!$this->uploadSingleImage($request, 'image-desktop', $brand, 'brands-desktop', 'brands')) {
                     throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
@@ -84,6 +88,9 @@ class BrandRepository extends BaseRepository
                 $data['slug'] = $this->makeSlug($request, 'slug', $brand->id);
             }
             $brand->update($data);
+            if ($request->has('products')) {
+                $brand->products()->sync($request->products);
+            }
             if ($request->has('image-desktop')) {
                 if (!$this->updateSingleImage($request, 'image-desktop', $brand, 'brands-desktop', 'brands')) {
                     throw new HttpException(422, 'Logo upload failed, please check the file format or size.');
@@ -100,6 +107,15 @@ class BrandRepository extends BaseRepository
             DB::rollBack();
             Log::error('Brand update failed: ' . $e->getMessage(), ['trace' => $e->getTraceAsString()]);
             throw new HttpException(500, COULD_NOT_UPDATE_THE_RESOURCE);
+        }
+    }
+
+    public function reorder(array $brands)
+    {
+        try {
+            $this->setNewOrder($brands);
+        } catch (\Exception $e) {
+            throw new HttpException(500, $e->getMessage());
         }
     }
 }

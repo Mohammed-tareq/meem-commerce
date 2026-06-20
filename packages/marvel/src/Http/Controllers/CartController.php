@@ -36,9 +36,23 @@ class CartController extends CoreController
         }
 
         $carts = $query->paginate($limit)->withQueryString();
-        $data = CartResource::collection($carts)->response()->getData(true);
+        $cartData = CartResource::collection($carts)->response()->getData(true);
 
-        return formatAPIResourcePaginate($data);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $cartData['data'] ?? [],
+            "page" => $cartData['meta']['current_page'] ?? 0,
+            "current_page" => $cartData['meta']['current_page'] ?? 0,
+            "from" => $cartData['meta']['from'] ?? 0,
+            "to" => $cartData['meta']['to'] ?? 0,
+            "last_page" => $cartData['meta']['last_page'] ?? 0,
+            "path" => $cartData['meta']['path'] ?? "",
+            "per_page" => $cartData['meta']['per_page'] ?? 0,
+            "total" => $cartData['meta']['total'] ?? 0,
+            "next_page_url" => $cartData['links']['next'] ?? "",
+            "prev_page_url" => $cartData['links']['prev'] ?? "",
+            "last_page_url" => $cartData['links']['last'] ?? "",
+            "first_page_url" => $cartData['links']['first'] ?? "",
+        ]);
     }
 
     public function store(CartCreateRequest $request)
