@@ -48,7 +48,9 @@ class UpdateFlashSaleRequest extends FormRequest
                 'numeric',
                 'min:1'
             ],
-            'status' => ['sometimes', 'in:1,0']
+            'status' => ['sometimes', 'in:1,0'],
+            "products" => "sometimes|array",
+            "products.*" => "exists:products,id",
 
         ];
         return $rules;

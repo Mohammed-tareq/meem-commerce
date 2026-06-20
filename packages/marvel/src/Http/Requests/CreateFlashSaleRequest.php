@@ -44,7 +44,9 @@ class CreateFlashSaleRequest extends FormRequest
                 'numeric',
                 'min:1'
             ],
-            'status' => ['required', 'in:1,0']
+            'status' => ['required', 'in:1,0'],
+            "products" => "sometimes|array",
+            "products.*" => "exists:products,id",
 
         ];
     }

@@ -555,6 +555,8 @@ Route::group(
             'only' => ['store', 'update', 'destroy'],
         ]);
 
+        Route::put('flash-sale/reorder', [FlashSaleController::class, 'reorder']);
+
         Route::get('product-flash-sale-info', [FlashSaleController::class, 'getFlashSaleInfoByProductID']);
 
         Route::apiResource('terms-and-conditions', TermsAndConditionsController::class, [

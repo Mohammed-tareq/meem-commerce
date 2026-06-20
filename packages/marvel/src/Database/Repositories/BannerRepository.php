@@ -9,7 +9,6 @@ use Marvel\Database\Models\Banner;
 use Marvel\Traits\MediaManager;
 use Illuminate\Http\Request;
 
-use const Dom\NOT_FOUND_ERR;
 
 class BannerRepository extends BaseRepository
 {
@@ -40,12 +39,12 @@ class BannerRepository extends BaseRepository
             }
             if ($request->has('image_desktop') || $request->has('image_mobile')) {
                 if ($request->has('image_desktop')) {
-                    if (!$this->uploadSingleImage($request, 'image_desktop', $banner, 'banners', 'banners')) {
+                    if (!$this->uploadSingleImage($request, 'image_desktop', $banner, 'banners-desktop', 'banners')) {
                         throw new HttpException(422, 'Banner image upload failed, please check the file format or size.');
                     }
                 }
                 if ($request->has('image_mobile')) {
-                    if (!$this->uploadSingleImage($request, 'image_mobile', $banner, 'banners', 'banners')) {
+                    if (!$this->uploadSingleImage($request, 'image_mobile', $banner, 'banners-mobile', 'banners')) {
                         throw new HttpException(422, 'Banner image upload failed, please check the file format or size.');
                     }
                 }
@@ -90,7 +89,7 @@ class BannerRepository extends BaseRepository
     {
         try {
             $banner = $this->find($id);
-            $banner->update(['is_active' => !$banner->is_active]);
+            $banner->update(['status' => !$banner->status]);
             return $banner;
         } catch (\Exception $e) {
             throw new HttpException(400, NOT_FOUND);

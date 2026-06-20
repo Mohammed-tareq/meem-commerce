@@ -91,6 +91,11 @@ class FlashSaleRepository extends BaseRepository
                 }
             }
 
+            if ($request->has('products')) {
+                $flash_sale->products()->sync($request->products);
+                $this->setProductInFlashSale($request->products);
+            }
+
             DB::commit();
             return $flash_sale;
         } catch (Exception $th) {
@@ -128,6 +133,12 @@ class FlashSaleRepository extends BaseRepository
                 }
             }
 
+            if ($request->has('products')) {
+                $oldProductIds = $flash_sale->products()->pluck('product_id')->toArray();
+                $flash_sale->products()->sync($request->products);
+                $this->unsetProductFromFlashSale($oldProductIds, $request->products);
+                $this->setProductInFlashSale($request->products);
+            }
 
             DB::commit();
             $this->updateFlashSaleProductPrices($flash_sale);
@@ -174,11 +185,20 @@ class FlashSaleRepository extends BaseRepository
         }
     }
 
+    public function reorder(array $flashSales)
+    {
+        try {
+            $this->setNewOrder($flashSales);
+        } catch (\Exception $e) {
+            throw new HttpException(500, $e->getMessage());
+        }
+    }
+
     private function updateFlashSaleProductPrices(FlashSale $flashSale)
     {
         $flashSale->load('products');
         $now = now();
-        $isActive = $flashSale->sale_status
+        $isActive = $flashSale->status
             && $flashSale->start_date
             && $flashSale->end_date
             && $now->between($flashSale->start_date, $flashSale->end_date);

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
@@ -15,11 +17,16 @@ use Marvel\Services\Pricing\ProductPricingService;
 use Illuminate\Support\Str;
 
 
-class FlashSale extends Model implements HasMedia
+class FlashSale extends Model implements HasMedia, Sortable
 {
-    use HasTranslations, SoftDeletes, InteractsWithMedia;
+    use HasTranslations, SoftDeletes, InteractsWithMedia, SortableTrait;
 
     protected $table = 'flash_sales';
+
+    public $sortable = [
+        'order_column_name' => 'order',
+        'sort_when_creating' => true,
+    ];
 
     public array $translatable = ["title", "description"];
     public $fillable = [
@@ -31,7 +38,8 @@ class FlashSale extends Model implements HasMedia
         'status',
         'type',
         'discount',
-        'max_discount_amount'
+        'max_discount_amount',
+        'order',
     ];
 
     protected $casts = [
@@ -40,18 +48,7 @@ class FlashSale extends Model implements HasMedia
         'end_date' => 'date',
     ];
 
-    /**
-     * Scope a query to only active flash sales.
-     *
-
-
-
-
-
-    /**
-     * @return BelongsToMany
-     */
-    public function products(): BelongsToMany
+        public function products(): BelongsToMany
     {
         return $this->belongsToMany(Product::class, 'flash_sale_products')->withPivot('flash_sale_id', 'product_id');
     }
@@ -70,13 +67,12 @@ class FlashSale extends Model implements HasMedia
             'ar' => [
                 'fixed_rate' => 'خصم من السعر بالقيمة',
                 'percentage' => 'خصم بالنسبة المئوية',
-                'free_shipping' => 'شحن مجاني',
-
+                'final_price' => 'السعر النهائي',
             ],
             'en' => [
                 'fixed_rate' => 'Fixed discount',
                 'percentage' => 'Percentage discount',
-                'free_shipping' => 'Free shipping',
+                'final_price' => 'Final price',
             ],
         ];
 
