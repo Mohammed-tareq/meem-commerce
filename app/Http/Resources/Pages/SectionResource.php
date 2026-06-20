@@ -28,12 +28,12 @@ class SectionResource extends JsonResource
 
     public function toArray($request)
     {
-        $settings = $this->getSettings();
+        // $settings = $this->getSettings();
         return [
             'id' => $this->id,
             'type' => $this->type,
             'title' => $this->title_visible ? $this->title : null,
-            'endpoint' => $this->buildEndpoint($settings),
+            'endpoint' => $this->buildEndpoint($this->setting),
             'order' => $this->order,
             // 'with_product' => $this->with_product,
             'setting' => $this->setting,
