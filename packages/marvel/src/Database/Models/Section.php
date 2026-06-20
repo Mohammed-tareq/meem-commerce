@@ -26,6 +26,7 @@ class Section extends Model implements Sortable
         'content_page_id',
         'title_visible',
         'with_product',
+        'setting'
     ];
 
     protected $casts = [
