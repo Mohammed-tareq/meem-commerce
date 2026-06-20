@@ -7,24 +7,24 @@ use Marvel\Database\Models\SectionType;
 
 class SectionResource extends JsonResource
 {
-    private ?array $resolvedSettings = null;
+    // private ?array $resolvedSettings = null;
 
-    private function getSettings(): array
-    {
-        if ($this->resolvedSettings !== null) {
-            return $this->resolvedSettings;
-        }
+    // private function getSettings(): array
+    // {
+    //     if ($this->resolvedSettings !== null) {
+    //         return $this->resolvedSettings;
+    //     }
 
-        $sectionType = SectionType::where('type', $this->type)->first();
-        if (!$sectionType) {
-            return $this->resolvedSettings = ['front' => [], 'back' => []];
-        }
+    //     $sectionType = SectionType::where('type', $this->type)->first();
+    //     if (!$sectionType) {
+    //         return $this->resolvedSettings = ['front' => [], 'back' => []];
+    //     }
 
-        $front = $sectionType->settings()->where('setting_key', 'front')->first()?->value ?? [];
-        $back = $sectionType->settings()->where('setting_key', 'back')->first()?->value ?? [];
+    //     $front = $sectionType->settings()->where('setting_key', 'front')->first()?->value ?? [];
+    //     $back = $sectionType->settings()->where('setting_key', 'back')->first()?->value ?? [];
 
-        return $this->resolvedSettings = ['front' => $front, 'back' => $back];
-    }
+    //     return $this->resolvedSettings = ['front' => $front, 'back' => $back];
+    // }
 
     public function toArray($request)
     {
