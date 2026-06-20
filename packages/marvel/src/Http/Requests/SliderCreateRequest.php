@@ -31,6 +31,8 @@ class   SliderCreateRequest extends FormRequest
             "image_desktop"=> "required | image | mimes:jpeg,png,jpg,gif | max:2048",
             "image_mobile"=> "required | image | mimes:jpeg,png,jpg,gif | max:2048",
             "status"=> "sometimes | in:1,0",
+            "products" => "sometimes|array",
+            "products.*" => "exists:products,id",
         ];
     }
 

@@ -451,12 +451,12 @@ Route::group(
         Route::apiResource('orders', OrderController::class, [
             'only' => ['update', 'destroy'],
         ]);
-        Route::apiResource('banners', BannerController::class);
-        Route::apiResource('sliders', SliderController::class);
         Route::post('banner/change-status', [BannerController::class, 'changeStatus']);
         Route::post('banner/reorder', [BannerController::class, 'reorder']);
-        Route::post('slider/change-status', [SliderController::class, 'changeStatus']);
-        Route::post('sliders/reorder', [SliderController::class, 'reorder']);
+        Route::patch('sliders/change-status', [SliderController::class, 'changeStatus']);
+        Route::put('sliders/reorder', [SliderController::class, 'reorder']);
+        Route::apiResource('banners', BannerController::class);
+        Route::apiResource('sliders', SliderController::class);
 
         Route::apiResource('countries', CountryController::class);
         Route::get('countries/{id}/governorates', [CountryController::class, 'governorates']);

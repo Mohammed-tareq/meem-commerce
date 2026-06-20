@@ -32,7 +32,7 @@ class SliderRepository extends BaseRepository
         try {
 
             DB::beginTransaction();
-            $slider = $this->create($request->except('image_desktop', 'image_mobile'));
+            $slider = $this->create($request->except('image_desktop', 'image_mobile', 'products'));
             if ($request->has('image_desktop')) {
                 if (!$this->uploadSingleImage($request, 'image_desktop', $slider, 'slider-image-desktop', 'sliders')) {
                     throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
@@ -44,6 +44,9 @@ class SliderRepository extends BaseRepository
                 }
             }
 
+            if ($request->has('products')) {
+                $slider->products()->sync($request->products);
+            }
 
             DB::commit();
             return $slider;
@@ -58,7 +61,7 @@ class SliderRepository extends BaseRepository
         try {
             DB::beginTransaction();
             $slider = $this->findOrFail($id);
-            $slider->update($request->except('image_desktop', 'image_mobile'));
+            $slider->update($request->except('image_desktop', 'image_mobile', 'products'));
             if ($request->has('image_desktop')) {
                 if (!$this->updateSingleImage($request, 'image_desktop', $slider, 'sliders-desktop', 'sliders')) {
                     throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
@@ -69,6 +72,11 @@ class SliderRepository extends BaseRepository
                     throw new HttpException(422, 'Slider image upload failed, please check the file format or size.');
                 }
             }
+
+            if ($request->has('products')) {
+                $slider->products()->sync($request->products);
+            }
+
             DB::commit();
             return $slider;
         } catch (\Exception $e) {

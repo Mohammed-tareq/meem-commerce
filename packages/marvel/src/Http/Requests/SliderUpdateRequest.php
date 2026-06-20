@@ -30,6 +30,8 @@ class SliderUpdateRequest extends FormRequest
             "image_desktop"=> "sometimes | image | mimes:jpeg,png,jpg,gif | max:2048",
             "image_mobile"=> "sometimes | image | mimes:jpeg,png,jpg,gif | max:2048",
            "status"=> "sometimes | in:1,0",
+            "products" => "sometimes|array",
+            "products.*" => "exists:products,id",
         ];
     }
 

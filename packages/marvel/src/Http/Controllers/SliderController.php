@@ -29,7 +29,20 @@ class SliderController   extends CoreController
     {
         $sliders = $this->repository->getSliders();
         $data = SliderResource::collection($sliders)->response()->getData(true);
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true, formatAPIResourcePaginate($data));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true, [
+            "data" => $data['data'] ?? [],
+            "current_page" => $data['meta']['current_page'] ?? 0,
+            "from" => $data['meta']['from'] ?? 0,
+            "to" => $data['meta']['to'] ?? 0,
+            "last_page" => $data['meta']['last_page'] ?? 0,
+            "path" => $data['meta']['path'] ?? "",
+            "per_page" => $data['meta']['per_page'] ?? 0,
+            "total" => $data['meta']['total'] ?? 0,
+            "next_page_url" => $data['links']['next'] ?? "",
+            "prev_page_url" => $data['links']['prev'] ?? "",
+            "last_page_url" => $data['links']['last'] ?? "",
+            "first_page_url" => $data['links']['first'] ?? "",
+        ]);
     }
 
     /**
@@ -39,6 +52,7 @@ class SliderController   extends CoreController
     {
         try{
             $slider = $this->repository->createSlider($request);
+            $slider->load('products');
             return $this->apiResponse(SLIDER_CREATED_SUCCESSFULLY,200, true, SliderResource::make($slider));
         }catch(\Exception $e){
             return $this->apiResponse(SOMETHING_WENT_WRONG,500, false);
@@ -52,6 +66,7 @@ class SliderController   extends CoreController
     {
         try{
             $slider = $this->repository->findOrFail($id);
+            $slider->load('products');
             return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true, SliderResource::make($slider));
         }catch(\Exception $e){
             return $this->apiResponse(NOT_FOUND,404, false);
@@ -65,6 +80,7 @@ class SliderController   extends CoreController
     {
         try{
             $slider = $this->repository->updateSlider($request, $id);
+            $slider->load('products');
             return $this->apiResponse(SLIDER_UPDATED_SUCCESSFULLY,200, true, SliderResource::make($slider));
         }catch(\Exception $e){
             return $this->apiResponse(NOT_FOUND,404, false);
@@ -94,6 +110,7 @@ class SliderController   extends CoreController
         if(!$slider){
             return $this->apiResponse(SOMETHING_WENT_WRONG,500, false);
         }
+        $slider->load('products');
         return $this->apiResponse(SLIDER_STATUS_CHANGED,200, true, SliderResource::make($slider));
     }
 
