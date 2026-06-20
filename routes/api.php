@@ -142,8 +142,6 @@ Route::get('/enum-types', function () {
 
 Route::get('product-type', function () {
     return [
-
-        'index',
         'best_product_sales',
         'brands_product',
         'new_arrivals',

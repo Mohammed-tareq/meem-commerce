@@ -101,7 +101,7 @@ class ProductController extends Controller
 
     public function index(Request $request)
     {
-        $type = $request->query('type', '');
+        $type = $request->query('type', 'index');
         $order = $request->query('order', 'desc');
         if (!empty($type)) {
             $handler = $this->productStrategyResolver->resolve($type);

@@ -35,21 +35,17 @@ class SectionResource extends JsonResource
             'title' => $this->title_visible ? $this->title : null,
             'endpoint' => $this->buildEndpoint($settings),
             'order' => $this->order,
-            'with_product' => $this->with_product,
+            // 'with_product' => $this->with_product,
             'setting' => $settings,
         ];
     }
 
     private function buildEndpoint(array $settings): string
     {
-        $params = [
-            ...($settings['back'] ?? [])
-        ];
+        $params = $settings['back'] ?? [];
 
-        if ($this->with_product) {
-            $params['with_product'] = 'true';
-        }
-
-        return 'general/' . $this->type . '?' . http_build_query($params);
+        return 'general/' . $this->type . '?' . http_build_query(
+            array_filter($params)
+        );
     }
 }

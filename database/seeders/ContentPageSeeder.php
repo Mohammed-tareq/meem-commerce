@@ -28,11 +28,12 @@ class ContentPageSeeder extends Seeder
 
         $firstBannerSlug = Banner::active()->value('slug');
         $activePromotions = Promotion::active()->valid()->get();
-        $firstPromotionSlug = $activePromotions->first()?->slug;
+        $firstPromotionSlug = $activePromotions->first()?->slug ?? 'summer-special-20-off';
         $activeCategories = Category::active()->limit(8)->pluck('id')->toArray();
         $activeBrands = Brand::active()->limit(6)->pluck('id')->toArray();
         $validFlashSales = FlashSale::valid()->limit(5)->pluck('id')->toArray();
         $activeCoupons = Coupon::valid()->limit(5)->pluck('id')->toArray();
+        $activeSliders = Slider::active()->limit(5)->pluck('id')->toArray();
         $firstProductSlug = Product::active()->value('slug');
 
         $items = [
@@ -41,10 +42,15 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Banners', 'ar' => 'بنرات'],
                 'endpoint' => 'banners',
                 'order' => 0,
-                'with_product' => true,
                 'setting' => [
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
-                    'back' => ['slug' => $firstBannerSlug]
+                    'back' => [
+                        'start_date' => '2026-06-01',
+                        'end_date' => '2026-06-20',
+                        'limit' => 10,
+                        'brandsId' => $activeBrands,
+                        'order' => 'desc',
+                    ],
                 ]
             ],
             [
@@ -52,10 +58,15 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Sliders', 'ar' => 'سلايدر'],
                 'endpoint' => 'sliders',
                 'order' => 0,
-                'with_product' => false,
                 'setting' => [
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
-                    'back' => []
+                    'back' => [
+                        'start_date' => '2026-06-01',
+                        'end_date' => '2026-06-20',
+                        'limit' => 10,
+                        'slidersId' => $activeSliders,
+                        'order' => 'desc',
+                    ],
                 ]
             ],
             [
@@ -63,10 +74,13 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Promotions', 'ar' => 'عروض'],
                 'endpoint' => 'promotions',
                 'order' => 1,
-                'with_product' => false,
                 'setting' => [
-                    'front' => ['columns_count' => 4],
-                    'back' => []
+                    'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                    'back' => [
+                        'slug' => $firstPromotionSlug,
+                        'with_product' => true,
+                        'order' => 'desc',
+                    ],
                 ]
             ],
             [
@@ -74,10 +88,14 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Best Category', 'ar' => 'أفضل التصنيفات'],
                 'endpoint' => 'categories',
                 'order' => 2,
-                'with_product' => false,
                 'setting' => [
-                    'front' => ['columns_count' => 8, 'shape' => 'circle'],
-                    'back' => []
+                    'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                    'back' => [
+                        'parent' => true,
+                        'limit' => 10,
+                        'categoriesId' => $activeCategories,
+                        'order' => 'desc',
+                    ],
                 ]
             ],
             [
@@ -85,10 +103,21 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Best Product Sales', 'ar' => 'أفضل مبيعات المنتجات'],
                 'endpoint' => 'products',
                 'order' => 3,
-                'with_product' => false,
                 'setting' => [
-                    'front' => ['columns_count' => 5, 'show_timer' => false],
-                    'back' => ['limit' => 10, 'type' => 'best_product_sales', 'productsId' => []]
+                    'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                    'back' => [
+                        'limit' => 20,
+                        'order' => 'desc',
+                        'order_price' => 'asc',
+                        'type' => null,
+                        'productsId' => null,
+                        'categoriesId' => null,
+                        'brandsId' => null,
+                        'promotionsId' => null,
+                        'flashSalesId' => null,
+                        'bannersId' => null,
+                        'couponsId' => null,
+                    ],
                 ]
             ],
             [
@@ -96,10 +125,15 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Flash Sales', 'ar' => 'عروض فلاش'],
                 'endpoint' => 'flash-sales',
                 'order' => 4,
-                'with_product' => false,
                 'setting' => [
-                    'front' => ['theme' => 'dark', 'show_timer' => true],
-                    'back' => ['status' => 'active', 'flashSalesId' => $validFlashSales],
+                    'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                    'back' => [
+                        'start_date' => '2026-06-01',
+                        'end_date' => '2026-06-20',
+                        'limit' => 10,
+                        'flashSalesId' => $validFlashSales,
+                        'order' => 'desc',
+                    ],
                 ]
             ],
             [
@@ -107,7 +141,6 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Flash Sales Products', 'ar' => 'منتجات عروض الفلاش'],
                 'endpoint' => 'products',
                 'order' => 5,
-                'with_product' => false,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => true, 'timer_end_at' => '2026-07-01 00:00:00'],
                     'back' => ['limit' => 10, 'type' => 'flash_sales_product', 'productsId' => []]
@@ -118,10 +151,15 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Brand', 'ar' => 'العلامة التجارية'],
                 'endpoint' => 'brands',
                 'order' => 6,
-                'with_product' => false,
                 'setting' => [
-                    'front' => ['columns_count' => 6],
-                    'back' => ['limit' => 6, 'brandsId' => $activeBrands]
+                    'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                    'back' => [
+                        'start_date' => '2026-06-01',
+                        'end_date' => '2026-06-20',
+                        'limit' => 10,
+                        'brandsId' => $activeBrands,
+                        'order' => 'desc',
+                    ],
                 ]
             ],
             [
@@ -129,7 +167,6 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Brands Products', 'ar' => 'منتجات العلامات التجارية'],
                 'endpoint' => 'products',
                 'order' => 7,
-                'with_product' => false,
                 'setting' => [
                     'front' => ['columns_count' => 5],
                     'back' => ['limit' => 10, 'type' => 'brands_product', 'productsId' => []]
@@ -140,7 +177,6 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Product Discount Days', 'ar' => 'أيام خصم المنتجات'],
                 'endpoint' => 'products',
                 'order' => 8,
-                'with_product' => false,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'badge_text' => 'LOW STOCK'],
                     'back' => ['limit' => 10, 'type' => 'product_discount_today_or_low_qty', 'productsId' => []]
@@ -151,10 +187,15 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Coupons', 'ar' => 'كوبونات'],
                 'endpoint' => 'coupons',
                 'order' => 9,
-                'with_product' => false,
                 'setting' => [
-                    'front' => ['layout' => 'slider'],
-                    'back' => ['only_valid' => true, 'couponsId' => $activeCoupons]
+                    'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                    'back' => [
+                        'start_date' => '2026-06-01',
+                        'end_date' => '2026-06-20',
+                        'limit' => 10,
+                        'couponsId' => $activeCoupons,
+                        'order' => 'desc',
+                    ],
                 ]
             ],
             [
@@ -162,7 +203,6 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Flash Sale Days', 'ar' => 'أيام عروض الفلاش'],
                 'endpoint' => 'products',
                 'order' => 10,
-                'with_product' => false,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => true],
                     'back' => ['limit' => 10, 'type' => 'flash_sales_end_today', 'productsId' => []]
@@ -173,7 +213,6 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Flash Sale Days', 'ar' => 'أيام عروض الفلاش'],
                 'endpoint' => 'products',
                 'order' => 10,
-                'with_product' => false,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'show_timer' => true],
                     'back' => ['limit' => 10, 'type' => 'flash_sales_end_week', 'productsId' => []]
@@ -184,7 +223,6 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Parent Category', 'ar' => 'التصنيف الرئيسي'],
                 'endpoint' => 'categories',
                 'order' => 11,
-                'with_product' => false,
                 'setting' => [
                     'front' => ['layout' => 'list'],
                     'back' => ['parent_only' => true, 'categoriesId' => $activeCategories]
@@ -195,7 +233,6 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'Product For Parent', 'ar' => 'منتجات للتصنيف الرئيسي'],
                 'endpoint' => 'products',
                 'order' => 12,
-                'with_product' => false,
                 'setting' => [
                     'front' => ['columns_count' => 5],
                     'back' => ['limit' => 10, 'type' => 'product_for_parent_category', 'productsId' => []]
@@ -206,7 +243,6 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'New Arrivals', 'ar' => 'وصل حديثاً'],
                 'endpoint' => 'products',
                 'order' => 13,
-                'with_product' => false,
                 'setting' => [
                     'front' => ['columns_count' => 5, 'badge_text' => 'NEW'],
                     'back' => ['limit' => 10, 'type' => 'new_arrivals', 'productsId' => []]
@@ -217,7 +253,6 @@ class ContentPageSeeder extends Seeder
                 'title' => ['en' => 'All Discount Product', 'ar' => 'كل المنتجات المخفضة'],
                 'endpoint' => 'products',
                 'order' => 14,
-                'with_product' => false,
                 'setting' => [
                     'front' => ['columns_count' => 5],
                     'back' => ['limit' => 10, 'type' => 'all_product_discounts', 'productsId' => []]
