@@ -176,13 +176,22 @@ class CategoryController extends CoreController
     {
         $parent = $request->parent ?? null;
         $selfId = $request->exceptSelf ?? null;
-        $limit = $request->limit ?? 15;
+        $limit = $request->per_page ?? $request->limit ?? 15;
         $active = $request->active ?? null;
         $Inactive = $request->inactive ?? null;
         $search = $request->search ?? null;
+        $featureCategory = filter_var($request->input('feature-category'), FILTER_VALIDATE_BOOLEAN);
+        $order = $request->order;
+        $sortedBy = $request->sortedBy ?? 'asc';
         $categoriesQuery = $this->repository
             ->withCount(['products']);
 
+        if ($featureCategory) {
+            $categoriesQuery = $categoriesQuery->orderByDesc('products_count');
+        }
+        if ($order && in_array($order, ['id', 'name', 'slug', 'products_count', 'created_at', 'updated_at', 'level'])) {
+            $categoriesQuery = $categoriesQuery->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
+        }
         if ($parent) {
             $categoriesQuery = $categoriesQuery->whereNull('parent_id');
         }
@@ -201,7 +210,21 @@ class CategoryController extends CoreController
 
         $categories = $categoriesQuery->paginate($limit);
         $data = CategoryResource::collection($categories)->response()->getData(true);
-        return formatAPIResourcePaginate($data);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $data['data'] ?? [],
+            "page" => $data['meta']['current_page'] ?? 0,
+            "current_page" => $data['meta']['current_page'] ?? 0,
+            "from" => $data['meta']['from'] ?? 0,
+            "to" => $data['meta']['to'] ?? 0,
+            "last_page" => $data['meta']['last_page'] ?? 0,
+            "path" => $data['meta']['path'] ?? "",
+            "per_page" => $data['meta']['per_page'] ?? 0,
+            "total" => $data['meta']['total'] ?? 0,
+            "next_page_url" => $data['links']['next'] ?? "",
+            "prev_page_url" => $data['links']['prev'] ?? "",
+            "last_page_url" => $data['links']['last'] ?? "",
+            "first_page_url" => $data['links']['first'] ?? "",
+        ]);
     }
 
     /**
@@ -241,6 +264,7 @@ class CategoryController extends CoreController
     {
         try {
             $category = $this->repository->saveCategory($request);
+            $category->load('products');
             return $this->apiResponse(CATEGORY_CREATED_SUCCESSFULLY, 200, true, CategoryResource::make($category));
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
@@ -282,7 +306,7 @@ class CategoryController extends CoreController
     public function show(Request $request, $id)
     {
         try {
-            $category = $this->repository->with(['parent', 'shops', 'products'])
+            $category = $this->repository->with(['parent', 'products'])
                 ->withCount('products')
                 ->where('id', $id)->firstOrFail();
             app(CategoryHierarchyService::class)->loadDirectChildren($category, true);
@@ -343,7 +367,9 @@ class CategoryController extends CoreController
     public function categoryUpdate(CategoryUpdateRequest $request): Category
     {
         $category = $this->repository->findOrFail($request->id);
-        return $this->repository->updateCategory($request, $category);
+        $category = $this->repository->updateCategory($request, $category);
+        $category->load('products');
+        return $category;
     }
 
     /**
@@ -374,14 +400,11 @@ class CategoryController extends CoreController
     {
         try {
             $this->repository->findOrFail($id)->delete();
-            return response()->json([
-                'message' => 'Category deleted successfully',
-                'status' => true
-            ]);
+            return $this->apiResponse(CATEGORY_DELETED_SUCCESSFULLY, 200, true);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
         } catch (\Illuminate\Database\QueryException $e) {
-            throw new MarvelException('Cannot delete category with existing associated resources');
+            throw new MarvelException(CANNOT_DELETE_CATEGORY_WITH_ASSOCIATED_RESOURCES);
         }
     }
 
@@ -421,6 +444,6 @@ class CategoryController extends CoreController
             ->orderByDesc('products_count')
             ->limit($limit)
             ->get();
-        return $this->apiResponse("Featured categories fetched successfully", 200, true, CategoryResource::collection($categories));
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryResource::collection($categories));
     }
 }

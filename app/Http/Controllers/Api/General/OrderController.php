@@ -44,7 +44,7 @@ class OrderController extends Controller
         $payload = $this->orderService->eligiblePromotionsForUser();
 
         if (!$payload) {
-            return $this->apiResponse('Cart not found', 400, false);
+            return $this->apiResponse(CART_NOT_FOUND, 400, false);
         }
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $payload);
@@ -57,7 +57,7 @@ class OrderController extends Controller
 
         $cart = $this->cartInventoryService->getActiveCartForUser($request->user());
         if (!$cart) {
-            return $this->apiResponse('Cart not found', 400, false);
+            return $this->apiResponse(CART_NOT_FOUND, 400, false);
         }
 
         try {
@@ -92,14 +92,14 @@ class OrderController extends Controller
         $invoice = $this->myfatoraService->createInvoice($data);
 
         if (!is_array($invoice)) {
-            return $this->apiResponse('Error creating invoice', 500, false);
+            return $this->apiResponse(ERROR_CREATING_INVOICE, 500, false);
         }
 
         $invoiceUrl = data_get($invoice, 'Data.InvoiceURL');
         $invoiceId = data_get($invoice, 'Data.InvoiceId');
 
         if (!$invoiceUrl || !$invoiceId) {
-            return $this->apiResponse('Error creating invoice', 500, false);
+            return $this->apiResponse(ERROR_CREATING_INVOICE, 500, false);
         }
 
 
@@ -110,14 +110,14 @@ class OrderController extends Controller
         }
 
         if (!$order) {
-            return $this->apiResponse('Error adding items to order', 500, false);
+            return $this->apiResponse(ERROR_ADDING_ITEMS_TO_ORDER, 500, false);
         }
 
         if (!$this->orderService->createTransaction($order->id, $invoiceId, 'myfatoorah')) {
-            return $this->apiResponse('Error creating transaction', 500, false);
+            return $this->apiResponse(ERROR_CREATING_TRANSACTION, 500, false);
         }
 
-        return $this->apiResponse('Checkout successful', 200, true, ['url' => $invoiceUrl]);
+        return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, ['url' => $invoiceUrl]);
     }
 
 
@@ -125,7 +125,7 @@ class OrderController extends Controller
     {
         $paymentId = $request->query('paymentId', $request->input('paymentId'));
         if (!$paymentId) {
-            return $this->apiResponse('Missing payment id', 400, false);
+            return $this->apiResponse(MISSING_PAYMENT_ID, 400, false);
         }
 
 
@@ -137,14 +137,14 @@ class OrderController extends Controller
         $invoice = $this->myfatoraService->checkInvoice($data);
 
         if (!is_array($invoice)) {
-            return $this->apiResponse('Invalid payment response', 400, false);
+            return $this->apiResponse(INVALID_PAYMENT_RESPONSE, 400, false);
         }
 
         $invoiceStatus = data_get($invoice, 'Data.InvoiceStatus');
         $invoiceId = data_get($invoice, 'Data.InvoiceId');
 
         if (!$invoiceStatus || !$invoiceId) {
-            return $this->apiResponse('Invalid payment response', 400, false);
+            return $this->apiResponse(INVALID_PAYMENT_RESPONSE, 400, false);
         }
 
         if ($invoiceStatus !== 'Paid') {
@@ -155,7 +155,7 @@ class OrderController extends Controller
                     $this->cartInventoryService->releaseCart($cart, false);
                 }
             }
-            return $this->apiResponse('Payment failed', 400, false);
+            return $this->apiResponse(PAYMENT_FAILED, 400, false);
         }
 
         $order = $this->orderService->changeOrderStatus($invoiceId, 'completed');
@@ -170,14 +170,14 @@ class OrderController extends Controller
         // if ($order = $this->orderService->getOrder($invoice['Data']["InvoiceId"])) {
         //     $this->orderService->sendAdminNotification($order);
         // }
-        return $this->apiResponse('Payment successful', 200, true);
+        return $this->apiResponse(PAYMENT_SUCCESSFUL, 200, true);
     }
 
     public function checkoutErrorCallback(Request $request)
     {
         $paymentId = $request->query('paymentId', $request->input('paymentId'));
         if (!$paymentId) {
-            return $this->apiResponse('Missing payment id', 400, false);
+            return $this->apiResponse(MISSING_PAYMENT_ID, 400, false);
         }
 
         $data = [
@@ -198,6 +198,6 @@ class OrderController extends Controller
                 }
             }
         }
-        return $this->apiResponse('Payment failed', 400, false);
+        return $this->apiResponse(PAYMENT_FAILED, 400, false);
     }
 }

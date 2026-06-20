@@ -17,7 +17,7 @@ class CategoryResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'name'                 => $this->getTranslation('name', app()->getLocale()),
+            'name'                 => request()->routeIs('categories.index') ? $this->getTranslation('name', app()->getLocale()) : $this->getTranslations('name'),
             'slug'                 => $this->slug,
             'parent_id'            => $this->parent_id,
             'level'                => $this->level,
@@ -31,6 +31,17 @@ class CategoryResource extends Resource
             ]),
             $this->mergeWhen($this->relationLoaded('children') && $this->children->isNotEmpty(), [
                 'children' => ChildrenCategoryResource::collection($this->children),
+            ]),
+            $this->mergeWhen($this->relationLoaded('products'), [
+                'products' => $this->products->map(fn($product) => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
+                    'status' => $product->status,
+                    'image' => [
+                        'thumbnail' => $product->getFirstMediaUrl('products'),
+                    ],
+                ]),
             ]),
         ];
     }

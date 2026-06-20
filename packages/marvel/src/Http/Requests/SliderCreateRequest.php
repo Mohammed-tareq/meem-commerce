@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Requests;
 
+use CodeZero\UniqueTranslation\UniqueTranslationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -27,7 +28,9 @@ class   SliderCreateRequest extends FormRequest
     public function rules()
     {
         return [
-            'title' => 'sometimes|string|max:255',
+            'title.*' => 'required|array',
+            'title.en'=> ['required', 'string', UniqueTranslationRule::for('sliders', 'title')],
+            'title.ar'=> ['required', 'string', UniqueTranslationRule::for('sliders', 'title')],
             "image_desktop"=> "required | image | mimes:jpeg,png,jpg,gif | max:2048",
             "image_mobile"=> "required | image | mimes:jpeg,png,jpg,gif | max:2048",
             "status"=> "sometimes | in:1,0",

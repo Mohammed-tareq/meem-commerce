@@ -18,7 +18,7 @@ class SliderResource extends Resource
 
         return [
             "id" => $this->id,
-            "title" => $this->getTranslation('title', app()->getLocale()),
+            "title" => request()->routeIs('sliders.index') ? $this->getTranslation('title', app()->getLocale()) : $this->getTranslations('title'),
             "slug" => $this->slug,
             "status" => (bool)$this->status,
             "order" => $this->order,

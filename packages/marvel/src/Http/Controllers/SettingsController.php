@@ -159,7 +159,7 @@ class SettingsController extends CoreController
         if (isset($settings->id)) {
             $settings = $this->repository->updateSetting($request, $settings->id);
         }
-        return $this->apiResponse('Settings updated successfully', 200, true, SettingResource::make($settings));
+        return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, SettingResource::make($settings));
 
     }
 

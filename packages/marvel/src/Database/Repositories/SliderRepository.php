@@ -19,12 +19,22 @@ class SliderRepository extends BaseRepository
     {
         return Slider::class;
     }
-    public function getSliders()
+    public function getSliders(Request $request)
     {
-        $limit = request()->limit ?? 15;
-        $active = request()->active ?? false;
-        $sliders = Slider::when($active, fn($query) => $query->active())->ordered()->paginate($limit);
-        return $sliders;
+        $limit = $request->per_page ?? $request->limit ?? 15;
+        $active = filter_var($request->active, FILTER_VALIDATE_BOOLEAN);
+        $order = $request->order;
+        $sortedBy = $request->sortedBy ?? 'asc';
+
+        $query = Slider::when($active, fn($q) => $q->active());
+
+        if ($order && in_array($order, ['id', 'title', 'slug', 'order', 'status', 'created_at', 'updated_at'])) {
+            $query = $query->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
+        } else {
+            $query = $query->ordered();
+        }
+
+        return $query->paginate($limit);
     }
 
     public function createSlider(Request $request)

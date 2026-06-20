@@ -59,6 +59,9 @@ class CategoryRepository extends BaseRepository
 
             $category = $this->create($data);
 
+            if ($request->has('products')) {
+                $category->products()->sync($request->products);
+            }
 
             if ($request->has('image-desktop')) {
                 if (!$this->uploadSingleImage($request, 'image-desktop', $category, 'categories-desktop', 'categories')) {
@@ -105,6 +108,9 @@ class CategoryRepository extends BaseRepository
                 }
             }
             $category->shops()->sync($request->shops_id ?? []);
+            if ($request->has('products')) {
+                $category->products()->sync($request->products);
+            }
             DB::commit();
             return $this->findOrFail($category->id);
         } catch (ValidationException $e) {

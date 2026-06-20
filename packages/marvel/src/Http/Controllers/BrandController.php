@@ -55,7 +55,7 @@ class BrandController extends CoreController
     {
         try {
             $brand = $this->repository->saveBrand($request);
-            return $this->apiResponse('Brand created successfully', 200, true, BrandResource::make($brand));
+            return $this->apiResponse(BRAND_CREATED_SUCCESSFULLY, 200, true, BrandResource::make($brand));
         } catch (MarvelException $th) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }
@@ -76,7 +76,7 @@ class BrandController extends CoreController
         try {
             $request->merge(['id' => $id]);
             $brand = $this->brandUpdate($request);
-            return $this->apiResponse('Brand updated successfully', 200, true, BrandResource::make($brand));
+            return $this->apiResponse(BRAND_UPDATED_SUCCESSFULLY, 200, true, BrandResource::make($brand));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -92,10 +92,7 @@ class BrandController extends CoreController
     {
         try {
             $this->repository->findOrFail($id)->delete();
-            return response()->json([
-                'message' => 'Brand deleted successfully',
-                'status' => true
-            ]);
+            return $this->apiResponse(BRAND_DELETED_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }

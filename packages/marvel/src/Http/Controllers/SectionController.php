@@ -41,7 +41,7 @@ class SectionController extends CoreController
                 $this->sectionTypeService->upsertSettings($sectionType->id, $setting);
             }
 
-            return $this->apiResponse("Section created successfully", 200, true, PagesSectionResource::make($section));
+            return $this->apiResponse(SECTION_CREATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -69,7 +69,7 @@ class SectionController extends CoreController
                 $this->sectionTypeService->upsertSettings($sectionType->id, $setting);
             }
 
-            return $this->apiResponse("Section updated successfully", 200, true, PagesSectionResource::make($section));
+            return $this->apiResponse(SECTION_UPDATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
         } catch (\Exception $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
@@ -79,7 +79,7 @@ class SectionController extends CoreController
     {
         try {
             $section->delete();
-            return $this->apiResponse("Section deleted successfully", 200, true);
+            return $this->apiResponse(SECTION_DELETED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
@@ -93,7 +93,7 @@ class SectionController extends CoreController
                 'sections.*' => 'required|integer|distinct|exists:sections,id',
             ]);
             Section::setNewOrder($request->sections);
-            return $this->apiResponse("Sections reordered successfully", 200, true);
+            return $this->apiResponse(SECTIONS_REORDERED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }

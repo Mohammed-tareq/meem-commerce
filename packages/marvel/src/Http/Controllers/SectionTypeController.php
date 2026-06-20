@@ -27,7 +27,7 @@ class SectionTypeController extends CoreController
     {
         try {
             $type = $this->sectionTypeService->createType($request->validated());
-            return $this->apiResponse("Type created successfully", 200, true, $type);
+            return $this->apiResponse(TYPE_CREATED_SUCCESSFULLY, 200, true, $type);
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -43,7 +43,7 @@ class SectionTypeController extends CoreController
     {
         try {
             $type = $this->sectionTypeService->updateType($sectionType->id, $request->validated());
-            return $this->apiResponse("Type updated successfully", 200, true, $type);
+            return $this->apiResponse(TYPE_UPDATED_SUCCESSFULLY, 200, true, $type);
         } catch (\Exception $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
@@ -53,7 +53,7 @@ class SectionTypeController extends CoreController
     {
         try {
             $this->sectionTypeService->deleteType($sectionType->id);
-            return $this->apiResponse("Type deleted successfully", 200, true);
+            return $this->apiResponse(TYPE_DELETED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
@@ -85,7 +85,7 @@ class SectionTypeController extends CoreController
             $this->sectionTypeService->upsertSettings($sectionType->id, $request->only(['front', 'back']));
 
             $grouped = $this->sectionTypeService->getSettingsGrouped($type);
-            return $this->apiResponse("Settings updated successfully", 200, true, $grouped);
+            return $this->apiResponse(SETTINGS_UPDATED_SUCCESSFULLY, 200, true, $grouped);
         } catch (\Exception $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }

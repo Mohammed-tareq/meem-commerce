@@ -25,12 +25,13 @@ class SliderController   extends CoreController
         $this->middleware("permission:".Permission::DELETE_SLIDER)->only("destroy");
     }
 
-    public function index()
+    public function index(Request $request)
     {
-        $sliders = $this->repository->getSliders();
+        $sliders = $this->repository->getSliders($request);
         $data = SliderResource::collection($sliders)->response()->getData(true);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY,200, true, [
             "data" => $data['data'] ?? [],
+            "page" => $data['meta']['current_page'] ?? 0,
             "current_page" => $data['meta']['current_page'] ?? 0,
             "from" => $data['meta']['from'] ?? 0,
             "to" => $data['meta']['to'] ?? 0,

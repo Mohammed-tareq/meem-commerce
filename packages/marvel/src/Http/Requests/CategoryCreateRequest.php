@@ -31,10 +31,12 @@ class CategoryCreateRequest extends FormRequest
         return [
             'name' => ['required', 'array'],
             'name.*' => ['required', 'string', UniqueTranslationRule::for('categories', 'name')],
-            // 'image-desktop' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
-            // 'image-mobile' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'image-desktop' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
+            'image-mobile' => ['required', 'file', 'mimes:jpeg,png,jpg,gif,svg', 'max:2048'],
             'parent_id' => ['nullable', 'integer', 'exists:categories,id'],
             'details'      => ['sometimes', 'string', 'min:3', 'max:2500'],
+            "products" => "sometimes|array",
+            "products.*" => "exists:products,id",
         ];
     }
 
@@ -50,9 +52,10 @@ class CategoryCreateRequest extends FormRequest
             'name.unique' => 'Name already exists',
             'name.*.string' => 'Name is not a valid string',
             'name.*.max:255' => 'Name can not be more than 255 character',
-            'icon.string' => 'Icon is not a valid string',
-            'image.string' => 'Image is not a valid image',
-            'banner_image.string' => 'Banner image is not a valid image',
+            'image-desktop.mimes' => 'Desktop image must be a file of type: jpeg, png, jpg, gif, svg',
+            'image-desktop.max' => 'Desktop image must not be greater than 2048 kilobytes',
+            'image-mobile.mimes' => 'Mobile image must be a file of type: jpeg, png, jpg, gif, svg',
+            'image-mobile.max' => 'Mobile image must not be greater than 2048 kilobytes',
             'details.string' => 'Details is not a valid string',
             'parent.integer' => 'Parent is not a valid integer',
         ];

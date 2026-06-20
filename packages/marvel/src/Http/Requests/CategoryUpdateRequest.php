@@ -49,9 +49,10 @@ class CategoryUpdateRequest extends FormRequest
                     }
                 },
             ],
-            'shops_id' => ['sometimes', 'array'],
-            'shops_id.*' => ['sometimes', 'integer', "exists:shops,id"],
+           
             'details'      => ['sometimes', 'string', 'min:3', 'max:2500'],
+            "products" => "sometimes|array",
+            "products.*" => "exists:products,id",
         ];
     }
 

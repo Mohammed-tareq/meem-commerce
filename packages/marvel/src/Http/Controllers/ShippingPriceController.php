@@ -80,7 +80,7 @@ class ShippingPriceController extends CoreController
         $price = $this->repository->findById($id, ['governorate']);
 
         if (!$price) {
-            return response()->json(['status' => false, 'message' => 'Shipping price not found.'], 404);
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, ShippingPriceResource::make($price));

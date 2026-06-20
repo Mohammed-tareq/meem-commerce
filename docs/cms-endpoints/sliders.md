@@ -110,12 +110,27 @@ All endpoints return:
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `limit` | int | 15 | Results per page |
+| `page` | int | 1 | Page number |
+| `per_page` | int | 15 | Results per page (alias: `limit`) |
+| `limit` | int | 15 | Results per page (alias: `per_page`) |
 | `active` | bool | false | Filter only active sliders |
+| `order` | string | — | Field to sort by. Allowed: `id`, `title`, `slug`, `order`, `status`, `created_at`, `updated_at` |
+| `sortedBy` | string | `asc` | Sort direction (`asc` or `desc`). Only applies when `order` is set. |
+
+**Example Usage:**
+```
+GET /sliders?page=2&per_page=20              # Page 2, 20 per page
+GET /sliders?page=1&limit=10                 # Page 1, 10 per page
+GET /sliders?order=title&sortedBy=asc        # Alphabetical A-Z by title
+GET /sliders?order=title&sortedBy=desc       # Alphabetical Z-A by title
+GET /sliders?order=order&sortedBy=asc        # By display order (default)
+GET /sliders?order=created_at&sortedBy=desc  # Newest first
+GET /sliders?order=status&sortedBy=desc      # Active first
+```
 
 **Business Logic:**
-1. Queries sliders with Spatie `ordered()` scope
-2. If `?active=true`, applies `active()` scope (`where status = true`)
+1. If `?active=true`, applies `active()` scope (`where status = true`)
+2. If `order` is a valid field, applies `orderBy($order, $sortedBy)`; otherwise uses Spatie `ordered()` scope
 3. Paginates with given limit
 4. Returns paginated `SliderResource` collection
 
@@ -139,6 +154,7 @@ All endpoints return:
                 }
             }
         ],
+        "page": 1,
         "current_page": 1,
         "from": 1,
         "to": 15,
@@ -178,7 +194,9 @@ All endpoints return:
 
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
-| `title` | string | yes | `string`, `max:255` |
+| `title` | object | **Yes** | Translatable object with `en` and `ar` keys |
+| `title.en` | string | **Yes** | `string`, unique translation |
+| `title.ar` | string | **Yes** | `string`, unique translation |
 | `image_desktop` | file | **Yes** | `image`, `mimes:jpeg,png,jpg,gif`, `max:2048` |
 | `image_mobile` | file | **Yes** | `image`, `mimes:jpeg,png,jpg,gif`, `max:2048` |
 | `status` | int | No | `in:0,1` |
@@ -188,7 +206,10 @@ All endpoints return:
 **Example Request:**
 ```json
 {
-    "title": "Summer Sale",
+    "title": {
+        "en": "Summer Sale",
+        "ar": "تخفيضات الصيف"
+    },
     "status": 1,
     "products": [2, 11, 14]
 }
@@ -196,7 +217,7 @@ All endpoints return:
 
 **Business Logic:**
 1. Validates via `SliderCreateRequest`
-2. Creates slider record with `title`, `slug` (auto-generated from English title), `order` (auto-set by Sortable), `status`
+2. Creates slider record with `title` (translatable), `slug` (auto-generated from English title), `order` (auto-set by Sortable), `status`
 3. Uploads and attaches desktop/mobile images via Spatie MediaLibrary
 4. If `products` array provided, syncs pivot relationships via `slider_product` table
 5. Returns created slider with loaded products
@@ -315,7 +336,9 @@ All endpoints return:
 
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
-| `title` | string | No | `string`, `max:255` |
+| `title` | object | **Yes** | Translatable object with `en` and `ar` keys |
+| `title.en` | string | **Yes** | `string`, unique translation (ignores self) |
+| `title.ar` | string | **Yes** | `string`, unique translation (ignores self) |
 | `image_desktop` | file | No | `image`, `mimes:jpeg,png,jpg,gif`, `max:2048` |
 | `image_mobile` | file | No | `image`, `mimes:jpeg,png,jpg,gif`, `max:2048` |
 | `status` | int | No | `in:0,1` |
@@ -325,7 +348,10 @@ All endpoints return:
 **Example Request:**
 ```json
 {
-    "title": "Updated Sale Title",
+    "title": {
+        "en": "Updated Sale Title",
+        "ar": "عنوان التخفيضات المحدث"
+    },
     "status": 1,
     "products": [5, 21, 35]
 }

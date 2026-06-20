@@ -39,7 +39,7 @@ class RoleAndPermissionController extends CoreController
             $limit = request('limit', 10);
             $search = request('search', null);
             $roles = Role::paginate($limit);
-            return $this->apiResponse('Roles fetched successfully', 200, true, RoleResource::collection($roles));
+            return $this->apiResponse(ROLES_FETCHED_SUCCESSFULLY, 200, true, RoleResource::collection($roles));
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -65,7 +65,7 @@ class RoleAndPermissionController extends CoreController
                 'guard_name' => 'api',
             ]);
 
-            return $this->apiResponse('Role added successfully', 200, true, RoleResource::make($role));
+            return $this->apiResponse(ROLE_ADDED_SUCCESSFULLY, 200, true, RoleResource::make($role));
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -90,7 +90,7 @@ class RoleAndPermissionController extends CoreController
                 'display_name' => $request->display_name,
             ]);
 
-            return $this->apiResponse('Role updated successfully', 200, true, RoleResource::make($role));
+            return $this->apiResponse(ROLE_UPDATED_SUCCESSFULLY, 200, true, RoleResource::make($role));
         } catch (RoleDoesNotExist|ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
         } catch (\Exception $e) {
@@ -103,11 +103,11 @@ class RoleAndPermissionController extends CoreController
         try {
             $role = Role::findById($id, 'api');
             $role->delete();
-            return $this->apiResponse('Role deleted successfully', 200, true, null);
+            return $this->apiResponse(ROLE_DELETED_SUCCESSFULLY, 200, true, null);
         } catch (RoleDoesNotExist|ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
         } catch (\Illuminate\Database\QueryException $e) {
-            return $this->apiResponse('Cannot delete role with assigned users', 409, false);
+            return $this->apiResponse(CANNOT_DELETE_ROLE_WITH_ASSIGNED_USERS, 409, false);
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -125,7 +125,7 @@ class RoleAndPermissionController extends CoreController
             $roles = Role::whereIn('id', $request->role_ids)->where('guard_name', 'api')->get();
             $user->syncRoles($roles)->load('roles', 'permissions');
 
-            return $this->apiResponse('Role assigned successfully', 200, true, UserResource::make($user));
+            return $this->apiResponse(ROLE_ASSIGNED_SUCCESSFULLY, 200, true, UserResource::make($user));
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -145,7 +145,7 @@ class RoleAndPermissionController extends CoreController
             }
             $user->load('roles', 'permissions');
 
-            return $this->apiResponse('Role removed successfully', 200, true);
+            return $this->apiResponse(ROLE_REMOVED_SUCCESSFULLY, 200, true);
         } catch (ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
         } catch (\Exception $e) {
@@ -164,7 +164,7 @@ class RoleAndPermissionController extends CoreController
             $permissions = Permission::when($search, function ($query) use ($search) {
                 $query->where('name', 'like', "%{$search}%");
             })->paginate($limit);
-            return $this->apiResponse('Permissions fetched successfully', 200, true, PermissionResource::collection($permissions));
+            return $this->apiResponse(PERMISSIONS_FETCHED_SUCCESSFULLY, 200, true, PermissionResource::collection($permissions));
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -186,7 +186,7 @@ class RoleAndPermissionController extends CoreController
 
             $role->syncPermissions($permissions)->load('permissions');
 
-            return $this->apiResponse('Permission assigned successfully', 200, true, RoleResource::make($role));
+            return $this->apiResponse(PERMISSION_ASSIGNED_SUCCESSFULLY, 200, true, RoleResource::make($role));
         } catch (RoleDoesNotExist|ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
         } catch (\Exception $e) {

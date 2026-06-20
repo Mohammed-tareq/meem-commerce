@@ -211,7 +211,7 @@ class ShopController extends CoreController
         if (!$shop) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
-        return $this->apiResponse('Shop retrieved successfully', 200, true, ShopResource::make($shop));
+        return $this->apiResponse(SHOP_RETRIEVED_SUCCESSFULLY, 200, true, ShopResource::make($shop));
 
         //        $shop = $this->repository
         //            ->with(['categories', 'owner', 'ownership_history'])
@@ -261,7 +261,7 @@ class ShopController extends CoreController
         try {
             $request->merge(['id' => $id]);
             $shop = $this->updateShop($request);
-            return $this->apiResponse('Shop updated successfully', 200, true, ShopResource::make($shop));
+            return $this->apiResponse(SHOP_UPDATED_SUCCESSFULLY, 200, true, ShopResource::make($shop));
         } catch (MarvelException $th) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -384,7 +384,7 @@ class ShopController extends CoreController
             FlashSaleShop::where('shop_id', $id)->delete();
 
             $shop->delete();
-            return $this->apiResponse('Shop deleted successfully', 200, true);
+            return $this->apiResponse(SHOP_DELETED_SUCCESSFULLY, 200, true);
         } catch (\Exception $e) {
             throw new ModelNotFoundException(NOT_FOUND);
         }

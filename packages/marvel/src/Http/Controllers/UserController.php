@@ -1141,7 +1141,7 @@ class UserController extends CoreController
         $wallet->total_points = $wallet->total_points + $points;
         $wallet->available_points = $wallet->available_points + $points;
         $wallet->save();
-        return ['message' => 'Points added successfully', 'success' => true];
+        return ['message' => POINTS_ADDED_SUCCESSFULLY, 'success' => true];
     }
 
     /**

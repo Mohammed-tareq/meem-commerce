@@ -84,7 +84,7 @@ class GovernorateController extends CoreController
         $governorate = $this->repository->findById($id, ['country', 'cities', 'shippingPrice']);
 
         if (!$governorate) {
-            return response()->json(['status' => false, 'message' => 'Governorate not found.'], 404);
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, GovernorateResource::make($governorate));
