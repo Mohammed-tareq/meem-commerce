@@ -32,13 +32,13 @@ class SectionController extends CoreController
 
             $section = Section::create($data);
 
-            if ($setting) {
-                $sectionType = $this->sectionTypeService->getByType($section->type);
-                if (!$sectionType) {
-                    $sectionType = $this->sectionTypeService->createType(['type' => $section->type]);
-                }
-                $this->sectionTypeService->upsertSettings($sectionType->id, $setting);
-            }
+            // if ($setting) {
+            //     $sectionType = $this->sectionTypeService->getByType($section->type);
+            //     if (!$sectionType) {
+            //         $sectionType = $this->sectionTypeService->createType(['type' => $section->type]);
+            //     }
+            //     $this->sectionTypeService->upsertSettings($sectionType->id, $setting);
+            // }
 
             return $this->apiResponse(SECTION_CREATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
         } catch (\Exception $e) {
@@ -59,13 +59,13 @@ class SectionController extends CoreController
 
             $section->update($data);
 
-            if ($setting) {
-                $sectionType = $this->sectionTypeService->getByType($section->type);
-                if (!$sectionType) {
-                    $sectionType = $this->sectionTypeService->createType(['type' => $section->type]);
-                }
-                $this->sectionTypeService->upsertSettings($sectionType->id, $setting);
-            }
+            // if ($setting) {
+            //     $sectionType = $this->sectionTypeService->getByType($section->type);
+            //     if (!$sectionType) {
+            //         $sectionType = $this->sectionTypeService->createType(['type' => $section->type]);
+            //     }
+            //     $this->sectionTypeService->upsertSettings($sectionType->id, $setting);
+            // }
 
             return $this->apiResponse(SECTION_UPDATED_SUCCESSFULLY, 200, true, PagesSectionResource::make($section));
         } catch (\Exception $e) {
