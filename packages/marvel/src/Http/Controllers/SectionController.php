@@ -29,7 +29,6 @@ class SectionController extends CoreController
         try {
             $data = $request->validated();
             $setting = $data['setting'] ?? null;
-            unset($data['setting']);
 
             $section = Section::create($data);
 
