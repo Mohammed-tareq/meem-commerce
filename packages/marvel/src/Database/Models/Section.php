@@ -34,6 +34,7 @@ class Section extends Model implements Sortable
         'order' => 'integer',
         'title_visible' => 'boolean',
         'with_product' => 'boolean',
+        'setting' => 'array',
     ];
     public function contentPage()
     {
