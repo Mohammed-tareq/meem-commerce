@@ -36,7 +36,7 @@ class SectionResource extends JsonResource
             'endpoint' => $this->buildEndpoint($settings),
             'order' => $this->order,
             // 'with_product' => $this->with_product,
-            'setting' => $settings,
+            'setting' => $this->setting,
         ];
     }
 
