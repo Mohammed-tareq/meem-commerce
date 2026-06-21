@@ -13,14 +13,8 @@ return new class extends Migration
     {
         Schema::create('faqs', function (Blueprint $table) {
             $table->id();
-            // $table->unsignedBigInteger('user_id');
-            // $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            // $table->unsignedBigInteger('shop_id')->nullable();
-            // $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
             $table->text('faq_title');
             $table->text('faq_description');
-            $table->string('faq_type')->nullable();
-            $table->string('issued_by')->nullable();
             $table->boolean('status')->default(true);
             $table->softDeletes();
             $table->timestamps();

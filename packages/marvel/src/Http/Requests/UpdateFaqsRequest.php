@@ -36,7 +36,7 @@ class UpdateFaqsRequest extends FormRequest
             'faq_title.*'       => ['sometimes', 'string', 'min:3', 'max:1000',  UniqueTranslationRule::for('faqs')->ignore($id)],
             'faq_description'   => ['sometimes', 'array'],
             'faq_description.*' => ['sometimes', 'string', 'min:3', 'max:1000'],
-            // 'shop_id'           => ['nullable', 'exists:shops,id'],
+            'status'            => ['sometimes', 'in:0,1'],
         ];
     }
 

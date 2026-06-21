@@ -64,7 +64,6 @@ class FaqsRepository extends BaseRepository
             $faqs                    = [];
             $faqs['faq_title']       = $request['faq_title'];
             $faqs['faq_description'] = $request['faq_description'];
-            $faqs['user_id']         = $request->user()->id;
             $faqs = $this->create($faqs);
             return $faqs;
         } catch (Exception $th) {
