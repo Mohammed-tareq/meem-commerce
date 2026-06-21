@@ -19,12 +19,14 @@ class Governorate extends Model
         'country_id',
         'name',
         'status',
+        'is_fast_shipping_enabled',
     ];
 
     public array $translatable = ['name'];
 
     protected $casts = [
         'status' => 'boolean',
+        'is_fast_shipping_enabled' => 'boolean',
         'country_id' => 'integer',
     ];
 
@@ -46,5 +48,10 @@ class Governorate extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', true);
+    }
+
+    public function scopeFastShippingEnabled(Builder $query): Builder
+    {
+        return $query->where('is_fast_shipping_enabled', true);
     }
 }

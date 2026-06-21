@@ -55,6 +55,7 @@ class OrderRepository extends BaseRepository
         'tracking_number' => 'like',
         'shop_id',
         'language',
+        'shipping_method',
     ];
     /**
      * @var string[]

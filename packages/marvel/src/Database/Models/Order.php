@@ -24,6 +24,9 @@ class Order extends Model
         'user_email',
         'address',
         'notes',
+        'shipping_method',
+        'expected_delivery_at',
+        'fast_shipping_fee',
         'price',
         'shipping_price',
         'total_price',
@@ -41,6 +44,7 @@ class Order extends Model
 
     protected $casts = [
         'address' => 'array',
+        'expected_delivery_at' => 'datetime',
     ];
 
 
@@ -163,6 +167,16 @@ class Order extends Model
     public function scopeForUser(Builder $query, int $userId): Builder
     {
         return $query->where('user_id', $userId);
+    }
+
+    public function scopeScheduled(Builder $query): Builder
+    {
+        return $query->where('shipping_method', 'SCHEDULED');
+    }
+
+    public function scopeFast(Builder $query): Builder
+    {
+        return $query->where('shipping_method', 'FAST');
     }
 
     public function getOrderNumberAttribute(): string

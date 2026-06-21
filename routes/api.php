@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\General\CategoryController;
 use App\Http\Controllers\Api\General\CouponController;
 use App\Http\Controllers\Api\General\FAQController;
+use App\Http\Controllers\Api\General\FastShippingController;
 use App\Http\Controllers\Api\General\HomeController;
 use App\Http\Controllers\Api\General\FlashSaleController;
 use App\Http\Controllers\Api\General\OrderController;
@@ -49,6 +50,14 @@ Route::prefix('general')->middleware(['api', 'check-lang'])->group(function () {
         Route::post('checkout', 'checkout')->middleware(['auth:sanctum', 'check-email']);
         Route::get('checkout/callback', 'checkoutCallback')->name('api.checkout.callback');
         Route::get('checkout/error', 'checkoutErrorCallback')->name('api.checkout.errorCallback');
+    });
+
+    //========================= fast shipping =========================//
+    Route::controller(FastShippingController::class)->group(function () {
+        Route::get('fast-shipping/status', 'status');
+        Route::get('fast-shipping/products', 'products');
+        Route::get('fast-shipping/orders', 'orders')->middleware('auth:sanctum');
+        Route::post('checkout/fast', 'checkout')->middleware('auth:sanctum');
     });
 
 
