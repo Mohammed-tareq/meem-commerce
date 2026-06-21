@@ -212,6 +212,9 @@ Route::post('coupons/add-to-cart', [CouponController::class, 'addCouponToCart'])
 Route::apiResource('attributes', AttributeController::class, [
     'only' => ['index', 'show'],
 ]);
+Route::apiResource('attribute-values', AttributeValueController::class, [
+    'only' => ['index', 'show'],
+]);
 Route::apiResource('shops', ShopController::class, [
     'only' => ['index', 'show'],
 ]);

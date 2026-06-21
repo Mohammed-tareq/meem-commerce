@@ -53,6 +53,7 @@ class CategoryUpdateRequest extends FormRequest
             'details'      => ['sometimes', 'string', 'min:3', 'max:2500'],
             "products" => "sometimes|array",
             "products.*" => "exists:products,id",
+            'status' => ['sometimes', 'in:0,1'],
         ];
     }
 

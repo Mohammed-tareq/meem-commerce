@@ -27,6 +27,7 @@ class CategoryResource extends Resource
             ],
             'is_featured'          => (bool) $this->is_featured,
             'products_count'       => (int) ($this->products_count ?? $this->products()->count()),
+            'status'               => (bool)$this->status,
             $this->mergeWhen(!request()->routeIs('categories.index'), [
                 'details' => $this->getRawOriginal('details'),
             ]),

@@ -130,6 +130,16 @@ class CartController extends CoreController
 
     public function pluckItemsToCart(Request $request)
     {
+        if (!$request->has('items')) {
+            $content = $request->getContent();
+            if (!empty($content)) {
+                $data = json_decode($content, true);
+                if (json_last_error() === JSON_ERROR_NONE && isset($data['items'])) {
+                    $request->merge($data);
+                }
+            }
+        }
+
         $request->validate([
             'items' => 'required|array',
             'items.*.product_id' => 'required|exists:products,id',

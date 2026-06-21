@@ -16,9 +16,9 @@ class AttributeResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'name'                 => $this->getTranslation('name', app()->getLocale()),
+            'name'                 => request()->routeIs('attributes.index') ? $this->getTranslation('name', app()->getLocale()) : $this->getRawOriginal('name'),
             'slug'                 => $this->slug,
-            $this->mergeWhen(request()->routeIs('attributes.show'), [
+            $this->mergeWhen(!request()->routeIs('attributes.index'), [
                 'values'               => $this->whenLoaded('values', AttributeValueResource::collection($this->values))
             ])
         ];

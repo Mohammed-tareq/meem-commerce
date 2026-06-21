@@ -224,7 +224,7 @@ class AttributeController extends CoreController
 
         $attribute = $this->repository->findOrFail($request->id);
         $attribute->delete();
-        return $this->apiResponse(ATTRIBUTE_DELETED_SUCCESSFULLY, 200);
+        return $this->apiResponse(ATTRIBUTE_DELETED_SUCCESSFULLY, 200, true);
     }
 
     public function exportAttributes(Request $request, $shop_id)
