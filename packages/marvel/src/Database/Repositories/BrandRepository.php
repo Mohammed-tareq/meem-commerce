@@ -56,7 +56,8 @@ class BrandRepository extends BaseRepository
             $brand = $this->create($data);
 
             if ($request->has('products')) {
-                $brand->products()->sync($request->products);
+                $products = array_filter(array_map('intval', (array) $request->products), fn($id) => $id > 0);
+                $brand->products()->sync($products);
             }
 
             if ($request->has('image-desktop')) {
@@ -89,7 +90,8 @@ class BrandRepository extends BaseRepository
             }
             $brand->update($data);
             if ($request->has('products')) {
-                $brand->products()->sync($request->products);
+                $products = array_filter(array_map('intval', (array) $request->products), fn($id) => $id > 0);
+                $brand->products()->sync($products);
             }
             if ($request->has('image-desktop')) {
                 if (!$this->updateSingleImage($request, 'image-desktop', $brand, 'brands-desktop', 'brands')) {

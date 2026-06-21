@@ -20,12 +20,13 @@ class Category extends Model implements HasMedia
     protected $table = 'categories';
     public array $translatable = ['name', 'details'];
 
-    public $fillable = ['name', 'details', 'slug', 'parent_id', 'level', 'status'];
+    public $fillable = ['name', 'details', 'slug','is_featured', 'parent_id', 'level', 'status'];
 
     protected $casts = [
         'parent_id' => 'integer',
         'level' => 'integer',
         'status' => 'boolean',
+        'is_featured' => 'boolean',
     ];
 
     protected static function booted(): void

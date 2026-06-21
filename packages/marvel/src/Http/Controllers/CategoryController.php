@@ -6,6 +6,7 @@ namespace Marvel\Http\Controllers;
 use App\Services\General\CategoryHierarchyService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Repositories\CategoryRepository;
 use Marvel\Enums\Permission;
@@ -100,6 +101,7 @@ class CategoryController extends CoreController
         $this->middleware("permission:" . Permission::CREATE_CATEGORY, ["only" => ["store"]]);
         $this->middleware("permission:" . Permission::UPDATE_CATEGORY, ["only" => ["update"]]);
         $this->middleware("permission:" . Permission::DELETE_CATEGORY, ["only" => ["destroy"]]);
+        $this->middleware("permission:" . Permission::UPDATE_CATEGORY, ["only" => ["addOrRemoveCategoryFromFeature"]]);
     }
 
     // /**
@@ -180,14 +182,14 @@ class CategoryController extends CoreController
         $active = $request->active ?? null;
         $Inactive = $request->inactive ?? null;
         $search = $request->search ?? null;
-        $featureCategory = filter_var($request->input('feature-category'), FILTER_VALIDATE_BOOLEAN);
+        $featureCategory = $request->input('feature-category');
         $order = $request->order;
         $sortedBy = $request->sortedBy ?? 'asc';
         $categoriesQuery = $this->repository
             ->withCount(['products']);
 
         if ($featureCategory) {
-            $categoriesQuery = $categoriesQuery->orderByDesc('products_count');
+            $categoriesQuery = $categoriesQuery->where('is_featured', true);
         }
         if ($order && in_array($order, ['id', 'name', 'slug', 'products_count', 'created_at', 'updated_at', 'level'])) {
             $categoriesQuery = $categoriesQuery->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
@@ -445,5 +447,18 @@ class CategoryController extends CoreController
             ->limit($limit)
             ->get();
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, CategoryResource::collection($categories));
+    }
+
+    public function addOrRemoveCategoryFromFeature(Request $request)
+    {
+        $request->validate([
+           "id"=>'required|integer|exists:categories,id',
+        ]);
+
+        $category = Category::find($request->id);
+        $category->is_featured = !$category->is_featured;
+        $category->save();
+
+        return $this->apiResponse(CATEGORY_FEATURE_TOGGLED_SUCCESSFULLY, 200, true);
     }
 }

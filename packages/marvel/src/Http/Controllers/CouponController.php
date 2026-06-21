@@ -101,6 +101,8 @@ class CouponController extends CoreController
         $active = $request->active ?? null;
         $Inactive = $request->inactive ?? null;
         $search = $request->search ?? null;
+        $order = $request->order;
+        $sortedBy = $request->sortedBy ?? 'asc';
         $query = $this->repository->modelQuery();
         if ($active) {
             $query = $query->valid();
@@ -111,6 +113,9 @@ class CouponController extends CoreController
         if ($search) {
             $query = $query->search('name', $search, app()->getLocale())
                 ->orWhere('code', 'like', "%$search%");
+        }
+        if ($order && in_array($order, ['id', 'code', 'name', 'discount', 'discount_type', 'start_date', 'end_date', 'limiter', 'used', 'status', 'created_at', 'updated_at'])) {
+            $query = $query->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
         }
         return $query;
     }
@@ -303,14 +308,10 @@ class CouponController extends CoreController
      */
     public function approveCoupon(Request $request)
     {
-
         try {
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                throw new MarvelException(NOT_AUTHORIZED);
-            }
             $coupon = $this->repository->findOrFail($request->id);
             $coupon->update(['is_approve' => true]);
-            return $coupon;
+            return $this->apiResponse(UPDATED_COUPON_SUCCESSFULLY, 200, true, CouponResource::make($coupon));
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }
@@ -340,13 +341,10 @@ class CouponController extends CoreController
     public function disApproveCoupon(Request $request)
     {
         try {
-            if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-                throw new MarvelException(NOT_AUTHORIZED);
-            }
             $coupon = $this->repository->findOrFail($request->id);
             $coupon->is_approve = false;
             $coupon->save();
-            return $coupon;
+            return $this->apiResponse(UPDATED_COUPON_SUCCESSFULLY, 200, true, CouponResource::make($coupon));
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }

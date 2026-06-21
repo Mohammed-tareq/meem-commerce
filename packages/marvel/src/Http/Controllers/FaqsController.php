@@ -41,7 +41,7 @@ class FaqsController extends CoreController
         $this->repository = $repository;
         $this->middleware("permission:" . Permission::VIEW_FAQS, ["only" => ["index", "show"]]);
         $this->middleware("permission:" . Permission::CREATE_FAQ, ["only" => ["store"]]);
-        $this->middleware("permission:" . Permission::UPDATE_FAQ, ["only" => ["update"]]);
+        $this->middleware("permission:" . Permission::UPDATE_FAQ, ["only" => ["update", "reorder"]]);
         $this->middleware("permission:" . Permission::DELETE_FAQ, ["only" => ["destroy"]]);
     }
 
@@ -86,10 +86,16 @@ class FaqsController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 10;
-        //        $language = $request->language ?? DEFAULT_LANGUAGE;
-        $faqs = $this->fetchFAQs($request)
-            //            ->where('language', $language)
-            ->paginate($limit)->withQueryString();
+        $order = $request->order;
+        $sortedBy = $request->sortedBy ?? 'asc';
+
+        $faqsQuery = $this->fetchFAQs($request);
+
+        if ($order && in_array($order, ['id', 'faq_title', 'faq_type', 'issued_by', 'status', 'created_at', 'updated_at'])) {
+            $faqsQuery = $faqsQuery->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
+        }
+
+        $faqs = $faqsQuery->paginate($limit)->withQueryString();
         $faqData = FaqResource::collection($faqs)->response()->getData(true);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
             "data" => $faqData['data'] ?? [],
@@ -238,9 +244,8 @@ class FaqsController extends CoreController
     public function show($id)
     {
         try {
-
             $faq = $this->repository->findOrFail($id);
-            return new FaqResource($faq);
+            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, FaqResource::make($faq));
         } catch (MarvelException $e) {
             return $this->apiResponse(NOT_FOUND, 404, false);
         }
@@ -278,10 +283,10 @@ class FaqsController extends CoreController
     public function update(UpdateFaqsRequest $request, $id)
     {
         try {
-            $request["id"] = $id;
+            $request->merge(['id' => $id]);
 
             $faq = $this->updateFaqs($request);
-            return $this->apiResponse(FAQ_UPDATED_SUCCESSFULLY, 200, true);
+            return $this->apiResponse(FAQ_UPDATED_SUCCESSFULLY, 200, true, FaqResource::make($faq));
         } catch (MarvelException $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -318,6 +323,20 @@ class FaqsController extends CoreController
      *     @OA\Response(response=404, description="FAQ not found")
      * )
      */
+    public function reorder(Request $request)
+    {
+        try {
+            $request->validate([
+                'faqs' => 'required|array',
+                'faqs.*' => 'required|exists:faqs,id',
+            ]);
+            $this->repository->reorder($request->faqs);
+            return $this->apiResponse(FAQS_REORDERED_SUCCESSFULLY, 200, true);
+        } catch (MarvelException $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
+    }
+
     public function destroy($id, Request $request)
     {
         $request->merge(['id' => $id]);
@@ -331,11 +350,11 @@ class FaqsController extends CoreController
             $user = $request->user();
             if ($user && ($user->hasPermissionTo(Permission::DELETE_FAQ))) {
                 $this->repository->findOrFail($id)->delete();
-                return $this->apiResponse(FAQ_DELETED_SUCCESSFULLY, 200, true, null);
+                return $this->apiResponse(FAQ_DELETED_SUCCESSFULLY, 200, true);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $e) {
-                throw new MarvelException(NOT_FOUND, $e->getMessage());
+            throw new MarvelException(NOT_FOUND);
         }
     }
 }

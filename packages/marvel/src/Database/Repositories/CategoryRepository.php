@@ -30,6 +30,7 @@ class CategoryRepository extends BaseRepository
         'parent',
         'details',
         'parent_id',
+        'is_featured',
     ];
 
     public function boot()

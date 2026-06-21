@@ -18,7 +18,10 @@ class CouponResource extends Resource
             'id'            => $this->id,
             'code'          => $this->code,
             'name'          => $this->getTranslation('name', app()->getLocale()),
-            'image'         => $this->getFirstMediaUrl('coupons'),
+            'image'         => [
+                'desktop' => $this->getFirstMediaUrl('coupons-desktop') ?: null,
+                'mobile'  => $this->getFirstMediaUrl('coupons-mobile') ?: null,
+            ],
             'borderColor'   => $this->border_color ?? null,
             'borderless'    => (bool) ($this->borderless ?? false),
             'discount'      => $this->discount,

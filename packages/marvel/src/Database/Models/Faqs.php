@@ -8,16 +8,22 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Marvel\Database\Models\Shop;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\EloquentSortable\Sortable;
+use Spatie\EloquentSortable\SortableTrait;
 use Spatie\Translatable\HasTranslations;
 
-class Faqs extends Model
+class Faqs extends Model implements Sortable
 {
-    use HasTranslations, SoftDeletes;
+    use HasTranslations, SoftDeletes, SortableTrait;
 
     protected $table = 'faqs';
 
     public array $translatable = ['faq_title', 'faq_description'];
 
+    public $sortable = [
+        'order_column_name' => 'order',
+        'sort_when_creating' => true,
+    ];
 
     public $fillable = [
         'user_id',
@@ -27,6 +33,7 @@ class Faqs extends Model
         'faq_type',
         'issued_by',
         'status',
+        'order',
     ];
 
     public function user(): BelongsTo

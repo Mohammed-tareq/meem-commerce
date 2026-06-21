@@ -220,6 +220,7 @@ class CreateMarvelTables extends Migration
             $table->unsignedBigInteger('parent_id')->nullable();
             $table->foreign('parent_id')->references('id')->on('categories')->restrictOnDelete();
             $table->boolean('status')->default(true);
+            $table->boolean('is_featured')->default(false);
             $table->timestamps();
             $table->softDeletes();
         });

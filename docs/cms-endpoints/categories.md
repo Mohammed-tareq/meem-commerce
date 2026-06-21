@@ -17,6 +17,7 @@ The Categories module manages hierarchical product categories with parent/child 
 | `slug` | varchar(255) | NOT NULL | Auto-generated from English name |
 | `details` | text | NULLABLE | Translatable description |
 | `parent_id` | bigint | FK → categories.id, RESTRICT ON DELETE | Parent category |
+| `is_featured` | tinyint(1) | DEFAULT false | Featured flag (toggle via categories/feature endpoint) |
 | `status` | tinyint(1) | DEFAULT true | Active/inactive |
 | `created_at` | timestamp | NULLABLE | Creation time |
 | `updated_at` | timestamp | NULLABLE | Last update |
@@ -59,6 +60,7 @@ All endpoints return:
 | `parent_id` | int|null | Parent category ID |
 | `level` | int | Hierarchy level (0 = root) |
 | `details` | string | Translated description (absent if empty) |
+| `is_featured` | bool | Featured flag |
 | `image.desktop` | string|null | Desktop image URL |
 | `image.mobile` | string|null | Mobile image URL |
 | `products_count` | int | Count of associated products |
@@ -522,6 +524,55 @@ Images are sent as file fields (`image-desktop`, `image-mobile`) in the multipar
 
 ---
 
+### PUT /categories/feature — Toggle Featured Categories
+
+**Purpose:** Toggle the `is_featured` flag on one or more categories. Passes `NOT is_featured` to flip the boolean value atomically.
+
+**Method:** `PUT`
+
+**URL:** `/categories/feature`
+
+**Authentication:** Required
+
+**Permissions:** `update-category`
+
+**Request Body (JSON):**
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| `category_ids` | array | **Yes** | Array of integer IDs |
+| `category_ids.*` | int | **Yes** | `integer`, `exists:categories,id` |
+
+**Example Request:**
+```json
+{
+    "category_ids": [1, 5, 12]
+}
+```
+
+**Business Logic:**
+1. Validates `category_ids` array with `exists:categories,id` constraint
+2. Runs a single `UPDATE categories SET is_featured = NOT is_featured WHERE id IN (...)` query
+3. Returns success message
+
+**Success Response (200):**
+```json
+{
+    "status": 200,
+    "message": "Category feature toggled successfully",
+    "success": true
+}
+```
+
+**Error Responses:**
+| Status | Condition |
+|--------|-----------|
+| 401 | Unauthenticated |
+| 403 | Missing `update-category` permission |
+| 422 | Validation failure (invalid IDs or non-array input) |
+
+---
+
 ## Route Definitions
 
 ```php
@@ -530,6 +581,7 @@ Route::apiResource('categories', CategoryController::class, ['only' => ['index',
 Route::get('featured-categories', 'Marvel\Http\Controllers\CategoryController@fetchFeaturedCategories');
 
 // Admin routes (auth + permissions)
+Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
 Route::apiResource('categories', CategoryController::class);
 Route::get('categories-parent', [CategoryController::class, 'fetchOnlyParent']);
 ```
@@ -544,7 +596,7 @@ Source: `packages/marvel/src/Rest/Routes.php`
 |----------------|--------|------------|
 | `VIEW_CATEGORIES` | `view-categories` | `index`, `show`, `fetchFeaturedCategories` |
 | `CREATE_CATEGORY` | `create-category` | `store` |
-| `UPDATE_CATEGORY` | `update-category` | `update` |
+| `UPDATE_CATEGORY` | `update-category` | `update`, `addOrRemoveCategoryFromFeature` |
 | `DELETE_CATEGORY` | `delete-category` | `destroy` |
 
 ---

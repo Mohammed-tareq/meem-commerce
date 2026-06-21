@@ -81,6 +81,7 @@ return [
     'MESSAGE.FAQ_CREATED_SUCCESSFULLY' => 'FAQ created successfully',
     'MESSAGE.FAQ_UPDATED_SUCCESSFULLY' => 'FAQ updated successfully',
     'MESSAGE.FAQ_DELETED_SUCCESSFULLY' => 'FAQ deleted successfully',
+    'MESSAGE.FAQS_REORDERED_SUCCESSFULLY' => 'FAQs reordered successfully',
     'MESSAGE.ATTRIBUTE_CREATED_SUCCESSFULLY' => 'Attribute created successfully',
     'MESSAGE.ATTRIBUTE_UPDATED_SUCCESSFULLY' => 'Attribute updated successfully',
     'MESSAGE.ATTRIBUTE_DELETED_SUCCESSFULLY' => 'Attribute deleted successfully',

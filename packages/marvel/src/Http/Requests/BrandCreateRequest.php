@@ -35,7 +35,7 @@ class BrandCreateRequest extends FormRequest
             'details.*' => ['required_with:details', 'string', 'min:3', 'max:2500'],
             'status' => ['sometimes', 'in:1,0'],
             "products" => "sometimes|array",
-            "products.*" => "exists:products,id",
+            "products.*" => "integer|exists:products,id",
         ];
     }
 

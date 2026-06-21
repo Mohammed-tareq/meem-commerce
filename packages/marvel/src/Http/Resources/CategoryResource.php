@@ -17,7 +17,7 @@ class CategoryResource extends Resource
     {
         return [
             'id'                   => $this->id,
-            'name'                 => request()->routeIs('categories.index') ? $this->getTranslation('name', app()->getLocale()) : $this->getTranslations('name'),
+            'name'                 => request()->routeIs('categories.index') ? $this->getTranslation('name', app()->getLocale()) : $this->getRawOriginal('name'),
             'slug'                 => $this->slug,
             'parent_id'            => $this->parent_id,
             'level'                => $this->level,
@@ -25,9 +25,10 @@ class CategoryResource extends Resource
                 'desktop' => $this->getFirstMediaUrl('categories-desktop') ?: null,
                 'mobile'  => $this->getFirstMediaUrl('categories-mobile') ?: null,
             ],
+            'is_featured'          => (bool) $this->is_featured,
             'products_count'       => (int) ($this->products_count ?? $this->products()->count()),
-            $this->mergeWhen($this->getTranslation('details', app()->getLocale()), [
-                'details' => $this->getTranslation('details', app()->getLocale()),
+            $this->mergeWhen(!request()->routeIs('categories.index'), [
+                'details' => $this->getRawOriginal('details'),
             ]),
             $this->mergeWhen($this->relationLoaded('children') && $this->children->isNotEmpty(), [
                 'children' => ChildrenCategoryResource::collection($this->children),

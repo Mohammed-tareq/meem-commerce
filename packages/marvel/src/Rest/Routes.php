@@ -603,10 +603,11 @@ Route::group([
     Route::apiResource('withdraws', WithdrawController::class, [
         'only' => ['update', 'destroy'],
     ]);
+    Route::put('categories/feature', [CategoryController::class, 'addOrRemoveCategoryFromFeature']);
     Route::apiResource('categories', CategoryController::class);
     Route::get('categories-parent', [CategoryController::class, 'fetchOnlyParent']);
-    Route::apiResource('brands', BrandController::class);
     Route::put('brands/reorder', [BrandController::class, 'reorder']);
+    Route::apiResource('brands', BrandController::class);
 
     Route::apiResource('delivery-times', DeliveryTimeController::class, [
         'only' => ['store', 'update', 'destroy']
@@ -676,6 +677,7 @@ Route::group([
         'only' => ['destroy'],
     ]);
 
+    Route::put('faqs/reorder', [FaqsController::class, 'reorder']);
     Route::apiResource('faqs', FaqsController::class);
     Route::get('new-shops', [ShopController::class, 'newOrInActiveShops']);
     Route::post('approve-terms-and-conditions', [TermsAndConditionsController::class, 'approveTerm']);

@@ -8,6 +8,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 use Marvel\Traits\MediaManager;
@@ -100,6 +101,7 @@ class FlashSaleRepository extends BaseRepository
             return $flash_sale;
         } catch (Exception $th) {
             DB::rollBack();
+            Log::error('FlashSale store failed: ' . $th->getMessage(), ['trace' => $th->getTraceAsString()]);
             throw new HttpException(500, SOMETHING_WENT_WRONG);
         }
     }
@@ -135,9 +137,10 @@ class FlashSaleRepository extends BaseRepository
 
             if ($request->has('products')) {
                 $oldProductIds = $flash_sale->products()->pluck('product_id')->toArray();
-                $flash_sale->products()->sync($request->products);
-                $this->unsetProductFromFlashSale($oldProductIds, $request->products);
-                $this->setProductInFlashSale($request->products);
+                $products = array_filter(array_map('intval', (array) $request->products), fn($id) => $id > 0);
+                $flash_sale->products()->sync($products);
+                $this->unsetProductFromFlashSale($oldProductIds, $products);
+                $this->setProductInFlashSale($products);
             }
 
             DB::commit();
@@ -157,9 +160,9 @@ class FlashSaleRepository extends BaseRepository
      */
     public function setProductInFlashSale($product_ids)
     {
-        foreach ($product_ids as $key => $product_id) {
+        foreach ($product_ids as $product_id) {
             $product = Product::findOrFail($product_id);
-            $product->in_flash_sale = true;
+            $product->has_flash_sale = true;
             $product->save();
         }
     }
@@ -179,7 +182,7 @@ class FlashSaleRepository extends BaseRepository
         if (isset($final_list)) {
             foreach ($final_list as $key => $product_id) {
                 $product = Product::findOrFail($product_id);
-                $product->in_flash_sale = false;
+                $product->has_flash_sale = false;
                 $product->save();
             }
         }

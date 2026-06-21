@@ -81,6 +81,7 @@ return [
     'MESSAGE.FAQ_CREATED_SUCCESSFULLY' => 'تم إنشاء الأسئلة الشائعة بنجاح',
     'MESSAGE.FAQ_UPDATED_SUCCESSFULLY' => 'تم تحديث الأسئلة الشائعة بنجاح',
     'MESSAGE.FAQ_DELETED_SUCCESSFULLY' => 'تم حذف الأسئلة الشائعة بنجاح',
+    'MESSAGE.FAQS_REORDERED_SUCCESSFULLY' => 'تمت إعادة ترتيب الأسئلة الشائعة بنجاح',
     'MESSAGE.ATTRIBUTE_CREATED_SUCCESSFULLY' => 'تم إنشاء السمة بنجاح',
     'MESSAGE.ATTRIBUTE_UPDATED_SUCCESSFULLY' => 'تم تحديث السمة بنجاح',
     'MESSAGE.ATTRIBUTE_DELETED_SUCCESSFULLY' => 'تم حذف السمة بنجاح',
