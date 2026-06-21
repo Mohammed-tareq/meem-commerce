@@ -192,6 +192,10 @@ class PermissionSeeder extends Seeder
             'edit-user',
             'approve-reviews',
             'delete-reviews',
+
+            //fast-shipping
+            'view-fast-shipping',
+            'update-fast-shipping',
         ];
 
         $customerPermission = [
