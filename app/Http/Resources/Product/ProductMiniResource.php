@@ -21,6 +21,7 @@ class ProductMiniResource extends JsonResource
             'name' => $this->getTranslation('name', app()->getLocale()),
             'slug' => $this->slug,
             'price' => $this->roundMoney($this->price),
+            'has_variants' => $this->product_type !== 'simple' ? true : false,
             'current_price' => $this->roundMoney($this->getRawOrComputedValue('current_price')),
             'price_after_discount' => $this->roundMoney($this->getRawOrComputedValue('price_after_discount')),
             'price_after_flash_sale' => $this->roundMoney($this->getRawOrComputedValue('price_after_flash_sale')),
