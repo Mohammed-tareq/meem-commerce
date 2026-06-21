@@ -121,10 +121,7 @@ All endpoints return:
 | `inactive` | bool | — | Filter invalid/expired coupons only |
 | `order` | string | — | Field to sort by. Allowed: `id`, `code`, `name`, `discount`, `discount_type`, `start_date`, `end_date`, `limiter`, `used`, `status`, `created_at`, `updated_at` |
 | `sortedBy` | string | `asc` | Sort direction (`asc` or `desc`). Only applies when `order` is set. |
-| `shop_id` | int | — | Filter by shop |
-| `language` | string | — | Language code |
 | `type` | string | — | Filter by coupon type |
-| `is_approve` | bool | — | Filter by approval status |
 
 **Example Usage:**
 ```
