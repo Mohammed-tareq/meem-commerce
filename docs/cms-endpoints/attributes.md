@@ -80,7 +80,7 @@ All endpoints return:
 
 ### GET /attributes — List Attributes
 
-**Purpose:** List all attributes with their values.
+**Purpose:** List all attributes with their values. Supports pagination, search, sorting, and filtering.
 
 **Method:** `GET`
 
@@ -90,9 +90,29 @@ All endpoints return:
 
 **Permissions:** `view-attributes`
 
+**Query Parameters:**
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `limit` | int | 15 | Items per page |
+| `order` | string | — | Sort column (`id`, `name`, `slug`, `shop_id`, `created_at`, `updated_at`) |
+| `sortedBy` | `asc`/`desc` | `asc` | Sort direction |
+| `search` | string | — | Search term (matches `name` via LIKE) |
+
+**Example URLs:**
+```
+GET /attributes?limit=10
+GET /attributes?search=size
+GET /attributes?order=name&sortedBy=desc
+GET /attributes?limit=20&order=created_at&sortedBy=desc
+GET /attributes?search=color&limit=5
+```
+
 **Business Logic:**
-1. Queries all attributes with `values` relation eager-loaded
-2. Returns `AttributeResource` collection
+1. Applies optional `order`/`sortedBy` sorting
+2. `RequestCriteria` handles `search`, `shop_id` and other field filters automatically
+3. Eager-loads `values` relation
+4. Returns paginated `AttributeResource` collection
 
 **Success Response (200):**
 ```json
@@ -111,7 +131,19 @@ All endpoints return:
             "name": "Color",
             "slug": "color"
         }
-    ]
+    ],
+    "page": 1,
+    "current_page": 1,
+    "from": 1,
+    "to": 2,
+    "last_page": 1,
+    "path": "http://localhost/api/attributes",
+    "per_page": 15,
+    "total": 2,
+    "next_page_url": "",
+    "prev_page_url": "",
+    "last_page_url": "http://localhost/api/attributes?page=1",
+    "first_page_url": "http://localhost/api/attributes?page=1"
 }
 ```
 
@@ -387,7 +419,7 @@ All endpoints return:
 
 ### GET /attribute-values — List Attribute Values
 
-**Purpose:** List all attribute values with their parent attribute.
+**Purpose:** List all attribute values with their parent attribute. Supports pagination, search, sorting, and filtering.
 
 **Method:** `GET`
 
@@ -397,9 +429,30 @@ All endpoints return:
 
 **Permissions:** `view-attributes`
 
+**Query Parameters:**
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `limit` | int | 15 | Items per page |
+| `order` | string | — | Sort column (`id`, `value`, `attribute_id`, `slug`, `created_at`, `updated_at`) |
+| `sortedBy` | `asc`/`desc` | `asc` | Sort direction |
+| `search` | string | — | Search term (matches `value` via LIKE) |
+| `language` | string | — | Filter by language |
+
+**Example URLs:**
+```
+GET /attribute-values?limit=10
+GET /attribute-values?search=small
+GET /attribute-values?order=value&sortedBy=desc
+GET /attribute-values?limit=20&order=created_at&sortedBy=desc
+GET /attribute-values?search=large&language=en
+```
+
 **Business Logic:**
-1. Queries all attribute values with `attribute` relation eager-loaded
-2. Returns `AttributeValueResource` collection
+1. Applies optional `order`/`sortedBy` sorting
+2. `RequestCriteria` handles `search`, `shop_id`, `language` and other field filters automatically
+3. Eager-loads `attribute` relation
+4. Returns paginated `AttributeValueResource` collection
 
 **Success Response (200):**
 ```json
@@ -420,7 +473,19 @@ All endpoints return:
             "slug": "medium",
             "attribute_id": 1
         }
-    ]
+    ],
+    "page": 1,
+    "current_page": 1,
+    "from": 1,
+    "to": 2,
+    "last_page": 1,
+    "path": "http://localhost/api/attribute-values",
+    "per_page": 15,
+    "total": 2,
+    "next_page_url": "",
+    "prev_page_url": "",
+    "last_page_url": "http://localhost/api/attribute-values?page=1",
+    "first_page_url": "http://localhost/api/attribute-values?page=1"
 }
 ```
 
@@ -442,15 +507,25 @@ All endpoints return:
 
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
-| `value` | string | **Yes** | `string`, `max:255` |
+| `value` | object | **Yes** | Translatable array |
+| `value.en` | string | **Yes** | `string`, `max:255` |
+| `value.ar` | string | **Yes** | `string`, `max:255` |
 | `attribute_id` | int | **Yes** | `exists:attributes,id` |
-| `shop_id` | int | **Yes** | `exists:shops,id` |
-| `meta` | string | No | `string` |
-| `price` | numeric | No | `numeric` |
+
+**Example Request:**
+```json
+{
+    "value": {
+        "en": "red",
+        "ar": "احمر"
+    },
+    "attribute_id": 1
+}
+```
 
 **Business Logic:**
-1. Checks `hasPermission` for the user + shop
-2. Creates attribute value with validated data
+1. Validates via `AttributeValueRequest`
+2. Creates attribute value with translatable `value` field
 3. Returns created resource
 
 **Success Response (201):**
@@ -461,8 +536,11 @@ All endpoints return:
     "success": true,
     "data": {
         "id": 6,
-        "value": "Extra Large",
-        "slug": "extra-large",
+        "value": {
+            "en": "red",
+            "ar": "احمر"
+        },
+        "slug": "red",
         "attribute_id": 1
     }
 }
@@ -501,16 +579,15 @@ All endpoints return:
     "success": true,
     "data": {
         "id": 6,
-        "value": "Extra Large",
+        "value": {
+            "en": "Extra Large",
+            "ar": "كبير جداً"
+        },
         "slug": "extra-large",
         "attribute_id": 1
     }
 }
 ```
-
----
-
-### PUT /attribute-values/{id} — Update Attribute Value
 
 **Purpose:** Update an attribute value.
 
@@ -526,8 +603,20 @@ All endpoints return:
 
 | Field | Type | Required | Validation |
 |-------|------|----------|------------|
-| `value` | string | No | `string`, `max:255` |
+| `value` | object | No | Translatable array |
+| `value.en` | string | No | `string`, `max:255` |
+| `value.ar` | string | No | `string`, `max:255` |
 | `attribute_id` | int | No | `exists:attributes,id` |
+
+**Example Request:**
+```json
+{
+    "value": {
+        "en": "XXL",
+        "ar": "اكس اكس ال"
+    }
+}
+```
 
 **Business Logic:**
 1. Checks `hasPermission` for the user + shop
@@ -542,7 +631,10 @@ All endpoints return:
     "success": true,
     "data": {
         "id": 6,
-        "value": "XXL",
+        "value": {
+            "en": "XXL",
+            "ar": "اكس اكس ال"
+        },
         "slug": "xxl",
         "attribute_id": 1
     }

@@ -77,9 +77,33 @@ class AttributeController extends CoreController
      */
     public function index(Request $request)
     {
-        $attributes = $this->repository
-            ->with('values')->get();
-        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, AttributeResource::collection($attributes));
+        $limit = $request->limit ?? 15;
+        $order = $request->order;
+        $sortedBy = $request->sortedBy ?? 'asc';
+
+        $attributes = $this->repository->with('values');
+
+        if ($order && in_array($order, ['id', 'name', 'slug', 'shop_id', 'created_at', 'updated_at'])) {
+            $attributes = $attributes->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
+        }
+
+        $attributes = $attributes->paginate($limit)->withQueryString();
+        $attributeData = AttributeResource::collection($attributes)->response()->getData(true);
+        return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
+            "data" => $attributeData['data'] ?? [],
+            "page" => $attributeData['meta']['current_page'] ?? 0,
+            "current_page" => $attributeData['meta']['current_page'] ?? 0,
+            "from" => $attributeData['meta']['from'] ?? 0,
+            "to" => $attributeData['meta']['to'] ?? 0,
+            "last_page" => $attributeData['meta']['last_page'] ?? 0,
+            "path" => $attributeData['meta']['path'] ?? "",
+            "per_page" => $attributeData['meta']['per_page'] ?? 0,
+            "total" => $attributeData['meta']['total'] ?? 0,
+            "next_page_url" => $attributeData['links']['next'] ?? "",
+            "prev_page_url" => $attributeData['links']['prev'] ?? "",
+            "last_page_url" => $attributeData['links']['last'] ?? "",
+            "first_page_url" => $attributeData['links']['first'] ?? "",
+        ]);
     }
 
     /**
