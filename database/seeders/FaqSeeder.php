@@ -19,10 +19,7 @@ class FaqSeeder extends Seeder
                     'ar' => "تفاصيل إرجاع المنتج رقم $i",
                     'en' => "Details about returning product $i",
                 ],
-                'faq_type' => 'global',
-                'issued_by' => 'admin',
-                // 'user_id' => 1,
-                // 'shop_id' => 1, // ثابت حسب المثال اللي إنت بعتّه
+                
             ]);
         }
     }
