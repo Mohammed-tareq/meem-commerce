@@ -22,6 +22,7 @@ class GovernorateStoreRequest extends FormRequest
             'name.en' => ['required', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('governorates')],
             'name.ar' => ['required', 'string', 'min:2', 'max:50', UniqueTranslationRule::for('governorates')],
             'status' => ['nullable', 'in:1,0'],
+            'is_fast_shipping_enabled' => ['nullable', 'boolean'],
             'shipping_price' => ['sometimes', 'array'],
             'shipping_price.price' => ['sometimes', 'numeric'],
             'shipping_price.estimated_days' => ['sometimes', 'integer'],

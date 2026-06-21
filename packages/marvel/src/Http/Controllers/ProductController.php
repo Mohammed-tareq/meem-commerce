@@ -959,4 +959,34 @@ class ProductController extends CoreController
 
         return $products_query;
     }
+
+    /**
+     * @OA\Put(
+     *     path="/api/products/{id}/fast-shipping",
+     *     tags={"Products"},
+     *     summary="Toggle fast shipping availability for a product",
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(name="id", in="path", required=true, @OA\Schema(type="integer")),
+     *     @OA\RequestBody(
+     *         @OA\JsonContent(
+     *             @OA\Property(property="is_fast_shipping_available", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(response=200, description="Fast shipping status updated"),
+     *     @OA\Response(response=404, description="Product not found")
+     * )
+     */
+    public function toggleFastShipping(Request $request, $id): JsonResponse
+    {
+        try {
+            $product = Product::findOrFail($id);
+            $validated = $request->validate([
+                'is_fast_shipping_available' => ['required', 'boolean'],
+            ]);
+            $product->update($validated);
+            return $this->apiResponse(UPDATE_PRODUCT_SUCCESSFULLY, 200, true, ProductResource::make($product->load('variations', 'categories', 'flash_sales', 'shops')));
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
+    }
 }

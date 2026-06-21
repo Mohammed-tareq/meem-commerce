@@ -197,4 +197,10 @@ return [
     'MESSAGE.PAYMENT_SUCCESSFUL' => 'تم الدفع بنجاح',
     'MESSAGE.BRANDS_REORDERED_SUCCESSFULLY' => 'تمت إعادة ترتيب العلامات التجارية بنجاح',
     'MESSAGE.FLASH_SALE_REORDERED_SUCCESSFULLY' => 'تمت إعادة ترتيب التخفيضات بنجاح',
+    'INVALID_CREDENTIALS' => 'بيانات الاعتماد غير صحيحة',
+    'MESSAGE.FAST_SHIPPING_NOT_AVAILABLE' => 'الشحن السريع غير متاح حالياً',
+    'MESSAGE.FAST_SHIPPING_OUTSIDE_HOURS' => 'الشحن السريع متاح فقط خلال ساعات العمل',
+    'MESSAGE.FAST_SHIPPING_GOVERNORATE_DISABLED' => 'الشحن السريع غير متاح في محافظتك',
+    'MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE' => 'منتج أو أكثر غير مؤهل للشحن السريع',
+    'MESSAGE.FAST_SHIPPING_MIXED_CART' => 'لا يمكن خلط الشحن السريع مع الشحن المجدول في نفس الطلب',
 ];
