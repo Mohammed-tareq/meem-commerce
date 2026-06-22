@@ -322,7 +322,14 @@ class UserController extends CoreController
     public function show($id)
     {
         try {
-            $user = $this->repository->with(['profile', 'address', 'shops', 'managed_shop'])->findOrFail($id);
+
+            $user = $this->repository->findOrFail($id);
+            if ($user->type === 'admin') {
+                $user->load(['roles', 'permissions'])->get();
+            }
+            if ($user->type === 'user') {
+                $user->load(['address'])->get();
+            }
             return $this->apiResponse(USER_FETCHED_SUCCESSFULLY, 200, true, UserResource::make($user));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
