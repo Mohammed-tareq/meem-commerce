@@ -59,7 +59,8 @@ class GetSingleProductResource extends Resource
             'price'                        => $this->current_price,
             'quantity'                     => $this->quantity,
             'unit'                         => $this->unit,
-            'in_flash_sale'                => $this->in_flash_sale
+            'in_flash_sale'                => $this->in_flash_sale,
+            'is_fast_shipping_available'  => (bool) $this->is_fast_shipping_available
         ];
     }
 }

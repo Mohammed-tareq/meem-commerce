@@ -34,6 +34,7 @@ class ProductResource extends Resource
             'weight'                 => $this->weight,
             'has_flash_sale'         => $this->has_flash_sale,
             'has_discount'           => $this->has_discount,
+            'is_fast_shipping_available' => (bool) $this->is_fast_shipping_available,
             $this->mergeWhen($this->has_discount, fn() => ['discount_valid' => $this->isDiscountActive()]),
             'banner_id'              => $this->banner_id,
             'created_at'             => $this->created_at ? $this->created_at->toIso8601String() : null,
