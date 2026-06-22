@@ -690,12 +690,10 @@ Route::group([
     Route::get('new-shops', [ShopController::class, 'newOrInActiveShops']);
     Route::post('approve-terms-and-conditions', [TermsAndConditionsController::class, 'approveTerm']);
     Route::post('disapprove-terms-and-conditions', [TermsAndConditionsController::class, 'disApproveTerm']);
-    Route::get('/admin/list', [UserController::class, 'admins']);
-    Route::post('admin-users', [UserController::class, 'adminAddUsers']);
-    Route::delete('admin-users/{id}', [UserController::class, 'adminDeleteUsers']);
     Route::post('admin-users/add', [UserController::class, 'adminAddUsers']);
     Route::put('admin-users/update-activation', [UserController::class, 'adminUpdateActivationUsers']);
     Route::delete('admin-users/delete/{id}', [UserController::class, 'adminDeleteUsers']);
+    Route::put('admin-users/restore/{id}', [UserController::class, 'adminRestoreUser']);
     Route::delete('admin-users/delete-forever/{id}', [UserController::class, 'adminDeleteUsersForever']);
     Route::get('/customers/list', [UserController::class, 'customers']);
     Route::get('my-staffs', [UserController::class, 'myStaffs']);

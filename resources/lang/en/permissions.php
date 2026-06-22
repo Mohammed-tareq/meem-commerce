@@ -116,6 +116,7 @@ return [
     'delete-user' => 'Delete user',
     'ban-user' => 'Ban user',
     'activate-user' => 'Activate user',
+    'update-user-activation' => 'Update user activation',
     'make-admin' => 'Make admin',
     'create-type' => 'Create type',
     'update-type' => 'Update type',

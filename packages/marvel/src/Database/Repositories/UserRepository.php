@@ -68,17 +68,6 @@ class UserRepository extends BaseRepository
             if ($request->hasFile('image')) {
                 $this->uploadSingleImage($request, 'image', $user, 'user-image', 'users');
             }
-            $user->givePermissionTo(UserPermission::CUSTOMER);
-            if (isset($request['address']) && count($request['address'])) {
-                $user->address()->createMany($request['address']);
-            }
-            if (isset($request['profile'])) {
-                $user->profile()->create($request['profile']);
-            }
-            $user->profile = $user->profile;
-            $user->address = $user->address;
-            $user->shop = $user->shop;
-            $user->managed_shop = $user->managed_shop;
             return $user;
         } catch (ValidatorException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
@@ -99,20 +88,12 @@ class UserRepository extends BaseRepository
                 }
             }
 
-            if (isset($request['profile'])) {
-                if (isset($request['profile']['id'])) {
-                    Profile::findOrFail($request['profile']['id'])->update($request['profile']);
-                } else {
-                    $profile = $request['profile'];
-                    $profile['customer_id'] = $user->id;
-                    Profile::create($profile);
-                }
-            }
+          
             if ($request->hasFile('image')) {
                 $this->updateSingleImage($request, 'image', $user, 'user-image', 'users');
             }
             $user->update($request->only($this->dataArray));
-            $user->load(['profile', 'address', 'shop', 'managed_shop']);
+            $user->load([ 'address']);
             return $user;
         } catch (ValidationException $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
@@ -163,6 +144,8 @@ class UserRepository extends BaseRepository
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'email_verified_at' => now(),
+                'type' =>'admin',
+                'is_active'=> isset($request->is_active) ? $request->is_active : 0,
             ]);
             if ($request->hasFile('image')) {
                 $this->uploadSingleImage($request, 'image', $user, 'user-image', 'users');

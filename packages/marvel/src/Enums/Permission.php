@@ -175,6 +175,8 @@ final class Permission extends Enum
     public const DELETE_USER = 'delete-user';
     public const BAN_USER = 'ban-user';
     public const ACTIVATE_USER = 'activate-user';
+    public const UPDATE_USER_ACTIVATION = 'update-user-activation';
+    public const RESTORE_USER = 'restore-user';
     public const MAKE_ADMIN = 'make-admin';
     public const CREATE_TYPE = 'create-type';
     public const UPDATE_TYPE = 'update-type';

@@ -202,5 +202,14 @@ return [
     'MESSAGE.FAST_SHIPPING_OUTSIDE_HOURS' => 'Fast shipping is only available during working hours',
     'MESSAGE.FAST_SHIPPING_GOVERNORATE_DISABLED' => 'Fast shipping is not available in your governorate',
     'MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE' => 'One or more products are not eligible for fast shipping',
-    'MESSAGE.FAST_SHIPPING_MIXED_CART' => 'Cannot mix fast shipping and scheduled shipping items in the same order'
+    'MESSAGE.FAST_SHIPPING_MIXED_CART' => 'Cannot mix fast shipping and scheduled shipping items in the same order',
+    'MESSAGE.USER_RESTORED_SUCCESSFULLY' => 'User restored successfully',
+    'ERROR.USER_CANNOT_BE_RESTORED' => 'User cannot be restored',
+    'MESSAGE.USER_TRASHED_LIST_RETRIEVED_SUCCESSFULLY' => 'Trashed users retrieved successfully',
+    'MESSAGE.ADMINS_LISTED_SUCCESSFULLY' => 'Admins listed successfully',
+    'MESSAGE.VENDORS_LISTED_SUCCESSFULLY' => 'Vendors listed successfully',
+    'MESSAGE.CUSTOMERS_LISTED_SUCCESSFULLY' => 'Customers listed successfully',
+    'MESSAGE.USERS_LISTED_SUCCESSFULLY' => 'Users listed successfully',
+    'MESSAGE.STAFFS_LISTED_SUCCESSFULLY' => 'Staffs listed successfully',
+    'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'User fetched successfully'
 ];

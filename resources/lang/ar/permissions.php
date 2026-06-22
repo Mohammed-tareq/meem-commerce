@@ -109,6 +109,7 @@ return [
     'delete-user' => 'حذف مستخدم',
     'ban-user' => 'حظر مستخدم',
     'activate-user' => 'تفعيل مستخدم',
+    'update-user-activation' => 'تحديث تفعيل المستخدم',
     'make-admin' => 'تعيين كمسؤول',
     'create-type' => 'إنشاء نوع',
     'update-type' => 'تعديل نوع',

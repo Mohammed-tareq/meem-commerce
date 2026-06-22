@@ -78,10 +78,11 @@ class UserController extends CoreController
     {
         $this->repository = $repository;
         $this->applicationIsValid = $this->repository->checkIfApplicationIsValid();
-        $this->middleware("permission:" . Permission::VIEW_USERS, ["only" => ["index", "show", "fetchFeaturedCategories"]]);
+        $this->middleware("permission:" . Permission::VIEW_USERS, ["only" => ["index", "show", "admins", "adminTrashedUsers"]]);
         $this->middleware("permission:" . Permission::CREATE_USER, ["only" => ["adminCreateUsers"]]);
-        $this->middleware("permission:" . Permission::DELETE_USER, ["only" => ["adminDeleteUsers"]]);
-        $this->middleware("permission:" . Permission::EDIT_USER, ["only" => ["adminUpdateActivationUsers"]]);
+        $this->middleware("permission:" . Permission::DELETE_USER, ["only" => ["adminDeleteUsers", "adminDeleteUsersForever"]]);
+        $this->middleware("permission:" . Permission::UPDATE_USER_ACTIVATION, ["only" => ["adminUpdateActivationUsers"]]);
+        $this->middleware("permission:" . Permission::RESTORE_USER, ["only" => ["adminRestoreUser"]]);
     }
 
     /**
@@ -129,13 +130,16 @@ class UserController extends CoreController
      */
     public function admins(Request $request)
     {
-        $limit = $request->limit ? $request->limit : 15;
-        $admins = $this->repository
-            ->with(['permissions'])
-            ->where('type', 'admin')
-            ->paginate($limit);
-        return $admins;
-        // return UserResource::collection($admins);
+        try {
+            $limit = $request->limit ? $request->limit : 15;
+            $admins = $this->repository
+                ->with(['permissions'])
+                ->where('type', 'admin')
+                ->paginate($limit);
+            return $this->apiResponse(ADMINS_LISTED_SUCCESSFULLY, 200, true, $admins);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
     }
 
     /**
@@ -154,9 +158,12 @@ class UserController extends CoreController
      */
     public function vendors(Request $request)
     {
-        $limit = $request->limit ? $request->limit : 15;
-
-        return $this->fetchVendors($request)->paginate($limit);
+        try {
+            $limit = $request->limit ? $request->limit : 15;
+            return $this->apiResponse(VENDORS_LISTED_SUCCESSFULLY, 200, true, $this->fetchVendors($request)->paginate($limit));
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
     }
 
     public function fetchVendors(Request $request)
@@ -190,10 +197,15 @@ class UserController extends CoreController
      */
     public function customers(Request $request)
     {
-        $limit = $request->limit ? $request->limit : 15;
-        $userWithOtherPermissions = User::permission([Permission::SUPER_ADMIN, Permission::STORE_OWNER, Permission::STAFF])->pluck('id')->toArray();
-        return $this->repository->with(['profile', 'address', 'permissions'])
-            ->permission(Permission::CUSTOMER)->whereNotIn('id', $userWithOtherPermissions)->paginate($limit);
+        try {
+            $limit = $request->limit ? $request->limit : 15;
+            $userWithOtherPermissions = User::permission([Permission::SUPER_ADMIN, Permission::STORE_OWNER, Permission::STAFF])->pluck('id')->toArray();
+            $customers = $this->repository->with(['profile', 'address', 'permissions'])
+                ->permission(Permission::CUSTOMER)->whereNotIn('id', $userWithOtherPermissions)->paginate($limit);
+            return $this->apiResponse(CUSTOMERS_LISTED_SUCCESSFULLY, 200, true, $customers);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
     }
 
 
@@ -213,8 +225,59 @@ class UserController extends CoreController
      */
     public function index(Request $request)
     {
-        $limit = $request->limit ? $request->limit : 15;
-        return $this->repository->with(['profile', 'address', 'permissions'])->paginate($limit);
+        try {
+            $limit = $request->limit ? $request->limit : 15;
+            $query = $this->repository->with(['profile', 'address', 'permissions']);
+
+            if ($request->query('users') === 'true') {
+                $query = $query->where('type', 'user');
+            } elseif ($request->query('admins') === 'true') {
+                $query = $query->where('type', 'admin');
+            }
+
+            if ($request->has('is_active')) {
+                $query = $query->where('is_active', $request->query('is_active') === 'true');
+            }
+
+            if ($request->has('type')) {
+                $query = $query->where('type', $request->query('type'));
+            }
+
+            if ($request->query('trash') === 'true') {
+                $query = $query->onlyTrashed();
+            }
+
+            if ($search = $request->query('search')) {
+                $query = $query->where(function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%")
+                      ->orWhere('email', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $orderBy = $request->query('order_by', 'created_at');
+            $sort = $request->query('sort', 'desc');
+            $query = $query->orderBy($orderBy, $sort);
+
+            $users = $query->paginate($limit)->withQueryString();
+            $paginated = UserResource::collection($users)->response()->getData(true);
+            return $this->apiResponse(USERS_LISTED_SUCCESSFULLY, 200, true, [
+                "data" => $paginated['data'] ?? [],
+                "page" => $users->currentPage(),
+                "current_page" => $users->currentPage(),
+                "from" => $users->firstItem() ?? 0,
+                "to" => $users->lastItem() ?? 0,
+                "last_page" => $users->lastPage(),
+                "path" => $users->path(),
+                "per_page" => $users->perPage(),
+                "total" => $users->total(),
+                "next_page_url" => $users->nextPageUrl() ?? "",
+                "prev_page_url" => $users->previousPageUrl() ?? "",
+                "last_page_url" => $users->url($users->lastPage()),
+                "first_page_url" => $users->url(1),
+            ]);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
     }
 
     /**
@@ -244,9 +307,10 @@ class UserController extends CoreController
     public function store(UserCreateRequest $request)
     {
         try {
-            return $this->repository->storeUser($request);
+            $user = $this->repository->storeUser($request);
+            return $this->apiResponse(USER_ADDED_SUCCESSFULLY, 200, true, UserResource::make($user));
         } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
 
@@ -268,7 +332,8 @@ class UserController extends CoreController
     public function show($id)
     {
         try {
-            return $this->repository->with(['profile', 'address', 'shops', 'managed_shop'])->findOrFail($id);
+            $user = $this->repository->with(['profile', 'address', 'shops', 'managed_shop'])->findOrFail($id);
+            return $this->apiResponse(USER_FETCHED_SUCCESSFULLY, 200, true, UserResource::make($user));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -299,14 +364,20 @@ class UserController extends CoreController
      */
     public function update(UserUpdateRequest $request, $id)
     {
-        if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-            $user = $this->repository->findOrFail($id);
-            return $this->repository->updateUser($request, $user);
-        } elseif ($request->user()->id == $id) {
-            $user = $request->user();
-            return $this->repository->updateUser($request, $user);
+        try {
+            if ($request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
+                $user = $this->repository->findOrFail($id);
+                $updatedUser = $this->repository->updateUser($request, $user);
+                return $this->apiResponse(USER_UPDATED_SUCCESSFULLY, 200, true, UserResource::make($updatedUser));
+            } elseif ($request->user()->id == $id) {
+                $user = $request->user();
+                $updatedUser = $this->repository->updateUser($request, $user);
+                return $this->apiResponse(USER_UPDATED_SUCCESSFULLY, 200, true, UserResource::make($updatedUser));
+            }
+            throw new AuthorizationException(NOT_AUTHORIZED);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
         }
-        throw new AuthorizationException(NOT_AUTHORIZED);
     }
 
     /**
@@ -327,7 +398,9 @@ class UserController extends CoreController
     public function destroy($id)
     {
         try {
-            return $this->repository->findOrFail($id)->delete();
+            $user = $this->repository->findOrFail($id);
+            $user->delete();
+            return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -381,7 +454,7 @@ class UserController extends CoreController
             $user->load(['roles']);
             return $this->apiResponse(USER_ADDED_SUCCESSFULLY, 200, true, UserResource::make($user));
         } catch (MarvelException $e) {
-            throw new MarvelException(NOT_FOUND);
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
     }
     public function adminDeleteUsers($id)
@@ -400,12 +473,40 @@ class UserController extends CoreController
     public function adminDeleteUsersForever($id)
     {
         try {
-            $user = $this->repository->findOrFail($id);
+            $user = User::withTrashed()->findOrFail($id);
             if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
                 return $this->apiResponse(USER_CANNOT_BE_DELETED, 400, false);
             }
             $user->forceDelete();
             return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
+    }
+    public function adminRestoreUser($id)
+    {
+        try {
+            $user = User::withTrashed()->findOrFail($id);
+            if (!$user->trashed()) {
+                return $this->apiResponse(USER_CANNOT_BE_RESTORED, 400, false);
+            }
+            if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
+                return $this->apiResponse(USER_CANNOT_BE_RESTORED, 400, false);
+            }
+            $user->restore();
+            return $this->apiResponse(USER_RESTORED_SUCCESSFULLY, 200, true);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
+    }
+    public function adminTrashedUsers(Request $request)
+    {
+        try {
+            $limit = $request->limit ? $request->limit : 15;
+            $trashedUsers = User::onlyTrashed()
+                ->with(['permissions'])
+                ->paginate($limit);
+            return $this->apiResponse(USER_TRASHED_LIST_RETRIEVED_SUCCESSFULLY, 200, true, $trashedUsers);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
@@ -416,11 +517,12 @@ class UserController extends CoreController
             'user_id' => 'required|integer|exists:users,id',
         ]);
         try {
+            if (!$request->user()->hasPermissionTo(Permission::UPDATE_USER_ACTIVATION)) {
+                throw new AuthorizationException(NOT_AUTHORIZED);
+            }
             $user = $this->repository->findOrFail($request->user_id);
-            if ($user->hasRole('super_admin')) {
-                if ($user->id === auth()->id() || $user->is_active === false) {
-                    return $this->apiResponse(USER_CANNOT_BE_UPDATED, 400, false);
-                }
+            if ($user->hasPermissionTo(Permission::SUPER_ADMIN)) {
+                return $this->apiResponse(USER_CANNOT_BE_UPDATED, 400, false);
             }
             $user->is_active = !$user->is_active;
             $user->save();
@@ -664,11 +766,11 @@ class UserController extends CoreController
         try {
             $user = $request->user();
             if ($user && $user->hasPermissionTo(Permission::BAN_USER) && $user->id != $request->id) {
-                $banUser = User::find($request->id);
+                $banUser = User::findOrFail($request->id);
                 $banUser->is_active = false;
                 $banUser->save();
                 $this->inactiveUserShops($banUser->id);
-                return $this->apiResponse(USER_DEACTIVATED_SUCCESSFULLY, 200);
+                return $this->apiResponse(USER_DEACTIVATED_SUCCESSFULLY, 200, true);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $th) {
@@ -691,10 +793,10 @@ class UserController extends CoreController
         try {
             $user = $request->user();
             if ($user && $user->hasPermissionTo(Permission::ACTIVATE_USER) && $user->id != $request->id) {
-                $activeUser = User::find($request->id);
+                $activeUser = User::findOrFail($request->id);
                 $activeUser->is_active = true;
                 $activeUser->save();
-                return $this->apiResponse(USER_ACTIVATED_SUCCESSFULLY, 200);
+                return $this->apiResponse(USER_ACTIVATED_SUCCESSFULLY, 200, true);
             }
             throw new AuthorizationException(NOT_AUTHORIZED);
         } catch (MarvelException $th) {
@@ -727,7 +829,7 @@ class UserController extends CoreController
     {
         $user = $this->repository->findByField('email', $request->email);
         if (count($user) < 1) {
-            return $this->apiResponse(NOT_FOUND, 404);
+            return $this->apiResponse(NOT_FOUND, 404, false);
         }
 
         $plainTextToken = Str::random(60);
@@ -753,9 +855,9 @@ class UserController extends CoreController
 
 
         if ($this->repository->sendResetEmail($request->email, $plainTextToken)) {
-            return $this->apiResponse(CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 200);
+            return $this->apiResponse(CHECK_INBOX_FOR_PASSWORD_RESET_EMAIL, 200, true);
         } else {
-            return $this->apiResponse(SOMETHING_WENT_WRONG, 500);
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
     }
 
@@ -864,10 +966,9 @@ class UserController extends CoreController
                 }
             }
             $details = $request->only('subject', 'name', 'email', 'description');
-            // config('shop.admin_email')
             $emailTo = isset($request['emailTo']) ? $request['emailTo'] : $listedAdmin;
             Mail::to($emailTo)->send(new ContactAdmin($details));
-            return ['message' => EMAIL_SENT_SUCCESSFUL, 'success' => true];
+            return $this->apiResponse(EMAIL_SENT_SUCCESSFUL, 200, true);
         } catch (\Exception $e) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }
@@ -890,9 +991,14 @@ class UserController extends CoreController
 
     public function staffs(Request $request)
     {
-        $query = $this->fetchStaff($request);
-        $limit = $request->limit ?? 15;
-        return $query->paginate($limit);
+        try {
+            $query = $this->fetchStaff($request);
+            $limit = $request->limit ?? 15;
+            $staffs = $query->paginate($limit);
+            return $this->apiResponse(STAFFS_LISTED_SUCCESSFULLY, 200, true, $staffs);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
     }
 
     /**
@@ -1088,17 +1194,14 @@ class UserController extends CoreController
 
         try {
             if ($this->verifyOtp($request)) {
-                $user = User::find($user_id);
+                $user = User::findOrFail($user_id);
                 $user->profile()->updateOrCreate(
                     ['customer_id' => $user_id],
                     [
                         'contact' => $phoneNumber
                     ]
                 );
-                return [
-                    "message" => CONTACT_UPDATE_SUCCESSFUL,
-                    "success" => true,
-                ];
+                return $this->apiResponse(CONTACT_UPDATE_SUCCESSFUL, 200, true);
             }
             return $this->apiResponse(CONTACT_UPDATE_FAILED, 400, false);
         } catch (\Exception $e) {
@@ -1141,7 +1244,7 @@ class UserController extends CoreController
         $wallet->total_points = $wallet->total_points + $points;
         $wallet->available_points = $wallet->available_points + $points;
         $wallet->save();
-        return ['message' => POINTS_ADDED_SUCCESSFULLY, 'success' => true];
+        return $this->apiResponse(POINTS_ADDED_SUCCESSFULLY, 200, true);
     }
 
     /**
@@ -1175,7 +1278,7 @@ class UserController extends CoreController
                 if ($newUser->hasPermissionTo(Permission::SUPER_ADMIN)) {
                     $newUser->revokePermissionTo(Permission::SUPER_ADMIN);
                     $newUser->removeRole(Role::SUPER_ADMIN);
-                    return true;
+                    return $this->apiResponse(USER_UPDATED_SUCCESSFULLY, 200, true);
                 }
             } catch (Exception $e) {
                 throw new MarvelException(USER_NOT_FOUND);
@@ -1183,7 +1286,7 @@ class UserController extends CoreController
             $newUser->givePermissionTo(Permission::SUPER_ADMIN);
             $newUser->assignRole(Role::SUPER_ADMIN);
 
-            return true;
+            return $this->apiResponse(USER_UPDATED_SUCCESSFULLY, 200, true);
         }
 
         throw new MarvelException(NOT_AUTHORIZED);
@@ -1213,7 +1316,7 @@ class UserController extends CoreController
         try {
             $email = $request->email;
             Newsletter::subscribeOrUpdate($email);
-            return true;
+            return $this->apiResponse(EMAIL_SENT_SUCCESSFUL, 200, true);
         } catch (MarvelException $th) {
             throw new MarvelException(SOMETHING_WENT_WRONG);
         }
@@ -1241,19 +1344,29 @@ class UserController extends CoreController
      */
     public function updateUserEmail(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email|unique:users,email',
-        ]);
-        if ($validator->fails()) {
-            throw new MarvelException($validator->errors()->first());
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email|unique:users,email',
+            ]);
+            if ($validator->fails()) {
+                throw new MarvelException($validator->errors()->first());
+            }
+            $this->repository->updateEmail($request);
+            return $this->apiResponse(EMAIL_UPDATED_SUCCESSFULLY, 200, true);
+        } catch (MarvelException $e) {
+            throw new MarvelException(SOMETHING_WENT_WRONG);
         }
-        return $this->repository->updateEmail($request);
     }
 
     public function myStaffs(Request $request)
     {
-        $limit = $request->limit ? $request->limit : 15;
-        return $this->fetchMyStaffs($request)->paginate($limit);
+        try {
+            $limit = $request->limit ? $request->limit : 15;
+            $staffs = $this->fetchMyStaffs($request)->paginate($limit);
+            return $this->apiResponse(STAFFS_LISTED_SUCCESSFULLY, 200, true, $staffs);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
+        }
     }
 
     public function fetchMyStaffs(Request $request)
@@ -1267,12 +1380,18 @@ class UserController extends CoreController
 
     public function allStaffs(Request $request)
     {
-        $user = $request->user();
-        $limit = $request->limit ? $request->limit : 15;
-        if ($this->repository->hasPermission($user)) {
-            return $this->repository->permission(Permission::STAFF)->paginate($limit);
+        try {
+            $user = $request->user();
+            $limit = $request->limit ? $request->limit : 15;
+            if ($this->repository->hasPermission($user)) {
+                $staffs = $this->repository->permission(Permission::STAFF)->paginate($limit);
+                return $this->apiResponse(STAFFS_LISTED_SUCCESSFULLY, 200, true, $staffs);
+            }
+            $staffs = $this->repository->permission(null)->paginate($limit);
+            return $this->apiResponse(STAFFS_LISTED_SUCCESSFULLY, 200, true, $staffs);
+        } catch (MarvelException $e) {
+            throw new MarvelException(NOT_FOUND);
         }
-        return $this->repository->permission(null)->paginate($limit);
     }
 
 
