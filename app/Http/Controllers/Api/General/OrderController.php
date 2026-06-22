@@ -217,7 +217,7 @@ class OrderController extends Controller
 
         return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/failed?' . http_build_query([
             'status' => 'failed',
-            'message' => $errorMessage,
+            'error' => $errorMessage,
             'payment_id' => $paymentId,
         ]));
     }
