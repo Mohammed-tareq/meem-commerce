@@ -231,12 +231,8 @@ class UserController extends CoreController
                 $query = $query->where('type', 'admin');
             }
 
-            if ($active === 'true') {
-                $query = $query->where('is_active', true);
-            }
-
-            if ($inActive === 'true') {
-                $query = $query->where('is_active', false);
+            if ($active) {
+                $query = $query->where('is_active', $request->query('is_active') === 'true');
             }
 
             if ($request->has('type')) {
@@ -465,7 +461,7 @@ class UserController extends CoreController
         try {
             $user = $this->repository->findOrFail($id);
             if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
-                return $this->apiResponse(USER_CANNOT_BE_DELETED, 400, false);
+                return $this->apiResponse(USER_ADMIN_CANNOT_BE_DELETED, 400, false);
             }
             $user->delete();
             return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
@@ -478,7 +474,7 @@ class UserController extends CoreController
         try {
             $user = User::withTrashed()->findOrFail($id);
             if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
-                return $this->apiResponse(USER_CANNOT_BE_DELETED, 400, false);
+                return $this->apiResponse(USER_ADMIN_CANNOT_BE_DELETED, 400, false);
             }
             $user->forceDelete();
             return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
@@ -491,9 +487,6 @@ class UserController extends CoreController
         try {
             $user = User::withTrashed()->findOrFail($id);
             if (!$user->trashed()) {
-                return $this->apiResponse(USER_CANNOT_BE_RESTORED, 400, false);
-            }
-            if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
                 return $this->apiResponse(USER_CANNOT_BE_RESTORED, 400, false);
             }
             $user->restore();

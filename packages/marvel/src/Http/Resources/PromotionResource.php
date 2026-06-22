@@ -10,7 +10,7 @@ class PromotionResource extends Resource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
+            'name' => request()->routeIs('promotions.index') ? $this->getTranslation('name',app()->getLocale()) : $this->getRawOriginal('name'),
             'slug' =>$this->slug,
             'type' => $this->typeByLang(),
             'discount_type' => $this->type_amount,
@@ -22,7 +22,10 @@ class PromotionResource extends Resource
             'apply_to' => $this->apply_to,
             'products' => $this->whenLoaded('products'),
             'gift_products' => $this->whenLoaded('giftProducts'),
-            'image' => method_exists($this, 'getFirstMediaUrl') ? $this->getFirstMediaUrl('promotions') : null,
+            'image' => [
+                'desktop' => $this->getFirstMediaUrl('promotions-desktop') ?:null,
+                'mobile' => $this->getFirstMediaUrl('promotions-mobile') ?: null,
+            ],
             'start_at' => $this->start_at ? $this->start_at->toIso8601String() : null,
             'end_at' => $this->end_at ? $this->end_at->toIso8601String() : null,
             'status' => (bool) $this->status,

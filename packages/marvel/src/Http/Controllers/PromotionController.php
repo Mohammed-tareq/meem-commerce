@@ -30,7 +30,33 @@ class PromotionController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ?? 15;
-        $promotions = $this->repository->paginate($limit)->withQueryString();
+        $query = $this->repository;
+
+        if ($search = $request->query('search')) {
+            $query = $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                  ->orWhere('code', 'LIKE', "%{$search}%")
+                  ->orWhere('type', 'LIKE', "%{$search}%");
+            });
+        }
+
+        if ($request->has('status')) {
+            $query = $query->where('status', $request->query('status') === 'true');
+        }
+
+        if ($request->has('type')) {
+            $query = $query->where('type', $request->query('type'));
+        }
+
+        if ($request->has('type_amount')) {
+            $query = $query->where('type_amount', $request->query('type_amount'));
+        }
+
+        $orderBy = $request->query('order_by', 'created_at');
+        $sort = $request->query('sort', 'desc');
+        $query = $query->orderBy($orderBy, $sort);
+
+        $promotions = $query->paginate($limit)->withQueryString();
         $promotionData = PromotionResource::collection($promotions)->response()->getData(true);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
             "data" => $promotionData['data'] ?? [],

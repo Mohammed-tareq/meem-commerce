@@ -151,7 +151,7 @@ return [
     'your otp code' => 'رمز التحقق الخاص بك ',
     'MESSAGE.USER_PROFILE_RETRIEVED_SUCCESSFULLY' => 'تم استرجاع بيانات المستخدم بنجاح',
     'MESSAGE.USER_ADDED_SUCCESSFULLY' => 'تمت إضافة المستخدم بنجاح',
-    'ERROR.USER_CANNOT_BE_DELETED' => 'لا يمكن حذف المستخدم',
+    'ERROR.USER_ADMIN_CANNOT_BE_DELETED' => 'لا يمكن حذف المستخدم اذي كان أدمن من فضلك تأكد من الادوار',
     'MESSAGE.USER_DELETED_SUCCESSFULLY' => 'تم حذف المستخدم بنجاح',
     'ERROR.USER_CANNOT_BE_UPDATED' => 'لا يمكن تحديث المستخدم',
     'MESSAGE.USER_UPDATED_SUCCESSFULLY' => 'تم تحديث المستخدم بنجاح',

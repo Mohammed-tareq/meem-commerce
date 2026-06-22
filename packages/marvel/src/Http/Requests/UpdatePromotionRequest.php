@@ -31,6 +31,15 @@ class UpdatePromotionRequest extends FormRequest
 
 
 
+            'product_ids' => [
+                'sometimes',
+                'array',
+                Rule::prohibitedIf(function () {
+                    return request()->input('apply_to') === 'all_products';
+                }),
+            ],
+            'product_ids.*' => 'exists:products,id',
+
             'gift_product_ids'   => ['sometimes', 'array', 'min:1'],
             'gift_product_ids.*' => 'exists:products,id',
 
@@ -66,9 +75,8 @@ class UpdatePromotionRequest extends FormRequest
                 'min:0',
                 Rule::requiredIf(function () {
                     $type = request()->input('type');
-                    $price = request()->input('price');
 
-                    return !empty($price) || $type !== 'quantity';
+                    return $type !== 'quantity';
                 }),
             ],
 
