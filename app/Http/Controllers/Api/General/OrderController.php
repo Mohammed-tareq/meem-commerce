@@ -155,7 +155,16 @@ class OrderController extends Controller
                     $this->cartInventoryService->releaseCart($cart, false);
                 }
             }
-            return $this->apiResponse(PAYMENT_FAILED, 400, false);
+
+            $errorMessage = data_get($invoice, 'Data.InvoiceError')
+                ?? data_get($invoice, 'Data.InvoiceTransactions.0.Error')
+                ?? __(PAYMENT_FAILED);
+
+            return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/failed?' . http_build_query([
+                'status' => 'failed',
+                'message' => $errorMessage,
+                'payment_id' => $paymentId,
+            ]));
         }
 
         $order = $this->orderService->changeOrderStatus($invoiceId, 'completed');
@@ -167,10 +176,13 @@ class OrderController extends Controller
                 }
             }
         }
-        // if ($order = $this->orderService->getOrder($invoice['Data']["InvoiceId"])) {
-        //     $this->orderService->sendAdminNotification($order);
-        // }
-        return $this->apiResponse(PAYMENT_SUCCESSFUL, 200, true);
+
+        return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/success?' . http_build_query([
+            'status' => 'success',
+            'message' => __(PAYMENT_SUCCESSFUL),
+            'payment_id' => $paymentId,
+            'order_id' => $order?->id,
+        ]));
     }
 
     public function checkoutErrorCallback(Request $request)
@@ -189,6 +201,10 @@ class OrderController extends Controller
         $invoiceStatus = data_get($invoice, 'Data.InvoiceStatus');
         $invoiceId = data_get($invoice, 'Data.InvoiceId');
 
+        $errorMessage = data_get($invoice, 'Data.InvoiceError')
+            ?? data_get($invoice, 'Data.InvoiceTransactions.0.Error')
+            ?? __(PAYMENT_FAILED);
+
         if ($invoiceStatus && $invoiceStatus !== 'Paid' && $invoiceId) {
             $order = $this->orderService->changeOrderStatus($invoiceId, 'cancelled');
             if ($order && ($user = User::find($order->user_id))) {
@@ -198,6 +214,11 @@ class OrderController extends Controller
                 }
             }
         }
-        return $this->apiResponse(PAYMENT_FAILED, 400, false);
+
+        return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/failed?' . http_build_query([
+            'status' => 'failed',
+            'message' => $errorMessage,
+            'payment_id' => $paymentId,
+        ]));
     }
 }
