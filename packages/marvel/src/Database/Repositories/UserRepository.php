@@ -145,6 +145,7 @@ class UserRepository extends BaseRepository
                 'password' => Hash::make($request->password),
                 'email_verified_at' => now(),
                 'type' =>'admin',
+                "phone_number"=> $request->phone_number,
                 'is_active'=> isset($request->is_active) ? $request->is_active : 0,
             ]);
             if ($request->hasFile('image')) {

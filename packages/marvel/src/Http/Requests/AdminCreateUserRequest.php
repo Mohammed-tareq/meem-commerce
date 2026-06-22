@@ -32,6 +32,7 @@ class AdminCreateUserRequest extends FormRequest
             "name" => "required",
             "email" => "required|email|unique:users,email",
             "password" => "required|min:6|confirmed|max:50",
+            "phone_number" => "required|unique:users,phone_number",
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp',
             'is_active' => 'nullable|in:0,1',
         ];
