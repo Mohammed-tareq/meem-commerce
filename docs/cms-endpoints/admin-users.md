@@ -425,7 +425,8 @@ Retrieve a paginated, filterable list of all users. Supports filtering by type, 
 | `admins` | string | No | `true` to filter by type `admin` |
 | `type` | string | No | Exact match on the `type` column |
 | `trash` | string | No | `true` to only show soft-deleted users (where `deleted_at` is not null) |
-| `is_active` | boolean | No | Filter by active status (`true`/`false`) |
+| `active` | boolean | No | Filter by active status (`true`) |
+| `in_active` | boolean | No | Filter by active status (`true`) |
 | `search` | string | No | LIKE search on `name` and `email` fields |
 | `order_by` | string | No | Column to sort by (default: `created_at`) |
 | `sort` | string | No | Sort direction `asc` or `desc` (default: `desc`) |
@@ -434,10 +435,10 @@ Retrieve a paginated, filterable list of all users. Supports filtering by type, 
 
 ```
 GET /users?limit=10&page=1
-GET /users?users=true&is_active=true
-GET /users?admins=true&is_active=false
+GET /users?users=true&active=true
+GET /users?admins=true&in_active=true
 GET /users?search=john&order_by=name&sort=asc
-GET /users?type=admin&is_active=true&search=admin&limit=20&page=2
+GET /users?type=admin&active=true&search=admin&limit=20&page=2
 GET /users?trash=true
 GET /users?trash=true&search=jane&limit=10&page=1
 ```
