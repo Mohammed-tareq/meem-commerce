@@ -712,6 +712,7 @@ Route::group([
 
 
     Route::get('/roles', [RoleAndPermissionController::class, 'getAllRoles']);
+    Route::get('/roles/{id}', [RoleAndPermissionController::class, 'showRole']);
     Route::post('/roles', [RoleAndPermissionController::class, 'addRole']);
     Route::put('/roles/{id}', [RoleAndPermissionController::class, 'updateRole']);
     Route::delete('/roles/{id}', [RoleAndPermissionController::class, 'destroyRole']);

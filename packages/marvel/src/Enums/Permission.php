@@ -54,6 +54,7 @@ final class Permission extends Enum
     public const UPDATE_ROLES = 'update-roles';
     public const DELETE_ROLES = 'delete-roles';
     public const VIEW_ROLES = 'view-roles';
+    public const VIEW_ROLE = 'view-role';
 
     public const ASSIGN_ROLE = 'assign-role';
     public const REMOVE_ROLE = 'remove-role';

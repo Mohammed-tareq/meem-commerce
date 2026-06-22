@@ -170,6 +170,7 @@ return [
     'MESSAGE.TYPE_UPDATED_SUCCESSFULLY' => 'Type updated successfully',
     'MESSAGE.TYPE_DELETED_SUCCESSFULLY' => 'Type deleted successfully',
     'MESSAGE.SETTINGS_UPDATED_SUCCESSFULLY' => 'Settings updated successfully',
+    'MESSAGE.ROLE_FETCHED_SUCCESSFULLY' => 'Role fetched successfully',
     'MESSAGE.ROLES_FETCHED_SUCCESSFULLY' => 'Roles fetched successfully',
     'MESSAGE.ROLE_ADDED_SUCCESSFULLY' => 'Role added successfully',
     'MESSAGE.ROLE_UPDATED_SUCCESSFULLY' => 'Role updated successfully',

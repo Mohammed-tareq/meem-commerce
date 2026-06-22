@@ -176,6 +176,7 @@ class PermissionSeeder extends Seeder
             'accept-abusive-report',
             'reject-abusive-report',
             'view-roles',
+            'view-role',
             'create-roles',
             'update-roles',
             'delete-roles',
@@ -276,6 +277,7 @@ class PermissionSeeder extends Seeder
         $superAdminPermission = [
             // 🔐 Super Admin
             'view-admins',
+            'view-role',
             'view-vendors',
             'view-customers',
             'view-users',

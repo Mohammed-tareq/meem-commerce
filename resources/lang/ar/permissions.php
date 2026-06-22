@@ -140,6 +140,7 @@ return [
     'accept-abusive-report' => 'قبول البلاغ',
     'reject-abusive-report' => 'رفض البلاغ',
     'view-roles' => 'عرض الأدوار',
+    'view-role' => 'عرض دور',
     'create-roles' => 'إنشاء أدوار',
     'update-roles' => 'تعديل أدوار',
     'delete-roles' => 'حذف أدوار',

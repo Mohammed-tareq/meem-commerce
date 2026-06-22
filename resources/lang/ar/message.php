@@ -170,6 +170,7 @@ return [
     'MESSAGE.TYPE_UPDATED_SUCCESSFULLY' => 'تم تحديث النوع بنجاح',
     'MESSAGE.TYPE_DELETED_SUCCESSFULLY' => 'تم حذف النوع بنجاح',
     'MESSAGE.SETTINGS_UPDATED_SUCCESSFULLY' => 'تم تحديث الإعدادات بنجاح',
+    'MESSAGE.ROLE_FETCHED_SUCCESSFULLY' => 'تم جلب الدور بنجاح',
     'MESSAGE.ROLES_FETCHED_SUCCESSFULLY' => 'تم جلب الأدوار بنجاح',
     'MESSAGE.ROLE_ADDED_SUCCESSFULLY' => 'تمت إضافة الدور بنجاح',
     'MESSAGE.ROLE_UPDATED_SUCCESSFULLY' => 'تم تحديث الدور بنجاح',

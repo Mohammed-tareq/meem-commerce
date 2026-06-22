@@ -28,6 +28,7 @@ return [
     'update-flash-sale' => 'Update flash sale',
     'delete-flash-sale' => 'Delete flash sale',
     'view-roles' => 'View roles',
+    'view-role' => 'View role',
     'create-roles' => 'Create roles',
     'update-roles' => 'Update roles',
     'delete-roles' => 'Delete roles',
