@@ -20,7 +20,6 @@ class PermissionResource extends JsonResource
 
         return [
             "id" => $this->id,
-            "name" => $this->name,
             "label" => $translation !== $key ? $translation : $this->name,
         ];
     }

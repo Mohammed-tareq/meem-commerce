@@ -38,6 +38,7 @@ return new class extends Migration {
             $roleId = DB::table('roles')->insertGetId([
                 'name' => RoleEnum::EDITOR,
                 'guard_name' => $guard,
+                'display_name' => json_encode(['en' => 'Editor', 'ar' => 'محرر']),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

@@ -15,10 +15,9 @@ class RoleResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "id"=> $this->id,
-            "name"=> $this->name,
-            "display_name"=> $this->getTranslation('display_name',app()->getLocale()),
-            "permissions"=> PermissionResource::collection($this->whenLoaded('permissions')),
+            "id" => $this->id,
+            "display_name" => request()->routeIs('roles.index') ? $this->getTranslation('display_name', app()->getLocale()) : $this->getRawOriginal('display_name'),
+            "permissions" => PermissionResource::collection($this->whenLoaded('permissions')),
         ];
     }
 }

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Marvel\Database\Models\Role;
 use Marvel\Database\Models\User;
 use Marvel\Exceptions\MarvelException;
@@ -38,8 +39,13 @@ class RoleAndPermissionController extends CoreController
         try {
             $limit = request('limit', 10);
             $search = request('search', null);
-            $roles = Role::paginate($limit);
+            $roles = Role::when($search, function ($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('display_name', 'like', "%{$search}%");
+            })->paginate($limit);
             return $this->apiResponse(ROLES_FETCHED_SUCCESSFULLY, 200, true, RoleResource::collection($roles));
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -66,6 +72,8 @@ class RoleAndPermissionController extends CoreController
             ]);
 
             return $this->apiResponse(ROLE_ADDED_SUCCESSFULLY, 200, true, RoleResource::make($role));
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -93,6 +101,8 @@ class RoleAndPermissionController extends CoreController
             return $this->apiResponse(ROLE_UPDATED_SUCCESSFULLY, 200, true, RoleResource::make($role));
         } catch (RoleDoesNotExist|ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -126,6 +136,8 @@ class RoleAndPermissionController extends CoreController
             $user->syncRoles($roles)->load('roles', 'permissions');
 
             return $this->apiResponse(ROLE_ASSIGNED_SUCCESSFULLY, 200, true, UserResource::make($user));
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -148,6 +160,8 @@ class RoleAndPermissionController extends CoreController
             return $this->apiResponse(ROLE_REMOVED_SUCCESSFULLY, 200, true);
         } catch (ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             Log::error('removeRoleFromUser failed: ' . $e->getMessage(), ['userId' => $userId]);
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
@@ -165,6 +179,8 @@ class RoleAndPermissionController extends CoreController
                 $query->where('name', 'like', "%{$search}%");
             })->paginate($limit);
             return $this->apiResponse(PERMISSIONS_FETCHED_SUCCESSFULLY, 200, true, PermissionResource::collection($permissions));
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
@@ -177,18 +193,95 @@ class RoleAndPermissionController extends CoreController
         try {
             $request->validate([
                 'permissions' => 'required|array',
-                'permissions.*' => ['distinct', 'string', 'max:50', Rule::unique('permissions', 'name')->where(fn($q) => $q->where('guard_name', 'api'))],
+                'permissions.*' => ['integer', 'distinct', Rule::exists('permissions', 'id')->where(fn($q) => $q->where('guard_name', 'api'))],
             ]);
 
             $role = Role::findById($roleId, 'api');
 
-            $permissions = Permission::whereIn('id', $request->permissions)->get();
+            $permissions = Permission::whereIn('id', $request->permissions)->where('guard_name', 'api')->get();
 
             $role->syncPermissions($permissions)->load('permissions');
 
             return $this->apiResponse(PERMISSION_ASSIGNED_SUCCESSFULLY, 200, true, RoleResource::make($role));
         } catch (RoleDoesNotExist|ModelNotFoundException $e) {
             throw new MarvelException(NOT_FOUND);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
+    }
+
+    // ================= DIRECT USER PERMISSIONS =================
+
+    public function givePermission(Request $request, $userId)
+    {
+        try {
+            $request->validate([
+                'permissions' => 'required|array',
+                'permissions.*' => ['integer', 'distinct', Rule::exists('permissions', 'id')->where(fn($q) => $q->where('guard_name', 'api'))],
+            ]);
+
+            $user = User::findOrFail($userId);
+            $permissions = Permission::whereIn('id', $request->permissions)->where('guard_name', 'api')->get();
+
+            $user->givePermissionTo($permissions);
+            $user->load('roles', 'permissions');
+
+            return $this->apiResponse(PERMISSION_ASSIGNED_SUCCESSFULLY, 200, true, UserResource::make($user));
+        } catch (ModelNotFoundException $e) {
+            throw new MarvelException(NOT_FOUND);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
+    }
+
+    public function syncPermissions(Request $request, $userId)
+    {
+        try {
+            $request->validate([
+                'permissions' => 'required|array',
+                'permissions.*' => ['integer', 'distinct', Rule::exists('permissions', 'id')->where(fn($q) => $q->where('guard_name', 'api'))],
+            ]);
+
+            $user = User::findOrFail($userId);
+            $permissions = Permission::whereIn('id', $request->permissions)->where('guard_name', 'api')->get();
+
+            $user->syncPermissions($permissions)->load('roles', 'permissions');
+
+            return $this->apiResponse(PERMISSION_ASSIGNED_SUCCESSFULLY, 200, true, UserResource::make($user));
+        } catch (ModelNotFoundException $e) {
+            throw new MarvelException(NOT_FOUND);
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
+        }
+    }
+
+    public function removePermission(Request $request, $userId)
+    {
+        try {
+            $request->validate([
+                'permissions' => 'required|array',
+                'permissions.*' => ['integer', 'distinct', Rule::exists('permissions', 'id')->where(fn($q) => $q->where('guard_name', 'api'))],
+            ]);
+
+            $user = User::findOrFail($userId);
+            $permissions = Permission::whereIn('id', $request->permissions)->where('guard_name', 'api')->get();
+
+            foreach ($permissions as $permission) {
+                $user->revokePermissionTo($permission);
+            }
+            $user->load('roles', 'permissions');
+
+            return $this->apiResponse(PERMISSION_ASSIGNED_SUCCESSFULLY, 200, true, UserResource::make($user));
+        } catch (ModelNotFoundException $e) {
+            throw new MarvelException(NOT_FOUND);
+        } catch (ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return $this->apiResponse(SOMETHING_WENT_WRONG, 500, false);
         }
