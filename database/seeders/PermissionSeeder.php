@@ -193,6 +193,7 @@ class PermissionSeeder extends Seeder
             'edit-user',
             'approve-reviews',
             'delete-reviews',
+            'restore-user',
 
             //fast-shipping
             'view-fast-shipping',

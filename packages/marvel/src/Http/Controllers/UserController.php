@@ -213,21 +213,58 @@ class UserController extends CoreController
     public function index(Request $request)
     {
         try {
-            $users = $request->query('users', 'false');
-            $admins = $request->query('admins', 'false');
-            $trash = $request->query('trash', 'false');
+            $filterUsers = $request->query('users', 'false');
+            $filterAdmins = $request->query('admins', 'false');
+            $filterTrash = $request->query('trash', 'false');
             $limit = $request->limit ? $request->limit : 15;
-            $users = $this->repository->query();
-            if ($trash) {
-                $users = $users->onlyTrashed();
+            $query = $this->repository->with(['profile', 'address', 'permissions']);
+
+            if ($filterTrash === 'true') {
+                $query = $query->onlyTrashed();
             }
-            if ($users) {
-                $users = $users->where('type', 'user')->paginate($limit);
+
+            if ($filterUsers === 'true') {
+                $query = $query->where('type', 'user');
+            } elseif ($filterAdmins === 'true') {
+                $query = $query->where('type', 'admin');
             }
-            if ($admins) {
-                $users = $users->where('type', 'admin')->with(['permissions'])->paginate($limit);
+
+            if ($request->has('is_active')) {
+                $query = $query->where('is_active', $request->query('is_active') === 'true');
             }
-            return $this->apiResponse(USERS_LISTED_SUCCESSFULLY, 200, true, UserResource::collection($users));
+
+            if ($request->has('type')) {
+                $query = $query->where('type', $request->query('type'));
+            }
+
+            if ($search = $request->query('search')) {
+                $query = $query->where(function ($q) use ($search) {
+                    $q->where('name', 'LIKE', "%{$search}%")
+                      ->orWhere('email', 'LIKE', "%{$search}%");
+                });
+            }
+
+            $orderBy = $request->query('order_by', 'created_at');
+            $sort = $request->query('sort', 'desc');
+            $query = $query->orderBy($orderBy, $sort);
+
+            $users = $query->paginate($limit)->withQueryString();
+            $paginated = UserResource::collection($users)->response()->getData(true);
+            return $this->apiResponse(USERS_LISTED_SUCCESSFULLY, 200, true, [
+                "data" => $paginated['data'] ?? [],
+                "page" => $users->currentPage(),
+                "current_page" => $users->currentPage(),
+                "from" => $users->firstItem() ?? 0,
+                "to" => $users->lastItem() ?? 0,
+                "last_page" => $users->lastPage(),
+                "path" => $users->path(),
+                "per_page" => $users->perPage(),
+                "total" => $users->total(),
+                "next_page_url" => $users->nextPageUrl() ?? "",
+                "prev_page_url" => $users->previousPageUrl() ?? "",
+                "last_page_url" => $users->url($users->lastPage()),
+                "first_page_url" => $users->url(1),
+            ]);
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }
