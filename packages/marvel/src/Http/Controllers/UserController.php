@@ -219,7 +219,7 @@ class UserController extends CoreController
             $active = $request->query('active', 'false');
             $inActive = $request->query('in_active', 'false');
             $limit = $request->limit ? $request->limit : 15;
-            $query = $this->repository->with(['address', 'permissions']);
+            $query = $this->repository->with(['permissions']);
 
             if ($filterTrash === 'true') {
                 $query = $query->onlyTrashed();
@@ -231,8 +231,12 @@ class UserController extends CoreController
                 $query = $query->where('type', 'admin');
             }
 
-            if ($active) {
-                $query = $query->where('is_active', $request->query('is_active') === 'true');
+            if ($active === 'true') {
+                $query = $query->where('is_active', true);
+            }
+
+            if ($inActive === 'true') {
+                $query = $query->where('is_active', false);
             }
 
             if ($request->has('type')) {
