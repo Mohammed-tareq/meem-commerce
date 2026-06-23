@@ -246,7 +246,7 @@ class UserController extends CoreController
             if ($search = $request->query('search')) {
                 $query = $query->where(function ($q) use ($search) {
                     $q->where('name', 'LIKE', "%{$search}%")
-                        ->orWhere('email', 'LIKE', "%{$search}%");
+                      ->orWhere('email', 'LIKE', "%{$search}%");
                 });
             }
 
@@ -587,7 +587,7 @@ class UserController extends CoreController
         if (!$user || !Hash::check($request->password, $user->password)) {
             return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
         }
-        if ($user->type !== 'admin') {
+        if($user->type !== 'admin'){
             return $this->apiResponse(USER_NOT_FOUND, 404, false);
         }
         $email_verified = $user->hasVerifiedEmail();
@@ -1053,10 +1053,7 @@ class UserController extends CoreController
                 [
                     'email_verified_at' => now(),
                     'name' => $user->getName(),
-                    'password' => Hash::make(uniqid()),
-                    'phone_number' => $user->getRawOriginal('phone_number') ?? "not available",
-                    'type' => 'user',
-                    'is_active' => true,
+                    'password' =>Hash::make()
                 ]
             );
 
