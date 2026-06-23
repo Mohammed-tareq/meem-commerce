@@ -216,5 +216,6 @@ return [
     'MESSAGE.CUSTOMERS_LISTED_SUCCESSFULLY' => 'تم عرض قائمة العملاء بنجاح',
     'MESSAGE.USERS_LISTED_SUCCESSFULLY' => 'تم عرض قائمة المستخدمين بنجاح',
     'MESSAGE.STAFFS_LISTED_SUCCESSFULLY' => 'تم عرض قائمة الموظفين بنجاح',
-    'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'تم جلب المستخدم بنجاح'
+    'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'تم جلب المستخدم بنجاح',
+    'ERROR.CANNOT_ASSIGN_ROLE_TO_USER' => 'لا يمكن تعيين دور للمستخدم'
 ];

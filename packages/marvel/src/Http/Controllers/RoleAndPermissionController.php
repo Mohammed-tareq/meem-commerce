@@ -145,6 +145,9 @@ class RoleAndPermissionController extends CoreController
             ]);
 
             $user = User::findOrFail($userId);
+            if ($user->type === 'user') {
+                return $this->apiResponse(CANNOT_ASSIGN_ROLE_TO_USER, 400, false);
+            }
             $roles = Role::whereIn('id', $request->role_ids)->where('guard_name', 'api')->get();
             $user->syncRoles($roles)->load('roles', 'permissions');
 

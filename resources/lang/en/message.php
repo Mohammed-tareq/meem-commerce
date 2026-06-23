@@ -216,5 +216,6 @@ return [
     'MESSAGE.CUSTOMERS_LISTED_SUCCESSFULLY' => 'Customers listed successfully',
     'MESSAGE.USERS_LISTED_SUCCESSFULLY' => 'Users listed successfully',
     'MESSAGE.STAFFS_LISTED_SUCCESSFULLY' => 'Staffs listed successfully',
-    'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'User fetched successfully'
+    'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'User fetched successfully',
+    'MESSAGE.CANNOT_ASSIGN_ROLE_TO_USER'=> 'Cannot assign role to user',
 ];
