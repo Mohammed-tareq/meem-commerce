@@ -199,6 +199,104 @@
 }
 ```
 
+---
+
+### POST /sections/reorder — Reorder Sections
+
+**Purpose:** Set a custom display order for sections by providing an ordered array of IDs.
+
+**Method:** `POST`
+
+**URL:** `/sections/reorder`
+
+**Authentication:** Required
+
+**Permissions:** N/A
+
+**Request Body:**
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| `sections` | array | **Yes** | `required`, `array` |
+| `sections.*` | int | **Yes** | `required`, `integer`, `distinct`, `exists:sections,id` |
+
+**Business Logic:**
+1. Uses `spatie/eloquent-sortable` `setNewOrder()` method
+2. Sections will be returned in the provided order on subsequent `GET /sections` calls
+
+**Success Response (200):**
+```json
+{
+    "status": 200,
+    "message": "Sections reordered successfully",
+    "success": true
+}
+```
+
+---
+
+### PATCH /sections/{section}/toggle-active — Toggle Section Active Status
+
+**Purpose:** Toggle the `is_active` boolean on a section.
+
+**Method:** `PATCH`
+
+**URL:** `/sections/{section}/toggle-active`
+
+**Authentication:** Required
+
+**Permissions:** N/A
+
+**Business Logic:**
+1. Flips `is_active` from `true` to `false` or `false` to `true`
+2. Saves and returns the updated section
+
+**Success Response (200):**
+```json
+{
+    "status": 200,
+    "message": "Data updated successfully",
+    "success": true,
+    "data": {
+        "id": 1,
+        "type": "hero",
+        "title": "Hero Banner",
+        "endpoint": "general/hero?slug=summer-sale",
+        "order": 1,
+        "setting": {
+            "front": { "autoplay": true, "slider_speed": 5000 },
+            "back": { "slug": "summer-sale" }
+        }
+    }
+}
+```
+
+---
+
+### GET /sections/types — Get Section Types
+
+**Purpose:** Get a unique list of all section `type` values currently used in the database.
+
+**Method:** `GET`
+
+**URL:** `/sections/types`
+
+**Authentication:** Required
+
+**Permissions:** N/A
+
+**Business Logic:**
+1. Plucks unique `type` values from all sections
+
+**Success Response (200):**
+```json
+{
+    "status": 200,
+    "message": "Data fetched successfully",
+    "success": true,
+    "data": ["hero", "featured-products", "categories-grid", "testimonials"]
+}
+```
+
 **Error Responses:**
 | Status | Condition |
 |--------|-----------|
