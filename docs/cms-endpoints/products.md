@@ -336,13 +336,11 @@ All endpoints return:
 | `end_date` | date | No | `sometimes`, `after_or_equal:start_date` |
 | `pieces` | int | No | `sometimes`, `min:1` |
 | `status` | bool/int | No | `sometimes`, `in:1,0` |
-| `in_stock` | bool/int | **Yes** | `in:1,0` |
 | `height` | string | No | `nullable` |
 | `width` | string | No | `nullable` |
 | `length` | string | No | `nullable` |
 | `weight` | string | No | `nullable` |
 | `is_fast_shipping_available` | bool | No | `nullable`, `boolean` |
-| `banner_id` | int | No | `sometimes`, `exists:banners,id` |
 | `images` | array | No | Files (jpeg,png,jpg, max:2048) — multipart upload |
 | `variants` | array | Conditional | `sometimes` — if non-empty, forces product_type to `variable` |
 | `variants.*.price` | numeric | **If** variants set | `required_with:variants`, `min:0` |
@@ -354,7 +352,7 @@ All endpoints return:
 | `variants.*.width` | string | No | `sometimes` |
 | `variants.*.height` | string | No | `sometimes` |
 
-**Example Request:**
+**Example Request (Simple Product):**
 ```json
 {
     "name": {
@@ -368,15 +366,75 @@ All endpoints return:
     "price": 29.99,
     "product_type": "simple",
     "categories": [1, 3],
+    "brands": [1, 2],
+    "banners": [1],
+    "sliders": [2],
     "quantity": 100,
     "in_stock": true,
     "has_discount": true,
     "discount_type": "percentage",
     "discount_amount": 10,
     "discount_status": 1,
-    "has_flash_sale": false,
+    "has_flash_sale": true,
+    "flash_sale_id": 1,
     "start_date": "2025-01-01",
     "end_date": "2025-01-31"
+}
+```
+
+**Example Request (Variable Product with Variants):**
+```json
+{
+    "name": {
+        "en": "Running Shoes",
+        "ar": "حذاء جري"
+    },
+    "description": {
+        "en": "Lightweight running shoes",
+        "ar": "حذاء جري خفيف الوزن"
+    },
+    "product_type": "variable",
+    "categories": [2, 5],
+    "brands": [3],
+    "banners": [1],
+    "sliders": [],
+    "quantity": 150,
+    "in_stock": true,
+    "has_discount": false,
+    "has_flash_sale": false,
+    "status": true,
+    "variants": [
+        {
+            "price": 89.99,
+            "quantity": 50,
+            "sku": "SHOE-RED-42",
+            "height": "10",
+            "width": "8",
+            "length": "12",
+            "weight": "0.5",
+            "attribute_values": [1, 5]
+        },
+        {
+            "price": 89.99,
+            "quantity": 30,
+            "sku": "SHOE-BLU-42",
+            "height": "10",
+            "width": "8",
+            "length": "12",
+            "weight": "0.5",
+            "attribute_values": [2, 5]
+        },
+        {
+            "price": 94.99,
+            "quantity": 20,
+            "sku": "SHOE-RED-44",
+            "height": "11",
+            "width": "9",
+            "length": "13",
+            "weight": "0.6",
+            "attribute_values": [1, 6]
+        }
+    ]
 }
 ```
 
@@ -560,6 +618,64 @@ All fields are `sometimes` (optional) — only send changed fields.
 | `variants.*.width` | string | No | `sometimes` | |
 | `variants.*.height` | string | No | `sometimes` | |
 
+**Example Request (Simple Product — partial update):**
+```json
+{
+    "name": {
+        "en": "Classic T-Shirt (Updated)"
+    },
+    "price": 34.99,
+    "categories": [1, 3, 5],
+    "brands": [1, 2, 4],
+    "banners": [2],
+    "sliders": [1, 3],
+    "has_discount": true,
+    "discount_type": "fixed_rate",
+    "discount_amount": 5,
+    "discount_status": 1,
+    "in_stock": true,
+    "status": 1
+}
+```
+
+**Example Request (Variable Product — replace all variants):**
+```json
+{
+    "name": {
+        "en": "Running Shoes (2025 Edition)"
+    },
+    "product_type": "variable",
+    "categories": [2, 5],
+    "brands": [3],
+    "banners": [1],
+    "sliders": [],
+    "in_stock": true,
+    "has_discount": false,
+    "has_flash_sale": false,
+    "status": 1,
+    "variants": [
+        {
+            "price": 99.99,
+            "quantity": 40,
+            "sku": "SHOE-RED-42-2025",
+            "attribute_values": [1, 5]
+        },
+        {
+            "price": 99.99,
+            "quantity": 25,
+            "sku": "SHOE-BLU-42-2025",
+            "attribute_values": [2, 5]
+        },
+        {
+            "price": 104.99,
+            "quantity": 15,
+            "sku": "SHOE-RED-44-2025",
+            "attribute_values": [1, 6]
+        }
+    ]
+}
+```
+
 **Business Logic:**
 1. Same pricing recalculation as Create — reads existing product values for unchanged fields
 2. Generates slug from name if name changed (appends suffix if slug collision)
@@ -586,7 +702,21 @@ All fields are `sometimes` (optional) — only send changed fields.
         "price": 34.99,
         "price_after_discount": 29.99,
         "product_type": "simple",
-        "in_stock": 1
+        "in_stock": 1,
+        "status": true,
+        "categories": [
+            { "id": 1, "name": "Clothing", "slug": "clothing" }
+        ],
+        "brands": [
+            { "id": 1, "name": "Nike", "slug": "nike" }
+        ],
+        "banners": [
+            { "id": 1, "title": "Summer Sale", "slug": "summer-sale" }
+        ],
+        "sliders": [
+            { "id": 1, "title": "Hero Banner", "slug": "hero-banner" }
+        ],
+        "variants": []
     }
 }
 ```
