@@ -88,6 +88,7 @@ class DatabaseSeeder extends Seeder
             PromotionSeeder::class,
             // ShopRelationsSeeder::class,
             WishlistSeeder::class,
+            SectionTypeSettingSeeder::class,
             ContentPageSeeder::class,
             SectionSeeder::class,
         ]);

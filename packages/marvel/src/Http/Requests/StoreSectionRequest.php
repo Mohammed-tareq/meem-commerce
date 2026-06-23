@@ -21,7 +21,6 @@ class StoreSectionRequest extends FormRequest
             'is_active' => 'nullable|in:0,1',
             'title_visible' => 'nullable|in:0,1',
             'order' => 'nullable|integer',
-            'with_product' => 'required|in:0,1',
             'setting' => 'nullable|array',
             'setting.front' => 'nullable|array',
             'setting.back' => 'nullable|array',

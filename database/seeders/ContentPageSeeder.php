@@ -57,11 +57,11 @@ class ContentPageSeeder extends Seeder
                 'setting' => [
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
                     'back' => [
-                        'start_date' => '2026-06-01',
-                        'end_date' => '2026-06-20',
-                        'limit' => 10,
-                        'slidersId' => $activeSliders,
-                        'order' => 'desc',
+                        "start_date" => "2026-06-01",
+                        "end_date" => "2026-06-20",
+                        "limit" => 10,
+                        "slidersId" => [],
+                        "order" => "desc",
                     ],
                 ]
             ],
@@ -73,9 +73,11 @@ class ContentPageSeeder extends Seeder
                 'setting' => [
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
                     'back' => [
-                        'slug' => $firstPromotionSlug,
-                        'with_product' => true,
-                        'order' => 'desc',
+                        "start_date" => "2026-06-01",
+                        "end_date" => "2026-06-20",
+                        "limit" => 10,
+                        "promotionsId" => [],
+                        "order" => "desc",
                     ],
                 ]
             ],
@@ -87,10 +89,11 @@ class ContentPageSeeder extends Seeder
                 'setting' => [
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
                     'back' => [
-                        'parent' => true,
-                        'limit' => 10,
-                        'categoriesId' => $activeCategories,
-                        'order' => 'desc',
+                        "pest_category" => true,
+                        "parent" => true,
+                        "limit" => 10,
+                        "categoriesId" => $activeCategories,
+                        "order" => "desc",
                     ],
                 ]
             ],
@@ -261,7 +264,6 @@ class ContentPageSeeder extends Seeder
         $createdTypes = [];
         foreach ($items as $item) {
             $settingData = $item['setting'] ?? [];
-            unset($item['setting']);
 
             $page->sections()->create($item);
 
