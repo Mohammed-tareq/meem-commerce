@@ -95,8 +95,8 @@ class ContentPageSeeder extends Seeder
                 'setting' => [
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
                     'back' => [
-                        "pest_category" => true,
-                        "parent" => true,
+                        "pest_category" => false,
+                        "parent" => false,
                         "limit" => 10,
                         "categoriesId" => $activeCategories,
                         "order" => "desc",
