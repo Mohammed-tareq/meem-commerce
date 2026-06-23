@@ -450,7 +450,7 @@ All endpoints return:
 1. Finds product by ID via `repository->where('id', $id)->firstOrFail()`
 2. Fetches related products (same categories, excluding current product, limited to `limit` param, default 10)
 3. Sets `related_products` relation on the product
-4. Eager loads `variations`, `categories`, `shops`, `flash_sales`, `banners`, `sliders`, `brands`
+4. Eager loads `variations`, `categories`, `shops`, `flash_sales`, `banners`, `sliders`, `brands`, `reviews`
 
 **Success Response (200):**
 ```json
@@ -475,6 +475,9 @@ All endpoints return:
         ],
         "sliders": [
             { "id": 1, "title": "Hero Banner", "slug": "hero-banner" }
+        ],
+        "reviews": [
+            { "id": 1, "rating": 5, "comment": "Great product!", "user": { "id": 1, "name": "John Doe" } }
         ],
         "variants": [],
         "related_products": [

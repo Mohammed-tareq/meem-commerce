@@ -42,6 +42,7 @@ class ProductResource extends Resource
             'created_at'             => $this->created_at ? $this->created_at->toIso8601String() : null,
             'categories'            => $this->whenLoaded('categories', fn() => $this->getCategories($this->categories)),
             'flash_sales'          => $this->whenLoaded('flash_sales', fn() => FlashSaleResource::collection($this->flash_sales)),
+            'reviews'              => $this->whenLoaded('reviews', fn() => ReviewResource::collection($this->reviews)),
             "images"                 => $this->getmedia('products') ? $this->getmediaImages('products') : [],
             "variants"                => $this->whenLoaded('variations', fn() => $this->getVariants()),
             $this->mergeWhen($this->relationLoaded('related_products'), fn() => ['related_products' => ProductResource::collection($this->related_products)]),
