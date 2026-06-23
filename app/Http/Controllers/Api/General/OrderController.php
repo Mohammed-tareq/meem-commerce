@@ -10,6 +10,7 @@ use App\Services\General\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\User;
+use Marvel\Enums\ShippingMethod;
 use Marvel\Http\Requests\OrderCreateRequest;
 use Marvel\Traits\ApiResponse;
 
@@ -163,13 +164,15 @@ class OrderController extends Controller
             if ($user = User::find($order->user_id)) {
                 $cart = $this->cartInventoryService->getActiveCartForUser($user);
                 if ($cart) {
-                    $this->cartInventoryService->finalizeCart($cart);
+                    $shippingMethod = $order->shipping_method ?? ShippingMethod::SCHEDULED;
+                    $this->cartInventoryService->finalizeItemsByShippingMethod($cart, $shippingMethod);
+
+                    if ($order->coupon && $cart->fresh()->coupon === $order->coupon) {
+                        $cart->fresh()->update(['coupon' => null]);
+                    }
                 }
             }
         }
-        // if ($order = $this->orderService->getOrder($invoice['Data']["InvoiceId"])) {
-        //     $this->orderService->sendAdminNotification($order);
-        // }
         return $this->apiResponse(PAYMENT_SUCCESSFUL, 200, true);
     }
 

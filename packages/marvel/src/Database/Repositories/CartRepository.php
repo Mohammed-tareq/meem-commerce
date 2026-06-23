@@ -96,12 +96,17 @@ class CartRepository extends BaseRepository
         $quantity = (int) ($item['quantity'] ?? 0);
         $variantId = $item['product_variant_id'] ?? null;
         $attributes = $item['attributes'] ?? [];
+        $shippingMethod = $item['shipping_method'] ?? 'SCHEDULED';
 
         if (!$productId || $quantity < 1) {
             return false;
         }
 
         $product = Product::findOrFail($productId);
+
+        if ($shippingMethod === 'FAST' && !$product->is_fast_shipping_available) {
+            throw new Exception(FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE);
+        }
 
         $inventoryService = app(CartInventoryService::class);
 
@@ -115,7 +120,7 @@ class CartRepository extends BaseRepository
                 throw new Exception('Quantity exceeds available stock.');
             }
 
-            $inventoryService->reserveItem($cart, $product, $variant, $quantity, $mode, $attributes);
+            $inventoryService->reserveItem($cart, $product, $variant, $quantity, $mode, $attributes, $shippingMethod);
             return true;
         }
 
@@ -127,7 +132,7 @@ class CartRepository extends BaseRepository
             throw new Exception('Product exceeds available stock.');
         }
 
-        $inventoryService->reserveItem($cart, $product, null, $quantity, $mode, $attributes);
+        $inventoryService->reserveItem($cart, $product, null, $quantity, $mode, $attributes, $shippingMethod);
         return true;
     }
 }

@@ -65,7 +65,12 @@ class FastShippingService
             throw new \InvalidArgumentException('Governorate not found.');
         }
 
-        $cart->load(['items.product', 'items.productVariant']);
+        $cart->load(['items' => fn($q) => $q->where('shipping_method', ShippingMethod::FAST), 'items.product', 'items.productVariant']);
+
+        if ($cart->items->isEmpty()) {
+            throw new \InvalidArgumentException('No fast shipping items in cart.');
+        }
+
         $errors = $this->fastShippingRepo->validateCheckout($governorate, $cart->items);
 
         if (!empty($errors)) {
