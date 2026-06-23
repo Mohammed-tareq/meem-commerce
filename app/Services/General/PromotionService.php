@@ -8,6 +8,7 @@ use App\Services\General\PromotionEngine\PromotionEligibilityResolver;
 use App\Services\General\PromotionEngine\PromotionApplicator;
 use App\Services\General\PromotionEngine\Outcome\DiscountOutcome;
 use App\Services\General\PromotionEngine\Outcome\GiftOutcome;
+use App\Services\General\PromotionEngine\DTOs\GiftItem;
 use App\Services\General\PromotionEngine\PromotionResult;
 use Illuminate\Support\Collection;
 use Marvel\Database\Models\Cart;
@@ -182,7 +183,7 @@ class PromotionService
             }), 2);
     }
 
-    private function resolveSelectedGiftItem(array $giftItems, ?int $selectedGiftProductId): array
+    private function resolveSelectedGiftItem(array $giftItems, ?int $selectedGiftProductId): GiftItem
     {
         $availableGiftItems = collect($giftItems)
             ->filter(fn($giftItem) => (int) ($giftItem['price_cents'] ?? 0) === 0)

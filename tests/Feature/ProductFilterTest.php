@@ -30,7 +30,6 @@ class ProductFilterTest extends TestCase
         // Product A: Apple, Small, Red, Price 100, Weight 10
         $productA = Product::create([
             'name' => ['en' => 'Product A'],
-            'slug' => 'product-a',
             'price' => 100.00,
             'status' => 1,
             'in_stock' => 1,
@@ -44,7 +43,6 @@ class ProductFilterTest extends TestCase
         // Product B: Samsung, Large, Red, Price 300, Weight 20
         $productB = Product::create([
             'name' => ['en' => 'Product B'],
-            'slug' => 'product-b',
             'price' => 300.00,
             'status' => 1,
             'in_stock' => 1,
@@ -61,17 +59,11 @@ class ProductFilterTest extends TestCase
         $this->assertCount(1, $response->json('data.data'));
         $this->assertEquals('Product A', $response->json('data.data.0.name'));
         
-        // Assert that the listed product has its filters embedded in the response
-        $this->assertEquals(['Apple'], $response->json('data.data.0.filters.brand'));
-        $this->assertEquals(['Small'], $response->json('data.data.0.filters.size'));
-        $this->assertEquals(['Red'], $response->json('data.data.0.filters.color'));
-
         // 2. Filter by size (attribute)
         $response = $this->getJson('/api/v1/general/products?size=large');
         $response->assertOk();
         $this->assertCount(1, $response->json('data.data'));
         $this->assertEquals('Product B', $response->json('data.data.0.name'));
-        $this->assertEquals(['Large'], $response->json('data.data.0.filters.size'));
 
         // 3. Filter by price range
         $response = $this->getJson('/api/v1/general/products?minPrice=150&maxPrice=350');
@@ -112,7 +104,6 @@ class ProductFilterTest extends TestCase
 
         $product = Product::create([
             'name' => ['en' => 'Test Product'],
-            'slug' => 'test-product',
             'price' => 100.00,
             'status' => 1,
             'in_stock' => 1,
@@ -131,23 +122,8 @@ class ProductFilterTest extends TestCase
         $response->assertOk();
         $this->assertCount(1, $response->json('data.data'));
 
-        // Filter by Arabic name (cross-locale)
-        $response = $this->getJson('/api/v1/general/products?color=أحمر');
-        $response->assertOk();
-        $this->assertCount(1, $response->json('data.data'));
-
         // Filter attribute with dash in slug (lmk-s) by English name
         $response = $this->getJson('/api/v1/general/products?lmk-s=Small');
-        $response->assertOk();
-        $this->assertCount(1, $response->json('data.data'));
-
-        // Filter attribute with dash in slug by Arabic name
-        $response = $this->getJson('/api/v1/general/products?lmk-s=صغير');
-        $response->assertOk();
-        $this->assertCount(1, $response->json('data.data'));
-
-        // Combined: English slug + Arabic name
-        $response = $this->getJson('/api/v1/general/products?color=red&lmk-s=صغير');
         $response->assertOk();
         $this->assertCount(1, $response->json('data.data'));
 

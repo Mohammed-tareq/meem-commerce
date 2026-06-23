@@ -122,10 +122,10 @@ class CreateMarvelTables extends Migration
             $table->boolean('in_stock')->default(true);
             $table->boolean('status')->default(false);
             $table->enum('product_type', ProductType::getValues())->default(ProductType::SIMPLE);
-            $table->float('height', 10, 2)->nullable();
-            $table->float('width', 10, 2)->nullable();
-            $table->float('length', 10, 2)->nullable();
-            $table->float('weight', 10, 2)->nullable();
+            $table->string('height')->nullable();
+            $table->string('width')->nullable();
+            $table->string('length')->nullable();
+            $table->string('weight')->nullable();
             $table->integer('pieces')->default(1);
             $table->boolean('has_flash_sale')->default(false);
             $table->boolean('has_discount')->default(false);
