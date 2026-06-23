@@ -87,7 +87,7 @@ class AttributeController extends CoreController
             $attributes = $attributes->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
         }
 
-        $attributes = $attributes->paginate($limit)->withQueryString();
+        $attributes = $attributes->with('values')->paginate($limit)->withQueryString();
         $attributeData = AttributeResource::collection($attributes)->response()->getData(true);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
             "data" => $attributeData['data'] ?? [],
