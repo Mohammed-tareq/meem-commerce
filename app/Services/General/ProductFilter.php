@@ -137,7 +137,10 @@ class ProductFilter
         $dimensions = ['height', 'width', 'length', 'weight'];
         foreach ($dimensions as $dimension) {
             if (!empty($filters[$dimension])) {
-                $values = is_array($filters[$dimension]) ? $filters[$dimension] : explode(',', $filters[$dimension]);
+                $rawValues = is_array($filters[$dimension]) ? $filters[$dimension] : explode(',', $filters[$dimension]);
+                $values = array_map(function ($v) {
+                    return (string) (float) $v;
+                }, $rawValues);
                 $query->where(function ($q) use ($dimension, $values) {
                     $q->whereIn("products.{$dimension}", $values)
                       ->orWhereHas('variations', function ($varQ) use ($dimension, $values) {
@@ -164,7 +167,7 @@ class ProductFilter
                     ->where(function ($q) use ($attrValues, $locale) {
                         foreach ($attrValues as $val) {
                             $q->orWhere("value->{$locale}", $val)
-                              ->orWhere("slug->{$locale}", $val);
+                              ->orWhere("slug", $val);
                         }
                     })
                     ->pluck('id')
@@ -172,6 +175,8 @@ class ProductFilter
 
                 if (!empty($attrValueIds)) {
                     $query->whereHas('variations.attributeProducts', fn($q) => $q->whereIn('attribute_value_id', $attrValueIds));
+                } elseif ($value !== '' && $value !== null) {
+                    $query->whereRaw('1 = 0');
                 }
             }
         }

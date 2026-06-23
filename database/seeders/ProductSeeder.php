@@ -156,6 +156,58 @@ class ProductSeeder extends Seeder
 
             $variablePrefixes = ['ELC', 'BEA', 'CLO', 'SPT'];
 
+            $productDimensions = [
+                // Electronics & Accessories
+                'Wireless Mouse'              => ['h' => 12, 'w' => 7,  'l' => 3,  'wt' => 100],
+                'USB-C Cable 2m'              => ['h' => 10, 'w' => 5,  'l' => 5,  'wt' => 50],
+                'Silicone Phone Case'         => ['h' => 16, 'w' => 8,  'l' => 1,  'wt' => 30],
+                'Bluetooth Speaker'           => ['h' => 10, 'w' => 10, 'l' => 18, 'wt' => 500],
+                'HDMI Cable 3m'               => ['h' => 12, 'w' => 8,  'l' => 4,  'wt' => 150],
+                'Tempered Glass Screen Protector' => ['h' => 18, 'w' => 9,  'l' => 0.1, 'wt' => 20],
+                'Power Bank 10000mAh'         => ['h' => 15, 'w' => 8,  'l' => 2,  'wt' => 250],
+                'Wireless Earbuds'            => ['h' => 6,  'w' => 5,  'l' => 3,  'wt' => 50],
+                'LED Desk Lamp'               => ['h' => 40, 'w' => 20, 'l' => 20, 'wt' => 800],
+                'Extension Cord 5m'           => ['h' => 15, 'w' => 10, 'l' => 10, 'wt' => 400],
+                // Beauty & Personal Care
+                'Shampoo 400ml'               => ['h' => 20, 'w' => 7,  'l' => 7,  'wt' => 450],
+                'Conditioner 400ml'           => ['h' => 20, 'w' => 7,  'l' => 7,  'wt' => 450],
+                'Body Lotion 200ml'           => ['h' => 16, 'w' => 6,  'l' => 6,  'wt' => 250],
+                'Face Moisturizer 50ml'       => ['h' => 12, 'w' => 4,  'l' => 4,  'wt' => 80],
+                'Toothpaste 100g'             => ['h' => 16, 'w' => 4,  'l' => 3,  'wt' => 120],
+                'Deodorant Spray 150ml'       => ['h' => 15, 'w' => 5,  'l' => 5,  'wt' => 180],
+                'Hand Cream 75ml'             => ['h' => 12, 'w' => 4,  'l' => 3,  'wt' => 100],
+                'Lip Balm 5g'                => ['h' => 7,  'w' => 2,  'l' => 2,  'wt' => 10],
+                'Sunscreen SPF50 100ml'       => ['h' => 14, 'w' => 5,  'l' => 5,  'wt' => 120],
+                // Clothing
+                'Cotton T-Shirt'              => ['h' => 30, 'w' => 20, 'l' => 2,  'wt' => 200],
+                'Denim Jeans'                 => ['h' => 35, 'w' => 25, 'l' => 3,  'wt' => 600],
+                'Wool Scarf'                  => ['h' => 25, 'w' => 15, 'l' => 3,  'wt' => 150],
+                'Leather Belt'                => ['h' => 10, 'w' => 10, 'l' => 3,  'wt' => 200],
+                'Running Shoes'               => ['h' => 30, 'w' => 20, 'l' => 12, 'wt' => 800],
+                'Summer Dress'                => ['h' => 30, 'w' => 20, 'l' => 2,  'wt' => 250],
+                // Fitness & Sports
+                'Yoga Mat'                    => ['h' => 60, 'w' => 15, 'l' => 15, 'wt' => 1000],
+                'Stainless Water Bottle 1L'   => ['h' => 25, 'w' => 8,  'l' => 8,  'wt' => 350],
+                'Jump Rope'                   => ['h' => 20, 'w' => 10, 'l' => 5,  'wt' => 150],
+                'Resistance Bands Set'        => ['h' => 15, 'w' => 10, 'l' => 5,  'wt' => 200],
+                'Dumbbell Set 5kg'            => ['h' => 30, 'w' => 15, 'l' => 15, 'wt' => 5000],
+            ];
+
+            $categoryDimensionDefaults = [
+                'VEG' => ['h' => 15, 'w' => 10, 'l' => 5,  'wt' => 250],
+                'FRT' => ['h' => 12, 'w' => 10, 'l' => 8,  'wt' => 300],
+                'DRY' => ['h' => 10, 'w' => 7,  'l' => 7,  'wt' => 400],
+                'MET' => ['h' => 8,  'w' => 6,  'l' => 4,  'wt' => 600],
+                'FRZ' => ['h' => 20, 'w' => 15, 'l' => 10, 'wt' => 800],
+                'BAK' => ['h' => 18, 'w' => 12, 'l' => 8,  'wt' => 350],
+                'SNK' => ['h' => 12, 'w' => 8,  'l' => 4,  'wt' => 200],
+                'DRK' => ['h' => 22, 'w' => 7,  'l' => 7,  'wt' => 1000],
+                'PNT' => ['h' => 18, 'w' => 12, 'l' => 6,  'wt' => 500],
+                'BRK' => ['h' => 20, 'w' => 14, 'l' => 6,  'wt' => 450],
+                'HOM' => ['h' => 22, 'w' => 10, 'l' => 8,  'wt' => 600],
+                'BBY' => ['h' => 14, 'w' => 8,  'l' => 6,  'wt' => 250],
+            ];
+
             $products = [
                 ['name' => ['en' => 'Fresh Spinach Bunch', 'ar' => 'حزمة سبانخ طازجة'], 'price' => 15.00, 'sku_prefix' => 'VEG'],
                 ['name' => ['en' => 'Romaine Lettuce', 'ar' => 'خس روماني'], 'price' => 12.00, 'sku_prefix' => 'VEG'],
@@ -274,6 +326,7 @@ class ProductSeeder extends Seeder
 
                 $hasFlashSale = $this->randomBool(30);
 
+                $dims = $productDimensions[$productNameEn] ?? $categoryDimensionDefaults[$skuPrefix] ?? [];
                 $product = Product::create([
                     'name' => [
                         'en' => $productNameEn,
@@ -293,10 +346,10 @@ class ProductSeeder extends Seeder
                     'sold_quantity' => random_int(0, 100),
                     'in_stock' => true,
                     'status' => 1,
-                    'height' => random_int(5, 30),
-                    'width' => random_int(5, 30),
-                    'length' => random_int(5, 30),
-                    'weight' => random_int(100, 3000),
+                    'height' => (string) $dims['h'],
+                    'width' => (string) $dims['w'],
+                    'length' => (string) $dims['l'],
+                    'weight' => (string) $dims['wt'],
                     'has_flash_sale' => $hasFlashSale,
                     'has_discount' => $this->randomBool(30),
                     'banner_id' => $this->randomElement($banners),
