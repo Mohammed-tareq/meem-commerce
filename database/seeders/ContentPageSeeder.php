@@ -29,7 +29,7 @@ class ContentPageSeeder extends Seeder
         $firstBannerSlug = Banner::active()->value('slug');
         $activePromotions = Promotion::active()->valid()->get();
         $firstPromotionSlug = $activePromotions->first()?->slug ?? 'summer-special-20-off';
-        $activeCategories = Category::active()->limit(8)->pluck('id')->toArray();
+        $activeCategories = Category::active()->limit(20)->pluck('id')->toArray();
         $activeBrands = Brand::active()->limit(6)->pluck('id')->toArray();
         $validFlashSales = FlashSale::valid()->limit(5)->pluck('id')->toArray();
         $activeCoupons = Coupon::valid()->limit(5)->pluck('id')->toArray();
