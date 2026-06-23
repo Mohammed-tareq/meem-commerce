@@ -37,6 +37,7 @@ class SectionResource extends JsonResource
             'id' => $this->id,
             'type' => $this->type,
             'title' => $this->title_visible ? $this->title : null,
+            'is_active' => (bool) $this->is_active,
             'endpoint' => $this->buildEndpoint($settings),
             'order' => $this->order,
             'setting' => $settings,
