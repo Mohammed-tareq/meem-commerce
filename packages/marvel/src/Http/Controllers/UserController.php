@@ -1053,7 +1053,7 @@ class UserController extends CoreController
                 [
                     'email_verified_at' => now(),
                     'name' => $user->getName(),
-                    'password' =>Hash::make()
+                    'password' =>Hash::make('password')
                 ]
             );
 

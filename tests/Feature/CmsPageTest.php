@@ -39,6 +39,8 @@ class CmsPageTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
+            'type' => 'user',
+            'phone_number' => '01000000001',
         ]);
 
         $user->givePermissionTo(PermissionEnum::EDITOR);
@@ -120,11 +122,13 @@ class CmsPageTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
+            'type' => 'user',
+            'phone_number' => '01000000002',
         ]);
 
         Sanctum::actingAs($user);
 
-        $response = $this->postJson('/api/cms-pages', [
+        $response = $this->postJson('/api/v1/cms-pages', [
             'slug' => 'blocked',
             'path' => 'blocked',
             'title' => 'Blocked',
