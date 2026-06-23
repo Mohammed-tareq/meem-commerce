@@ -90,6 +90,8 @@ class ProductResource extends Resource
                 'reserved_quantity' => $variant->reserved_quantity ?? 0,
                 'available_stock' => $variant->available_stock,
                 'quantity' => $variant->quantity,
+                                // 'sold_quantity' => $variant->sold_quantity,
+
                 'height' => $variant->height,
                 'width' => $variant->width,
                 'length' => $variant->length,
