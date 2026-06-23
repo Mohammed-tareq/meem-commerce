@@ -8,12 +8,17 @@ use Marvel\Database\Models\AttributeValue;
 use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
-use Marvel\Database\Models\FlashSale;
-use Marvel\Database\Models\Promotion;
 use Marvel\Database\Models\Slider;
 
 class ProductFilter
 {
+    /**
+     * Resolve model IDs by matching name (translated) or slug against given values.
+     *
+     * @param class-string $modelClass
+     * @param array<int, string> $values
+     * @return array<int, int>
+     */
     private function resolveIds(string $modelClass, array $values): array
     {
         $locale = app()->getLocale();
@@ -25,6 +30,12 @@ class ProductFilter
         })->pluck('id')->toArray();
     }
 
+    /**
+     * Recursively expand a list of category IDs to include all descendant IDs.
+     *
+     * @param array<int, int> $ids
+     * @return array<int, int>
+     */
     public function expandWithDescendants(array $ids): array
     {
         $allIds = $ids;
@@ -35,6 +46,17 @@ class ProductFilter
         return array_unique($allIds);
     }
 
+    /**
+     * Apply all product filters to the given query.
+     *
+     * Supported filter keys:
+     * - brand, category: Resolved by name or slug.
+     * - promotion, flash_sale: Filtered by slug.
+     * - banner, slider: Filtered by slug or translated title.
+     * - minPrice, maxPrice, price_min, price_max: Price range including variants.
+     * - height, width, length, weight: Exact match dimension values.
+     * - Dynamic attribute slugs: Filtered by attribute value.
+     */
     public function apply(Builder $query, array $filters): Builder
     {
         // 1. Filter by Brand
@@ -110,7 +132,7 @@ class ProductFilter
             }
         }
 
-        // 6. Filter by Price
+        // 6. Filter by Price (product price + variant prices)
         $minPrice = $filters['minPrice'] ?? $filters['price_min'] ?? null;
         $maxPrice = $filters['maxPrice'] ?? $filters['price_max'] ?? null;
         if ($minPrice !== null || $maxPrice !== null) {
@@ -133,7 +155,7 @@ class ProductFilter
             });
         }
 
-        // 7. Filter by Dimensions
+        // 7. Filter by Dimensions (exact match on products and their variants)
         $dimensions = ['height', 'width', 'length', 'weight'];
         foreach ($dimensions as $dimension) {
             if (!empty($filters[$dimension])) {
@@ -164,7 +186,7 @@ class ProductFilter
                     ->where(function ($q) use ($attrValues, $locale) {
                         foreach ($attrValues as $val) {
                             $q->orWhere("value->{$locale}", $val)
-                              ->orWhere("slug->{$locale}", $val);
+                              ->orWhere("slug", $val);
                         }
                     })
                     ->pluck('id')

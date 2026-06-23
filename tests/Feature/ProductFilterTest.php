@@ -30,6 +30,7 @@ class ProductFilterTest extends TestCase
         // Product A: Apple, Small, Red, Price 100, Weight 10
         $productA = Product::create([
             'name' => ['en' => 'Product A'],
+            'slug' => 'product-a',
             'price' => 100.00,
             'status' => 1,
             'in_stock' => 1,
@@ -43,6 +44,7 @@ class ProductFilterTest extends TestCase
         // Product B: Samsung, Large, Red, Price 300, Weight 20
         $productB = Product::create([
             'name' => ['en' => 'Product B'],
+            'slug' => 'product-b',
             'price' => 300.00,
             'status' => 1,
             'in_stock' => 1,
@@ -110,6 +112,7 @@ class ProductFilterTest extends TestCase
 
         $product = Product::create([
             'name' => ['en' => 'Test Product'],
+            'slug' => 'test-product',
             'price' => 100.00,
             'status' => 1,
             'in_stock' => 1,

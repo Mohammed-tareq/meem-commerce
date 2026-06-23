@@ -53,7 +53,7 @@ class ProductCreateRequest extends FormRequest
             'product_type'                 => ['required', Rule::in($productType)],
             'categories'                   => ['required', 'array'],
             'categories.*'                 => ['integer', 'exists:categories,id'],
-            'quantity'                     => ['sometimes   ', 'integer', 'min:1'],
+            'quantity'                     => ['sometimes', 'integer', 'min:1'],
             // 'images'                        => ['required', 'array'],
             // 'images.*'                      => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'pieces'                       => ['sometimes', 'integer', 'min:1'],

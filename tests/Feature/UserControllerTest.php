@@ -65,9 +65,28 @@ class UserControllerTest extends TestCase
         Schema::create('roles', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->string('name');
-            $table->string('display_name');
+            $table->string('display_name')->default('');
             $table->string('guard_name');
             $table->timestamps();
+        });
+
+        Schema::create('media', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->morphs('model');
+            $table->uuid('uuid')->nullable();
+            $table->string('collection_name');
+            $table->string('name');
+            $table->string('file_name');
+            $table->string('mime_type')->nullable();
+            $table->string('disk');
+            $table->string('conversions_disk')->nullable();
+            $table->unsignedBigInteger('size');
+            $table->json('manipulations');
+            $table->json('generated_conversions');
+            $table->json('custom_properties');
+            $table->json('responsive_images');
+            $table->unsignedInteger('order_column')->nullable();
+            $table->nullableTimestamps();
         });
 
         Schema::create('model_has_permissions', function (Blueprint $table) {

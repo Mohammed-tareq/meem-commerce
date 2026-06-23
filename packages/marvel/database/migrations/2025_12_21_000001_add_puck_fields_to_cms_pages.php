@@ -23,9 +23,10 @@ return new class extends Migration {
         });
 
         // Copy existing slugs to paths with "/" prefix if not already present
-        DB::table('cms_pages')->whereNull('path')->update([
-            'path' => DB::raw("CASE WHEN slug LIKE '/%' THEN slug ELSE CONCAT('/', slug) END")
-        ]);
+        DB::table('cms_pages')->whereNull('path')->orderBy('id')->each(function ($page) {
+            $path = str_starts_with($page->slug, '/') ? $page->slug : '/' . $page->slug;
+            DB::table('cms_pages')->where('id', $page->id)->update(['path' => $path]);
+        });
 
         // Make path required after migration
         Schema::table('cms_pages', function (Blueprint $table): void {

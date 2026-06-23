@@ -246,7 +246,7 @@ class UserController extends CoreController
             if ($search = $request->query('search')) {
                 $query = $query->where(function ($q) use ($search) {
                     $q->where('name', 'LIKE', "%{$search}%")
-                      ->orWhere('email', 'LIKE', "%{$search}%");
+                        ->orWhere('email', 'LIKE', "%{$search}%");
                 });
             }
 
@@ -572,10 +572,28 @@ class UserController extends CoreController
             return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
         }
         $email_verified = $user->hasVerifiedEmail();
-        // if (!$email_verified) {
-        //     return $this->apiResponse(USER_NOT_VERIFIED, 404, false);
-        // }
-        // event(new ProcessUserData());
+        $data = [
+            "token" => $user->createToken('auth_token')->plainTextToken,
+            "email_verified" => $email_verified
+        ];
+        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
+    }
+    public function adminToken(UserAuthEmailAndPasswordRequest $request)
+    {
+        $request->validated();
+
+        $user = User::where('email', $request->email)->where('is_active', true)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
+        }
+        if ($user->type !== 'admin') {
+            return $this->apiResponse(USER_NOT_FOUND, 404, false);
+        }
+        $email_verified = $user->hasVerifiedEmail();
+        if (!$email_verified) {
+            return $this->apiResponse(USER_NOT_VERIFIED, 404, false);
+        }
         $data = [
             "token" => $user->createToken('auth_token')->plainTextToken,
             "permissions" => $user->getAllPermissions()->pluck('name'),
@@ -1035,6 +1053,10 @@ class UserController extends CoreController
                 [
                     'email_verified_at' => now(),
                     'name' => $user->getName(),
+                    'password' => Hash::make(uniqid()),
+                    'phone_number' => $user->getRawOriginal('phone_number') ?? "not available",
+                    'type' => 'user',
+                    'is_active' => true,
                 ]
             );
 

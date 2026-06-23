@@ -27,6 +27,9 @@ use Marvel\Services\Pricing\ProductPricingService;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Marvel\Exceptions\MarvelException;
 
+/**
+ * Repository for Product model operations including CRUD, pricing, availability, and CSV import/export.
+ */
 class ProductRepository extends BaseRepository
 {
 
@@ -171,6 +174,14 @@ class ProductRepository extends BaseRepository
         }
     }
 
+    /**
+     * Sync product relations such as categories and flash sales.
+     *
+     * @param  Product $product
+     * @param  Request $request
+     * @param  array   $data
+     * @return void
+     */
     private function syncRelation($product, $request, $data)
     {
         if (isset($request['categories'])) {
@@ -187,6 +198,15 @@ class ProductRepository extends BaseRepository
             }
         }
     }
+
+    /**
+     * Create product variants and their attribute value associations.
+     *
+     * @param  Product      $product
+     * @param  array        $variants
+     * @param  FlashSale|null $flashSale
+     * @return bool|void
+     */
     private function addVariants(
         $product,
         $variants,
@@ -439,11 +459,27 @@ class ProductRepository extends BaseRepository
         return $slug . $divider . $slugCount;
     }
 
+    /**
+     * Calculate the discounted price using the ProductPricingService.
+     *
+     * @param  mixed  $price
+     * @param  string $discountType
+     * @param  float  $amount
+     * @return float|null
+     */
     private function calculateDiscountedPrice($price, $discountType, $amount)
     {
         return app(ProductPricingService::class)->calculateDiscountedPrice($price, $discountType, $amount);
     }
 
+    /**
+     * Resolve the active flash sale for a product by ID or from its relations.
+     *
+     * @param  mixed       $flashSaleId
+     * @param  Product|null $product
+     * @param  bool        $hasFlashSale
+     * @return FlashSale|null
+     */
     private function resolveFlashSale($flashSaleId, $product, $hasFlashSale)
     {
         if (!$hasFlashSale) {
@@ -461,6 +497,13 @@ class ProductRepository extends BaseRepository
         return null;
     }
 
+    /**
+     * Calculate the flash sale price using the ProductPricingService.
+     *
+     * @param  FlashSale $flashSale
+     * @param  mixed     $basePrice
+     * @return float|null
+     */
     private function calculateFlashSalePrice($flashSale, $basePrice)
     {
         return app(ProductPricingService::class)->calculateFlashSalePrice($flashSale, $basePrice);

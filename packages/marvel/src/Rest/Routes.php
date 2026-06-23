@@ -86,6 +86,7 @@ Route::get('/email/verify/{id}/{hash}', [UserController::class, 'verifyEmail'])-
 Route::middleware(['throttle:auth'])->group(function () {
     Route::post('/register', [UserController::class, 'register']);
     Route::post('/token', [UserController::class, 'token']);
+    Route::post('/admin-login', [UserController::class, 'adminToken']);
     Route::post('/social-login-token', [UserController::class, 'socialLogin']);
 });
 Route::get('me', [UserController::class, 'me'])->middleware('auth:sanctum');

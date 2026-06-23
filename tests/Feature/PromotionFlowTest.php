@@ -146,7 +146,7 @@ class PromotionFlowTest extends TestCase
             'status' => true,
         ]);
 
-        $response = $this->getJson('/api/general/checkout/promotions');
+        $response = $this->getJson('/api/v1/general/checkout/promotions');
 
         $response->assertOk();
         $promotions = $response->json('data.eligible_promotions');

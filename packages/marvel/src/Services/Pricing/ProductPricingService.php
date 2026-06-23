@@ -10,8 +10,18 @@ use Marvel\Database\Models\ProductVariant;
 use Marvel\Enums\DiscountType;
 use Marvel\Enums\FlashSaleType;
 
+/**
+ * Service responsible for all product pricing calculations including discounts, flash sales, and coupon pricing.
+ */
 class ProductPricingService
 {
+    /**
+     * Calculate full pricing for a product including discount and flash sale adjustments.
+     *
+     * @param  Product       $product
+     * @param  FlashSale|null $flashSale
+     * @return array
+     */
     public function calculateProductPricing(Product $product, ?FlashSale $flashSale = null): array
     {
         return $this->runSafely(function () use ($product, $flashSale): array {
@@ -36,6 +46,13 @@ class ProductPricingService
         ]);
     }
 
+    /**
+     * Calculate product pricing from raw array data (used during create/update before model persistence).
+     *
+     * @param  array         $data
+     * @param  FlashSale|null $flashSale
+     * @return array
+     */
     public function calculateProductPricingFromData(array $data, ?FlashSale $flashSale = null): array
     {
         return $this->runSafely(function () use ($data, $flashSale): array {
@@ -59,6 +76,14 @@ class ProductPricingService
         ]);
     }
 
+    /**
+     * Calculate the sale price for a product variant considering parent product discount and flash sale.
+     *
+     * @param  Product             $product
+     * @param  ProductVariant|array $variation
+     * @param  FlashSale|null      $flashSale
+     * @return float|null
+     */
     public function calculateVariantSalePrice(Product $product, ProductVariant |array $variation, ?FlashSale $flashSale = null): ?float
     {
         return $this->runSafely(function () use ($product, $variation, $flashSale): ?float {
@@ -81,6 +106,14 @@ class ProductPricingService
         }, null);
     }
 
+    /**
+     * Calculate variant pricing from raw array data for both the variant and its parent product.
+     *
+     * @param  array         $variant
+     * @param  array         $productData
+     * @param  FlashSale|null $flashSale
+     * @return array
+     */
     public function calculateVariantPricingFromData(array $variant, array $productData, ?FlashSale $flashSale = null): array
     {
         return $this->runSafely(function () use ($variant, $productData, $flashSale): array {
@@ -111,11 +144,24 @@ class ProductPricingService
         ]);
     }
 
+    /**
+     * Get the current effective price for a product.
+     *
+     * @param  Product $product
+     * @return float|null
+     */
     public function calculateProductCurrentPrice(Product $product): ?float
     {
         return $this->runSafely(fn(): ?float => $this->calculateProductPricing($product)['final_price'], $this->normalizeMoney($product->price));
     }
 
+    /**
+     * Calculate the discounted price for a given coupon and base price.
+     *
+     * @param  Coupon $coupon
+     * @param  mixed  $basePrice
+     * @return float|null
+     */
     public function calculateCouponPrice(Coupon $coupon, $basePrice): ?float
     {
         return $this->runSafely(function () use ($coupon, $basePrice): ?float {
@@ -129,6 +175,13 @@ class ProductPricingService
         }, null);
     }
 
+    /**
+     * Find a coupon by code and calculate its discount on the given base price.
+     *
+     * @param  string $code
+     * @param  mixed  $basePrice
+     * @return float|null
+     */
     public function calculateCouponPriceByCode(string $code, $basePrice): ?float
     {
         return $this->runSafely(function () use ($code, $basePrice): ?float {
@@ -142,11 +195,26 @@ class ProductPricingService
         }, null);
     }
 
+    /**
+     * Calculate the current price for a product variant considering active discounts and flash sales.
+     *
+     * @param  Product             $product
+     * @param  ProductVariant|array $variation
+     * @param  FlashSale|null      $flashSale
+     * @return float|null
+     */
     public function calculateVariantCurrentPrice(Product $product, ProductVariant|array $variation, ?FlashSale $flashSale = null): ?float
     {
         return $this->runSafely(fn(): ?float => $this->calculateVariantSalePrice($product, $variation, $flashSale), null);
     }
 
+    /**
+     * Resolve the active flash sale for a product, optionally filtering by a specific flash sale ID.
+     *
+     * @param  Product   $product
+     * @param  int|null  $flashSaleId
+     * @return FlashSale|null
+     */
     public function resolveActiveFlashSale(Product $product, ?int $flashSaleId = null): ?FlashSale
     {
         return $this->runSafely(function () use ($product, $flashSaleId): ?FlashSale {
@@ -164,6 +232,14 @@ class ProductPricingService
         }, null);
     }
 
+    /**
+     * Calculate the discounted price given a base price, discount type, and amount.
+     *
+     * @param  mixed  $price
+     * @param  string $discountType
+     * @param  float  $amount
+     * @return float|null
+     */
     public function calculateDiscountedPrice($price, $discountType, $amount): ?float
     {
         return $this->runSafely(function () use ($price, $discountType, $amount): ?float {
@@ -194,6 +270,13 @@ class ProductPricingService
         }, null);
     }
 
+    /**
+     * Calculate the flash sale discounted price for a given base price.
+     *
+     * @param  FlashSale|null $flashSale
+     * @param  mixed          $basePrice
+     * @return float|null
+     */
     public function calculateFlashSalePrice(?FlashSale $flashSale, $basePrice): ?float
     {
         return $this->runSafely(function () use ($flashSale, $basePrice): ?float {
@@ -214,6 +297,17 @@ class ProductPricingService
         }, null);
     }
 
+    /**
+     * Calculate variant pricing from a base price using product-level discount and flash sale information.
+     *
+     * @param  float        $basePrice
+     * @param  mixed        $hasDiscount
+     * @param  mixed        $discountType
+     * @param  mixed        $discountAmount
+     * @param  bool         $discountActive
+     * @param  FlashSale|null $flashSale
+     * @return array
+     */
     private function calculateVariantPricingFromBase(
         float $basePrice,
         $hasDiscount,
@@ -235,6 +329,13 @@ class ProductPricingService
         ];
     }
 
+    /**
+     * Resolve the discount units for a flash sale based on its type (percentage, fixed rate, or final price).
+     *
+     * @param  FlashSale $flashSale
+     * @param  float     $baseUnits
+     * @return float|null
+     */
     private function resolveFlashSaleDiscountUnits(FlashSale $flashSale, float $baseUnits): ?float
     {
         $discountUnits = max(0, $this->toUnits($flashSale->discount ?? 0));
@@ -261,6 +362,12 @@ class ProductPricingService
         return null;
     }
 
+    /**
+     * Check whether a flash sale is currently active based on its status and date range.
+     *
+     * @param  FlashSale|null $flashSale
+     * @return bool
+     */
     private function isFlashSaleActive(?FlashSale $flashSale): bool
     {
         if (!$flashSale || !$flashSale->status) {
@@ -280,6 +387,12 @@ class ProductPricingService
         return true;
     }
 
+    /**
+     * Check whether a product's discount is currently active based on its status and date range.
+     *
+     * @param  Product $product
+     * @return bool
+     */
     private function isDiscountActive($product): bool
     {
         if (!$product || empty($product->has_discount)) {
@@ -303,6 +416,12 @@ class ProductPricingService
         return true;
     }
 
+    /**
+     * Check whether a discount is active based on raw array data (used before model persistence).
+     *
+     * @param  array $data
+     * @return bool
+     */
     private function isDiscountActiveFromData(array $data): bool
     {
         if (empty($data['has_discount'])) {
@@ -326,6 +445,12 @@ class ProductPricingService
         return true;
     }
 
+    /**
+     * Normalize a monetary value to a float with 2 decimal places, returning null for empty values.
+     *
+     * @param  mixed $amount
+     * @return float|null
+     */
     private function normalizeMoney($amount): ?float
     {
         if ($amount === null || $amount === '') {
@@ -335,6 +460,13 @@ class ProductPricingService
         return round((float) $amount, 2);
     }
 
+    /**
+     * Execute a callback safely, returning a fallback value on exception.
+     *
+     * @param  callable $callback
+     * @param  mixed    $fallback
+     * @return mixed
+     */
     private function runSafely(callable $callback, $fallback)
     {
         try {
@@ -346,6 +478,12 @@ class ProductPricingService
         }
     }
 
+    /**
+     * Convert a monetary value to its float unit representation.
+     *
+     * @param  mixed $amount
+     * @return float
+     */
     private function toUnits($amount): float
     {
         return (float) $amount;

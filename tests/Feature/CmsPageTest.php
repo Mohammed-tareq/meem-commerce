@@ -38,6 +38,7 @@ class CmsPageTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
+            'type' => 'user',
         ]);
 
         $user->givePermissionTo(PermissionEnum::EDITOR);
@@ -49,6 +50,7 @@ class CmsPageTest extends TestCase
     {
         /** @var CmsPage $page */
         $page = CmsPage::create([
+            'path' => '/home',
             'slug' => 'home',
             'title' => 'Home',
             'content' => [
@@ -57,7 +59,7 @@ class CmsPageTest extends TestCase
             ],
         ]);
 
-        $response = $this->getJson('/api/cms-pages/home');
+        $response = $this->getJson('/api/v1/cms-pages/home');
 
         $response->assertOk();
         $response->assertJsonPath('data.slug', 'home');
@@ -72,6 +74,7 @@ class CmsPageTest extends TestCase
 
         // Create
         $createPayload = [
+            'path' => '/landing',
             'slug' => 'landing',
             'title' => 'Landing',
             'content' => [
@@ -80,7 +83,7 @@ class CmsPageTest extends TestCase
             ],
         ];
 
-        $create = $this->postJson('/api/cms-pages', $createPayload);
+        $create = $this->postJson('/api/v1/cms-pages', $createPayload);
         $create->assertCreated();
         $create->assertJsonPath('data.slug', 'landing');
         $create->assertJsonPath('data.content.0.type', 'Heading');
@@ -96,12 +99,12 @@ class CmsPageTest extends TestCase
             ],
         ];
 
-        $update = $this->putJson("/api/cms-pages/{$pageId}", $updatePayload);
+        $update = $this->putJson("/api/v1/cms-pages/{$pageId}", $updatePayload);
         $update->assertOk();
         $update->assertJsonPath('data.title', 'Updated Landing');
 
         // Delete
-        $delete = $this->deleteJson("/api/cms-pages/{$pageId}");
+        $delete = $this->deleteJson("/api/v1/cms-pages/{$pageId}");
         $delete->assertOk();
     }
 
@@ -113,11 +116,13 @@ class CmsPageTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
+            'type' => 'user',
         ]);
 
         Sanctum::actingAs($user, [], 'api');
 
-        $response = $this->postJson('/api/cms-pages', [
+        $response = $this->postJson('/api/v1/cms-pages', [
+            'path' => '/blocked',
             'slug' => 'blocked',
             'title' => 'Blocked',
         ]);
