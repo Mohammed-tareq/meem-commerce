@@ -23,7 +23,6 @@ class UpdateSectionRequest extends FormRequest
             'order' => 'sometimes|integer',
             'is_active' => 'sometimes|in:0,1',
             'title_visible' => 'sometimes|in:0,1',
-            'with_product' => 'sometimes|boolean',
             'setting' => 'nullable|array',
             'setting.front' => 'nullable|array',
             'setting.back' => 'nullable|array',

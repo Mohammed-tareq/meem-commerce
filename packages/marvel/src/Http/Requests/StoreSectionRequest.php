@@ -15,7 +15,7 @@ class StoreSectionRequest extends FormRequest
     public function rules()
     {
         return [
-            'type' => 'required|string|max:100',
+            'type' => 'required|string|max:100|exists:section_types,type',
             'title' => 'required|array',
             'title.*' => ['required', 'string', 'max:50', UniqueTranslationRule::for('sections', 'title')],
             'is_active' => 'nullable|in:0,1',
