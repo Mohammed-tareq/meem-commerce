@@ -18,6 +18,10 @@ class ProductVariantResource extends Resource
             'sold_quantity' => $this->sold_quantity,
             'in_stock' => $this->in_stock,
             'current_price' => $this->current_price,
+            'height' => $this->height,
+            'width' => $this->width,
+            'length' => $this->length,
+            'weight' => $this->weight,
             'attributes' => $this->whenLoaded('attributeProducts', function () {
                 return $this->attributeProducts->map(function ($ap) {
                     return [

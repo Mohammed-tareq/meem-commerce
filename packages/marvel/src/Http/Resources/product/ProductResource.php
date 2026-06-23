@@ -39,7 +39,6 @@ class ProductResource extends Resource
             'banner_id'              => $this->banner_id,
             'created_at'             => $this->created_at ? $this->created_at->toIso8601String() : null,
             'categories'            => $this->whenLoaded('categories', fn() => $this->getCategories($this->categories)),
-            // 'shops'                 => $this->whenLoaded('shops', fn() => $this->getShops($this->shops)),
             'flash_sales'          => $this->whenLoaded('flash_sales', fn() => FlashSaleResource::collection($this->flash_sales)),
             "images"                 => $this->getmedia('products') ? $this->getmediaImages('products') : [],
             "variants"                => $this->whenLoaded('variations', fn() => $this->getVariants()),

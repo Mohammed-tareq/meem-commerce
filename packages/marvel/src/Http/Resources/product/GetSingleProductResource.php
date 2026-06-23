@@ -56,6 +56,7 @@ class GetSingleProductResource extends Resource
             'height'                       => $this->height,
             'length'                       => $this->length,
             'width'                        => $this->width,
+            'weight'                       => $this->weight,
             'price'                        => $this->current_price,
             'quantity'                     => $this->quantity,
             'unit'                         => $this->unit,

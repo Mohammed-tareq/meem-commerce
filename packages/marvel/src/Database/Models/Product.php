@@ -86,6 +86,7 @@ class Product extends Model implements HasMedia
         'stock_quantity' => 'integer',
         'reserved_quantity' => 'integer',
         'sold_quantity' => 'integer',
+
     ];
 
     protected $appends = [

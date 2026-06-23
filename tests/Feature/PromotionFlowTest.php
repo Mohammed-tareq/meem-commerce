@@ -94,7 +94,7 @@ class PromotionFlowTest extends TestCase
     public function test_checkout_promotions_returns_gift_variant_payload(): void
     {
         $user = $this->makeUser();
-        Sanctum::actingAs($user, [], 'api');
+        Sanctum::actingAs($user);
 
         $cartProduct = $this->makeSimpleProduct('Cart Item', 100, 10);
         $this->makeCartWithItem($user, $cartProduct);
@@ -146,7 +146,7 @@ class PromotionFlowTest extends TestCase
             'status' => true,
         ]);
 
-        $response = $this->getJson('/api/general/checkout/promotions');
+        $response = $this->getJson('/api/v1/general/checkout/promotions');
 
         $response->assertOk();
         $promotions = $response->json('data.eligible_promotions');
@@ -167,7 +167,7 @@ class PromotionFlowTest extends TestCase
     public function test_apply_selected_gift_promotion_reserves_variant(): void
     {
         $user = $this->makeUser();
-        Sanctum::actingAs($user, [], 'api');
+        Sanctum::actingAs($user);
 
         $cartProduct = $this->makeSimpleProduct('Cart Item', 100, 10);
         $cart = $this->makeCartWithItem($user, $cartProduct);
