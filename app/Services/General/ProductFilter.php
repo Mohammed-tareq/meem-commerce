@@ -115,7 +115,7 @@ class ProductFilter
                 }
             })->pluck('id')->toArray();
             if (!empty($bannerIds)) {
-                $query->whereIn('products.banner_id', $bannerIds);
+                $query->whereHas('banners', fn($q) => $q->whereIn('banners.id', $bannerIds));
             }
         }
 

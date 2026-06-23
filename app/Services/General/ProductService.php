@@ -123,7 +123,7 @@ class ProductService
      *
      * @return Product|null
      */
-    public function getProductBySlug($slug, int $limit = 10): 
+    public function getProductBySlug($slug, int $limit = 10): ?Product
     {
         $product = Product::query()
             ->active()
@@ -132,6 +132,8 @@ class ProductService
                 'categories',
                 'variations',
                 'brands',
+                'banners',
+                'sliders',
                 'reviews' => fn($builder) => $builder->approved()->with('user'),
             ])
             ->withAvg(['reviews' => fn($builder) => $builder->approved()], 'rating')
@@ -707,7 +709,7 @@ class ProductService
             'brandsId'     => 'brands',
             'promotionsId' => 'promotions',
             'flashSalesId' => 'flash_sales',
-            'bannersId'    => null,
+            'bannersId'    => 'banners',
             'couponsId'    => 'coupons',
             'slidersId'    => 'sliders',
         ];
@@ -723,7 +725,7 @@ class ProductService
                 continue;
             }
             if ($relation === null) {
-                $query->whereIn('products.banner_id', $ids);
+                $query->whereIn('products.id', $ids);
             } else {
                 $query->whereHas($relation, fn($q) => $q->whereIn("{$relation}.id", $ids));
             }
@@ -890,7 +892,7 @@ class ProductService
     /**
      * Round a monetary value to 2 decimal places. Returns null if input is null/empty.
      */
-    private function moneyValue($value): 
+    private function moneyValue($value): ?float
     {
         if ($value === null || $value === '') {
             return null;

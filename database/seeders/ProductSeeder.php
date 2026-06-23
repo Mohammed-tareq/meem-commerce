@@ -36,7 +36,6 @@ class ProductSeeder extends Seeder
                 return $cat->getTranslation('name', 'en');
             });
             $allCategoriesById = Category::all()->keyBy('id');
-            $banners = Banner::pluck('id')->toArray();
             $couponIds = Coupon::pluck('id')->toArray();
 
             $skuCategoryMap = [
@@ -352,7 +351,6 @@ class ProductSeeder extends Seeder
                     'weight' => (string) $dims['wt'],
                     'has_flash_sale' => $hasFlashSale,
                     'has_discount' => $this->randomBool(30),
-                    'banner_id' => $this->randomElement($banners),
                     'discount_type' => $this->randomElement($discountTypes),
                     'discount_amount' => round($basePrice * random_int(5, 30) / 100, 2),
                     'start_date' => $this->maybeDate(30),

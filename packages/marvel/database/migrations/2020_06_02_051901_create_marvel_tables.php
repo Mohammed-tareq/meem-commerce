@@ -129,8 +129,6 @@ class CreateMarvelTables extends Migration
             $table->integer('pieces')->default(1);
             $table->boolean('has_flash_sale')->default(false);
             $table->boolean('has_discount')->default(false);
-            $table->unsignedBigInteger('banner_id')->nullable();
-            $table->foreign('banner_id')->references('id')->on('banners')->nullOnDelete();
             $table->enum('discount_type', DiscountType::getValues())->default(DiscountType::PERCENTAGE);
             $table->double('discount_amount', 10, 2)->default(0);
             $table->boolean('discount_status')->nullable();

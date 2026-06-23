@@ -88,7 +88,12 @@ class ProductUpdateRequest extends FormRequest
             'discount_status'              => ['required_if:has_discount,1', 'in:true,false,1,0'],
             'start_date'                   => ['sometimes', 'date'],
             'end_date'                     => ['sometimes', 'date', 'after_or_equal:start_date'],
-            'banner_id'                    => ['sometimes', 'exists:banners,id'],
+            'brands'                       => ['sometimes', 'array'],
+            'brands.*'                     => ['integer', 'exists:brands,id'],
+            'banners'                      => ['sometimes', 'array'],
+            'banners.*'                    => ['integer', 'exists:banners,id'],
+            'sliders'                      => ['sometimes', 'array'],
+            'sliders.*'                    => ['integer', 'exists:sliders,id'],
 
             // variants
             'variants'                     => ['sometimes', 'array'],

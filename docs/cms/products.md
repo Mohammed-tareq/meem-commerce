@@ -41,7 +41,6 @@ The Products module manages the full product catalog. Supports simple and variab
 | `width` | varchar(255) | NULLABLE | Product dimensions |
 | `length` | varchar(255) | NULLABLE | Product dimensions |
 | `weight` | varchar(255) | NULLABLE | Product weight |
-| `banner_id` | int | NULLABLE | FK → banners.id |
 | `type_id` | int | NULLABLE | FK → types.id |
 | `language` | varchar(10) | DEFAULT 'en' | Language code |
 | `created_at` | timestamp | NULLABLE | Creation time |
@@ -89,6 +88,24 @@ The Products module manages the full product catalog. Supports simple and variab
 | `id` | bigint | PK, AUTO_INCREMENT | |
 | `product_id` | bigint | FK → products.id, CASCADE | |
 | `flash_sale_id` | bigint | FK → flash_sales.id, CASCADE | |
+
+### `banner_product` Pivot Table
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | bigint | PK, AUTO_INCREMENT | |
+| `banner_id` | bigint | FK → banners.id, CASCADE | |
+| `product_id` | bigint | FK → products.id, CASCADE | |
+| `created_at` | timestamp | NULLABLE | |
+
+### `slider_product` Pivot Table
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | bigint | PK, AUTO_INCREMENT | |
+| `slider_id` | bigint | FK → sliders.id, CASCADE | |
+| `product_id` | bigint | FK → products.id, CASCADE | |
+| `created_at` | timestamp | NULLABLE | |
 
 ---
 
@@ -145,6 +162,9 @@ All endpoints return:
 | `banner_id` | int | Associated banner ID |
 | `created_at` | ISO 8601 | Creation timestamp |
 | `categories` | array | `[{id, name, slug}]` (when loaded) |
+| `brands` | array | Brand objects (when loaded via `brands`) |
+| `banners` | array | Banner objects (when loaded via `banners`) |
+| `sliders` | array | Slider objects (when loaded via `sliders`) |
 | `flash_sales` | array | `FlashSaleResource` collection (when loaded) |
 | `images` | array | Media URLs from `products` collection |
 | `variants` | array | Variant details (when loaded via `variations`) |
@@ -297,6 +317,12 @@ All endpoints return:
 | `product_type` | string | **Yes** | `in:simple,variable` |
 | `categories` | array | **Yes** | Array of integer IDs |
 | `categories.*` | int | **Yes** | `exists:categories,id` |
+| `brands` | array | No | `sometimes` |
+| `brands.*` | int | No | `exists:brands,id` |
+| `banners` | array | No | `sometimes` |
+| `banners.*` | int | No | `exists:banners,id` |
+| `sliders` | array | No | `sometimes` |
+| `sliders.*` | int | No | `exists:sliders,id` |
 | `price` | numeric | Conditional | `sometimes`, `min:0`, `required_if:product_type=simple` |
 | `quantity` | int | No | `sometimes`, `min:1` |
 | `in_stock` | bool/int | **Yes** | `in:1,0` |
@@ -365,9 +391,12 @@ All endpoints return:
 6. If variants provided, creates `ProductVariant` records with `attribute_values` associations
 7. Uploads images via Spatie Media Library to `products` collection
 8. Syncs categories via `categories()` relationship
-9. Syncs flash sale via `flash_sales()` relationship
-10. All operations wrapped in `DB::transaction()` — rollback on failure
-11. Returns created product with loaded `variations`, `categories`, `flash_sales`, `shops`
+9. Syncs brands via `brands()` relationship (`brand_product` pivot)
+10. Syncs banners via `banners()` relationship (`banner_product` pivot)
+11. Syncs sliders via `sliders()` relationship (`slider_product` pivot)
+12. Syncs flash sale via `flash_sales()` relationship
+13. All operations wrapped in `DB::transaction()` — rollback on failure
+14. Returns created product with loaded `variations`, `categories`, `brands`, `banners`, `sliders`, `flash_sales`, `shops`
 
 **Success Response (201):**
 ```json
@@ -421,7 +450,7 @@ All endpoints return:
 1. Finds product by ID via `repository->where('id', $id)->firstOrFail()`
 2. Fetches related products (same categories, excluding current product, limited to `limit` param, default 10)
 3. Sets `related_products` relation on the product
-4. Eager loads `variations`, `categories`, `shops`, `flash_sales`
+4. Eager loads `variations`, `categories`, `shops`, `flash_sales`, `banners`, `sliders`, `brands`
 
 **Success Response (200):**
 ```json
@@ -437,6 +466,15 @@ All endpoints return:
         "current_price": 26.99,
         "categories": [
             { "id": 1, "name": "Clothing", "slug": "clothing" }
+        ],
+        "brands": [
+            { "id": 1, "name": "Nike", "slug": "nike" }
+        ],
+        "banners": [
+            { "id": 1, "title": "Summer Sale", "slug": "summer-sale" }
+        ],
+        "sliders": [
+            { "id": 1, "title": "Hero Banner", "slug": "hero-banner" }
         ],
         "variants": [],
         "related_products": [
@@ -482,6 +520,12 @@ All fields are `sometimes` (optional) — only send changed fields.
 | `shop_id` | int | No | `sometimes`, `exists:shops,id` | **New — only in update** |
 | `categories` | array | No | `sometimes` | |
 | `categories.*` | int | No | `exists:categories,id` | |
+| `brands` | array | No | `sometimes` | |
+| `brands.*` | int | No | `exists:brands,id` | |
+| `banners` | array | No | `sometimes` | |
+| `banners.*` | int | No | `exists:banners,id` | |
+| `sliders` | array | No | `sometimes` | |
+| `sliders.*` | int | No | `exists:sliders,id` | |
 | `quantity` | int | No | `sometimes`, `min:1` | |
 | `images` | array | No | `sometimes`; each: image, mimes:jpeg,png,jpg,gif, max:2048 | **New — only in update** |
 | `images.*` | file | No | `image`, `mimes:jpeg,png,jpg,gif`, `max:2048` | |
@@ -501,7 +545,6 @@ All fields are `sometimes` (optional) — only send changed fields.
 | `width` | string | No | `nullable` | |
 | `length` | string | No | `nullable` | |
 | `weight` | string | No | `nullable` | |
-| `banner_id` | int | No | `sometimes`, `exists:banners,id` | |
 | `variants` | array | No | `sometimes` | |
 | `variants.*.id` | int | No | `sometimes`, `exists:product_variants,id` | **New — variant identifier** |
 | `variants.*.price` | numeric | No | `sometimes`, `min:0` | |
@@ -520,8 +563,12 @@ All fields are `sometimes` (optional) — only send changed fields.
 3. Resolves flash sale (reads existing `has_flash_sale` from product if not in request)
 4. **Warning:** ALL existing variants are **deleted and recreated** — `ProductVariant::where('product_id', ...)->delete()` — `variants.*.id` is not used
 5. Updates images via `updateImages()` which replaces existing media
-6. Syncs categories and flash sales
-7. All operations wrapped in `DB::transaction()`
+6. Syncs categories via `categories()` relationship
+7. Syncs brands via `brands()` relationship (`brand_product` pivot)
+8. Syncs banners via `banners()` relationship (`banner_product` pivot)
+9. Syncs sliders via `sliders()` relationship (`slider_product` pivot)
+10. Syncs flash sale via `flash_sales()` relationship
+11. All operations wrapped in `DB::transaction()`
 
 **Success Response (200):**
 ```json
@@ -897,6 +944,9 @@ Source: `packages/marvel/src/Rest/Routes.php`
 - The `sku` is auto-generated if empty (format: `PRD-{uuid}`)
 - Images are managed via Spatie Media Library in the `products` collection
 - Categories are synced via `sync()` — send the full desired list
+- Brands are synced via `sync()` on the `brand_product` pivot table — send the full desired list of brand IDs
+- Banners are synced via `sync()` on the `banner_product` pivot table — send the full desired list of banner IDs
+- Sliders are synced via `sync()` on the `slider_product` pivot table — send the full desired list of slider IDs
 - Flash sale is synced via `sync()` — single flash sale per product
 - `slug` is auto-generated from the English translation of `name`
 - The `ApiResponse` trait handles response formatting for all product endpoints

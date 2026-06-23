@@ -75,7 +75,7 @@ class ProductRepository extends BaseRepository
                     : ProductType::SIMPLE
             ]);
 
-            $data = $request->except(['images', 'categories', 'variants']);
+            $data = $request->except(['images', 'categories', 'variants', 'brands', 'banners', 'sliders']);
 
             $data['slug'] = $this->makeSlug($request);
             $hasFlashSale = !empty($data['has_flash_sale']);
@@ -103,15 +103,12 @@ class ProductRepository extends BaseRepository
 
             $this->syncRelation($product, $request, $data);
             DB::commit();
-            return $product->load('variations', 'categories', 'flash_sales', 'shops');
+            return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales', 'shops');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
         }
     }
-
-
-
 
 
     public function updateProduct(Request $request, $id)
@@ -128,7 +125,7 @@ class ProductRepository extends BaseRepository
                     ? ProductType::VARIABLE
                     : ProductType::SIMPLE
             ]);
-            $data = $request->except(['images', 'categories', 'variants']);
+            $data = $request->except(['images', 'categories', 'variants', 'brands', 'banners', 'sliders']);
 
             $data['slug'] = $this->makeSlug($request, 'slug', $product->id);
             $hasFlashSale = array_key_exists('has_flash_sale', $data) ? (bool) $data['has_flash_sale'] : $product->has_flash_sale;
@@ -167,7 +164,7 @@ class ProductRepository extends BaseRepository
             $this->syncRelation($product, $request, $data);
             DB::commit();
 
-            return $product->load('variations', 'categories', 'flash_sales', 'shops');
+            return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales', 'shops');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -175,7 +172,7 @@ class ProductRepository extends BaseRepository
     }
 
     /**
-     * Sync product relations such as categories and flash sales.
+     * Sync product relations such as categories, brands, banners, sliders and flash sales.
      *
      * @param  Product $product
      * @param  Request $request
@@ -186,6 +183,18 @@ class ProductRepository extends BaseRepository
     {
         if (isset($request['categories'])) {
             $product->categories()->sync($request['categories']);
+        }
+
+        if ($request->has('brands')) {
+            $product->brands()->sync($request->input('brands'));
+        }
+
+        if ($request->has('banners')) {
+            $product->banners()->sync($request->input('banners'));
+        }
+
+        if ($request->has('sliders')) {
+            $product->sliders()->sync($request->input('sliders'));
         }
 
         if (!empty($data['has_flash_sale']) && $data['has_flash_sale'] === true) {
