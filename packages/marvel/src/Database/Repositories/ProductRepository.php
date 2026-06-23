@@ -27,6 +27,9 @@ use Marvel\Services\Pricing\ProductPricingService;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Marvel\Exceptions\MarvelException;
 
+/**
+ * Repository for Product model operations including CRUD, pricing, availability, and CSV import/export.
+ */
 class ProductRepository extends BaseRepository
 {
 
@@ -72,7 +75,7 @@ class ProductRepository extends BaseRepository
                     : ProductType::SIMPLE
             ]);
 
-            $data = $request->except(['images', 'categories', 'variants']);
+            $data = $request->except(['images', 'categories', 'variants', 'brands', 'banners', 'sliders']);
 
             $data['slug'] = $this->makeSlug($request);
             $hasFlashSale = !empty($data['has_flash_sale']);
@@ -100,15 +103,12 @@ class ProductRepository extends BaseRepository
 
             $this->syncRelation($product, $request, $data);
             DB::commit();
-            return $product->load('variations', 'categories', 'flash_sales', 'shops');
+            return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales', 'shops');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
         }
     }
-
-
-
 
 
     public function updateProduct(Request $request, $id)
@@ -125,7 +125,7 @@ class ProductRepository extends BaseRepository
                     ? ProductType::VARIABLE
                     : ProductType::SIMPLE
             ]);
-            $data = $request->except(['images', 'categories', 'variants']);
+            $data = $request->except(['images', 'categories', 'variants', 'brands', 'banners', 'sliders']);
 
             $data['slug'] = $this->makeSlug($request, 'slug', $product->id);
             $hasFlashSale = array_key_exists('has_flash_sale', $data) ? (bool) $data['has_flash_sale'] : $product->has_flash_sale;
@@ -164,17 +164,37 @@ class ProductRepository extends BaseRepository
             $this->syncRelation($product, $request, $data);
             DB::commit();
 
-            return $product->load('variations', 'categories', 'flash_sales', 'shops');
+            return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales', 'shops');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
         }
     }
 
+    /**
+     * Sync product relations such as categories, brands, banners, sliders and flash sales.
+     *
+     * @param  Product $product
+     * @param  Request $request
+     * @param  array   $data
+     * @return void
+     */
     private function syncRelation($product, $request, $data)
     {
         if (isset($request['categories'])) {
             $product->categories()->sync($request['categories']);
+        }
+
+        if ($request->has('brands')) {
+            $product->brands()->sync($request->input('brands'));
+        }
+
+        if ($request->has('banners')) {
+            $product->banners()->sync($request->input('banners'));
+        }
+
+        if ($request->has('sliders')) {
+            $product->sliders()->sync($request->input('sliders'));
         }
 
         if (!empty($data['has_flash_sale']) && $data['has_flash_sale'] === true) {
@@ -187,6 +207,15 @@ class ProductRepository extends BaseRepository
             }
         }
     }
+
+    /**
+     * Create product variants and their attribute value associations.
+     *
+     * @param  Product      $product
+     * @param  array        $variants
+     * @param  FlashSale|null $flashSale
+     * @return bool|void
+     */
     private function addVariants(
         $product,
         $variants,
@@ -439,11 +468,27 @@ class ProductRepository extends BaseRepository
         return $slug . $divider . $slugCount;
     }
 
+    /**
+     * Calculate the discounted price using the ProductPricingService.
+     *
+     * @param  mixed  $price
+     * @param  string $discountType
+     * @param  float  $amount
+     * @return float|null
+     */
     private function calculateDiscountedPrice($price, $discountType, $amount)
     {
         return app(ProductPricingService::class)->calculateDiscountedPrice($price, $discountType, $amount);
     }
 
+    /**
+     * Resolve the active flash sale for a product by ID or from its relations.
+     *
+     * @param  mixed       $flashSaleId
+     * @param  Product|null $product
+     * @param  bool        $hasFlashSale
+     * @return FlashSale|null
+     */
     private function resolveFlashSale($flashSaleId, $product, $hasFlashSale)
     {
         if (!$hasFlashSale) {
@@ -461,6 +506,13 @@ class ProductRepository extends BaseRepository
         return null;
     }
 
+    /**
+     * Calculate the flash sale price using the ProductPricingService.
+     *
+     * @param  FlashSale $flashSale
+     * @param  mixed     $basePrice
+     * @return float|null
+     */
     private function calculateFlashSalePrice($flashSale, $basePrice)
     {
         return app(ProductPricingService::class)->calculateFlashSalePrice($flashSale, $basePrice);

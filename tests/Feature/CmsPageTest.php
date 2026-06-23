@@ -22,8 +22,9 @@ class CmsPageTest extends TestCase
     private function seedEditorPermission(): void
     {
         $guard = 'api';
+        Permission::findOrCreate(PermissionEnum::SUPER_ADMIN, $guard);
         Permission::findOrCreate(PermissionEnum::EDITOR, $guard);
-        $role = Role::findOrCreate(RoleEnum::EDITOR, $guard);
+        $role = Role::findOrCreate(RoleEnum::EDITOR, $guard, ['display_name' => 'Editor']);
         $role->givePermissionTo(PermissionEnum::EDITOR);
     }
 
@@ -38,9 +39,12 @@ class CmsPageTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
+            'type' => 'user',
+            'phone_number' => '01000000001',
         ]);
 
         $user->givePermissionTo(PermissionEnum::EDITOR);
+        $user->assignRole(RoleEnum::EDITOR);
 
         return $user;
     }
@@ -49,30 +53,34 @@ class CmsPageTest extends TestCase
     {
         /** @var CmsPage $page */
         $page = CmsPage::create([
+            'path' => '/home',
             'slug' => 'home',
             'title' => 'Home',
+            'path' => 'home',
             'content' => [
                 ['type' => 'B', 'order' => 2],
                 ['type' => 'A', 'order' => 1],
             ],
         ]);
 
-        $response = $this->getJson('/api/cms-pages/home');
+        $response = $this->getJson('/api/v1/cms-pages/home');
 
         $response->assertOk();
-        $response->assertJsonPath('data.slug', 'home');
-        $response->assertJsonPath('data.content.0.type', 'A');
-        $response->assertJsonPath('data.content.1.type', 'B');
+        $response->assertJsonPath('slug', 'home');
+        $response->assertJsonPath('content.0.type', 'A');
+        $response->assertJsonPath('content.1.type', 'B');
     }
 
     public function test_editor_can_create_update_and_delete_page(): void
     {
         $user = $this->makeEditorUser();
-        Sanctum::actingAs($user, [], 'api');
+        Sanctum::actingAs($user);
 
         // Create
         $createPayload = [
+            'path' => '/landing',
             'slug' => 'landing',
+            'path' => 'landing',
             'title' => 'Landing',
             'content' => [
                 ['type' => 'Hero', 'order' => 2],
@@ -80,28 +88,29 @@ class CmsPageTest extends TestCase
             ],
         ];
 
-        $create = $this->postJson('/api/cms-pages', $createPayload);
+        $create = $this->postJson('/api/v1/cms-pages', $createPayload);
         $create->assertCreated();
-        $create->assertJsonPath('data.slug', 'landing');
-        $create->assertJsonPath('data.content.0.type', 'Heading');
+        $create->assertJsonPath('slug', 'landing');
+        $create->assertJsonPath('content.0.type', 'Heading');
 
-        $pageId = $create['data']['id'];
+        $pageId = $create['id'];
 
         // Update
         $updatePayload = [
             'slug' => 'landing',
+            'path' => 'landing',
             'title' => 'Updated Landing',
             'content' => [
                 ['type' => 'Heading', 'order' => 1],
             ],
         ];
 
-        $update = $this->putJson("/api/cms-pages/{$pageId}", $updatePayload);
+        $update = $this->putJson("/api/v1/cms-pages/{$pageId}", $updatePayload);
         $update->assertOk();
-        $update->assertJsonPath('data.title', 'Updated Landing');
+        $update->assertJsonPath('title', 'Updated Landing');
 
         // Delete
-        $delete = $this->deleteJson("/api/cms-pages/{$pageId}");
+        $delete = $this->deleteJson("/api/v1/cms-pages/{$pageId}");
         $delete->assertOk();
     }
 
@@ -113,12 +122,15 @@ class CmsPageTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
+            'type' => 'user',
+            'phone_number' => '01000000002',
         ]);
 
-        Sanctum::actingAs($user, [], 'api');
+        Sanctum::actingAs($user);
 
-        $response = $this->postJson('/api/cms-pages', [
+        $response = $this->postJson('/api/v1/cms-pages', [
             'slug' => 'blocked',
+            'path' => 'blocked',
             'title' => 'Blocked',
         ]);
 

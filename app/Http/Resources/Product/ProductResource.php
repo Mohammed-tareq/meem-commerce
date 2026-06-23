@@ -2,6 +2,9 @@
 
 namespace App\Http\Resources\Product;
 
+use App\Http\Resources\Banner\BannerResource;
+use App\Http\Resources\Brand\BrandResource;
+use App\Http\Resources\Slider\SliderResource;
 use App\Traits\HasProductFilters;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -46,6 +49,9 @@ class ProductResource extends JsonResource
                 'thumbnail'  => $this->getFirstMediaUrl('products'),
                 'original' => $this->getMediaImages('products'),
             ],
+            'brands'                 => $this->whenLoaded('brands', fn() => BrandResource::collection($this->brands)),
+            'banners'                => $this->whenLoaded('banners', fn() => BannerResource::collection($this->banners)),
+            'sliders'                => $this->whenLoaded('sliders', fn() => SliderResource::collection($this->sliders)),
             "variants"                => $this->whenLoaded('variations', fn() => $this->getVariants()),
             'reviews'                 => ReviewResource::collection($this->whenLoaded('reviews')),
             $this->mergeWhen($this->relationLoaded('related_products'), fn() => ['related_products' => ProductMiniResource::collection($this->related_products)]),

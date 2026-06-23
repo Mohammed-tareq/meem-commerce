@@ -47,7 +47,6 @@ class Product extends Model implements HasMedia
         'is_fast_shipping_available',
         'has_discount',
         'pieces',
-        'banner_id',
         'discount_type',
         'discount_amount',
         'discount_status',
@@ -86,6 +85,7 @@ class Product extends Model implements HasMedia
         'stock_quantity' => 'integer',
         'reserved_quantity' => 'integer',
         'sold_quantity' => 'integer',
+
     ];
 
     protected $appends = [
@@ -292,6 +292,14 @@ class Product extends Model implements HasMedia
     public function brands(): BelongsToMany
     {
         return $this->belongsToMany(Brand::class, 'brand_product','product_id','brand_id');
+    }
+
+    /**
+     * @return BelongsToMany
+     */
+    public function banners(): BelongsToMany
+    {
+        return $this->belongsToMany(Banner::class, 'banner_product', 'product_id', 'banner_id');
     }
 
     /**

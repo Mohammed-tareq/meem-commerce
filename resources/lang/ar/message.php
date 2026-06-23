@@ -151,7 +151,7 @@ return [
     'your otp code' => 'رمز التحقق الخاص بك ',
     'MESSAGE.USER_PROFILE_RETRIEVED_SUCCESSFULLY' => 'تم استرجاع بيانات المستخدم بنجاح',
     'MESSAGE.USER_ADDED_SUCCESSFULLY' => 'تمت إضافة المستخدم بنجاح',
-    'ERROR.USER_CANNOT_BE_DELETED' => 'لا يمكن حذف المستخدم',
+    'ERROR.USER_ADMIN_CANNOT_BE_DELETED' => 'لا يمكن حذف المستخدم اذي كان أدمن من فضلك تأكد من الادوار',
     'MESSAGE.USER_DELETED_SUCCESSFULLY' => 'تم حذف المستخدم بنجاح',
     'ERROR.USER_CANNOT_BE_UPDATED' => 'لا يمكن تحديث المستخدم',
     'MESSAGE.USER_UPDATED_SUCCESSFULLY' => 'تم تحديث المستخدم بنجاح',
@@ -216,5 +216,6 @@ return [
     'MESSAGE.CUSTOMERS_LISTED_SUCCESSFULLY' => 'تم عرض قائمة العملاء بنجاح',
     'MESSAGE.USERS_LISTED_SUCCESSFULLY' => 'تم عرض قائمة المستخدمين بنجاح',
     'MESSAGE.STAFFS_LISTED_SUCCESSFULLY' => 'تم عرض قائمة الموظفين بنجاح',
-    'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'تم جلب المستخدم بنجاح'
+    'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'تم جلب المستخدم بنجاح',
+    'ERROR.CANNOT_ASSIGN_ROLE_TO_USER' => 'لا يمكن تعيين دور للمستخدم'
 ];

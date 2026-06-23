@@ -151,7 +151,7 @@ return [
     'your otp code' => 'Your OTP Code',
     'MESSAGE.USER_PROFILE_RETRIEVED_SUCCESSFULLY' => 'User profile retrieved successfully',
     'MESSAGE.USER_ADDED_SUCCESSFULLY' => 'User added successfully',
-    'ERROR.USER_CANNOT_BE_DELETED' => 'User cannot be deleted',
+    'ERROR.USER_ADMIN_CANNOT_BE_DELETED' => 'User Admin cannot be deleted Please Check The Roles',
     'MESSAGE.USER_DELETED_SUCCESSFULLY' => 'User deleted successfully',
     'ERROR.USER_CANNOT_BE_UPDATED' => 'User cannot be updated',
     'MESSAGE.USER_UPDATED_SUCCESSFULLY' => 'User updated successfully',
@@ -216,5 +216,6 @@ return [
     'MESSAGE.CUSTOMERS_LISTED_SUCCESSFULLY' => 'Customers listed successfully',
     'MESSAGE.USERS_LISTED_SUCCESSFULLY' => 'Users listed successfully',
     'MESSAGE.STAFFS_LISTED_SUCCESSFULLY' => 'Staffs listed successfully',
-    'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'User fetched successfully'
+    'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'User fetched successfully',
+    'MESSAGE.CANNOT_ASSIGN_ROLE_TO_USER'=> 'Cannot assign role to user',
 ];

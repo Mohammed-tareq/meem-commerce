@@ -22,26 +22,52 @@ class ProductVariant extends Model
 
     protected $table = 'product_variants';
     protected $fillable = ['price', 'sale_price', 'stock_quantity', 'quantity', 'reserved_quantity', 'sold_quantity', 'height', 'width', 'length', 'weight', 'product_id', 'in_stock'];
+
+    /**
+     * Get the parent product that this variant belongs to.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
+     */
     public function product()
     {
         return $this->belongsTo(Product::class);
     }
 
+    /**
+     * Get the attribute product pivot records associated with this variant.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
     public function attributeProducts()
     {
         return $this->hasMany(AttributeProduct::class);
     }
 
+    /**
+     * Get the current price attribute (alias for sale price).
+     *
+     * @return float|null
+     */
     public function getCurrentPriceAttribute()
     {
         return $this->getSalePriceAttribute();
     }
 
+    /**
+     * Get the final price attribute (alias for sale price).
+     *
+     * @return float|null
+     */
     public function getFinalPriceAttribute()
     {
         return $this->getSalePriceAttribute();
     }
 
+    /**
+     * Get the computed sale price considering parent product discounts and active flash sales.
+     *
+     * @return float|null
+     */
     public function getSalePriceAttribute()
     {
         $product = $this->relationLoaded('product') ? $this->product : $this->product()->with('flash_sales')->first();
@@ -53,16 +79,32 @@ class ProductVariant extends Model
         return app(ProductPricingService::class)->calculateVariantCurrentPrice($product, $this);
     }
 
+    /**
+     * Get the available stock quantity (stock minus reserved).
+     *
+     * @return int
+     */
     public function getAvailableStockAttribute(): int
     {
         return max(0, (int) $this->stock_quantity - (int) ($this->reserved_quantity ?? 0));
     }
 
+    /**
+     * Get the quantity attribute (delegates to available stock).
+     *
+     * @return int
+     */
     public function getQuantityAttribute(): int
     {
         return $this->available_stock;
     }
 
+    /**
+     * Set the quantity attribute (maps to stock_quantity).
+     *
+     * @param  mixed $value
+     * @return void
+     */
     public function setQuantityAttribute($value): void
     {
         $this->attributes['stock_quantity'] = (int) $value;

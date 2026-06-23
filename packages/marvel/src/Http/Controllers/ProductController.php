@@ -108,6 +108,12 @@ class ProductController extends CoreController
 
 
 
+    /**
+     * Display a paginated listing of products.
+     *
+     * @param  Request $request
+     * @return JsonResponse
+     */
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
@@ -147,7 +153,12 @@ class ProductController extends CoreController
 
 
 
-
+    /**
+     * Store a newly created product via REST API.
+     *
+     * @param  ProductCreateRequest $request
+     * @return JsonResponse
+     */
     public function store(ProductCreateRequest $request)
     {
         $product = $this->ProductStore($request);
@@ -173,7 +184,13 @@ class ProductController extends CoreController
 
 
 
-
+    /**
+     * Display the specified product.
+     *
+     * @param  Request $request
+     * @param  int $id
+     * @return JsonResponse
+     */
     public function show(Request $request, $id)
     {
         try {
@@ -200,12 +217,19 @@ class ProductController extends CoreController
             $related_products = $this->repository->fetchRelated($id, $limit);
             $product->setRelation('related_products', $related_products);
 
-            return $product->load('variations', 'categories', 'shops', 'flash_sales');
+            return $product->load('variations', 'categories', 'flash_sales', 'banners', 'sliders', 'brands', 'reviews');
         } catch (Exception $e) {
             throw new MarvelNotFoundException();
         }
     }
 
+    /**
+     * Update the specified product via REST API.
+     *
+     * @param  ProductUpdateRequest $request
+     * @param  int $id
+     * @return JsonResponse
+     */
     public function update(ProductUpdateRequest $request, $id)
     {
         try {
@@ -236,6 +260,13 @@ class ProductController extends CoreController
 
 
 
+    /**
+     * Remove the specified product from storage via REST API.
+     *
+     * @param  Request $request
+     * @param  int $id
+     * @return JsonResponse
+     */
     public function destroy(Request $request, $id)
     {
         $request->id = $id;

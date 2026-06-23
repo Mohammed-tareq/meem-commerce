@@ -90,9 +90,9 @@ class AddressController extends CoreController
     public function store(AddressRequest $request)
     {
         try {
-            $validatedData = $request->all();
+            $validatedData = $request->merge(['customer_id' => $request->user()->id])->all();
             $address = $this->repository->create($validatedData);
-            return $this->apiResponse(COULD_NOT_CREATE_THE_RESOURCE, 200, true, AddressResource::make($address));
+            return $this->apiResponse(COULD_NOT_CREATE_THE_RESOURCE, 201, true, AddressResource::make($address));
         } catch (MarvelException $e) {
             throw new MarvelException(COULD_NOT_CREATE_THE_RESOURCE);
         }

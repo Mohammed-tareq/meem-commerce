@@ -28,9 +28,17 @@ class PromotionRequest extends FormRequest
             'type' => ['required', Rule::in(PromotionType::getValues())],
             'type_amount' => ['required', Rule::in(PromotionMountType::getValues())],
 
-            'product_ids' => ['sometimes', 'array'],
+            'product_ids' => [
+                Rule::requiredIf(function () {
+                    return request()->input('apply_to') === 'specific_products';
+                }),
+                Rule::prohibitedIf(function () {
+                    return request()->input('apply_to') === 'all_products';
+                }),
+                'array',
+            ],
             'product_ids.*' => 'exists:products,id',
-            'gift_products' => ['sometimes', 'array', 'min:1'],
+            'gift_products' => ['required_if:type_amount,gift', 'array', 'min:1'],
             'gift_products.*.product_id' => 'required_with:gift_products|exists:products,id',
             'gift_products.*.product_variant_id' => 'nullable|exists:product_variants,id',
             'gift_products.*.quantity'   => 'sometimes|integer|min:1',
@@ -50,7 +58,11 @@ class PromotionRequest extends FormRequest
                 }),
             ],
 
-            'max_discount_amount' => 'sometimes|numeric|min:1',
+            'max_discount_amount' => [
+                'required_if:type_amount,percentage',
+                'numeric',
+                'min:1'
+            ],
 
             'required_quantity_type' => [
                 'integer',
@@ -64,17 +76,16 @@ class PromotionRequest extends FormRequest
                 'min:0',
                 Rule::requiredIf(function () {
                     $type = request()->input('type');
-                    $price = request()->input('price');
 
-                    return !empty($price) || $type !== 'quantity';
+                    return $type !== 'quantity';
                 }),
             ],
 
-            'apply_to' => ['nullable', Rule::in(['all_products', 'specific_products'])],
-            'limiter' => 'nullable|integer|min:1',
+            'apply_to' => ['required', Rule::in(['all_products', 'specific_products'])],
+            'limiter' => 'sometimes|integer|min:1',
 
-            'start_at' => 'nullable|date|before_or_equal:today',
-            'end_at'   => 'nullable|date|after_or_equal:start_at',
+            'start_at' => 'sometimes|date|before_or_equal:today',
+            'end_at'   => 'sometimes|date|after_or_equal:start_at',
 
             'status'   => 'sometimes|in:0,1',
         ];

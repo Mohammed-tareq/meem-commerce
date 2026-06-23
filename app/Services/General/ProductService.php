@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Banner;
 use Marvel\Database\Models\Brand;
@@ -18,11 +19,13 @@ use Marvel\Database\Models\Slider;
 use Marvel\Traits\MediaManager;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
-
 class ProductService
 {
     use MediaManager;
 
+    /**
+     * Build a filtered base query with active products, relations, reviews aggregation, search, and relation filters.
+     */
     public function buildFilteredBaseQuery(Request $request): Builder
     {
         $query = Product::query()->active()
@@ -42,6 +45,9 @@ class ProductService
         return $query;
     }
 
+    /**
+     * Build a Scout (Meilisearch) search query. Returns null if search term is empty or Scout fails.
+     */
     public function buildScoutSearchQuery(Request $request): ?Builder
     {
         $term = trim((string) $request->get('search', ''));
@@ -76,6 +82,9 @@ class ProductService
         return $query;
     }
 
+    /**
+     * Paginate products using the filtered base query.
+     */
     public function paginate(Request $request)
     {
         $limit = $this->getLimit($request);
@@ -85,6 +94,9 @@ class ProductService
         return $query->orderBy('id', $order)->paginate($limit);
     }
 
+    /**
+     * Paginate products that belong to a valid flash sale.
+     */
     public function paginateFlashSales(Request $request)
     {
         $limit = $this->getLimit($request);
@@ -106,7 +118,12 @@ class ProductService
         return $query->orderBy('id', $order)->paginate($limit);
     }
 
-    public function getProductBySlug($slug, $limit = 10)
+    /**
+     * Get a single product by slug with related products, categories, variations, brands, and reviews.
+     *
+     * @return Product|null
+     */
+    public function getProductBySlug($slug, int $limit = 10): ?Product
     {
         $product = Product::query()
             ->active()
@@ -115,6 +132,8 @@ class ProductService
                 'categories',
                 'variations',
                 'brands',
+                'banners',
+                'sliders',
                 'reviews' => fn($builder) => $builder->approved()->with('user'),
             ])
             ->withAvg(['reviews' => fn($builder) => $builder->approved()], 'rating')
@@ -129,6 +148,13 @@ class ProductService
 
         return $product;
     }
+
+    /**
+     * Get products whose discount ends today or have low stock (1-9 remaining).
+     * Adds `badges` attribute to each product.
+     *
+     * @return Collection<int, Product>
+     */
     public function getDiscountEndingTodayOrLowStockProducts($request)
     {
         $limit = $request->query('limit', 10);
@@ -136,7 +162,6 @@ class ProductService
             ->with(['categories', 'variations', 'brands'])
             ->where('status', true)
             ->where(function ($query) {
-
                 $query->where(function ($q) {
                     $q->where('has_discount', true)
                         ->whereDate('end_date', today());
@@ -145,12 +170,10 @@ class ProductService
                         $q->whereBetween('stock_quantity', [1, 9]);
                     });
             })
-
             ->limit($limit)
             ->get();
 
         return $products->map(function (Product $product) {
-
             $product->setAttribute(
                 'current_price',
                 $this->moneyValue(
@@ -177,6 +200,12 @@ class ProductService
             return $product;
         })->values();
     }
+
+    /**
+     * Get products from flash sales within a date range, flattened.
+     *
+     * @return Collection<int, Product>
+     */
     public function getFlashSalesAndHereProductsByQtySet($request)
     {
         $qty = $request->query('limit', 5);
@@ -200,6 +229,12 @@ class ProductService
 
         return $flashSales;
     }
+
+    /**
+     * Get products in flash sales ending this week.
+     *
+     * @return Collection<int, Product>
+     */
     public function getFlashSaleProductsEndingThisWeek($request)
     {
         $limit = $request->query('limit', 10);
@@ -208,20 +243,10 @@ class ProductService
         $products = Product::query()
             ->with(['categories', 'variations', 'brands'])
             ->select([
-                'id',
-                'name',
-                'slug',
-                'price',
-                'quantity',
-                'has_flash_sale',
-                'has_discount',
-                'discount_type',
-                'discount_amount',
-                'discount_status',
-                'start_date',
-                'end_date',
-                'price_after_discount',
-                'price_after_flash_sale',
+                'id', 'name', 'slug', 'price', 'quantity',
+                'has_flash_sale', 'has_discount', 'discount_type', 'discount_amount',
+                'discount_status', 'start_date', 'end_date',
+                'price_after_discount', 'price_after_flash_sale',
             ])
             ->whereNull('deleted_at')
             ->where('status', true)
@@ -242,32 +267,26 @@ class ProductService
 
         return $products->map(function (Product $product) {
             $product->setAttribute('current_price', $this->moneyValue($product->price_after_flash_sale ?? $product->price_after_discount ?? $product->price ?? null));
-
             return $product;
         })->values();
     }
+
+    /**
+     * Get products in flash sales ending today.
+     *
+     * @return Collection<int, Product>
+     */
     public function getFlashSaleProductsEndingToday($request)
     {
         $limit = $request->query('limit', 10);
-        $today = today();
 
         $products = Product::query()
             ->with(['categories', 'variations', 'brands'])
             ->select([
-                'id',
-                'name',
-                'slug',
-                'price',
-                'quantity',
-                'has_flash_sale',
-                'has_discount',
-                'discount_type',
-                'discount_amount',
-                'discount_status',
-                'start_date',
-                'end_date',
-                'price_after_discount',
-                'price_after_flash_sale',
+                'id', 'name', 'slug', 'price', 'quantity',
+                'has_flash_sale', 'has_discount', 'discount_type', 'discount_amount',
+                'discount_status', 'start_date', 'end_date',
+                'price_after_discount', 'price_after_flash_sale',
             ])
             ->whereNull('deleted_at')
             ->where('status', true)
@@ -288,29 +307,24 @@ class ProductService
 
         return $products->map(function (Product $product) {
             $product->setAttribute('current_price', $this->moneyValue($product->price_after_flash_sale ?? $product->price_after_discount ?? $product->price ?? null));
-
             return $product;
         })->values();
     }
+
+    /**
+     * Get all products with active discounts.
+     *
+     * @return Collection<int, Product>
+     */
     public function getAllDiscountProducts($request)
     {
         $limit = $request->query('limit', 10);
         $products = Product::query()
             ->select([
-                'id',
-                'name',
-                'slug',
-                'price',
-                'quantity',
-                'has_flash_sale',
-                'has_discount',
-                'discount_type',
-                'discount_amount',
-                'discount_status',
-                'start_date',
-                'end_date',
-                'price_after_discount',
-                'price_after_flash_sale',
+                'id', 'name', 'slug', 'price', 'quantity',
+                'has_flash_sale', 'has_discount', 'discount_type', 'discount_amount',
+                'discount_status', 'start_date', 'end_date',
+                'price_after_discount', 'price_after_flash_sale',
             ])
             ->with(['reviews', 'media', 'categories', 'variations', 'brands'])
             ->whereNull('deleted_at')
@@ -322,17 +336,20 @@ class ProductService
 
         return $products->map(function (Product $product) {
             $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
-
             return $product;
         })->filter(fn(Product $product) => $product->isDiscountActive())->values();
     }
 
+    /**
+     * Get products grouped by brand, limited per brand.
+     *
+     * @return Collection<int, Product>
+     */
     public function getBrandsProductsByQtySet($request)
     {
         $qty = $request->query('limit', 10);
-        // $qtyBrand = $request->query('limit_brand', 10);
         $start_date = $request->query('start_date', '');
-        $end_date   = $request->query('end_date', '');
+        $end_date = $request->query('end_date', '');
 
         $brands = Brand::active()
             ->when(!empty($start_date), function ($query) use ($start_date) {
@@ -350,25 +367,21 @@ class ProductService
 
         return $brands;
     }
+
+    /**
+     * Get newly arrived products (created within last 15 days, no flash sale).
+     *
+     * @return Collection<int, Product>
+     */
     public function getNewArrivals($request)
     {
         $limit = $request->get('limit', 10);
         $products = Product::query()
             ->select([
-                'id',
-                'name',
-                'slug',
-                'price',
-                'quantity',
-                'has_flash_sale',
-                'has_discount',
-                'discount_type',
-                'discount_amount',
-                'discount_status',
-                'start_date',
-                'end_date',
-                'price_after_discount',
-                'price_after_flash_sale',
+                'id', 'name', 'slug', 'price', 'quantity',
+                'has_flash_sale', 'has_discount', 'discount_type', 'discount_amount',
+                'discount_status', 'start_date', 'end_date',
+                'price_after_discount', 'price_after_flash_sale',
             ])
             ->with(['reviews', 'media', 'categories', 'variations', 'brands'])
             ->whereNull('deleted_at')
@@ -381,13 +394,15 @@ class ProductService
 
         return $products->map(function (Product $product) {
             $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
-
             return $product;
         })->values();
     }
 
-
-
+    /**
+     * Add a review to a product with optional image uploads.
+     *
+     * @return Review|null Null if product not found.
+     */
     public function addProductReview($request, $id)
     {
         try {
@@ -413,6 +428,12 @@ class ProductService
             throw $e;
         }
     }
+
+    /**
+     * Update a product review. Only the review author may update.
+     *
+     * @return Review|null Null if review not found or not owned by user.
+     */
     public function updateProductReview($request, $id)
     {
         try {
@@ -423,7 +444,6 @@ class ProductService
             }
 
             $reviewData = $request->only(['rating', 'comment']);
-
             $review->update($reviewData);
             if ($request->has('images')) {
                 if (!$this->uploadImages($request, 'images', $review->fresh(), 'reviews', 'reviews')) {
@@ -438,6 +458,11 @@ class ProductService
         }
     }
 
+    /**
+     * Get best-selling products sorted by sold_quantity descending.
+     *
+     * @return Collection<int, Product>
+     */
     public function getBestProductSales($request)
     {
         $limit = $request->get('limit', 10);
@@ -450,11 +475,16 @@ class ProductService
             ->get();
     }
 
+    /**
+     * Get products that belong to any top-level (parent) category.
+     *
+     * @return Collection<int, Product>
+     */
     public function getProductForParentCategory($request)
     {
-
         $limit = $request->integer('limit', 10);
         $ParentCategories = Category::query()->whereNull('parent_id')->pluck('id');
+
         return Product::query()
             ->active()
             ->with(['categories', 'variations', 'brands'])
@@ -466,6 +496,11 @@ class ProductService
             ->get();
     }
 
+    /**
+     * Fetch related products sharing the same categories, excluding the current product.
+     *
+     * @return Collection<int, Product>
+     */
     private function fetchRelated(Product $product, int $limit = 10)
     {
         $categories = $product->categories->pluck('id');
@@ -485,7 +520,9 @@ class ProductService
             ->get();
     }
 
-
+    /**
+     * Apply the global ProductFilter scope, dimension ranges, and rating filters.
+     */
     private function applyProductFilters(Builder $query, Request $request): void
     {
         $query->filter($request->all());
@@ -514,6 +551,10 @@ class ProductService
         }
     }
 
+    /**
+     * Apply range filters for dimension columns (height, width, length, weight).
+     * Uses REGEXP_REPLACE to extract numeric values from string-based dimensions.
+     */
     private function applyDimensionFilters(Builder $query, Request $request): void
     {
         $dimensions = [
@@ -533,6 +574,9 @@ class ProductService
         }
     }
 
+    /**
+     * Apply a single dimension range filter with numeric extraction from string values.
+     */
     private function applyDimensionRange(Builder $query, string $column, mixed $min, mixed $max): void
     {
         $allowed = ['height', 'width', 'length', 'weight'];
@@ -571,6 +615,9 @@ class ProductService
         });
     }
 
+    /**
+     * Filter products to only those currently in a valid flash sale.
+     */
     private function applyFlashSaleFilter(Builder $query): void
     {
         $now = now();
@@ -583,6 +630,9 @@ class ProductService
             });
     }
 
+    /**
+     * Apply a multi-field search across product name, description, dimensions, reviews, shops, and categories.
+     */
     private function applyProductSearch(Builder $query, string $term, string $locale): void
     {
         $query->where(function (Builder $builder) use ($term, $locale) {
@@ -623,15 +673,20 @@ class ProductService
         });
     }
 
+    /**
+     * Apply a LIKE search on a translatable JSON field for the given locale.
+     */
     private function applyTranslatableLike(Builder $query, string $field, string $term, string $locale): void
     {
-
         $query->where(function ($q) use ($field, $term, $locale) {
             $q->where($field . '->' . $locale, 'like', "%$term%")
                 ->orWhere($field, 'like', "%$term%");
         });
     }
 
+    /**
+     * Filter by a comma-separated or array list of product IDs.
+     */
     private function applyIdsFilter(Builder $query, Request $request, string $paramName): void
     {
         $ids = $request->query($paramName);
@@ -644,6 +699,9 @@ class ProductService
         }
     }
 
+    /**
+     * Apply relationship-based filters (categories, brands, promotions, flash_sales, banners, coupons, sliders).
+     */
     private function applyRelationIdsFilters(Builder $query, Request $request): void
     {
         $relations = [
@@ -651,7 +709,7 @@ class ProductService
             'brandsId'     => 'brands',
             'promotionsId' => 'promotions',
             'flashSalesId' => 'flash_sales',
-            'bannersId'    => null,
+            'bannersId'    => 'banners',
             'couponsId'    => 'coupons',
             'slidersId'    => 'sliders',
         ];
@@ -667,13 +725,16 @@ class ProductService
                 continue;
             }
             if ($relation === null) {
-                $query->whereIn('products.banner_id', $ids);
+                $query->whereIn('products.id', $ids);
             } else {
                 $query->whereHas($relation, fn($q) => $q->whereIn("{$relation}.id", $ids));
             }
         }
     }
 
+    /**
+     * Get the pagination limit from the request, bounded between 1 and 100.
+     */
     public function getLimit(Request $request): int
     {
         $limit = (int) $request->get('limit', 15);
@@ -684,6 +745,10 @@ class ProductService
         return min($limit, 100);
     }
 
+    /**
+     * Build the dynamic filters array for the frontend based on the current query results.
+     * Extracts available brands, categories, banners, sliders, dimension values, ratings, and attributes.
+     */
     public function getDynamicFilters(Builder $query): array
     {
         $filters = [];
@@ -824,7 +889,10 @@ class ProductService
         return $filters;
     }
 
-    private function moneyValue($value)
+    /**
+     * Round a monetary value to 2 decimal places. Returns null if input is null/empty.
+     */
+    private function moneyValue($value): ?float
     {
         if ($value === null || $value === '') {
             return null;

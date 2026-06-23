@@ -27,7 +27,7 @@ class AdminCreateUserRequest extends FormRequest
     public function rules()
     {
         return [
-            'roles' => 'required|array',
+            'roles' => 'sometimes|array',
             'roles.*' => 'integer|exists:roles,id',
             "name" => "required",
             "email" => "required|email|unique:users,email",

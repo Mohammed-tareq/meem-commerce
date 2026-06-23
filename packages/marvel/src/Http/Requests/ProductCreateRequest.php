@@ -23,6 +23,26 @@ class ProductCreateRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation()
+    {
+        $dimensions = ['height', 'width', 'length', 'weight'];
+        foreach ($dimensions as $dim) {
+            if ($this->has($dim) && $this->input($dim) !== null) {
+                $this->merge([$dim => (string) $this->input($dim)]);
+            }
+        }
+        if ($this->has('variants') && is_array($this->input('variants'))) {
+            $variants = $this->input('variants');
+            foreach ($variants as $i => $variant) {
+                foreach ($dimensions as $dim) {
+                    if (isset($variant[$dim]) && $variant[$dim] !== null) {
+                        $variants[$i][$dim] = (string) $variant[$dim];
+                    }
+                }
+            }
+            $this->merge(['variants' => $variants]);
+        }
+    }
 
     /**
      * Get the validation rules that apply to the request.
@@ -53,15 +73,15 @@ class ProductCreateRequest extends FormRequest
             'product_type'                 => ['required', Rule::in($productType)],
             'categories'                   => ['required', 'array'],
             'categories.*'                 => ['integer', 'exists:categories,id'],
-            'quantity'                     => ['sometimes   ', 'integer', 'min:1'],
-            // 'images'                        => ['required', 'array'],
-            // 'images.*'                      => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
+            'quantity'                     => ['sometimes', 'integer', 'min:1'],
+            'images'                        => ['required', 'array'],
+            'images.*'                      => ['required', 'image', 'mimes:jpeg,png,jpg', 'max:2048'],
             'pieces'                       => ['sometimes', 'integer', 'min:1'],
             'status'                       => ['sometimes', 'in:1,0'],
-            'height'                       => ['nullable', 'numeric'],
-            'length'                       => ['nullable', 'numeric'],
-            'width'                        => ['nullable', 'numeric'],
-            'weight'                       => ['nullable', 'numeric'],
+            'height'                       => ['nullable', 'string'],
+            'length'                       => ['nullable', 'string'],
+            'width'                        => ['nullable', 'string'],
+            'weight'                       => ['nullable', 'string'],
             'in_stock'                     => ["required", 'in:1,0'],
             'has_discount'                 => ["required", 'in:true,false,1,0'],
             'has_flash_sale'               => ["required", 'in:true,false,1,0'],
@@ -72,16 +92,21 @@ class ProductCreateRequest extends FormRequest
             'discount_status'              => ['required_if:has_discount,1', 'in:1,0'],
             'start_date'                   => ['sometimes', 'date'],
             'end_date'                     => ['sometimes', 'date', 'after_or_equal:start_date'],
-            'banner_id'                    => ['sometimes', 'exists:banners,id'],
+            'brands'                       => ['sometimes', 'array'],
+            'brands.*'                     => ['integer', 'exists:brands,id'],
+            'banners'                      => ['sometimes', 'array'],
+            'banners.*'                    => ['integer', 'exists:banners,id'],
+            'sliders'                      => ['sometimes', 'array'],
+            'sliders.*'                    => ['integer', 'exists:sliders,id'],
 
             // variants (for variable products)
             'variants'                     => ['sometimes', 'array'],
             'variants.*.price'             => ['required_with:variants', 'numeric', 'min:0'],
             'variants.*.quantity'          => ['required_with:variants', 'integer', 'min:0'],
-            'variants.*.weight'            => ['sometimes', 'numeric', 'min:0'],
-            'variants.*.length'            => ['sometimes', 'numeric', 'min:0'],
-            'variants.*.width'             => ['sometimes', 'numeric', 'min:0'],
-            'variants.*.height'            => ['sometimes', 'numeric', 'min:0'],
+            'variants.*.weight'            => ['sometimes', 'string'],
+            'variants.*.length'            => ['sometimes', 'string'],
+            'variants.*.width'             => ['sometimes', 'string'],
+            'variants.*.height'            => ['sometimes', 'string'],
             'variants.*.attribute_values'  => ['required_with:variants', 'array'],
             'variants.*.attribute_values.*' => ['integer', 'exists:attribute_values,id'],
         ];

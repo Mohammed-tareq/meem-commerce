@@ -78,6 +78,7 @@ class DatabaseSeeder extends Seeder
             ContactSeeder::class,
             ProductSeeder::class,
             SliderProductSeeder::class,
+            BannerProductSeeder::class,
             ReviewSeeder::class,
             ProductVariantSeeder::class,
             BrandProductSeeder::class,

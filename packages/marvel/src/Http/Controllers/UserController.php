@@ -219,7 +219,7 @@ class UserController extends CoreController
             $active = $request->query('active', 'false');
             $inActive = $request->query('in_active', 'false');
             $limit = $request->limit ? $request->limit : 15;
-            $query = $this->repository->with(['address', 'permissions']);
+            $query = $this->repository->with(['permissions']);
 
             if ($filterTrash === 'true') {
                 $query = $query->onlyTrashed();
@@ -465,7 +465,7 @@ class UserController extends CoreController
         try {
             $user = $this->repository->findOrFail($id);
             if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
-                return $this->apiResponse(USER_CANNOT_BE_DELETED, 400, false);
+                return $this->apiResponse(USER_ADMIN_CANNOT_BE_DELETED, 400, false);
             }
             $user->delete();
             return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
@@ -478,7 +478,7 @@ class UserController extends CoreController
         try {
             $user = User::withTrashed()->findOrFail($id);
             if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
-                return $this->apiResponse(USER_CANNOT_BE_DELETED, 400, false);
+                return $this->apiResponse(USER_ADMIN_CANNOT_BE_DELETED, 400, false);
             }
             $user->forceDelete();
             return $this->apiResponse(USER_DELETED_SUCCESSFULLY, 200, true);
@@ -491,9 +491,6 @@ class UserController extends CoreController
         try {
             $user = User::withTrashed()->findOrFail($id);
             if (!$user->trashed()) {
-                return $this->apiResponse(USER_CANNOT_BE_RESTORED, 400, false);
-            }
-            if ($user->hasRole('super_admin') || $user->id === auth()->id()) {
                 return $this->apiResponse(USER_CANNOT_BE_RESTORED, 400, false);
             }
             $user->restore();
@@ -575,10 +572,28 @@ class UserController extends CoreController
             return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
         }
         $email_verified = $user->hasVerifiedEmail();
-        // if (!$email_verified) {
-        //     return $this->apiResponse(USER_NOT_VERIFIED, 404, false);
-        // }
-        // event(new ProcessUserData());
+        $data = [
+            "token" => $user->createToken('auth_token')->plainTextToken,
+            "email_verified" => $email_verified
+        ];
+        return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
+    }
+    public function adminToken(UserAuthEmailAndPasswordRequest $request)
+    {
+        $request->validated();
+
+        $user = User::where('email', $request->email)->where('is_active', true)->first();
+
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
+        }
+        if($user->type !== 'admin'){
+            return $this->apiResponse(USER_NOT_FOUND, 404, false);
+        }
+        $email_verified = $user->hasVerifiedEmail();
+        if (!$email_verified) {
+            return $this->apiResponse(USER_NOT_VERIFIED, 404, false);
+        }
         $data = [
             "token" => $user->createToken('auth_token')->plainTextToken,
             "permissions" => $user->getAllPermissions()->pluck('name'),
@@ -1038,6 +1053,7 @@ class UserController extends CoreController
                 [
                     'email_verified_at' => now(),
                     'name' => $user->getName(),
+                    'password' =>Hash::make('password')
                 ]
             );
 

@@ -23,6 +23,27 @@ class ProductUpdateRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation()
+    {
+        $dimensions = ['height', 'width', 'length', 'weight'];
+        foreach ($dimensions as $dim) {
+            if ($this->has($dim) && $this->input($dim) !== null) {
+                $this->merge([$dim => (string) $this->input($dim)]);
+            }
+        }
+        if ($this->has('variants') && is_array($this->input('variants'))) {
+            $variants = $this->input('variants');
+            foreach ($variants as $i => $variant) {
+                foreach ($dimensions as $dim) {
+                    if (isset($variant[$dim]) && $variant[$dim] !== null) {
+                        $variants[$i][$dim] = (string) $variant[$dim];
+                    }
+                }
+            }
+            $this->merge(['variants' => $variants]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
@@ -53,10 +74,10 @@ class ProductUpdateRequest extends FormRequest
             'images.*'                     => ['sometimes', 'image', 'mimes:jpeg,png,jpg,gif', "max:2048"],
             'status'                       => ['sometimes', Rule::in(ProductStatus::getValues())],
             'pieces'                       => ['sometimes', 'integer', 'min:1'],
-            'height'                       => ['nullable', 'numeric'],
-            'length'                       => ['nullable', 'numeric'],
-            'width'                        => ['nullable', 'numeric'],
-            'weight'                       => ['nullable', 'numeric'],
+            'height'                       => ['nullable', 'string'],
+            'length'                       => ['nullable', 'string'],
+            'width'                        => ['nullable', 'string'],
+            'weight'                       => ['nullable', 'string'],
             'in_stock'                     => ['sometimes', 'in:true,false,1,0'],
             'has_discount'                 => ['sometimes', 'in:true,false,1,0'],
             'has_flash_sale'               => ['sometimes', 'in:true,false,1,0'],
@@ -67,7 +88,12 @@ class ProductUpdateRequest extends FormRequest
             'discount_status'              => ['required_if:has_discount,1', 'in:true,false,1,0'],
             'start_date'                   => ['sometimes', 'date'],
             'end_date'                     => ['sometimes', 'date', 'after_or_equal:start_date'],
-            'banner_id'                    => ['sometimes', 'exists:banners,id'],
+            'brands'                       => ['sometimes', 'array'],
+            'brands.*'                     => ['integer', 'exists:brands,id'],
+            'banners'                      => ['sometimes', 'array'],
+            'banners.*'                    => ['integer', 'exists:banners,id'],
+            'sliders'                      => ['sometimes', 'array'],
+            'sliders.*'                    => ['integer', 'exists:sliders,id'],
 
             // variants
             'variants'                     => ['sometimes', 'array'],
@@ -75,10 +101,10 @@ class ProductUpdateRequest extends FormRequest
             'variants.*.price'             => ['sometimes', 'numeric', 'min:0'],
             'variants.*.sale_price'        => ['sometimes', 'numeric', 'min:0'],
             'variants.*.quantity'          => ['sometimes', 'integer', 'min:0'],
-            'variants.*.weight'            => ['sometimes', 'numeric', 'min:0'],
-            'variants.*.length'            => ['sometimes', 'numeric', 'min:0'],
-            'variants.*.width'             => ['sometimes', 'numeric', 'min:0'],
-            'variants.*.height'            => ['sometimes', 'numeric', 'min:0'],
+            'variants.*.weight'            => ['sometimes', 'string'],
+            'variants.*.length'            => ['sometimes', 'string'],
+            'variants.*.width'             => ['sometimes', 'string'],
+            'variants.*.height'            => ['sometimes', 'string'],
             'variants.*.attribute_values'  => ['sometimes', 'array'],
             'variants.*.attribute_values.*' => ['integer', 'exists:attribute_values,id'],
         ];

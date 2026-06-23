@@ -11,6 +11,8 @@ use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
 use Illuminate\Support\Str;
 
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
 class Banner extends Model implements HasMedia, Sortable
 {
     use InteractsWithMedia, HasTranslations, SortableTrait, SoftDeletes;
@@ -38,9 +40,9 @@ class Banner extends Model implements HasMedia, Sortable
         });
     }
 
-    public function products()
+    public function products(): BelongsToMany
     {
-        return $this->hasMany(Product::class, 'banner_id');
+        return $this->belongsToMany(Product::class, 'banner_product', 'banner_id', 'product_id');
     }
 
     public function scopeActive($query)
