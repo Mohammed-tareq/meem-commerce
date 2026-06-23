@@ -97,7 +97,7 @@ class ContentPageSeeder extends Seeder
                     'back' => [
                         "pest_category" => false,
                         "parent" => false,
-                        "limit" => 10,
+                        "limit" => 20,
                         "categoriesId" => $activeCategories,
                         "order" => "desc",
                     ],
