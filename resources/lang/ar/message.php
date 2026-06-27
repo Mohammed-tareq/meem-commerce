@@ -217,5 +217,6 @@ return [
     'MESSAGE.USERS_LISTED_SUCCESSFULLY' => 'تم عرض قائمة المستخدمين بنجاح',
     'MESSAGE.STAFFS_LISTED_SUCCESSFULLY' => 'تم عرض قائمة الموظفين بنجاح',
     'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'تم جلب المستخدم بنجاح',
-    'ERROR.CANNOT_ASSIGN_ROLE_TO_USER' => 'لا يمكن تعيين دور للمستخدم'
+    'ERROR.CANNOT_ASSIGN_ROLE_TO_USER' => 'لا يمكن تعيين دور للمستخدم',
+    'MESSAGE.CATEGORY_FEATURE_TOGGLED_SUCCESSFULLY' => 'تم تبديل ميزة الفئة بنجاح'
 ];

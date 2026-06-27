@@ -14,6 +14,7 @@ use Marvel\Database\Models\Wishlist;
 use Marvel\Database\Models\Variation;
 use Marvel\Exceptions\MarvelException;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Marvel\Database\Models\Author;
 use Marvel\Database\Models\Category;
@@ -117,11 +118,40 @@ class ProductController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
-        $products = $this->fetchProducts($request)->with(['variations','categories','shops','flash_sales'])->paginate($limit)->withQueryString();
+        $term = trim((string) $request->get('search', ''));
+        $products = $this->fetchProducts($request)->with(['variations','categories','flash_sales']);
+        if ($term !== '') {
+            $this->applyProductSearch($products, $term, app()->getLocale());
+        }
+        $products = $products->paginate($limit)->withQueryString();
         $data = new  ProductCollection($products);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
+    private function applyProductSearch(Builder $query, string $term, string $locale): void
+    {
+        $query->where(function (Builder $builder) use ($term, $locale) {
+            $this->applyTranslatableLike($builder, 'name', $term, $locale);
+
+            $builder->orWhere(function (Builder $sub) use ($term, $locale) {
+                $this->applyTranslatableLike($sub, 'description', $term, $locale);
+            });
+
+            
+          
+        });
+    }
+
+    /**
+     * Apply a LIKE search on a translatable JSON field for the given locale.
+     */
+    private function applyTranslatableLike(Builder $query, string $field, string $term, string $locale): void
+    {
+        $query->where(function ($q) use ($field, $term, $locale) {
+            $q->where($field . '->' . $locale, 'like', "%$term%")
+                ->orWhere($field, 'like', "%$term%");
+        });
+    }
 
 
     /**
@@ -143,6 +173,10 @@ class ProductController extends CoreController
             throw new AuthorizationException(NOT_AUTHORIZED);
         }
         $products_query = $this->repository->whereNotIn('id', $unavailableProducts);
+
+        if ($request->has('status') && $request->status !== null) {
+            $products_query = $products_query->where('status', '=', $request->status);
+        }
 
         if ($request->flash_sale_builder) {
             $products_query = $this->repository->processFlashSaleProducts($request, $products_query);

@@ -218,4 +218,5 @@ return [
     'MESSAGE.STAFFS_LISTED_SUCCESSFULLY' => 'Staffs listed successfully',
     'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'User fetched successfully',
     'MESSAGE.CANNOT_ASSIGN_ROLE_TO_USER'=> 'Cannot assign role to user',
+    'MESSAGE.CATEGORY_FEATURE_TOGGLED_SUCCESSFULLY' => 'Category feature toggled successfully'
 ];
