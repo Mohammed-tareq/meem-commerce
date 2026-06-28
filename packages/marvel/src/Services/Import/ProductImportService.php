@@ -61,12 +61,19 @@ class ProductImportService
 
             $data = $this->buildProductData($row);
 
+            if (empty($sku)) {
+                $data['sku'] = 'PRD-' . Str::uuid();
+            } else {
+                $data['sku'] = $sku;
+            }
+
             if ($product) {
                 $data['slug'] = $product->slug;
-                $product->update($data);
+                $product->fill($data)->saveQuietly();
             } else {
                 $data['slug'] = $this->generateSlug($row, $product->id ?? null);
-                $product = Product::create($data);
+                $product = new Product($data);
+                $product->saveQuietly();
             }
 
             if (!empty($sku) && $product->sku !== $sku) {
@@ -78,10 +85,10 @@ class ProductImportService
                 $product->toArray(),
                 $product->getActiveFlashSale()
             );
-            $product->update([
+            $product->fill([
                 'price_after_discount' => $pricing['price_after_discount'] ?? null,
                 'price_after_flash_sale' => $pricing['price_after_flash_sale'] ?? null,
-            ]);
+            ])->saveQuietly();
 
             DB::commit();
             $this->successCount++;
@@ -135,10 +142,11 @@ class ProductImportService
             ];
 
             if ($variant) {
-                $variant->update($variantData);
+                $variant->fill($variantData)->saveQuietly();
                 $variant->attributeProducts()->delete();
             } else {
-                $variant = ProductVariant::create($variantData);
+                $variant = new ProductVariant($variantData);
+                $variant->saveQuietly();
             }
 
             $this->attachVariantAttributes($variant, $row);
@@ -148,7 +156,7 @@ class ProductImportService
             DB::commit();
 
             $product->product_type = ProductType::VARIABLE;
-            $product->save();
+            $product->saveQuietly();
 
             $this->successCount++;
         } catch (Exception $e) {

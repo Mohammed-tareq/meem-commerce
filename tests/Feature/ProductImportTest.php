@@ -10,9 +10,11 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Marvel\Database\Models\Product;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission as PermissionEnum;
 use Marvel\Enums\Role as RoleEnum;
+use Marvel\Services\Import\ProductImportService;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
@@ -22,7 +24,7 @@ class ProductImportTest extends TestCase
     use RefreshDatabase;
 
     private const GUARD = 'api';
-    private const PREFIX = '/api/v1/admin';
+    private const PREFIX = '/api/v1';
 
     private function createSuperAdminUser(): User
     {
@@ -207,5 +209,150 @@ class ProductImportTest extends TestCase
         $response = $this->getJson(self::PREFIX . "/products/import/{$import->id}/download-errors");
 
         $response->assertStatus(404);
+    }
+
+    public function test_process_product_row_creates_product_in_database(): void
+    {
+        $service = new ProductImportService();
+
+        $row = [
+            'sku' => 'REGRESSION-TEST-001',
+            'name_en' => 'Regression Test Product',
+            'price' => 100,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ];
+
+        $service->processProductRow($row, 2);
+
+        $this->assertDatabaseHas('products', [
+            'sku' => 'REGRESSION-TEST-001',
+        ]);
+
+        $product = Product::where('sku', 'REGRESSION-TEST-001')->first();
+        $this->assertNotNull($product);
+        $this->assertEquals(100, (float) $product->price);
+        $this->assertEquals(1, $service->getSuccessCount());
+    }
+
+    public function test_process_product_row_updates_existing_product(): void
+    {
+        $service = new ProductImportService();
+
+        $row = [
+            'sku' => 'REGRESSION-TEST-002',
+            'name_en' => 'Original Product',
+            'price' => 50,
+            'quantity' => 5,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ];
+
+        $service->processProductRow($row, 2);
+
+        $this->assertDatabaseHas('products', [
+            'sku' => 'REGRESSION-TEST-002',
+            'price' => 50,
+        ]);
+
+        $updatedRow = [
+            'sku' => 'REGRESSION-TEST-002',
+            'name_en' => 'Updated Product',
+            'price' => 75,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ];
+
+        $service->processProductRow($updatedRow, 3);
+
+        $this->assertDatabaseHas('products', [
+            'sku' => 'REGRESSION-TEST-002',
+            'price' => 75,
+        ]);
+    }
+
+    public function test_process_product_row_handles_empty_sku(): void
+    {
+        $service = new ProductImportService();
+
+        $row = [
+            'name_en' => 'No SKU Product',
+            'price' => 25,
+            'quantity' => 3,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ];
+
+        $service->processProductRow($row, 2);
+
+        $product = Product::orderBy('id', 'desc')->first();
+        $this->assertNotNull($product);
+        $this->assertStringStartsWith('PRD-', $product->sku);
+    }
+
+    public function test_process_product_row_tracks_failures(): void
+    {
+        $service = new ProductImportService();
+
+        $this->assertEquals(0, $service->getSuccessCount());
+        $this->assertEmpty($service->getFailedRows());
+
+        $row = [
+            'sku' => 'REGRESSION-FAIL-001',
+            'name_en' => 'Failure Test',
+            'price' => 100,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ];
+
+        $service->processProductRow($row, 2);
+
+        $this->assertEquals(1, $service->getSuccessCount());
+        $this->assertEmpty($service->getFailedRows());
+    }
+
+    public function test_service_tracks_success_and_failure_counts(): void
+    {
+        $service = new ProductImportService();
+
+        $row1 = [
+            'sku' => 'REGRESSION-TRACK-001',
+            'name_en' => 'Track Test 1',
+            'price' => 100,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ];
+
+        $row2 = [
+            'sku' => 'REGRESSION-TRACK-002',
+            'name_en' => 'Track Test 2',
+            'price' => 200,
+            'quantity' => 20,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ];
+
+        $service->processProductRow($row1, 2);
+        $service->processProductRow($row2, 3);
+
+        $this->assertEquals(2, $service->getSuccessCount());
+        $this->assertCount(0, $service->getFailedRows());
+
+        $product1 = Product::where('sku', 'REGRESSION-TRACK-001')->first();
+        $product2 = Product::where('sku', 'REGRESSION-TRACK-002')->first();
+
+        $this->assertNotNull($product1);
+        $this->assertNotNull($product2);
     }
 }

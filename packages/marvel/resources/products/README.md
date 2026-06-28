@@ -30,7 +30,7 @@ This system uses `maatwebsite/excel` (Laravel Excel) with the following features
 | Feature | Used In |
 |---------|---------|
 | `WithMultipleSheets` | `ProductsImport`, `ProductsExport` |
-| `WithChunkReading` | `ProductsSheetImport`, `ProductVariantsSheetImport` |
+| `WithChunkReading` | `ProductsSheetImport`, `ProductVariantsSheetImport`, `ImagesSheetImport` |
 | Queued Import | `ImportProductsJob` (dispatched on `high` queue) |
 | Export Classes | 7 sheet export classes, one per sheet |
 
@@ -42,21 +42,21 @@ This system uses `maatwebsite/excel` (Laravel Excel) with the following features
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/api/v1/admin/products/import` | Yes | Upload Excel file to start import |
-| GET | `/api/v1/admin/products/import/{id}` | Yes | Check import progress/status |
-| GET | `/api/v1/admin/products/import/{id}/download-errors` | Yes | Download error report for failed rows |
+| POST | `/api/v1/products/import` | Yes | Upload Excel file to start import |
+| GET | `/api/v1/products/import/{id}` | Yes | Check import progress/status |
+| GET | `/api/v1/products/import/{id}/download-errors` | Yes | Download error report for failed rows |
 | GET | `/api/v1/samples/product-import` | No | Download sample Excel template |
 
-**POST `/api/v1/admin/products/import`** accepts:
+**POST `/api/v1/products/import`** accepts:
 - `file` (required) — `.xlsx`, `.xls`, or `.ods` file (max 20MB)
 
 ### Export
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| GET | `/api/v1/admin/products/export` | Yes | Export all products as Excel |
+| GET | `/api/v1/products/export` | No | Export all products as Excel |
 
-**GET `/api/v1/admin/products/export`** accepts optional filters:
+**GET `/api/v1/products/export`** accepts optional filters:
 - `status` — filter by product status (0 or 1)
 - `product_type` — `simple` or `variable`
 - `category_id` — filter by category
@@ -99,6 +99,8 @@ Primary product data. One row = one product. UPSERT by `sku`.
 | `length` | string | No | Product length |
 | `weight` | string | No | Product weight |
 
+**Export notes:** The `pieces` and `has_flash_sale` columns are NOT exported.
+
 ### 2. `product_variants`
 
 One row = one variant. Attributes are auto-generated from this sheet.
@@ -123,11 +125,11 @@ One row = one variant. Attributes are auto-generated from this sheet.
 
 **Variant matching** uses existing database fields: `product_id`, `price`, `sale_price`, `height`, `width`, `length`, `weight`. Empty/null fields are matched as `NULL` to prevent duplicate variants.
 
-**Default behavior:** Existing matches are **updated**, new rows are **created**. Variants in the database not present in the Excel are **NOT deleted** (prevents accidental data loss).
-
-**Optional sync mode:** Pass `sync_variants=true` to enable full replacement — missing variants are deleted, making the Excel the complete set for the product.
+**Behavior:** Existing matches are **updated**, new rows are **created**. After all rows are processed, variants in the database not present in the Excel are **deleted** (the Excel becomes the complete set of variants for each product).
 
 The `product_type` is automatically set to `variable`.
+
+**Export notes:** The `variant_sku` and `in_stock` columns are NOT exported.
 
 ### 3. `images`
 
@@ -145,7 +147,11 @@ Each row represents one image. Multiple images for the same product use multiple
 | PHONE-001   | https://site.com/image1.jpg     |
 | PHONE-001   | https://site.com/image2.jpg     |
 
-**Import:** Get product by SKU, read `image` URL, attach via `$product->addMediaFromUrl()` → `toMediaCollection('products')`. If the URL is invalid, log warning and skip.
+**Import:** Get product by SKU, download the image via `UrlImageHandler` (supports Google Drive URLs), validate MIME type and file size (max 5MB), then attach via `$product->addMedia()` → `toMediaCollection('products')`. Failed downloads are tracked in the import error report.
+
+**Google Drive URLs** are automatically converted:
+- `https://drive.google.com/file/d/FILE_ID/view` → `https://drive.google.com/uc?export=download&confirm=t&id=FILE_ID`
+- If download fails, falls back to `https://drive.google.com/thumbnail?id=FILE_ID&sz=w1000`
 
 **Export:** One row per image URL.
 
@@ -290,24 +296,38 @@ Upload Excel
     ↓
 Validate
     ↓
-Import Products
+Import Products (process rows one by one, upsert by SKU)
     ↓
-Use Existing Product Business Logic
+Calculate Prices (via ProductPricingService)
     ↓
-Calculate Prices
-(via ProductPricingService)
+Import Variants (upsert by matching fields)
     ↓
-Import Variants
+Generate Attributes (auto-create missing attributes/values)
     ↓
-Generate Attributes
+Import Images (download + validate + attach via Media Library)
     ↓
-Import Images
+Sync Relations (categories, brands, flash_sales, sliders)
     ↓
-Sync Relations
-(categories, brands, flash_sales, sliders)
+Finalize Variants (delete variants not in the Excel)
     ↓
 Finish
 ```
+
+---
+
+## Image Download Details
+
+Images are downloaded through `UrlImageHandler` which:
+
+1. Normalizes Google Drive URLs to direct download format
+2. Validates the URL is a public, non-private IP address
+3. Downloads with 30-second timeout
+4. Validates MIME type (jpeg, png, webp, gif, svg+xml only)
+5. Validates file size (max 5MB)
+6. Saves to `storage/app/temp/` before attaching via Spatie Media Library
+7. If download fails for a Google Drive URL, automatically retries with the thumbnail endpoint
+
+**Backward compatibility:** The import also supports the old pipe-delimited `images` column format (multiple URLs separated by `|`), falling back to it if the single `image` column is empty.
 
 ---
 
@@ -315,16 +335,28 @@ Finish
 
 Any failed row is stored with:
 
-| Field   | Description          |
-|---------|----------------------|
-| `sheet` | Source sheet name    |
-| `row`   | Excel row number     |
-| `sku`   | Product SKU          |
-| `message` | Error description   |
+| Field | Description |
+|-------|-------------|
+| `sheet` | Source sheet name (`products`, `product_variants`, `images`, etc.) |
+| `row` | Excel row number |
+| `sku` | Product SKU |
+| `error_message` | Error description |
+
+**Errors tracked:**
+
+| Source | Tracked? |
+|--------|----------|
+| Product row processing failure | Yes |
+| Variant row processing failure | Yes |
+| Variant product SKU not found | Yes |
+| **Image download failure** | **Yes** |
+| **Image invalid URL** | **Yes** |
+| **Image product SKU not found** | **Yes** |
+| Category/brand/flash sale/slider sync failure | Log only |
 
 Download error report as Excel:
 
-`GET /api/v1/admin/products/import/{id}/download-errors`
+`GET /api/v1/products/import/{id}/download-errors`
 
 ---
 
