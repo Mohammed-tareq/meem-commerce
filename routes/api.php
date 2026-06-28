@@ -181,9 +181,9 @@ Route::get('/test-mail', function () {
     return 'sent';
 });
 
-Route::prefix('admin')->middleware(['auth:sanctum', 'verified'])->group(function () {
-    Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
-    Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
-    Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
-    Route::get('products/export', [ProductExportController::class, 'export'])->name('admin.products.export');
-});
+// Route::prefix('admin')->middleware(['auth:sanctum', 'verified'])->group(function () {
+//     Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
+//     Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
+//     Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
+//     Route::get('products/export', [ProductExportController::class, 'export'])->name('admin.products.export');
+// });
