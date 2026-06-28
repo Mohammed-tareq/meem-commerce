@@ -119,9 +119,13 @@ class ProductController extends CoreController
     {
         $limit = $request->limit ? $request->limit : 15;
         $term = trim((string) $request->get('search', ''));
+        $sort = trim((string) $request->get('sort',''));
         $products = $this->fetchProducts($request)->with(['variations','categories','flash_sales']);
         if ($term !== '') {
             $this->applyProductSearch($products, $term, app()->getLocale());
+        }
+        if ($sort !== '') {
+            $products = $products->orderBy('created_at',$sort);
         }
         $products = $products->paginate($limit)->withQueryString();
         $data = new  ProductCollection($products);
@@ -136,8 +140,6 @@ class ProductController extends CoreController
             $builder->orWhere(function (Builder $sub) use ($term, $locale) {
                 $this->applyTranslatableLike($sub, 'description', $term, $locale);
             });
-
-            
           
         });
     }
