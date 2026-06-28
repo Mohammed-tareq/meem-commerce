@@ -218,5 +218,15 @@ return [
     'MESSAGE.STAFFS_LISTED_SUCCESSFULLY' => 'تم عرض قائمة الموظفين بنجاح',
     'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'تم جلب المستخدم بنجاح',
     'ERROR.CANNOT_ASSIGN_ROLE_TO_USER' => 'لا يمكن تعيين دور للمستخدم',
-    'MESSAGE.CATEGORY_FEATURE_TOGGLED_SUCCESSFULLY' => 'تم تبديل ميزة الفئة بنجاح'
+    'MESSAGE.CATEGORY_FEATURE_TOGGLED_SUCCESSFULLY' => 'تم تبديل ميزة الفئة بنجاح',
+    'MESSAGE.IMPORT_STARTED_SUCCESSFULLY' => 'بدأ الاستيراد بنجاح',
+    'MESSAGE.IMPORT_STATUS_FETCHED' => 'تم جلب حالة الاستيراد',
+    'MESSAGE.EXPORT_STARTED_SUCCESSFULLY' => 'بدأ التصدير بنجاح',
+    'MESSAGE.IMPORT_NO_ERRORS' => 'لم يتم العثور على أخطاء',
+    'IMPORT.VALIDATION.FILE_REQUIRED' => 'ملف Excel مطلوب',
+    'IMPORT.VALIDATION.FILE_MIMES' => 'يجب أن يكون الملف بصيغة Excel صالحة (xlsx, xls, or ods)',
+    'IMPORT.VALIDATION.FILE_MAX' => 'حجم الملف يجب ألا يتجاوز 20 ميغابايت',
+    'IMPORT.VALIDATION.IMAGES_SOURCE_REQUIRED' => 'يرجى تحديد مصدر الصور (url أو none)',
+    'IMPORT.VALIDATION.IMAGES_SOURCE_IN' => 'مصدر الصور يجب أن يكون url أو none',
+    'EXPORT.VALIDATION.INVALID_PRODUCT_TYPE' => 'نوع المنتج غير صالح. يجب أن يكون simple أو variable',
 ];

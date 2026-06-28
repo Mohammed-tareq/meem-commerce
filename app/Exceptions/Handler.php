@@ -158,8 +158,8 @@ class Handler extends ExceptionHandler
         // Handle ValidationException
         elseif ($exception instanceof ValidationException) {
             $statusCode = 422;
-            $message =  $exception->getMessage();
-            $errors = $exception->validator->errors()->all();
+            $message = $exception->getMessage();
+            $errors = $exception->validator->errors()->toArray();
         }
         // Handle HttpException (includes various HTTP status codes)
         elseif ($exception instanceof HttpException) {
@@ -180,10 +180,16 @@ class Handler extends ExceptionHandler
             $message = config('app.debug') ? $exception->getMessage() : 'Internal Server Error';
         }
 
-        return response()->json([
+        $responseData = [
             'message' => $message,
             'status' => false,
-        ], $statusCode);
+        ];
+
+        if (!empty($errors)) {
+            $responseData['errors'] = $errors;
+        }
+
+        return response()->json($responseData, $statusCode);
     }
 
     private function translateNotice(string $key, array $replace = []): string

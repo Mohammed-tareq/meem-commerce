@@ -6,6 +6,7 @@ use Marvel\Services\Pricing\ProductPricingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Database\Factories\ProductVariantFactory;
+use Illuminate\Support\Str;
 
 
 
@@ -15,13 +16,24 @@ class ProductVariant extends Model
 
     protected $appends = ['current_price', 'sale_price', 'final_price'];
 
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($variant) {
+            if (empty($variant->sku)) {
+                $variant->sku = 'VAR-' . Str::random(6);
+            }
+        });
+    }
+
     protected static function newFactory()
     {
         return ProductVariantFactory::new();
     }
 
     protected $table = 'product_variants';
-    protected $fillable = ['price', 'sale_price', 'stock_quantity', 'quantity', 'reserved_quantity', 'sold_quantity', 'height', 'width', 'length', 'weight', 'product_id', 'in_stock'];
+    protected $fillable = ['sku', 'price', 'sale_price', 'stock_quantity', 'quantity', 'reserved_quantity', 'sold_quantity', 'height', 'width', 'length', 'weight', 'product_id', 'in_stock'];
 
     /**
      * Get the parent product that this variant belongs to.

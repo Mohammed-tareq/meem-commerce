@@ -142,6 +142,7 @@ class CreateMarvelTables extends Migration
 
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id();
+            $table->string('sku')->nullable()->unique();
             $table->double('price', 10, 2);
             $table->double('sale_price', 10, 2)->nullable();
             $table->boolean('in_stock')->default(true);

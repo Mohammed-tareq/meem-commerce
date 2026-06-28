@@ -21,6 +21,7 @@
         "laravel/scout": "10.0",
         "laravel/socialite": "5.10.0",
         "laravel/tinker": "2.8.2",
+        "maatwebsite/excel": "^3.1",
         "marvel/shop": "dev-main",
         "meilisearch/meilisearch-php": "^1.16",
         "messagebird/php-rest-api": "3.1.4",

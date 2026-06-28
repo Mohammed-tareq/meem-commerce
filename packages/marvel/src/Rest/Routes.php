@@ -34,6 +34,7 @@ use Marvel\Http\Controllers\OrderController;
 use Marvel\Http\Controllers\PaymentIntentController;
 use Marvel\Http\Controllers\PaymentMethodController;
 use Marvel\Http\Controllers\ProductController;
+use Marvel\Http\Controllers\ProductImportController;
 use Marvel\Http\Controllers\PromotionController;
 use Marvel\Http\Controllers\QuestionController;
 use Marvel\Http\Controllers\RefundController;
@@ -65,6 +66,7 @@ use Marvel\Http\Controllers\ContentPageController;
 use Marvel\Http\Controllers\CountryController;
 use Marvel\Http\Controllers\FastShippingController;
 use Marvel\Http\Controllers\GovernorateController;
+use Marvel\Http\Controllers\ProductExportController;
 use Marvel\Http\Controllers\ShippingPriceController;
 
 // use Illuminate\Support\Facades\Auth;
@@ -127,6 +129,7 @@ Route::get("products/calculate-rental-price", [ProductController::class, 'calcul
  * Import/Export Routes - Rate Limited (uploads)
  * Protects against storage and processing abuse
  */
+Route::get('samples/product-import', [ProductImportController::class, 'downloadSample']);
 Route::middleware(['throttle:uploads'])->group(function () {
     Route::post('import-products', [ProductController::class, 'importProducts']);
     Route::post('import-variation-options', [ProductController::class, 'importVariationOptions']);
@@ -138,7 +141,7 @@ Route::get('export-variation-options/{shop_id}', [ProductController::class, 'exp
 Route::post('generate-description', [ProductController::class, 'generateDescription']);
 Route::get('export-attributes/{shop_id}', [AttributeController::class, 'exportAttributes']);
 Route::get('download_url/token/{token}', [DownloadController::class, 'downloadFile'])->name('download_url.token');
-Route::get('export-order/token/{token}', [OrderController::class, 'exportOrder'])->name('export_order.token');
+
 Route::post('subscribe-to-newsletter', [UserController::class, 'subscribeToNewsletter'])->name('subscribeToNewsletter');
 Route::get('download-invoice/token/{token}', [OrderController::class, 'downloadInvoice'])->name('download_invoice.token');
 
@@ -165,6 +168,7 @@ Route::get('near-by-shop/{lat}/{lng}', [ShopController::class, 'nearByShop']);
 
 Route::get('store-notices', [StoreNoticeController::class, 'index'])->name('store-notices.index');
 
+Route::get('products/export', [ProductExportController::class, 'export'])->name('admin.products.export');
 Route::apiResource('products', ProductController::class, [
     'only' => ['index', 'show'],
 ]);
@@ -729,6 +733,9 @@ Route::group([
     Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
         'only' => ['update', 'destroy'],
     ]);
+    Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
+    Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
+    Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
 });
 Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::get('cart', [CartController::class, 'index']);

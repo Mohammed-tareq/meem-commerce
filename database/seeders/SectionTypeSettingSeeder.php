@@ -13,7 +13,7 @@ class SectionTypeSettingSeeder extends Seeder
         $types = [
             [
                 'type' => 'banners',
-                'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                'front' => [],
                 'back'  => [
                     "slug" => "",
                 ],
@@ -22,8 +22,6 @@ class SectionTypeSettingSeeder extends Seeder
                 'type' => 'sliders',
                 'front' => ['autoplay' => true, 'slider_speed' => 5000],
                 'back'  => [
-                    'start_date' => '2026-06-01',
-                    'end_date' => '2026-06-20',
                     'limit' => 10,
                     'slidersId' => [],
                     'order' => 'desc',
@@ -40,7 +38,7 @@ class SectionTypeSettingSeeder extends Seeder
             ],
             [
                 'type' => 'categories',
-                'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                'front' => [],
                 'back'  => [
                     'parent' => true,
                     'limit' => 10,
@@ -50,7 +48,7 @@ class SectionTypeSettingSeeder extends Seeder
             ],
             [
                 'type' => 'products',
-                'front' => ['autoplay' => true, 'slider_speed' => 5000],
+                'front' =>[],
                 'back'  => [
                     'limit' => 20,
                     'order' => 'desc',

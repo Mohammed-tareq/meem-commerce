@@ -218,5 +218,15 @@ return [
     'MESSAGE.STAFFS_LISTED_SUCCESSFULLY' => 'Staffs listed successfully',
     'MESSAGE.USER_FETCHED_SUCCESSFULLY' => 'User fetched successfully',
     'MESSAGE.CANNOT_ASSIGN_ROLE_TO_USER'=> 'Cannot assign role to user',
-    'MESSAGE.CATEGORY_FEATURE_TOGGLED_SUCCESSFULLY' => 'Category feature toggled successfully'
+    'MESSAGE.CATEGORY_FEATURE_TOGGLED_SUCCESSFULLY' => 'Category feature toggled successfully',
+    'MESSAGE.IMPORT_STARTED_SUCCESSFULLY' => 'Import started successfully',
+    'MESSAGE.IMPORT_STATUS_FETCHED' => 'Import status fetched',
+    'MESSAGE.EXPORT_STARTED_SUCCESSFULLY' => 'Export started successfully',
+    'MESSAGE.IMPORT_NO_ERRORS' => 'No errors found',
+    'IMPORT.VALIDATION.FILE_REQUIRED' => 'An Excel file is required',
+    'IMPORT.VALIDATION.FILE_MIMES' => 'The file must be a valid Excel file (xlsx, xls, or ods)',
+    'IMPORT.VALIDATION.FILE_MAX' => 'The file size must not exceed 20MB',
+    'IMPORT.VALIDATION.IMAGES_SOURCE_REQUIRED' => 'Please specify the image source (url or none)',
+    'IMPORT.VALIDATION.IMAGES_SOURCE_IN' => 'Image source must be url or none',
+    'EXPORT.VALIDATION.INVALID_PRODUCT_TYPE' => 'Invalid product type. Must be simple or variable',
 ];
