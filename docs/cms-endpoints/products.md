@@ -209,12 +209,26 @@ All endpoints return:
 |-------|------|---------|-------------|
 | `page` | int | 1 | Page number |
 | `limit` | int | 15 | Results per page |
+| `search` | string | — | Search in product name, description, SKU, and variant SKUs |
 | `with` | string | — | Relations to eager load (semicolon separated, e.g. `variations;categories;flash_sales`) |
-| `order_by` | string | — | Column to sort by |
-| `sort` | string | `asc` | Sort direction |
-| `search` | string | — | Search in product fields (via RequestCriteria) |
+| `sort` | string | `desc` | Legacy sort direction by `created_at` (`asc` or `desc`) |
+| `orderBy` | string | `created_at` | Column to sort by. Supported: `created_at`, `updated_at`, `name`, `price`, `sold_quantity`, `sku`, `id` |
+| `orderDir` | string | `desc` | Sort direction (`asc` or `desc`) |
 | `date_range` | string | — | Date range `YYYY-MM-DD//YYYY-MM-DD` for availability filtering |
 | `flash_sale_builder` | mixed | — | Flash sale product processing |
+| `status` | int | — | Filter by product status (`0` or `1`) |
+| `category` | string | — | Filter by category slug (e.g. `?category=electronics`) |
+| `banner` | string | — | Filter by banner slug (e.g. `?banner=summer-sale`) |
+| `flash_sale` | string | — | Filter by flash sale slug (e.g. `?flash_sale=flash-01`) |
+| `slider` | string | — | Filter by slider slug (e.g. `?slider=hero-banner`) |
+
+**URL Examples:**
+```
+GET /api/v1/products?category=electronics&flash_sale=summer-sale&orderBy=price&orderDir=asc&limit=20
+GET /api/v1/products?search=iphone&banner=homepage-banner&orderBy=name&orderDir=asc
+GET /api/v1/products?slider=featured&status=1&sort=desc&page=2
+GET /api/v1/products?category=clothing&orderBy=sold_quantity&orderDir=desc&limit=10
+```
 
 **Business Logic:**
 1. If `date_range` is set, calculates unavailable products via `getUnavailableProducts()` and excludes them

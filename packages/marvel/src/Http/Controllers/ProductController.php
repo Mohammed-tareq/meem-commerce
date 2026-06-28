@@ -119,16 +119,33 @@ class ProductController extends CoreController
     {
         $limit = $request->limit ? $request->limit : 15;
         $term = trim((string) $request->get('search', ''));
-        $sort = trim((string) $request->get('sort',''));
-        $products = $this->fetchProducts($request)->with(['variations','categories','flash_sales']);
+        $sort = trim((string) $request->get('sort', ''));
+        $orderBy = trim((string) $request->get('orderBy', 'created_at'));
+        $orderDir = trim((string) $request->get('orderDir', 'desc'));
+
+        $products = $this->fetchProducts($request)->with(['variations', 'categories', 'flash_sales']);
+
         if ($term !== '') {
             $this->applyProductSearch($products, $term, app()->getLocale());
         }
+
+        $sortable = ['created_at', 'updated_at', 'name', 'price', 'sold_quantity', 'sku', 'id'];
         if ($sort !== '') {
-            $products = $products->orderBy('created_at',$sort);
+            $dir = strtolower($sort) === 'asc' ? 'asc' : 'desc';
+            $products = $products->orderBy('created_at', $dir);
+        } elseif (in_array($orderBy, $sortable)) {
+            $dir = strtolower($orderDir) === 'asc' ? 'asc' : 'desc';
+            if ($orderBy === 'name') {
+                $products = $products->orderBy('name->' . app()->getLocale(), $dir);
+            } else {
+                $products = $products->orderBy($orderBy, $dir);
+            }
+        } else {
+            $products = $products->orderBy('created_at', 'desc');
         }
+
         $products = $products->paginate($limit)->withQueryString();
-        $data = new  ProductCollection($products);
+        $data = new ProductCollection($products);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
@@ -140,7 +157,12 @@ class ProductController extends CoreController
             $builder->orWhere(function (Builder $sub) use ($term, $locale) {
                 $this->applyTranslatableLike($sub, 'description', $term, $locale);
             });
-          
+
+            $builder->orWhere('sku', 'like', "%{$term}%");
+
+            $builder->orWhereHas('variations', function (Builder $variantQuery) use ($term) {
+                $variantQuery->where('sku', 'like', "%{$term}%");
+            });
         });
     }
 
@@ -182,6 +204,34 @@ class ProductController extends CoreController
 
         if ($request->flash_sale_builder) {
             $products_query = $this->repository->processFlashSaleProducts($request, $products_query);
+        }
+
+        if ($request->has('category')) {
+            $categorySlug = trim((string) $request->category);
+            $products_query->whereHas('categories', function (Builder $q) use ($categorySlug) {
+                $q->where('slug', $categorySlug);
+            });
+        }
+
+        if ($request->has('banner')) {
+            $bannerSlug = trim((string) $request->banner);
+            $products_query->whereHas('banners', function (Builder $q) use ($bannerSlug) {
+                $q->where('slug', $bannerSlug);
+            });
+        }
+
+        if ($request->has('flash_sale')) {
+            $flashSaleSlug = trim((string) $request->flash_sale);
+            $products_query->whereHas('flash_sales', function (Builder $q) use ($flashSaleSlug) {
+                $q->where('slug', $flashSaleSlug);
+            });
+        }
+
+        if ($request->has('slider')) {
+            $sliderSlug = trim((string) $request->slider);
+            $products_query->whereHas('sliders', function (Builder $q) use ($sliderSlug) {
+                $q->where('slug', $sliderSlug);
+            });
         }
 
         return $products_query;

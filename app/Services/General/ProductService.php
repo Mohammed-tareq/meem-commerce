@@ -659,6 +659,12 @@ class ProductService
                 });
             });
 
+            $builder->orWhere('sku', 'like', "%{$term}%");
+
+            $builder->orWhereHas('variations', function (Builder $variantQuery) use ($term) {
+                $variantQuery->where('sku', 'like', "%{$term}%");
+            });
+
             $builder->orWhereHas('reviews', function (Builder $reviewQuery) use ($term) {
                 $reviewQuery->where('comment', 'like', '%' . $term . '%');
             });
