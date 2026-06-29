@@ -378,9 +378,9 @@ class ProductController extends CoreController
         public function destroyAll(Request $request)
     {
         try {
-            $count = Product::withTrashed()->count();
+            $count = Product::count();
 
-            Product::withTrashed()->chunk(100, function ($products) {
+            Product::chunk(100, function ($products) {
                 foreach ($products as $product) {
                     $this->forceDeleteProduct($product);
                 }
@@ -408,7 +408,7 @@ class ProductController extends CoreController
         try {
             $ids = $request->input('ids');
 
-            Product::withTrashed()->whereIn('id', $ids)->chunk(100, function ($products) {
+            Product::whereIn('id', $ids)->chunk(100, function ($products) {
                 foreach ($products as $product) {
                     $this->forceDeleteProduct($product);
                 }

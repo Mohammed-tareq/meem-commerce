@@ -11,7 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
+
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -74,14 +74,11 @@ class ImportProductsJob implements ShouldQueue
                 'errors' => $failedRows,
             ]);
 
-            Log::info("Import {$this->importId} completed: {$successCount} success, " . count($failedRows) . " failed");
         } catch (Exception $e) {
             $import->update([
                 'status' => 'failed',
                 'errors' => [['sheet' => 'system', 'row' => 0, 'sku' => '', 'error_message' => $e->getMessage()]],
             ]);
-
-            Log::error("Import {$this->importId} failed: " . $e->getMessage());
 
             throw $e;
         }
@@ -93,7 +90,5 @@ class ImportProductsJob implements ShouldQueue
         if ($import) {
             $import->update(['status' => 'failed']);
         }
-
-        Log::error("Import {$this->importId} completely failed after retries: " . $exception->getMessage());
     }
 }

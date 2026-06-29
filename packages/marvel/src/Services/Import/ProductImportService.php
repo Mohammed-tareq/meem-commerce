@@ -6,7 +6,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+
 use Illuminate\Support\Str;
 use Marvel\Database\Models\Attribute;
 use Marvel\Database\Models\AttributeProduct;
@@ -100,7 +100,7 @@ class ProductImportService
                 'sku' => $row['sku'] ?? 'N/A',
                 'error_message' => $e->getMessage(),
             ];
-            Log::error("Product import row {$rowIndex} failed: " . $e->getMessage());
+
         }
     }
 
@@ -167,7 +167,7 @@ class ProductImportService
                 'sku' => $productSku,
                 'error_message' => $e->getMessage(),
             ];
-            Log::error("Variant import row {$rowIndex} for SKU {$productSku} failed: " . $e->getMessage());
+
         }
     }
 
@@ -279,11 +279,10 @@ class ProductImportService
 
     public function processProductImage(string $productSku, string $imageUrl): void
     {
-        Log::info("Processing image for SKU {$productSku}: {$imageUrl}");
 
         $product = Product::where('sku', $productSku)->first();
         if (!$product) {
-            Log::warning("Product SKU {$productSku} not found for image import");
+
             return;
         }
 
@@ -302,12 +301,9 @@ class ProductImportService
             } elseif (file_exists($imageUrl)) {
                 $product->addMedia($imageUrl)
                     ->toMediaCollection('products');
-                Log::info("Imported local image for SKU {$productSku}: {$imageUrl}");
-            } else {
-                Log::warning("Invalid image source skipped for SKU {$productSku}: {$imageUrl}");
             }
         } catch (Exception $e) {
-            Log::warning("Image import for SKU {$productSku} failed: " . $e->getMessage());
+
         }
     }
 
@@ -315,16 +311,13 @@ class ProductImportService
     {
         $product = Product::where('sku', $productSku)->first();
         if (!$product) {
-            Log::warning("syncCategories: Product SKU {$productSku} not found");
             return;
         }
 
         $categoryIds = Category::whereIn('slug', $categorySlugs)->pluck('id')->toArray();
         if (!empty($categoryIds)) {
             $product->categories()->sync($categoryIds);
-            Log::info("syncCategories: Synced {$productSku} to categories: " . implode(',', $categoryIds));
-        } else {
-            Log::warning("syncCategories: No matching categories for slugs: " . implode(',', $categorySlugs));
+        }
         }
     }
 
@@ -332,16 +325,13 @@ class ProductImportService
     {
         $product = Product::where('sku', $productSku)->first();
         if (!$product) {
-            Log::warning("syncBrands: Product SKU {$productSku} not found");
             return;
         }
 
         $brandIds = Brand::whereIn('slug', $brandSlugs)->pluck('id')->toArray();
         if (!empty($brandIds)) {
             $product->brands()->sync($brandIds);
-            Log::info("syncBrands: Synced {$productSku} to brands: " . implode(',', $brandIds));
-        } else {
-            Log::warning("syncBrands: No matching brands for slugs: " . implode(',', $brandSlugs));
+        }
         }
     }
 
@@ -349,16 +339,13 @@ class ProductImportService
     {
         $product = Product::where('sku', $productSku)->first();
         if (!$product) {
-            Log::warning("syncFlashSales: Product SKU {$productSku} not found");
             return;
         }
 
         $flashSaleIds = FlashSale::whereIn('slug', $flashSaleSlugs)->pluck('id')->toArray();
         if (!empty($flashSaleIds)) {
             $product->flash_sales()->sync($flashSaleIds);
-            Log::info("syncFlashSales: Synced {$productSku} to flash sales: " . implode(',', $flashSaleIds));
-        } else {
-            Log::warning("syncFlashSales: No matching flash sales for slugs: " . implode(',', $flashSaleSlugs));
+        }
         }
     }
 
@@ -366,16 +353,13 @@ class ProductImportService
     {
         $product = Product::where('sku', $productSku)->first();
         if (!$product) {
-            Log::warning("syncSliders: Product SKU {$productSku} not found");
             return;
         }
 
         $sliderIds = Slider::whereIn('slug', $sliderSlugs)->pluck('id')->toArray();
         if (!empty($sliderIds)) {
             $product->sliders()->sync($sliderIds);
-            Log::info("syncSliders: Synced {$productSku} to sliders: " . implode(',', $sliderIds));
-        } else {
-            Log::warning("syncSliders: No matching sliders for slugs: " . implode(',', $sliderSlugs));
+        }
         }
     }
 
