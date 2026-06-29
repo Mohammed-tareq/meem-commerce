@@ -375,15 +375,7 @@ class ProductController extends CoreController
     }
 
 
-    /**
-     * destroyAll
-     *
-     * Force delete ALL products with their variants, relations, and media.
-     *
-     * @param  Request $request
-     * @return JsonResponse
-     */
-    public function destroyAll(Request $request): JsonResponse
+        public function destroyAll(Request $request)
     {
         try {
             $count = Product::withTrashed()->count();
