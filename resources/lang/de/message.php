@@ -5,4 +5,5 @@ return [
     'MESSAGE.IMPORT_STATUS_FETCHED' => 'Importstatus abgerufen',
     'MESSAGE.EXPORT_STARTED_SUCCESSFULLY' => 'Export erfolgreich gestartet',
     'MESSAGE.IMPORT_NO_ERRORS' => 'Keine Fehler gefunden',
+    'MESSAGE.PRODUCTS_DELETED_SUCCESSFULLY' => 'Produkte erfolgreich gelöscht',
 ];

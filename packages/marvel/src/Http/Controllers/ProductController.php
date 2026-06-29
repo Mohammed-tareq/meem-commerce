@@ -30,10 +30,12 @@ use Marvel\Database\Models\Tag;
 use Marvel\Exceptions\MarvelNotFoundException;
 use \OpenAI;
 use Marvel\Enums\Permission;
+use Marvel\Http\Requests\BulkDeleteProductsRequest;
 use Marvel\Http\Resources\GetSingleProductResource;
 use Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Http\Resources\ProductResource;
 
+use const Dom\NOT_FOUND_ERR;
 
 /**
  * @OA\Tag(name="Products", description="Product catalog endpoints - browse, search, and manage products")
@@ -305,7 +307,7 @@ class ProductController extends CoreController
 
             return $product->load('variations', 'categories', 'flash_sales', 'banners', 'sliders', 'brands', 'reviews');
         } catch (Exception $e) {
-            throw new MarvelNotFoundException();
+            throw new MarvelNotFoundException(NOT_FOUND);
         }
     }
 
@@ -360,17 +362,12 @@ class ProductController extends CoreController
     }
 
 
-    /**
-     * destroyProduct
-     *
-     * @param  Request $request
-     * @return void
-     */
+
     public function destroyProduct(Request $request)
     {
         try {
             $product = $this->repository->findOrFail($request->id);
-            $product->delete();
+            $this->forceDeleteProduct($product);
             return $this->apiResponse(DELETE_PRODUCT_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException($e->getMessage());
@@ -378,6 +375,86 @@ class ProductController extends CoreController
     }
 
 
+    /**
+     * destroyAll
+     *
+     * Force delete ALL products with their variants, relations, and media.
+     *
+     * @param  Request $request
+     * @return JsonResponse
+     */
+    public function destroyAll(Request $request): JsonResponse
+    {
+        try {
+            $count = Product::withTrashed()->count();
+
+            Product::withTrashed()->chunk(100, function ($products) {
+                foreach ($products as $product) {
+                    $this->forceDeleteProduct($product);
+                }
+            });
+
+            return $this->apiResponse(PRODUCTS_DELETED_SUCCESSFULLY, 200, true, [
+                'deleted_count' => $count,
+            ]);
+        } catch (MarvelException $e) {
+            throw new MarvelException($e->getMessage());
+        }
+    }
+
+
+    /**
+     * destroyBulk
+     *
+     * Force delete specific products by IDs with their variants, relations, and media.
+     *
+     * @param  BulkDeleteProductsRequest $request
+     * @return JsonResponse
+     */
+    public function destroyBulk(BulkDeleteProductsRequest $request): JsonResponse
+    {
+        try {
+            $ids = $request->input('ids');
+
+            Product::withTrashed()->whereIn('id', $ids)->chunk(100, function ($products) {
+                foreach ($products as $product) {
+                    $this->forceDeleteProduct($product);
+                }
+            });
+
+            return $this->apiResponse(PRODUCTS_DELETED_SUCCESSFULLY, 200, true, [
+                'deleted_ids' => $ids,
+            ]);
+        } catch (MarvelException $e) {
+            throw new MarvelException($e->getMessage());
+        }
+    }
+
+
+    private function forceDeleteProduct(Product $product): void
+    {
+        $product->clearMediaCollection('products');
+
+        $product->variations->each(function ($variant) {
+            $variant->attributeProducts()->delete();
+            $variant->delete();
+        });
+
+        $product->reviews()->delete();
+        $product->categories()->detach();
+        $product->brands()->detach();
+        $product->banners()->detach();
+        $product->tags()->detach();
+        $product->flash_sales()->detach();
+        $product->promotions()->detach();
+        $product->coupons()->detach();
+        $product->sliders()->detach();
+      
+        $product->features()->detach();
+        $product->flash_sale_requests()->detach();
+
+        $product->forceDelete();
+    }
 
     /**
      * relatedProducts

@@ -1,387 +1,468 @@
-# Product Import/Export System
+# Product Import System — Full Flow
 
-## Overview
+## Table of Contents
 
-The import/export system allows bulk product management via Excel files (`.xlsx`). The file contains **7 sheets**. Attributes are **auto-generated** from the `product_variants` sheet — there is no separate attributes sheet.
-
-Products are linked across sheets by the `products.sku` column.
-
-All importing logic reuses existing product creation/update business logic from the system. The importer must NOT directly calculate or save computed fields.
-
-## Implementation Rules
-
-Before implementing features:
-
-1. Analyze existing project structure.
-2. Read existing Product creation/update flow.
-3. Find the real business logic responsible for:
-   - Product price calculation
-   - Discount calculation
-   - Sale price calculation
-   - Flash sale calculation
-   - Final price calculation
-
-The importer MUST reuse the same logic. Do NOT create duplicated calculation logic inside import classes.
-
-## Required Package
-
-This system uses `maatwebsite/excel` (Laravel Excel) with the following features:
-
-| Feature | Used In |
-|---------|---------|
-| `WithMultipleSheets` | `ProductsImport`, `ProductsExport` |
-| `WithChunkReading` | `ProductsSheetImport`, `ProductVariantsSheetImport`, `ImagesSheetImport` |
-| Queued Import | `ImportProductsJob` (dispatched on `high` queue) |
-| Export Classes | 7 sheet export classes, one per sheet |
+1. [Overview](#1-overview)
+2. [The `imports` Database Table](#2-the-imports-database-table)
+3. [Endpoints — User Story](#3-endpoints--user-story)
+   - [POST /api/v1/products/import — Start an Import](#31-post-apiv1productsimport--start-an-import)
+   - [GET /api/v1/products/import/{id} — Check Status](#32-get-apiv1productsimportid--check-import-status)
+   - [GET /api/v1/products/import/{id}/download-errors — Download Error Report](#33-get-apiv1productsimportiddownload-errors--download-error-report)
+4. [Backend Flow — How It Runs](#4-backend-flow--how-it-runs-detailed)
+   - [Products Sheet](#41-products-sheet-processing-processproductrow)
+   - [Variants Sheet](#42-variants-sheet-processing-processvariantrow)
+   - [Images Sheet](#43-images-sheet-processing-processproductimage)
+   - [Relations Sheets](#44-relations-sheets-categories-brands-flash_sales-sliders)
+   - [Finalize Variants](#45-finalize-variants-finalizevariants)
+5. [Queue Configuration](#5-queue-configuration)
+6. [Frontend Integration Summary](#6-frontend-integration-summary)
+7. [Error Handling](#7-error-handling)
+8. [Testing](#8-testing)
+9. [Troubleshooting](#9-troubleshooting)
 
 ---
 
-## Endpoints
+## 1. Overview
 
-### Import
+The import feature lets an admin upload an Excel file (`.xlsx`, `.xls`, `.ods`) with **7 sheets** to bulk create/update products, variants, images, categories, brands, flash sales, and sliders. The import runs **asynchronously** via a Laravel queue job so the admin can continue working while the import processes.
 
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/v1/products/import` | Yes | Upload Excel file to start import |
-| GET | `/api/v1/products/import/{id}` | Yes | Check import progress/status |
-| GET | `/api/v1/products/import/{id}/download-errors` | Yes | Download error report for failed rows |
-| GET | `/api/v1/samples/product-import` | No | Download sample Excel template |
+**Files involved:**
 
-**POST `/api/v1/products/import`** accepts:
-- `file` (required) — `.xlsx`, `.xls`, or `.ods` file (max 20MB)
-
-### Export
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/v1/products/export` | No | Export all products as Excel |
-
-**GET `/api/v1/products/export`** accepts optional filters:
-- `status` — filter by product status (0 or 1)
-- `product_type` — `simple` or `variable`
-- `category_id` — filter by category
-- `brand_id` — filter by brand
+| Layer | File |
+|-------|------|
+| Controller | `packages/marvel/src/Http/Controllers/ProductImportController.php` |
+| Request | `packages/marvel/src/Http/Requests/ProductImportRequest.php` |
+| Job (Queue) | `packages/marvel/src/Jobs/ImportProductsJob.php` |
+| Service | `packages/marvel/src/Services/Import/ProductImportService.php` |
+| Excel Imports | `packages/marvel/src/Imports/ProductsImport.php` + 7 Sheet classes |
+| Model | `packages/marvel/src/Database/Models/Import.php` |
+| Enum | `packages/marvel/src/Enums/ImportStatus.php` |
+| Migration | `database/migrations/2026_06_27_000001_create_imports_table.php` |
 
 ---
 
-## Excel Sheets (7)
+## 2. The `imports` Database Table
 
-### 1. `products`
-
-Primary product data. One row = one product. UPSERT by `sku`.
-
-**Example:**
-
-| sku       | name_en | price | product_type |
-|-----------|---------|-------|--------------|
-| PHONE-001 | iPhone  | 1000  | simple       |
-| SHIRT-001 | Shirt   | 500   | variable     |
-
-| Column | Type | Required | Description |
-|--------|------|----------|-------------|
-| `sku` | string | **Yes** | Unique. If exists → update; if new → create |
-| `name_en` | string | **Yes** | English name (stored as JSON) |
-| `name_ar` | string | No | Arabic name (stored as JSON) |
-| `description_en` | string | No | English description |
-| `description_ar` | string | No | Arabic description |
-| `price` | float | **Yes** | Product base price |
-| `product_type` | string | No | `simple` or `variable` (default: `simple`) |
-| `quantity` | integer | No | Stock quantity |
-| `status` | boolean | No | Boolean-parsed |
-| `in_stock` | boolean | No | Stock availability |
-| `has_discount` | boolean | No | Discount flag |
-| `discount_type` | string | No | `percentage` or `fixed_rate` |
-| `discount_amount` | float | No | Discount value |
-| `start_date` | date | No | Discount start (e.g. `2026-07-01`) |
-| `end_date` | date | No | Discount end |
-| `height` | string | No | Product height |
-| `width` | string | No | Product width |
-| `length` | string | No | Product length |
-| `weight` | string | No | Product weight |
-
-**Export notes:** The `pieces` and `has_flash_sale` columns are NOT exported.
-
-### 2. `product_variants`
-
-One row = one variant. Attributes are auto-generated from this sheet.
-
-**Example:**
-
-| product_sku | price | sale_price | attributes                              |
-|-------------|-------|------------|-----------------------------------------|
-| SHIRT-001   | 200   | 150        | Color|اللون:Red|احمر-Size|المقاس:L|كبير |
-
-| Column | Type | Required | Description |
-|--------|------|----------|-------------|
-| `product_sku` | string | **Yes** | Must match a `sku` in the `products` sheet |
-| `price` | float | **Yes** | Used as matching field |
-| `sale_price` | float | No | Used as matching field |
-| `quantity` | integer | No | Variant stock |
-| `height` | string | No | Used as matching field |
-| `width` | string | No | Used as matching field |
-| `length` | string | No | Used as matching field |
-| `weight` | string | No | Used as matching field |
-| `attributes` | string | No | Format: `EnglishName|ArabicName:EnglishValue|ArabicValue` (see below) |
-
-**Variant matching** uses existing database fields: `product_id`, `price`, `sale_price`, `height`, `width`, `length`, `weight`. Empty/null fields are matched as `NULL` to prevent duplicate variants.
-
-**Behavior:** Existing matches are **updated**, new rows are **created**. After all rows are processed, variants in the database not present in the Excel are **deleted** (the Excel becomes the complete set of variants for each product).
-
-The `product_type` is automatically set to `variable`.
-
-**Export notes:** The `variant_sku` and `in_stock` columns are NOT exported.
-
-### 3. `images`
-
-Each row represents one image. Multiple images for the same product use multiple rows. Images are attached via Spatie Media Library.
-
-| Column | Type | Required | Description |
-|--------|------|----------|-------------|
-| `product_sku` | string | **Yes** | Must match a `sku` in the `products` sheet |
-| `image` | string | No | Single image URL |
-
-**Example:**
-
-| product_sku | image                           |
-|-------------|---------------------------------|
-| PHONE-001   | https://site.com/image1.jpg     |
-| PHONE-001   | https://site.com/image2.jpg     |
-
-**Import:** Get product by SKU, download the image via `UrlImageHandler` (supports Google Drive URLs), validate MIME type and file size (max 5MB), then attach via `$product->addMedia()` → `toMediaCollection('products')`. Failed downloads are tracked in the import error report.
-
-**Google Drive URLs** are automatically converted:
-- `https://drive.google.com/file/d/FILE_ID/view` → `https://drive.google.com/uc?export=download&confirm=t&id=FILE_ID`
-- If download fails, falls back to `https://drive.google.com/thumbnail?id=FILE_ID&sz=w1000`
-
-**Export:** One row per image URL.
-
-### 4. `categories`
-
-| Column | Type | Required | Description |
-|--------|------|----------|-------------|
-| `product_sku` | string | **Yes** | Links to `products.sku` |
-| `category_slug` | string | **Yes** | Existing category slug |
-
-Replaces all existing category relations (sync).
-
-### 5. `brands`
-
-| Column | Type | Required | Description |
-|--------|------|----------|-------------|
-| `product_sku` | string | **Yes** | Links to `products.sku` |
-| `brand_slug` | string | **Yes** | Existing brand slug |
-
-Replaces all existing brand relations (sync).
-
-### 6. `flash_sales`
-
-| Column | Type | Required | Description |
-|--------|------|----------|-------------|
-| `product_sku` | string | **Yes** | Links to `products.sku` |
-| `flash_sale_slug` | string | **Yes** | Existing flash sale slug |
-
-Replaces all existing flash sale relations (sync).
-
-### 7. `sliders`
-
-| Column | Type | Required | Description |
-|--------|------|----------|-------------|
-| `product_sku` | string | **Yes** | Links to `products.sku` |
-| `slider_slug` | string | **Yes** | Existing slider slug |
-
-Replaces all existing slider relations (sync).
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | bigint PK | Auto-increment |
+| `type` | string | `'product'` (reserved for future types) |
+| `file_path` | string | Path in `storage/app/public/imports/` |
+| `file_name` | string | Original uploaded filename |
+| `status` | string | `pending` → `processing` → `completed` / `completed_with_errors` / `failed` |
+| `total_rows` | int | Total rows processed |
+| `processed_rows` | int | Rows attempted |
+| `success_rows` | int | Rows that succeeded |
+| `failed_rows` | int | Rows that failed |
+| `errors` | json | Array of `{sheet, row, sku, error_message}` |
+| `created_by` | FK | → `users.id` |
+| `created_at` | timestamp | |
+| `updated_at` | timestamp | |
 
 ---
 
-## Boolean Values
+## 3. Endpoints — User Story
 
-These columns accept case-insensitive values: `status`, `in_stock`, `has_discount`
+### 3.1. POST `/api/v1/products/import` — Start an Import
 
-| Input Value | Result |
-|-------------|--------|
-| `1`, `true`, `yes`, `publish`, `approved` | `true` |
-| `0`, `false`, `no`, (empty), anything else | `false` |
+**Who:** Super Admin
 
----
+**What they do:** Upload an Excel file via a form/modal in the dashboard.
 
-## Attributes System
-
-There is NO attributes sheet. All attributes come from `product_variants.attributes`.
-
-Format:
-
+**Request:**
 ```
-EnglishName|ArabicName:EnglishValue|ArabicValue-EnglishName|ArabicName:EnglishValue|ArabicValue
+POST /api/v1/products/import
+Content-Type: multipart/form-data
+
+file: products.xlsx   (required, max 20MB, types: xlsx/xls/ods)
 ```
 
-**Example:**
+**What happens immediately (synchronous):**
+1. Validates the file (required, xlsx/xls/ods, max 20MB)
+2. Stores the file in `storage/app/public/imports/`
+3. Creates a new row in the `imports` table with `status = pending`
+4. Dispatches `ImportProductsJob` to the `high` queue
+5. Returns HTTP **202 Accepted**:
 
+```json
+{
+    "success": true,
+    "message": "Import started successfully",
+    "data": {
+        "import_id": 1,
+        "status": "pending"
+    }
+}
+```
+
+**Frontend behavior:**
+- Show a success toast: "Import started"
+- Redirect to an **import status page** (or show a progress component)
+- Start **polling** `GET /api/v1/products/import/{id}` every 2-3 seconds
+
+---
+
+### 3.2. GET `/api/v1/products/import/{id}` — Check Import Status
+
+**Who:** Super Admin
+
+**What they do:** Visit the import status page or the frontend polls automatically.
+
+**Response:**
+```json
+{
+    "success": true,
+    "message": "Import status fetched",
+    "data": {
+        "id": 1,
+        "status": "processing",
+        "total_rows": 100,
+        "processed_rows": 45,
+        "success_rows": 40,
+        "failed_rows": 5,
+        "progress": 45,
+        "errors": [
+            {"sheet": "products", "row": 12, "sku": "PRD-023", "error_message": "Invalid price"}
+        ]
+    }
+}
+```
+
+**Status values & what they mean:**
+
+| Status | Meaning | Frontend Action |
+|--------|---------|-----------------|
+| `pending` | Job not picked up yet | Keep polling |
+| `processing` | Job is actively processing rows | Show progress bar |
+| `completed` | All rows succeeded | Show success message, stop polling |
+| `completed_with_errors` | Some rows failed | Show warning + "Download Errors" button |
+| `failed` | Everything failed or system error | Show error message, stop polling |
+
+**Frontend behavior:**
+- Show a **progress bar**: `progress` field (0-100%)
+- Show counters: `success_rows ✓`, `failed_rows ✗`
+- If `status` is `completed` → green success banner
+- If `status` is `completed_with_errors` → yellow warning + **"Download Error Report"** button
+- If `status` is `failed` → red error banner
+- Display errors inline if few, or link to download full report
+
+**Progress calculation:**
+```
+progress = round((processed_rows / total_rows) * 100, 2)
+```
+Minimum 0, maximum 100.
+
+**Polling code example (JavaScript):**
+```js
+async function pollImportStatus(importId) {
+    const poll = async () => {
+        const res = await fetch(`/api/v1/products/import/${importId}`);
+        const data = await res.json();
+        
+        updateProgressBar(data.data.progress);
+        updateCounters(data.data.success_rows, data.data.failed_rows);
+        
+        if (['completed', 'completed_with_errors', 'failed'].includes(data.data.status)) {
+            stopPolling();
+            if (data.data.status === 'completed_with_errors') {
+                showDownloadErrorsButton(importId);
+            }
+        }
+    };
+    
+    const interval = setInterval(poll, 3000);
+    poll(); // immediate first call
+}
+```
+
+---
+
+### 3.3. GET `/api/v1/products/import/{id}/download-errors` — Download Error Report
+
+**Who:** Super Admin
+
+**What they do:** Click the "Download Error Report" button.
+
+**What happens:**
+1. Finds the import record
+2. If no errors exist → returns **404** with message "No errors to download"
+3. Generates an Excel file on-the-fly with columns: `Sheet`, `Row`, `SKU`, `Error Message`
+4. Returns the file as a download, then **deletes it from the server**
+
+**Frontend behavior:**
+- Trigger a file download
+- The browser will save `failed_import_rows_{id}.xlsx`
+- Open in Excel to see which rows failed and why
+
+---
+
+## 4. Backend Flow — How It Runs (Detailed)
+
+### Step-by-step execution within `ImportProductsJob::handle()`:
+
+```
+Upload (Controller)
+  │
+  ▼
+Store file, create import record (status=pending)
+  │
+  ▼
+Dispatch ImportProductsJob to 'high' queue
+  │
+  ▼
+[Queue Worker picks up the job]
+  │
+  ▼
+Update status = 'processing'
+  │
+  ▼
+Read file from storage
+  │
+  ▼
+Create ProductImportService instance (shared across all sheets)
+  │
+  ▼
+Run Excel::import() which processes 7 sheets IN ORDER:
+  │
+  ├── 1. products        → ProductImportService.processProductRow()
+  ├── 2. product_variants → ProductImportService.processVariantRow()
+  ├── 3. images           → ProductImportService.processProductImage()
+  ├── 4. categories       → ProductImportService.syncCategories()
+  ├── 5. brands           → ProductImportService.syncBrands()
+  ├── 6. flash_sales      → ProductImportService.syncFlashSales()
+  └── 7. sliders          → ProductImportService.syncSliders()
+  │
+  ▼
+Collect success/failure counts from service
+  │
+  ▼
+Update import record: status, total_rows, processed_rows, etc.
+```
+
+### 4.1. Products Sheet Processing (`processProductRow`)
+
+For each row in the `products` sheet:
+
+```
+Row data (sku, name_en, price, ...)
+  │
+  ├── Look up product by SKU in DB
+  │
+  ├── If EXISTS → fill() + saveQuietly() (update)
+  │
+  └── If NEW → new Product() + saveQuietly() (create)
+         │
+         └── SKU auto-generated if empty: 'PRD-' . uuid
+  │
+  ▼
+Calculate pricing via ProductPricingService (price_after_discount, price_after_flash_sale)
+  │
+  ▼
+fill() + saveQuietly() with computed prices
+  │
+  ▼
+DB::commit()
+  │
+  └── On error → DB::rollBack() → log error → record in failedRows[]
+```
+
+**Key design decisions:**
+- Uses `saveQuietly()` instead of `save()` to prevent Laravel Scout from trying to sync to Algolia (which isn't installed). Also prevents all model events from firing.
+- Each row is wrapped in its own DB transaction so one failed row doesn't block others.
+- Pricing is calculated via `ProductPricingService` — same service used by the admin panel, no duplicated logic.
+
+### 4.2. Variants Sheet Processing (`processVariantRow`)
+
+```
+Row data (product_sku, price, attributes, ...)
+  │
+  ├── Find parent product by product_sku
+  ├── If not found → record error, skip
+  │
+  ▼
+Find existing variant by matching (product_id, price, sale_price, dimensions)
+  │
+  ├── If EXISTS → fill() + saveQuietly() → delete old attribute relations
+  │
+  └── If NEW → new ProductVariant() + saveQuietly()
+  │
+  ▼
+Attach attributes (auto-create Attribute + AttributeValue if needed)
+  │
+  ▼
+Mark parent product as product_type = 'variable', saveQuietly()
+  │
+  ▼
+DB::commit()
+```
+
+**Attributes format in Excel:**
 ```
 Color|اللون:Red|احمر-Size|المقاس:L|كبير
 ```
+Split by `-` → groups, split by `:` → name:value, split by `|` → en|ar translations.
 
-**English-only format** (single language):
+### 4.3. Images Sheet Processing (`processProductImage`)
 
 ```
-AttributeName:Value-AttributeName:Value
+Row (product_sku, image_url)
+  │
+  ├── Find product by SKU → if not found, log warning and skip
+  │
+  ▼
+Validate URL (must be public, non-private IP)
+  │
+  ▼
+Normalize Google Drive URLs (if applicable):
+  /file/d/FILE_ID/view → /uc?export=download&id=FILE_ID
+  │
+  ▼
+Download image (max 5MB, timeout 30s) via UrlImageHandler
+  │
+  ├── Validate MIME type (jpeg, png, webp, gif, svg)
+  │
+  ▼
+Save to storage/app/temp/
+  │
+  ▼
+Attach to product via Spatie Media Library → toMediaCollection('products')
+  │
+  ▼
+Cleanup temp file
 ```
 
-**Process:**
+### 4.4. Relations Sheets (categories, brands, flash_sales, sliders)
 
-1. Split by `-` → `["Color|اللون:Red|احمر", "Size|المقاس:L|كبير"]`
-2. Split each group by `:` → `["Color|اللون", "Red|احمر"]`
-3. Split by `|` to extract language parts:
-   - Name: `English = "Color"`, `Arabic = "اللون"`
-   - Value: `English = "Red"`, `Arabic = "احمر"`
-4. Search attribute:
-   - If exists → use it
-   - If not → create attribute
-5. Search attribute value:
-   - If exists → use it
-   - If not → create attribute value
-6. Create `attribute_product` relation
+Each follows the same pattern:
+```
+Row (product_sku, slug)
+  │
+  ├── Find product by SKU → if not found, log warning and skip
+  │
+  ▼
+Find related entity by slug
+  │
+  ▼
+sync() the pivot table (replaces ALL existing relations)
+```
 
-**Single-language fallback:** If no `|` separator is present, the entire string is treated as English. Ensures backward compatibility with `Name:Value` format.
+### 4.5. Finalize Variants (`finalizeVariants`)
 
-**Any attribute name is supported** — e.g. `Color`, `Size`, `Material`, `Fabric`, `Style`, etc. Names and values are case-sensitive but slugs are normalized.
+After all variant rows are processed:
+- For each product that had variants in the Excel
+- Delete any variant in the database that was NOT in the Excel
+- This makes the Excel the "source of truth" for variants
 
 ---
 
-## Product Calculation Logic
+## 5. Queue Configuration
 
-The importer MUST NOT calculate product values manually.
+| Setting | Value |
+|---------|-------|
+| Queue | `high` |
+| Max retries | 3 |
+| Backoff | 60s, 120s, 240s |
+| Timeout | 3600s (1 hour) |
 
-All price calculations use the same service used in dashboard product creation (`ProductPricingService`).
-
-```
-Excel Data
-    ↓
-ProductPricingService
-    ↓
-Business Calculations
-    ↓
-Save Product
+**To run the queue worker:**
+```bash
+php artisan queue:work --queue=high,default
 ```
 
-**Calculated fields** (never read from Excel):
-
-| Field                 | Rule                                       |
-|-----------------------|--------------------------------------------|
-| `price_after_discount` | Computed from `price` + `discount_type` + `discount_amount` |
-| `price_after_flash_sale` | Computed from `price` + active flash sale rules |
-
-**Example:**
-
-| Input | Value |
-|-------|-------|
-| `price` | 1000 |
-| `discount_type` | percentage |
-| `discount_amount` | 20 |
-
-System calculates:
-
-```
-discount    = 200
-final_price = 800
-```
-
-No duplicated calculation logic exists inside the import — the system delegates entirely to `ProductPricingService`, which is the same service called during admin panel product creation.
+If the `.env` has `QUEUE_CONNECTION=sync`, the job runs **synchronously** (immediately, no worker needed) — useful for development and testing.
 
 ---
 
-## Import Process
+## 6. Frontend Integration Summary
 
 ```
-Upload Excel
-    ↓
-Validate
-    ↓
-Import Products (process rows one by one, upsert by SKU)
-    ↓
-Calculate Prices (via ProductPricingService)
-    ↓
-Import Variants (upsert by matching fields)
-    ↓
-Generate Attributes (auto-create missing attributes/values)
-    ↓
-Import Images (download + validate + attach via Media Library)
-    ↓
-Sync Relations (categories, brands, flash_sales, sliders)
-    ↓
-Finalize Variants (delete variants not in the Excel)
-    ↓
-Finish
+┌─────────────────────────────────────────────────────────┐
+│  Dashboard — Import Page                                 │
+│                                                          │
+│  [Upload Excel File] ───► POST /api/v1/products/import   │
+│         │                                                 │
+│         ▼                                                 │
+│  Response: { import_id: 1, status: "pending" }            │
+│         │                                                 │
+│         ▼                                                 │
+│  Start polling every 3s:                                  │
+│  GET /api/v1/products/import/1                           │
+│         │                                                 │
+│         ▼                                                 │
+│  ┌─────────────────────────────────────┐                  │
+│  │  Progress: ████████████░░░ 75%      │                  │
+│  │  ✓ 75 succeeded                     │                  │
+│  │  ✗ 5 failed                        │                  │
+│  │                                     │                  │
+│  │  [Download Error Report] ───► GET   │                  │
+│  │   (only when completed_with_errors) │                  │
+│  └─────────────────────────────────────┘                  │
+│                                                          │
+│  When status = "completed": green success banner          │
+│  When status = "completed_with_errors": yellow warning    │
+│  When status = "failed": red error banner                │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Image Download Details
+## 7. Error Handling
 
-Images are downloaded through `UrlImageHandler` which:
+**Per-row errors** are caught in `processProductRow` / `processVariantRow` and stored as:
+```json
+{
+    "sheet": "products",
+    "row": 12,
+    "sku": "PRD-023",
+    "error_message": "Invalid price value"
+}
+```
 
-1. Normalizes Google Drive URLs to direct download format
-2. Validates the URL is a public, non-private IP address
-3. Downloads with 30-second timeout
-4. Validates MIME type (jpeg, png, webp, gif, svg+xml only)
-5. Validates file size (max 5MB)
-6. Saves to `storage/app/temp/` before attaching via Spatie Media Library
-7. If download fails for a Google Drive URL, automatically retries with the thumbnail endpoint
+**System-level errors** (file not found, Excel parse error, etc.) are caught in the Job and stored as:
+```json
+{
+    "sheet": "system",
+    "row": 0,
+    "sku": "",
+    "error_message": "File format not supported"
+}
+```
 
-**Backward compatibility:** The import also supports the old pipe-delimited `images` column format (multiple URLs separated by `|`), falling back to it if the single `image` column is empty.
+**Image download failures** are logged as warnings (not stored in import errors).
+
+**Relation sync failures** (categories, brands, etc.) are logged as warnings.
 
 ---
 
-## Error Handling
+## 8. Testing
 
-Any failed row is stored with:
+Run the import feature tests:
+```bash
+php artisan test tests/Feature/ProductImportTest.php
+```
 
-| Field | Description |
-|-------|-------------|
-| `sheet` | Source sheet name (`products`, `product_variants`, `images`, etc.) |
-| `row` | Excel row number |
-| `sku` | Product SKU |
-| `error_message` | Error description |
-
-**Errors tracked:**
-
-| Source | Tracked? |
-|--------|----------|
-| Product row processing failure | Yes |
-| Variant row processing failure | Yes |
-| Variant product SKU not found | Yes |
-| **Image download failure** | **Yes** |
-| **Image invalid URL** | **Yes** |
-| **Image product SKU not found** | **Yes** |
-| Category/brand/flash sale/slider sync failure | Log only |
-
-Download error report as Excel:
-
-`GET /api/v1/products/import/{id}/download-errors`
+Tests cover:
+- Unauthenticated access (401)
+- File validation (422)
+- Job dispatch (202)
+- Status fetching (200)
+- Error download (200)
+- 404 on non-existent import
+- 404 when no errors to download
+- Product creation via `ProductImportService::processProductRow()`
+- Product update via SKU upsert
+- Empty SKU auto-generation
+- Service success/failure counters
 
 ---
 
-## Database Relations
+## 9. Troubleshooting
 
-```
-products
-
-  1:N
-
-product_variants
-
-
-product_variants
-
-  M:N (through attribute_product)
-
-attribute_values
-
-
-products
-
-  M:N categories (via category_product)
-  M:N brands     (via brand_product)
-  M:N flash_sales (via flash_sale_products)
-  M:N sliders    (via slider_product)
-  1:N media      (Spatie Media Library)
-```
+| Symptom | Likely Cause | Fix |
+|---------|-------------|-----|
+| Import never progresses past "pending" | Queue worker not running | Run `php artisan queue:work` or check `QUEUE_CONNECTION` in `.env` |
+| All rows fail with "Algolia client" error | Scout driver set to `algolia` but package not installed | Set `SCOUT_DRIVER=database` or `SCOUT_DRIVER=collection` in `.env` |
+| Products not found by SKU in later sheets | Product creation failed silently | Check `failed_rows` in import status; check `storage/logs/laravel.log` |
+| Image import fails | URL not publicly accessible, or MIME type not allowed | Verify URL is public and points to jpeg/png/webp/gif/svg |
+| File too large | Excel > 20MB | Split file or increase `max:20480` in `ProductImportRequest.php` |
+| Unexpected column names | Excel headers don't match expected format | Download the sample file and follow its structure |

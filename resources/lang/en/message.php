@@ -223,6 +223,7 @@ return [
     'MESSAGE.IMPORT_STATUS_FETCHED' => 'Import status fetched',
     'MESSAGE.EXPORT_STARTED_SUCCESSFULLY' => 'Export started successfully',
     'MESSAGE.IMPORT_NO_ERRORS' => 'No errors found',
+    'MESSAGE.PRODUCTS_DELETED_SUCCESSFULLY' => 'Products deleted successfully',
     'IMPORT.VALIDATION.FILE_REQUIRED' => 'An Excel file is required',
     'IMPORT.VALIDATION.FILE_MIMES' => 'The file must be a valid Excel file (xlsx, xls, or ods)',
     'IMPORT.VALIDATION.FILE_MAX' => 'The file size must not exceed 20MB',

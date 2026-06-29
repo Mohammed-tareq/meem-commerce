@@ -223,6 +223,7 @@ return [
     'MESSAGE.IMPORT_STATUS_FETCHED' => 'تم جلب حالة الاستيراد',
     'MESSAGE.EXPORT_STARTED_SUCCESSFULLY' => 'بدأ التصدير بنجاح',
     'MESSAGE.IMPORT_NO_ERRORS' => 'لم يتم العثور على أخطاء',
+    'MESSAGE.PRODUCTS_DELETED_SUCCESSFULLY' => 'تم حذف المنتجات بنجاح',
     'IMPORT.VALIDATION.FILE_REQUIRED' => 'ملف Excel مطلوب',
     'IMPORT.VALIDATION.FILE_MIMES' => 'يجب أن يكون الملف بصيغة Excel صالحة (xlsx, xls, or ods)',
     'IMPORT.VALIDATION.FILE_MAX' => 'حجم الملف يجب ألا يتجاوز 20 ميغابايت',

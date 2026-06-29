@@ -81,7 +81,7 @@ class UserController extends CoreController
         $this->middleware("permission:" . Permission::VIEW_USERS, ["only" => ["index", "show", "admins", "adminTrashedUsers"]]);
         $this->middleware("permission:" . Permission::CREATE_USER, ["only" => ["adminCreateUsers"]]);
         $this->middleware("permission:" . Permission::DELETE_USER, ["only" => ["adminDeleteUsers", "adminDeleteUsersForever"]]);
-        $this->middleware("permission:" . Permission::EDIT_USER, ["only" => ["adminUpdateActivationUsers"]]);
+        $this->middleware("permission:" . Permission::EDIT_USER, ["only" => ["adminUpdateActivationUsers","update"]]);
         $this->middleware("permission:" . Permission::RESTORE_USER, ["only" => ["adminRestoreUser"]]);
     }
 

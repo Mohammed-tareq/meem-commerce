@@ -748,7 +748,7 @@ All fields are `sometimes` (optional) — only send changed fields.
 
 ### DELETE /products/{id} — Delete Product
 
-**Purpose:** Permanently delete a product.
+**Purpose:** Hard-delete a single product with all its relations (variants, media, reviews, questions, wishlists, pivots). Irreversible.
 
 **Method:** `DELETE`
 
@@ -760,7 +760,13 @@ All fields are `sometimes` (optional) — only send changed fields.
 
 **Business Logic:**
 1. Finds product by ID via `repository->findOrFail($request->id)`
-2. Calls `delete()` on the model
+2. Calls `forceDeleteProduct()` which performs full cleanup:
+   - `clearMediaCollection('products')` — removes Spatie Media Library files + records
+   - Delete variants → each variant's `attributeProducts()` → variant delete
+   - Delete `reviews()`, `questions()`, `wishlists()`, `availabilities()`
+   - Delete `digital_file()` morph-one relation
+   - Detach all 16 BelongsToMany pivots (categories, brands, banners, tags, orders, shops, flash_sales, promotions, coupons, sliders, dropoff_locations, pickup_locations, deposits, persons, features, flash_sale_requests)
+   - `forceDelete()` — bypasses SoftDeletes, removes row permanently
 
 **Success Response (200):**
 ```json
@@ -777,6 +783,107 @@ All fields are `sometimes` (optional) — only send changed fields.
 | 401 | Unauthenticated |
 | 403 | Missing `delete-product` permission |
 | 404 | Product not found |
+
+---
+
+### DELETE /products/all — Delete All Products
+
+**Purpose:** Hard-delete every product in the database (including soft-deleted ones). Cleans up media, variants, reviews, questions, wishlists, and all pivot relations. Irreversible.
+
+**Method:** `DELETE`
+
+**URL:** `/products/all`
+
+**Authentication:** Required
+
+**Permissions:** `delete-product`
+
+**Business Logic:**
+1. Counts all products (including soft-deleted) via `Product::withTrashed()->count()`
+2. Iterates in chunks of 100 via `withTrashed()->chunk(100, ...)`
+3. For each product, `forceDeleteProduct()` performs:
+   - `clearMediaCollection('products')` — removes Spatie Media Library files + records
+   - Delete variants → each variant's `attributeProducts()` → variant delete
+   - Delete `reviews()`, `questions()`, `wishlists()`, `availabilities()`
+   - Delete `digital_file()` morph-one relation
+   - Detach all 16 BelongsToMany pivots (categories, brands, banners, tags, orders, shops, flash_sales, promotions, coupons, sliders, dropoff_locations, pickup_locations, deposits, persons, features, flash_sale_requests)
+   - `forceDelete()` — bypasses SoftDeletes, removes row permanently
+4. Returns deleted count
+
+**Success Response (200):**
+```json
+{
+    "status": 200,
+    "message": "Products deleted successfully",
+    "success": true,
+    "data": {
+        "deleted_count": 47
+    }
+}
+```
+
+**Error Responses:**
+| Status | Condition |
+|--------|-----------|
+| 401 | Unauthenticated |
+| 403 | Missing `delete-product` permission |
+
+---
+
+### POST /products/bulk-delete — Bulk Delete Products
+
+**Purpose:** Hard-delete specific products by their IDs with full cleanup. Irreversible.
+
+**Method:** `POST`
+
+**URL:** `/products/bulk-delete`
+
+**Authentication:** Required
+
+**Permissions:** `delete-product`
+
+**Validation Rules (via `BulkDeleteProductsRequest`):**
+
+| Field | Type | Required | Validation |
+|-------|------|----------|------------|
+| `ids` | array | **Yes** | `required`, `array`, `min:1` |
+| `ids.*` | int | **Yes** | `integer`, `min:1`, `distinct`, `exists:products,id` |
+
+**Example Request:**
+```json
+{
+    "ids": [1, 5, 12, 27]
+}
+```
+
+**Business Logic:**
+1. Validates request via `BulkDeleteProductsRequest`
+2. Queries with `Product::withTrashed()->whereIn('id', $ids)->chunk(100, ...)`
+3. Per-product cleanup identical to `destroyAll`:
+   - Clear media, delete variants + attribute products
+   - Delete reviews, questions, wishlists, availabilities, digital files
+   - Detach all pivot relations
+   - `forceDelete()`
+4. Returns array of deleted IDs
+
+**Success Response (200):**
+```json
+{
+    "status": 200,
+    "message": "Products deleted successfully",
+    "success": true,
+    "data": {
+        "deleted_ids": [1, 5, 12, 27]
+    }
+}
+```
+
+**Error Responses:**
+| Status | Condition |
+|--------|-----------|
+| 401 | Unauthenticated |
+| 403 | Missing `delete-product` permission |
+| 422 | Validation failure (missing/invalid IDs) |
 
 ---
 
@@ -990,6 +1097,10 @@ Route::get('product-stock', [ProductController::class, 'productStock']);
 Route::get('my-wishlists', [ProductController::class, 'myWishlists']);
 Route::get('products/calculate-rental-price', [ProductController::class, 'calculateRentalPrice']);
 Route::put('products/{id}/fast-shipping', [ProductController::class, 'toggleFastShipping']);
+
+// Bulk delete routes (registered before apiResource to avoid route conflict)
+Route::delete('products/all', [ProductController::class, 'destroyAll']);
+Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);
 ```
 
 Source: `packages/marvel/src/Rest/Routes.php`
@@ -1003,7 +1114,7 @@ Source: `packages/marvel/src/Rest/Routes.php`
 | `VIEW_PRODUCTS` | `view-products` | `index`, `show` |
 | `CREATE_PRODUCT` | `create-product` | `store` |
 | `UPDATE_PRODUCT` | `update-product` | `update`, `toggleFastShipping` |
-| `DELETE_PRODUCT` | `delete-product` | `destroy` |
+| `DELETE_PRODUCT` | `delete-product` | `destroy`, `destroyAll`, `destroyBulk` |
 
 ---
 
@@ -1076,6 +1187,7 @@ Source: `packages/marvel/src/Rest/Routes.php`
 | Model | `packages/marvel/src/Database/Models/Product.php` |
 | ProductType Enum | `packages/marvel/src/Enums/ProductType.php` |
 | ProductStatus Enum | `packages/marvel/src/Enums/ProductStatus.php` |
+| Bulk Delete Request | `packages/marvel/src/Http/Requests/BulkDeleteProductsRequest.php` |
 | DiscountType Enum | `packages/marvel/src/Enums/DiscountType.php` |
 | PricingService | `packages/marvel/Services/Pricing/ProductPricingService.php` |
 | Permission Enum | `packages/marvel/src/Enums/Permission.php` |
@@ -1098,3 +1210,4 @@ Source: `packages/marvel/src/Rest/Routes.php`
 - `slug` is auto-generated from the English translation of `name`
 - The `ApiResponse` trait handles response formatting for all product endpoints
 - All create/update operations are wrapped in `DB::transaction()` with rollback on failure
+

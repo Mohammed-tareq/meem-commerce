@@ -118,8 +118,13 @@ class Handler extends ExceptionHandler
         }
         // Handle Spatie permission exceptions
         elseif ($exception instanceof SpatieUnauthorizedException) {
-            $statusCode = 403;
-            $message = $this->messageForSpatieUnauthorized($exception);
+            if ($exception->getMessage() === 'User is not logged in.') {
+                $statusCode = 401;
+                $message = $this->messageForSpatieUnauthorized($exception);
+            } else {
+                $statusCode = 403;
+                $message = $this->messageForSpatieUnauthorized($exception);
+            }
         } elseif ($exception instanceof PermissionDoesNotExist) {
             $statusCode = 404;
             $message = $this->messageForPermissionDoesNotExist($exception);

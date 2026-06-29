@@ -215,41 +215,6 @@ class CouponController extends CoreController
     }
 
     /**
-     * Undocumented function
-     *
-     * @param  $request
-     * @return void
-     */
-    // public function updateCoupon(Request $request)
-    // {
-    //     $id = $request->id;
-    //     $dataArray = $this->repository->getDataArray();
-
-    //     try {
-    //         $code = $this->repository->findOrFail($id);
-
-    //         if ($request->has('language') && $request['language'] === DEFAULT_LANGUAGE) {
-    //             $updatedCoupon = $request->only($dataArray);
-    //             if (!$request->user()->hasPermissionTo(Permission::SUPER_ADMIN)) {
-    //                 $updatedCoupon['is_approve'] = false;
-    //             }
-    //             $nonTranslatableKeys = ['language', 'image', 'description', 'id'];
-    //             foreach ($nonTranslatableKeys as $key) {
-    //                 if (isset($updatedCoupon[$key])) {
-    //                     unset($updatedCoupon[$key]);
-    //                 }
-    //             }
-    //             $this->repository->where('code', $code->code)->update($updatedCoupon);
-    //         }
-
-    //         return $this->repository->update($request->only($dataArray), $id);
-    //     } catch (Exception $e) {
-    //         throw new HttpException(404, NOT_FOUND);
-    //     }
-    // }
-
-
-    /**
      * @OA\Delete(
      *     path="/coupons/{id}",
      *     operationId="deleteCoupon",
