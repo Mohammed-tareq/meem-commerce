@@ -106,7 +106,7 @@ class ProductController extends CoreController
         $this->middleware("permission:" . Permission::VIEW_PRODUCTS, ["only" => ["index", "show"]]);
         $this->middleware("permission:" . Permission::CREATE_PRODUCT, ["only" => ["store"]]);
         $this->middleware("permission:" . Permission::UPDATE_PRODUCT, ["only" => ["update"]]);
-        $this->middleware("permission:" . Permission::DELETE_PRODUCT, ["only" => ["destroy"]]);
+        $this->middleware("permission:" . Permission::DELETE_PRODUCT, ["only" => ["destroy" , 'destroyAll', 'destroyBulk']]);
     }
 
 
