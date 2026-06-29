@@ -43,7 +43,7 @@ class ImagesSheetExport implements FromCollection, WithTitle, WithHeadings
             foreach ($mediaItems as $media) {
                 $rows[] = [
                     'product_sku' => $product->sku,
-                    'image' => $media->getUrl(),
+                    'image' => '=HYPERLINK("' . $media->getUrl() . '", "' . $media->getUrl() . '")',
                 ];
             }
         }
