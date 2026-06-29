@@ -425,27 +425,27 @@ class ProductController extends CoreController
 
     private function forceDeleteProduct(Product $product): void
     {
-        $product->clearMediaCollection('products');
+        // $product->clearMediaCollection('products');
 
-        $product->variations->each(function ($variant) {
-            $variant->attributeProducts()->delete();
-            $variant->delete();
-        });
+        // $product->variations->each(function ($variant) {
+        //     $variant->attributeProducts()->delete();
+        //     $variant->delete();
+        // });
 
-        $product->reviews()->delete();
-        $product->categories()->detach();
-        $product->brands()->detach();
-        $product->banners()->detach();
-        $product->tags()->detach();
-        $product->flash_sales()->detach();
-        $product->promotions()->detach();
-        $product->coupons()->detach();
-        $product->sliders()->detach();
+        // $product->reviews()->delete();
+        // $product->categories()->detach();
+        // $product->brands()->detach();
+        // $product->banners()->detach();
+        // $product->tags()->detach();
+        // $product->flash_sales()->detach();
+        // $product->promotions()->detach();
+        // $product->coupons()->detach();
+        // $product->sliders()->detach();
       
-        $product->features()->detach();
-        $product->flash_sale_requests()->detach();
+        // $product->features()->detach();
+        // $product->flash_sale_requests()->detach();
 
-        $product->forceDelete();
+        $product->delete();
     }
 
     /**

@@ -448,7 +448,7 @@ Route::group(
         Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);
         Route::delete('products/all', [ProductController::class, 'destroyAll']);
         Route::apiResource('products', ProductController::class, [
-            'only' => ['store', 'update', 'destroy'],
+            'only' => ['store', 'show','update', 'destroy'],
         ]);
         Route::put('products/{id}/fast-shipping', [ProductController::class, 'toggleFastShipping']);
         Route::apiResource('resources', ResourceController::class, [
