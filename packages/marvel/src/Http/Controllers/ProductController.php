@@ -445,7 +445,9 @@ class ProductController extends CoreController
         // $product->features()->detach();
         // $product->flash_sale_requests()->detach();
 
-        $product->delete();
+        $product->update([
+            "deleted_at" => now(),
+        ]);
     }
 
     /**
