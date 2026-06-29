@@ -24,7 +24,7 @@ class ImagesSheetExport implements FromCollection, WithTitle, WithHeadings
 
     public function collection()
     {
-        $query = Product::query()->with('media');
+        $query = Product::withTrashed();
 
         if (isset($this->filters['category_id'])) {
             $query->whereHas('categories', fn($q) => $q->where('category_id', $this->filters['category_id']));
@@ -43,7 +43,7 @@ class ImagesSheetExport implements FromCollection, WithTitle, WithHeadings
             foreach ($mediaItems as $media) {
                 $rows[] = [
                     'product_sku' => $product->sku,
-                    'image' => '=HYPERLINK("' . $media->getUrl() . '", "' . $media->getUrl() . '")',
+                    'image' => $media->getUrl(),
                 ];
             }
         }
