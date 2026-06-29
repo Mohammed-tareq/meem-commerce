@@ -319,7 +319,6 @@ class ProductImportService
         if (!empty($categoryIds)) {
             $product->categories()->sync($categoryIds);
         }
-        }
     }
 
     public function syncBrands(string $productSku, array $brandSlugs): void
@@ -332,7 +331,6 @@ class ProductImportService
         $brandIds = Brand::whereIn('slug', $brandSlugs)->pluck('id')->toArray();
         if (!empty($brandIds)) {
             $product->brands()->sync($brandIds);
-        }
         }
     }
 
@@ -347,7 +345,6 @@ class ProductImportService
         if (!empty($flashSaleIds)) {
             $product->flash_sales()->sync($flashSaleIds);
         }
-        }
     }
 
     public function syncSliders(string $productSku, array $sliderSlugs): void
@@ -360,7 +357,6 @@ class ProductImportService
         $sliderIds = Slider::whereIn('slug', $sliderSlugs)->pluck('id')->toArray();
         if (!empty($sliderIds)) {
             $product->sliders()->sync($sliderIds);
-        }
         }
     }
 
