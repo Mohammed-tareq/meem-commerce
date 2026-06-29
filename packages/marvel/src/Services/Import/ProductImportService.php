@@ -56,7 +56,7 @@ class ProductImportService
             $product = null;
 
             if (!empty($sku)) {
-                $product = Product::where('sku', $sku)->first();
+                $product = Product::withTrashed()->where('sku', $sku)->first();
             }
 
             $data = $this->buildProductData($row);
@@ -68,6 +68,9 @@ class ProductImportService
             }
 
             if ($product) {
+                if ($product->trashed()) {
+                    $product->restore();
+                }
                 $data['slug'] = $product->slug;
                 $product->fill($data)->saveQuietly();
             } else {
