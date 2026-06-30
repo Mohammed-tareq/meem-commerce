@@ -36,7 +36,7 @@ class BannerService
     public function getBannerBySlug($slug, $with_products = false)
     {
         $banner =  Banner::active()->search('slug', $slug, app()->getLocale())->first();
-        if ($banner && $with_products === true) {
+        if ($banner && $with_products !== 'false') {
             $banner->load('products');
         }
         return $banner;
