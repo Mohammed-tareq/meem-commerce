@@ -33,10 +33,10 @@ class BannerService
 
         return $query->orderBy('id', $order)->limit($limit)->get();
     }
-    public function getBannerBySlug($slug)
+    public function getBannerBySlug($slug, $with_products = false)
     {
         $banner =  Banner::active()->search('slug', $slug, app()->getLocale())->first();
-        if ($banner) {
+        if ($banner && $with_products === true) {
             $banner->load('products');
         }
         return $banner;

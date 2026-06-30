@@ -66,6 +66,7 @@ class ContentPageSeeder extends Seeder
                     'front' => ['autoplay' => true, 'slider_speed' => 5000],
                     'back' => [
                         "slug" => $firstBannerSlug,
+                        "with_products" => true
                     ],
                 ]
             ],
