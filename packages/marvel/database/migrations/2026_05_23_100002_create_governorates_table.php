@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('name');
             $table->boolean('status')->default(true);
             $table->timestamps();
-
+            $table->boolean('is_fast_shipping_enabled')->default(false);
             $table->unique(['country_id', 'name']);
             $table->index('country_id');
         });

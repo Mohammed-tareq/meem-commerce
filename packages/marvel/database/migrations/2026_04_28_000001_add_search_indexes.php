@@ -13,6 +13,7 @@ class AddSearchIndexes extends Migration
             $table->index('sold_quantity');
             $table->index('name');
             $table->index('slug');
+            $table->index('sku');
         });
         Schema::table('categories', function (Blueprint $table) {
             $table->index('name');
@@ -23,26 +24,30 @@ class AddSearchIndexes extends Migration
             $table->index(['rating', 'product_id']);
         });
 
-        Schema::table('shops', function (Blueprint $table) {
-            $table->index('name');
-            $table->index('slug');
-        });
 
         Schema::table('category_product', function (Blueprint $table) {
             $table->index(['category_id', 'product_id']);
         });
-        Schema::table('category_shop', function (Blueprint $table) {
+        Schema::table('product_variants', function (Blueprint $table) {
+            $table->index('product_id');
+            $table->index('sku');
+        });
 
-            $table->index(['category_id','shop_id']);
+        Schema::table('carts', function (Blueprint $table) {
+            $table->index(['user_id', 'status']);
+            $table->index(['status', 'expires_at']);
         });
-        Schema::table('coupon_shop', function (Blueprint $table) {
-            $table->index(['coupon_id', 'shop_id']);
+        Schema::table('cart_items', function (Blueprint $table) {
+            $table->index(['cart_id', 'product_id', 'product_variant_id']);
         });
-        Schema::table('flash_sale_shop', function (Blueprint $table) {
-            $table->index(['flash_sale_id', 'shop_id']);
+        Schema::table('orders', function (Blueprint $table) {
+            $table->index(['user_id', 'created_at'], 'orders_user_id_created_at_index');
+            $table->index('status', 'orders_status_index');
+            $table->index('shipping_method');
         });
-        Schema::table('product_shop', function (Blueprint $table) {
-            $table->index(['product_id', 'shop_id']);
+
+        Schema::table('order_products', function (Blueprint $table) {
+            $table->index('order_id', 'order_products_order_id_index');
         });
     }
 
@@ -53,6 +58,18 @@ class AddSearchIndexes extends Migration
             $table->dropIndex(['sold_quantity']);
             $table->dropIndex(['name']);
             $table->dropIndex(['slug']);
+            $table->dropIndex(['sku']);
+        });
+        Schema::table('product_variants', function (Blueprint $table) {
+            $table->dropIndex(['product_id']);
+            $table->dropIndex(['sku']);
+        });
+        Schema::table('carts', function (Blueprint $table) {
+            $table->dropIndex(['user_id', 'status']);
+            $table->dropIndex(['status', 'expires_at']);
+        });
+        Schema::table('cart_items', function (Blueprint $table) {
+            $table->dropIndex(['cart_id', 'product_id', 'product_variant_id']);
         });
         Schema::table('categories', function (Blueprint $table) {
             $table->dropIndex(['name']);
@@ -63,26 +80,19 @@ class AddSearchIndexes extends Migration
             $table->dropIndex(['rating', 'product_id']);
         });
 
-        Schema::table('shops', function (Blueprint $table) {
-            $table->dropIndex(['slug']);
-            $table->dropIndex(['name']);
-        });
-
         Schema::table('category_product', function (Blueprint $table) {
             $table->dropIndex(['category_id', 'product_id']);
             $table->dropIndex(['product_id', 'category_id']);
         });
-        Schema::table('category_shop', function (Blueprint $table) {
-            $table->dropIndex(['category_id', 'shop_id']);
+
+        Schema::table('orders', function (Blueprint $table) {
+            $table->dropIndex('orders_user_id_created_at_index');
+            $table->dropIndex('orders_status_index');
+            $table->dropIndex('shipping_method');
         });
-        Schema::table('coupon_shop', function (Blueprint $table) {
-            $table->dropIndex(['coupon_id', 'shop_id']);
-        });
-        Schema::table('flash_sale_shop', function (Blueprint $table) {
-            $table->dropIndex(['flash_sale_id', 'shop_id']);
-        });
-        Schema::table('product_shop', function (Blueprint $table) {
-            $table->dropIndex(['product_id', 'shop_id']);
+
+        Schema::table('order_products', function (Blueprint $table) {
+            $table->dropIndex('order_products_order_id_index');
         });
     }
 }

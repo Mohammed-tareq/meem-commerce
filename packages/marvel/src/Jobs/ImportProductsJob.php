@@ -5,13 +5,12 @@ namespace Marvel\Jobs;
 use Marvel\Database\Models\Import;
 use Marvel\Imports\ProductsImport;
 use Marvel\Services\Import\ProductImportService;
-use Exception;
+use Throwable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -36,7 +35,13 @@ class ImportProductsJob implements ShouldQueue
     public function handle(): void
     {
         $import = Import::findOrFail($this->importId);
-        $import->update(['status' => 'processing']);
+        $import->update([
+            'status' => 'processing',
+            'total_rows' => $this->countRows(),
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+        ]);
 
         $filePath = Storage::disk('public')->path($import->file_path);
 
@@ -73,8 +78,7 @@ class ImportProductsJob implements ShouldQueue
                 'failed_rows' => count($failedRows),
                 'errors' => $failedRows,
             ]);
-
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             $import->update([
                 'status' => 'failed',
                 'errors' => [['sheet' => 'system', 'row' => 0, 'sku' => '', 'error_message' => $e->getMessage()]],
@@ -84,10 +88,41 @@ class ImportProductsJob implements ShouldQueue
         }
     }
 
-    public function failed(\Throwable $exception): void
+    protected function countRows(): int
+    {
+        try {
+            $import = Import::find($this->importId);
+            if (!$import) {
+                return 0;
+            }
+
+            $filePath = Storage::disk('public')->path($import->file_path);
+
+            $readerType = \Maatwebsite\Excel\Excel::XLSX;
+            $extension = strtolower(pathinfo($import->file_name, PATHINFO_EXTENSION));
+            if ($extension === 'xls') {
+                $readerType = \Maatwebsite\Excel\Excel::XLS;
+            } elseif ($extension === 'ods') {
+                $readerType = \Maatwebsite\Excel\Excel::ODS;
+            }
+
+            $allRows = Excel::toArray(new ProductsImport(new ProductImportService()), $filePath, null, $readerType);
+
+            $total = 0;
+            foreach ($allRows as $sheetRows) {
+                $total += count($sheetRows);
+            }
+
+            return $total;
+        } catch (Throwable $e) {
+            return 0;
+        }
+    }
+
+    public function failed(Throwable $exception): void
     {
         $import = Import::find($this->importId);
-        if ($import) {
+        if ($import && $import->status === 'processing') {
             $import->update(['status' => 'failed']);
         }
     }

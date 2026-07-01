@@ -188,24 +188,10 @@ class ProductController extends CoreController
      */
     public function fetchProducts(Request $request)
     {
-        $unavailableProducts = [];
-
-
-        if (isset($request->date_range)) {
-            $dateRange = explode('//', $request->date_range);
-            $unavailableProducts = $this->repository->getUnavailableProducts($dateRange[0], $dateRange[1]);
-        }
-        if (in_array('variation_options.digital_files', explode(';', $request->with)) || in_array('digital_files', explode(';', $request->with))) {
-            throw new AuthorizationException(NOT_AUTHORIZED);
-        }
-        $products_query = $this->repository->whereNotIn('id', $unavailableProducts);
+        $products_query = $this->repository;
 
         if ($request->has('status') && $request->status !== null) {
             $products_query = $products_query->where('status', '=', $request->status);
-        }
-
-        if ($request->flash_sale_builder) {
-            $products_query = $this->repository->processFlashSaleProducts($request, $products_query);
         }
 
         if ($request->has('category')) {
@@ -382,7 +368,7 @@ class ProductController extends CoreController
 
             Product::chunk(100, function ($products) {
                 foreach ($products as $product) {
-                    $this->forceDeleteProduct($product);
+                    $this->deleteProduct($product);
                 }
             });
 
@@ -410,7 +396,7 @@ class ProductController extends CoreController
 
             Product::whereIn('id', $ids)->chunk(100, function ($products) {
                 foreach ($products as $product) {
-                    $this->forceDeleteProduct($product);
+                    $this->deleteProduct($product);
                 }
             });
 
@@ -423,27 +409,8 @@ class ProductController extends CoreController
     }
 
 
-    private function forceDeleteProduct(Product $product): void
+    private function deleteProduct(Product $product): void
     {
-        // $product->clearMediaCollection('products');
-
-        // $product->variations->each(function ($variant) {
-        //     $variant->attributeProducts()->delete();
-        //     $variant->delete();
-        // });
-
-        // $product->reviews()->delete();
-        // $product->categories()->detach();
-        // $product->brands()->detach();
-        // $product->banners()->detach();
-        // $product->tags()->detach();
-        // $product->flash_sales()->detach();
-        // $product->promotions()->detach();
-        // $product->coupons()->detach();
-        // $product->sliders()->detach();
-      
-        // $product->features()->detach();
-        // $product->flash_sale_requests()->detach();
 
         $product->delete();
     }
