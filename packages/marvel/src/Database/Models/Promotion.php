@@ -32,7 +32,6 @@ class Promotion extends Model implements HasMedia
         'required_quantity_type',
         'minimum_order_amount',
         'apply_to',
-        'product_id',
         'limiter',
         'usage',
         'start_at',
@@ -51,7 +50,6 @@ class Promotion extends Model implements HasMedia
         'discount' => 'float',
         'minimum_order_amount' => 'float',
         'max_discount_amount' => 'float',
-        'product_id' => 'integer',
     ];
 
 

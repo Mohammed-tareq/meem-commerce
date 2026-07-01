@@ -39,7 +39,6 @@ class Order extends Model
         'promotion_type',
         'promotion_discount',
         'status',
-        'shop_id',
     ];
 
     protected $casts = [
@@ -159,10 +158,7 @@ class Order extends Model
         return $this->hasMany(Transaction::class);
     }
 
-    public function shop(): BelongsTo
-    {
-        return $this->belongsTo(Shop::class);
-    }
+  
 
     public function scopeForUser(Builder $query, int $userId): Builder
     {

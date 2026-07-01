@@ -132,7 +132,6 @@ class CreateMarvelTables extends Migration
             $table->integer('stock_quantity')->default(0);
             $table->integer('reserved_quantity')->default(0);
             $table->boolean('is_fast_shipping_available')->default(false);
-
             $table->softDeletes();
             $table->timestamps();
         });
@@ -153,32 +152,24 @@ class CreateMarvelTables extends Migration
             $table->integer('stock_quantity')->default(0);
             $table->integer('reserved_quantity')->default(0);
             $table->integer('sold_quantity')->default(0);
-
             $table->timestamps();
         });
 
         Schema::create('orders', function (Blueprint $table) {
-
-
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('user_phone');
             $table->string('user_email');
             $table->json('address');
-
-
             $table->string('notes')->nullable();
-
             $table->decimal('shipping_price', 8, 3)->nullable();
             $table->decimal('total_price', 8, 3);
             $table->decimal('price', 8, 3);
-
             $table->string('coupon')->nullable();
             $table->decimal('coupon_discount', 10, 3)->nullable();
             $table->string('coupon_discount_type')->nullable();
             $table->decimal('coupon_discount_max_amount', 10, 3)->nullable();
-
             $table->enum('status', ['pending', 'completed', 'delivered', 'cancelled'])->default('pending');
             $table->enum('shipping_method', ['SCHEDULED', 'FAST'])->default('SCHEDULED');
             $table->dateTime('expected_delivery_at')->nullable();
@@ -188,12 +179,9 @@ class CreateMarvelTables extends Migration
         });
 
         Schema::create('order_products', function (Blueprint $table) {
-
-
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
-
             $table->string('product_name');
             $table->string('product_sku')->nullable();
             $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
@@ -204,7 +192,6 @@ class CreateMarvelTables extends Migration
             $table->decimal('product_discount_price', 10, 3)->nullable();
             $table->decimal('product_flash_sale_price', 10, 3)->nullable();
             $table->decimal('promotion_discount_amount', 10, 2)->default(0);
-
             $table->timestamps();
         });
         Schema::create('transactions', function (Blueprint $table) {

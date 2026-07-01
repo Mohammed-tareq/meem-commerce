@@ -49,11 +49,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         'email',
         'password',
         'is_active',
-        'shop_id',
         'type',
         // Allow setting verification timestamp explicitly on creation/update
         'email_verified_at',
         'phone_number',
+        'remember_token',
     ];
 
     /**

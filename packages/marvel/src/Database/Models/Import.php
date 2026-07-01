@@ -14,6 +14,8 @@ class Import extends Model
         'type',
         'file_path',
         'file_name',
+        'images_source',
+        'zip_file_path',
         'status',
         'total_rows',
         'processed_rows',
