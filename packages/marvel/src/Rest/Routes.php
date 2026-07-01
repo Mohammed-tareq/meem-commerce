@@ -14,7 +14,7 @@ use Marvel\Http\Controllers\CouponController;
 use Marvel\Http\Controllers\CmsPageController;
 use Marvel\Http\Controllers\FaqsController;
 use Marvel\Http\Controllers\FlashSaleController;
-use Marvel\Http\Controllers\OrderController;
+use Marvel\Http\Controllers\Order\OrderController;
 use Marvel\Http\Controllers\ProductController;
 use Marvel\Http\Controllers\ProductImportController;
 use Marvel\Http\Controllers\PromotionController;
@@ -131,7 +131,12 @@ Route::group(
         Route::apiResource('sliders', SliderController::class);
 
         //==================================== order  controllers =============================================//
-        Route::apiResource('orders', OrderController::class);
+        // GET /api/v1/orders - List all orders (paginated). Filters: status, user_id, user_email, promotion_id,
+        //   promotion_name, product_id, product_name, flash_sale_name, shipping_method, created_from, created_to, search, limit, page
+        Route::get('orders', [OrderController::class, 'index']);
+        // GET /api/v1/orders/{id} - Show order by ID or tracking number. Includes items, transactions, user.
+        //   Examples: GET /api/v1/orders/42    GET /api/v1/orders/ORD-abc123
+        Route::get('orders/{id}', [OrderController::class, 'show']);
 
         //==================================== faqs  controllers =============================================//
         Route::put('faqs/reorder', [FaqsController::class, 'reorder']);

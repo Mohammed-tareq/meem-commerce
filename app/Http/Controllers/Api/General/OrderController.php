@@ -54,28 +54,28 @@ class OrderController extends Controller
     {
         $orderDataUser = $request->validated();
         $orderDataUser['user_id'] = $request->user()->id;
-
+        
         $cart = $this->cartInventoryService->getActiveCartForUser($request->user());
         if (!$cart) {
             return $this->apiResponse(CART_NOT_FOUND, 400, false);
         }
-
+        
         try {
             $this->cartInventoryService->ensureCartReservation($cart);
         } catch (\Throwable $e) {
             return $this->apiResponse($e->getMessage(), 400, false);
         }
-
+        
         try {
             $orderPrice = $this->orderService->calcInvoicePrice($request);
         } catch (\InvalidArgumentException $e) {
             return $this->apiResponse($e->getMessage(), 422, false);
         }
-
+        
         if (!$orderPrice || $orderPrice <= 0) {
             return $this->apiResponse(FILED_TO_CREATE_ORDER_TRY_AGAIN, 500, false);
         }
-
+        
         $data = [
             'InvoiceValue' => $orderPrice,
             'CustomerName' => "{$orderDataUser['name']}",
@@ -88,34 +88,35 @@ class OrderController extends Controller
             'CallBackUrl' => route('api.checkout.callback'),
             'ErrorUrl' => route('api.checkout.errorCallback'),
         ];
-
+        
         $invoice = $this->myfatoraService->createInvoice($data);
-
+        
         if (!is_array($invoice)) {
             return $this->apiResponse(ERROR_CREATING_INVOICE, 500, false);
         }
-
+        
         $invoiceUrl = data_get($invoice, 'Data.InvoiceURL');
         $invoiceId = data_get($invoice, 'Data.InvoiceId');
-
+        
         if (!$invoiceUrl || !$invoiceId) {
             return $this->apiResponse(ERROR_CREATING_INVOICE, 500, false);
         }
-
-
+        
+        
         try {
             $order = $this->orderService->addItemsInOrder($request);
         } catch (\InvalidArgumentException $e) {
             return $this->apiResponse($e->getMessage(), 422, false);
         }
-
+        
         if (!$order) {
             return $this->apiResponse(ERROR_ADDING_ITEMS_TO_ORDER, 500, false);
         }
-
+        
         if (!$this->orderService->createTransaction($order->id, $invoiceId, 'myfatoorah')) {
             return $this->apiResponse(ERROR_CREATING_TRANSACTION, 500, false);
         }
+        
 
         return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, ['url' => $invoiceUrl]);
     }

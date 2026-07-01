@@ -10,6 +10,7 @@ use Marvel\Database\Models\CouponUsage;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
+use Marvel\Events\OrderCancelled;
 use Marvel\Services\Pricing\ProductPricingService;
 
 class OrderService
@@ -46,7 +47,6 @@ class OrderService
     private function orderListRelations(): array
     {
         return [
-            'shop',
             'orderItems.product.media',
             'orderItems.productVariant.attributeProducts.attributeValue',
         ];
@@ -97,11 +97,7 @@ class OrderService
             if (!$cart || !$cart->items()->exists()) {
                 return null;
             }
-            $checkoutTotals = $this->calculateCheckoutTotals(
-                $cart,
-                (int) $request->input('selected_promotion_id') ?: null,
-                (int) $request->input('selected_gift_product_id') ?: null,
-            );
+            $checkoutTotals = $this->getCheckoutTotalsFromCart($cart);
             $order = $this->saveOrderInDatabase($request->only($this->dataArray), $cart, $checkoutTotals);
             if (!$order) {
                 DB::rollBack();
@@ -171,10 +167,6 @@ class OrderService
                 $product = $item->product ?? null;
                 $productName = $product->name ?? 'No Name';
                 $productSku = $product->sku ?? null;
-                $shopName = null;
-                if ($product && method_exists($product, 'shops')) {
-                    $shopName = $product->shops()->first()?->name ?? null;
-                }
 
                 $flashSalePrice = null;
                 if ($product && ($product->has_flash_sale ?? false)) {
@@ -195,7 +187,6 @@ class OrderService
                     'product_price' => $effectiveUnitPrice,
                     'product_total_price' => round($lineTotal, 2),
                     'product_sku' => $productSku,
-                    'shop_name' => $shopName,
                     'product_flash_sale_price' => $flashSalePrice,
                     'product_discount_price' => $discountPrice,
                     'promotion_discount_amount' => $promotionDiscountAmount,
@@ -266,6 +257,42 @@ class OrderService
         }
     }
 
+    private function getCheckoutTotalsFromCart(Cart $cart): array
+    {
+        $items = $cart->items->reject(fn($item) => (bool) ($item->is_gift ?? false));
+
+        $subtotal = round((float) $items->sum(function ($item) {
+            $baseLineTotal = ((float) ($item->price ?? 0)) * ((int) ($item->quantity ?? 0));
+            if ($baseLineTotal > 0) {
+                return $baseLineTotal;
+            }
+            return (float) ($item->total_price ?? 0);
+        }), 2);
+
+        $promotionDiscount = round((float) $items->sum(fn($item) => (float) ($item->discount_amount ?? 0)), 2);
+        $finalTotal = round((float) ($cart->total_price ?? 0), 2);
+
+        $promotionItem = $items->first(fn($item) => !is_null($item->promotion_id));
+        $promotionData = null;
+        if ($promotionItem) {
+            $promotion = \Marvel\Database\Models\Promotion::query()->find((int) $promotionItem->promotion_id);
+            $promotionData = $promotion ? [
+                'id' => (int) $promotion->id,
+                'type' => $promotion->type_amount,
+                'code' => $promotion->code,
+            ] : null;
+        }
+
+        return [
+            'subtotal' => $subtotal,
+            'promotion_discount' => $promotionDiscount,
+            'coupon_discount' => round(max(0, $subtotal - $promotionDiscount - $finalTotal), 2),
+            'final_total' => $finalTotal,
+            'promotion' => $promotionData,
+            'gift_items' => [],
+        ];
+    }
+
     private function calculateCheckoutTotals(Cart $cart, ?int $selectedPromotionId, ?int $selectedGiftProductId = null): array
     {
         $promotionTotals = $this->promotionService->applySelectedPromotion($cart, $selectedPromotionId, $selectedGiftProductId);
@@ -331,12 +358,18 @@ class OrderService
             return false;
         }
         $order = $transaction->order;
+        $previousStatus = $order->status;
+
         if (!$order->update(['status' => $status])) {
             return false;
         }
 
         if ($status === 'completed') {
             $this->recordCouponUsage($order);
+        }
+
+        if ($status === 'cancelled' && $previousStatus === 'completed') {
+            event(new OrderCancelled($order));
         }
 
         return $order;

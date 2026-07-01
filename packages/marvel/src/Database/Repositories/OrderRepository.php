@@ -342,13 +342,11 @@ class OrderRepository extends BaseRepository
             }
 
             if ($variationId) {
-                // Deduct from variation
                 Variation::where('id', $variationId)
                     ->decrement('quantity', $orderQuantity);
             } else {
-                // Deduct from main product
                 Product::where('id', $productId)
-                    ->decrement('quantity', $orderQuantity);
+                    ->decrement('stock_quantity', $orderQuantity);
             }
         }
     }

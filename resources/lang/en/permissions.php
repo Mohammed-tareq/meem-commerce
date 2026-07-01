@@ -41,6 +41,16 @@ return [
     'update-slider' => 'Update slider',
     'delete-slider' => 'Delete slider',
     'view-attributes' => 'View attributes',
+    'view-country'=> 'View countries',
+    'create-country'=> 'Create country',
+    'update-country'=> 'Update country',
+    'delete-country'=> 'Delete country',
+    'view-city'=> 'View cities',
+    'create-city'=> 'Create city',
+    'update-city'=> 'Update city',
+    'delete-city'=> 'Delete city',
+    'view-order'=> 'View order',
+    'view-orders'=> 'View orders',
 
     // 👤 Customer
     'view-profile' => 'View profile',

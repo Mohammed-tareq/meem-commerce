@@ -53,6 +53,8 @@ class PermissionSeeder extends Seeder
             'create-country',
             'update-country',
             'delete-country',
+            'view-order',
+            'view-orders',
 
             'view-city',
             'create-city',

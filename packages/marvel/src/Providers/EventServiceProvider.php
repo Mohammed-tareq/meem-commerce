@@ -43,7 +43,6 @@ use Marvel\Listeners\DigitalProductNotifyLogsListener;
 use Marvel\Listeners\FlashSaleProductProcess;
 use Marvel\Listeners\MaintenanceNotification;
 use Marvel\Listeners\OwnershipTransferStatusControlListener;
-use Marvel\Listeners\ProductInventoryDecrement;
 use Marvel\Listeners\ProductInventoryRestore;
 use Marvel\Listeners\ProductReviewApprovedListener;
 use Marvel\Listeners\ProductReviewRejectedListener;
@@ -92,7 +91,9 @@ class EventServiceProvider extends ServiceProvider
             SendOrderReceivedNotification::class
         ],
         OrderProcessed::class => [
-            ProductInventoryDecrement::class,
+            // ProductInventoryDecrement is intentionally removed:
+            // Stock is already decremented synchronously in OrderRepository::deductStock().
+            // This listener was redundant AND broken (relied on commented-out ->products() relationship).
         ],
         OrderCancelled::class => [
             ProductInventoryRestore::class,

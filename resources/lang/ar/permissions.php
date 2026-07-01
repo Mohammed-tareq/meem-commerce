@@ -33,6 +33,16 @@ return [
     'create-slider' => 'إنشاء شاشة منزلقة',
     'update-slider' => 'تعديل شاشة منزلقة',
     'delete-slider' => 'حذف شاشة منزلقة',
+    'view-country'=> 'عرض الدول',
+    'create-country'=> 'إنشاء دولة',
+    'update-country'=> 'تعديل دولة',
+    'delete-country'=> 'حذف دولة',
+    'view-city'=> 'عرض المدن',
+    'create-city'=> 'إنشاء مدينة',
+    'update-city'=> 'تعديل مدينة',
+    'delete-city'=> 'حذف مدينة',
+    'view-order'=> 'عرض الطلبات',
+    'view-orders'=> 'عرض طلب',
 
     // 👤 Customer
     'view-profile' => 'عرض الملف الشخصي',

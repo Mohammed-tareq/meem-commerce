@@ -1075,7 +1075,7 @@ class ProductController extends CoreController
         $user = $request->user();
         $language = $request->language ? $request->language : DEFAULT_LANGUAGE;
 
-        $products_query = $this->repository->with(['type', 'shop'])->where('language', $language)->where('quantity', '<', 10);
+        $products_query = $this->repository->with(['type', 'shop'])->where('language', $language)->where('stock_quantity', '<', 10);
 
         switch ($user) {
             case $user->hasPermissionTo(Permission::SUPER_ADMIN):
