@@ -15,7 +15,7 @@ class OrderResource extends Resource
             'status' => $this->status,
             'payment_status' => $this->payment_status,
             'shipping_method' => $this->shipping_method,
-            'expected_delivery_at' => $this->expected_delivery_at?->toIso8601String(),
+            // 'expected_delivery_at' => $this->expected_delivery_at?->toIso8601String(),
             'customer' => $this->when($this->relationLoaded('user') && $this->user, [
                 'id' => $this->user->id,
                 'name' => $this->user->name,
