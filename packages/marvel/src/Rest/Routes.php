@@ -460,7 +460,23 @@ Route::group(
         Route::apiResource('attribute-values', AttributeValueController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
-        Route::get('orders', [OrderController::class, 'index']);
+        /**
+         * GET /api/v1/orders
+         * List all orders (paginated). Super Admins see all orders. Store Owners/Staff
+         * see orders scoped to their shop. Customers see only their own orders.
+         * Supports filtering by shop_id and tracking_number.
+         * Middleware: role:super_admin | auth:sanctum | email.verified
+         */
+        Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+
+        /**
+         * GET /api/v1/orders/{id}
+         * Get a single order by ID or tracking number. Includes eager-loaded
+         * relations: products, shop, children.shop, wallet_point.
+         * Authorization is role-based: Super Admin (all), Owner/Staff (shop-scoped),
+         * Customer (own only).
+         * Middleware: role:super_admin | auth:sanctum | email.verified
+         */
         Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
 
 

@@ -422,7 +422,54 @@ Returns all promotions applicable to the current user's cart.
 
 **Flow:** Validates → Checks cart → Calculates prices → Creates external payment invoice → Creates order → Creates order items → Creates transaction → Returns payment URL.
 
-### POST /orders (Admin Order Creation)
+### GET /api/v1/orders (Admin Order List)
+
+**Controller:** `Marvel\Http\Controllers\OrderController@index`
+
+**Authentication:** Required (Super Admin via `auth:sanctum`)
+
+**Middleware:** `role:super_admin`, `auth:sanctum`, `email.verified`
+
+**Description:** Retrieve a paginated list of orders. Customers see their own orders. Store Owners/Staff see orders for their shop. Super Admins see all.
+
+**Query Parameters:**
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | integer | 10 | Items per page |
+| `page` | integer | 1 | Page number |
+| `shop_id` | integer | - | Filter by Shop ID (for Store Owners/Staff) |
+| `tracking_number` | string | - | Search by tracking number |
+
+**Authorization rules:**
+- Super Admin: sees all orders (`parent_id IS NULL`)
+- Store Owner: sees orders for their shop(s) (`shop_id = X`, `parent_id IS NOT NULL`)
+- Staff: sees orders for their assigned shop (`shop_id = X`, `parent_id IS NOT NULL`)
+- Customer: sees own orders (`customer_id = user.id`, `parent_id IS NULL`)
+
+---
+
+### GET /api/v1/orders/{id} (Admin Order Detail)
+
+**Controller:** `Marvel\Http\Controllers\OrderController@show`
+
+**Authentication:** Required (Super Admin via `auth:sanctum`)
+
+**Middleware:** `role:super_admin`, `auth:sanctum`, `email.verified`
+
+**Description:** Retrieve a single order by ID or tracking number. Access restricted to the Customer who owns it, or Store Owner/Staff of the shop.
+
+**URL Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Order ID or Tracking Number |
+
+**Eager loaded relations:** `products`, `shop`, `children.shop`, `wallet_point`
+
+**Note:** The `show` method sets `tracking_number` from the route parameter and delegates to `fetchSingleOrder()` which queries by `id` OR `tracking_number`. For online payment gateways, a `payment_intent` is attached.
+
+---
+
+### POST /api/v1/orders (Admin Order Creation)
 
 **Controller:** `Marvel\Http\Controllers\OrderController@store`
 
