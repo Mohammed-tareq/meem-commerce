@@ -65,12 +65,21 @@ class ProductImportController extends Controller
 
         $filePath = $file->store('imports', 'public');
 
+        $totalRows = $this->estimateRowCount($filePath);
+
         $import = Import::create([
             'type' => 'product',
             'file_path' => $filePath,
             'file_name' => $file->getClientOriginalName(),
             'status' => 'pending',
+            'total_rows' => $totalRows,
             'created_by' => $request->user()->id,
+        ]);
+
+        $this->writeSignalFile($import->id, 'progress', [
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
         ]);
 
         ImportProductsJob::dispatch($import->id);
@@ -79,6 +88,36 @@ class ProductImportController extends Controller
             'import_id' => $import->id,
             'status' => $import->status,
         ]);
+    }
+
+    protected function estimateRowCount(string $filePath): int
+    {
+        try {
+            $fullPath = Storage::disk('public')->path($filePath);
+            if (!file_exists($fullPath)) {
+                return 0;
+            }
+
+            $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($fullPath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($fullPath);
+
+            $total = 0;
+            foreach ($spreadsheet->getSheetNames() as $name) {
+                $sheet = $spreadsheet->getSheetByName($name);
+                if ($sheet) {
+                    $total += $sheet->getHighestDataRow();
+                }
+            }
+
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet, $reader);
+
+            return $total;
+        } catch (\Throwable $e) {
+            report($e);
+            return 0;
+        }
     }
 
     public function status(int $id): JsonResponse

@@ -182,8 +182,6 @@ class ProductImportService
                 'success_rows' => $this->successCount,
                 'failed_rows' => count($this->failedRows),
             ]);
-
-        $this->removeSignal('progress');
     }
 
     public function getCreatedProductIds(): array

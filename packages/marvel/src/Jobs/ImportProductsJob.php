@@ -52,6 +52,20 @@ class ImportProductsJob implements ShouldQueue
         $this->removeSignalFile('progress');
     }
 
+    protected function writeProgressSignal(int $processed, int $success, int $failed): void
+    {
+        $dir = storage_path('app/imports');
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        $path = $dir . "/progress_{$this->importId}.json";
+        file_put_contents($path, json_encode([
+            'processed_rows' => $processed,
+            'success_rows' => $success,
+            'failed_rows' => $failed,
+        ]), LOCK_EX);
+    }
+
     public function handle(): void
     {
         $import = Import::select(['id', 'status', 'file_path', 'file_name'])->findOrFail($this->importId);
@@ -68,11 +82,18 @@ class ImportProductsJob implements ShouldQueue
 
         $import->update([
             'status' => 'processing',
-            'total_rows' => $this->countRows(),
             'processed_rows' => 0,
             'success_rows' => 0,
             'failed_rows' => 0,
         ]);
+
+        $totalRows = $this->countRows();
+
+        if ($import->total_rows !== $totalRows) {
+            $import->update(['total_rows' => $totalRows]);
+        }
+
+        $this->writeProgressSignal(0, 0, 0);
 
         $filePath = Storage::disk('public')->path($import->file_path);
 
