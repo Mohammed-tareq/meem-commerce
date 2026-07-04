@@ -232,4 +232,12 @@ return [
     'IMPORT.VALIDATION.IMAGES_SOURCE_REQUIRED' => 'Please specify the image source (url or none)',
     'IMPORT.VALIDATION.IMAGES_SOURCE_IN' => 'Image source must be url or none',
     'EXPORT.VALIDATION.INVALID_PRODUCT_TYPE' => 'Invalid product type. Must be simple or variable',
+    'DASHBOARD.OVERVIEW_FETCHED' => 'Dashboard overview fetched successfully',
+    'DASHBOARD.REVENUE_FETCHED' => 'Revenue data fetched successfully',
+    'DASHBOARD.ORDER_STATS_FETCHED' => 'Order statistics fetched successfully',
+    'DASHBOARD.RECENT_ORDERS_FETCHED' => 'Recent orders fetched successfully',
+    'DASHBOARD.TOP_PRODUCTS_FETCHED' => 'Top selling products fetched successfully',
+    'DASHBOARD.CATEGORY_STATS_FETCHED' => 'Category statistics fetched successfully',
+    'DASHBOARD.LOW_STOCK_FETCHED' => 'Low stock products fetched successfully',
+    'DASHBOARD.DATABASE_ERROR' => 'Database error occurred. Please check your request and try again.',
 ];

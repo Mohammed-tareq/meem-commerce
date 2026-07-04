@@ -22,7 +22,7 @@ class DashboardController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => __('Dashboard overview fetched successfully'),
+                'message' => __('message.DASHBOARD.OVERVIEW_FETCHED'),
                 'data'    => $data,
             ]);
         } catch (Throwable $e) {
@@ -37,7 +37,7 @@ class DashboardController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => __('Revenue data fetched successfully'),
+                'message' => __('message.DASHBOARD.REVENUE_FETCHED'),
                 'data'    => $data,
             ]);
         } catch (Throwable $e) {
@@ -52,7 +52,7 @@ class DashboardController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => __('Order statistics fetched successfully'),
+                'message' => __('message.DASHBOARD.ORDER_STATS_FETCHED'),
                 'data'    => $data,
             ]);
         } catch (Throwable $e) {
@@ -68,7 +68,7 @@ class DashboardController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => __('Recent orders fetched successfully'),
+                'message' => __('message.DASHBOARD.RECENT_ORDERS_FETCHED'),
                 'data'    => $orders,
             ]);
         } catch (Throwable $e) {
@@ -84,7 +84,7 @@ class DashboardController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => __('Top selling products fetched successfully'),
+                'message' => __('message.DASHBOARD.TOP_PRODUCTS_FETCHED'),
                 'data'    => $products,
             ]);
         } catch (Throwable $e) {
@@ -99,7 +99,7 @@ class DashboardController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => __('Category statistics fetched successfully'),
+                'message' => __('message.DASHBOARD.CATEGORY_STATS_FETCHED'),
                 'data'    => $data,
             ]);
         } catch (Throwable $e) {
@@ -115,7 +115,7 @@ class DashboardController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => __('Low stock products fetched successfully'),
+                'message' => __('message.DASHBOARD.LOW_STOCK_FETCHED'),
                 'data'    => $products,
             ]);
         } catch (Throwable $e) {
@@ -126,7 +126,7 @@ class DashboardController extends Controller
     protected function errorResponse(Throwable $e): JsonResponse
     {
         if ($e instanceof QueryException) {
-            $message = __('Database error occurred. Please check your request and try again.');
+            $message = __('message.DASHBOARD.DATABASE_ERROR');
         } else {
             $message = $e->getMessage();
         }

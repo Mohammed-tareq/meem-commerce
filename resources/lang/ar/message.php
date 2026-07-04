@@ -232,4 +232,12 @@ return [
     'IMPORT.VALIDATION.IMAGES_SOURCE_REQUIRED' => 'يرجى تحديد مصدر الصور (url أو none)',
     'IMPORT.VALIDATION.IMAGES_SOURCE_IN' => 'مصدر الصور يجب أن يكون url أو none',
     'EXPORT.VALIDATION.INVALID_PRODUCT_TYPE' => 'نوع المنتج غير صالح. يجب أن يكون simple أو variable',
+    'DASHBOARD.OVERVIEW_FETCHED' => 'تم جلب نظرة عامة على لوحة التحكم بنجاح',
+    'DASHBOARD.REVENUE_FETCHED' => 'تم جلب بيانات الإيرادات بنجاح',
+    'DASHBOARD.ORDER_STATS_FETCHED' => 'تم جلب إحصائيات الطلبات بنجاح',
+    'DASHBOARD.RECENT_ORDERS_FETCHED' => 'تم جلب الطلبات الحديثة بنجاح',
+    'DASHBOARD.TOP_PRODUCTS_FETCHED' => 'تم جلب أفضل المنتجات مبيعا بنجاح',
+    'DASHBOARD.CATEGORY_STATS_FETCHED' => 'تم جلب إحصائيات الفئات بنجاح',
+    'DASHBOARD.LOW_STOCK_FETCHED' => 'تم جلب المنتجات منخفضة المخزون بنجاح',
+    'DASHBOARD.DATABASE_ERROR' => 'حدث خطأ في قاعدة البيانات. يرجى التحقق من طلبك والمحاولة مرة أخرى.',
 ];
