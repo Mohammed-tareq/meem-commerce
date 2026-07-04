@@ -150,9 +150,7 @@ class DashboardService
 
     public function getCategoryStats(Request $request): array
     {
-        $language = $request->language ?? DEFAULT_LANGUAGE;
-
-        return Cache::remember("dashboard_category_stats_{$language}", 300, function () use ($language) {
+        return Cache::remember('dashboard_category_stats', 300, function () {
             $productCounts = DB::table('category_product')
                 ->select(
                     'categories.id as category_id',
@@ -161,7 +159,6 @@ class DashboardService
                 )
                 ->join('products', 'category_product.product_id', '=', 'products.id')
                 ->join('categories', 'category_product.category_id', '=', 'categories.id')
-                ->where('categories.language', $language)
                 ->groupBy('categories.id', 'categories.name')
                 ->orderBy('product_count', 'desc')
                 ->limit(15)
@@ -171,14 +168,13 @@ class DashboardService
                 ->select(
                     'categories.id as category_id',
                     'categories.name as category_name',
-                    DB::raw('COALESCE(SUM(order_product.product_quantity), 0) as total_sales')
+                    DB::raw('COALESCE(SUM(order_products.product_quantity), 0) as total_sales')
                 )
                 ->leftJoin('category_product', 'category_product.category_id', '=', 'categories.id')
                 ->leftJoin('products', 'category_product.product_id', '=', 'products.id')
-                ->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
-                ->leftJoin('orders', 'order_product.order_id', '=', 'orders.id')
+                ->leftJoin('order_products', 'order_products.product_id', '=', 'products.id')
+                ->leftJoin('orders', 'order_products.order_id', '=', 'orders.id')
                 ->where('orders.status', 'completed')
-                ->where('categories.language', $language)
                 ->groupBy('categories.id', 'categories.name')
                 ->orderBy('total_sales', 'desc')
                 ->limit(15)
