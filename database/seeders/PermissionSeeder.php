@@ -351,7 +351,7 @@ class PermissionSeeder extends Seeder
         ];
 
         $permissionsData = [];
-        foreach ($permissions as $permission) {
+        foreach (array_unique($permissions) as $permission) {
             $permissionsData[] = Permission::firstOrCreate([
                 'name' => $permission,
                 'guard_name' => 'api',
