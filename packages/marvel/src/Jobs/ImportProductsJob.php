@@ -62,6 +62,10 @@ class ImportProductsJob implements ShouldQueue
             return;
         }
 
+        if (in_array($import->status, ['completed', 'completed_with_errors', 'failed'], true)) {
+            return;
+        }
+
         $import->update([
             'status' => 'processing',
             'total_rows' => $this->countRows(),
