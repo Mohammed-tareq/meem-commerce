@@ -3,6 +3,7 @@
 namespace Marvel\Jobs;
 
 use Marvel\Database\Models\Import;
+use Marvel\Exceptions\ImportCancelledException;
 use Marvel\Imports\ProductsImport;
 use Marvel\Services\Import\ProductImportService;
 use Throwable;
@@ -35,6 +36,11 @@ class ImportProductsJob implements ShouldQueue
     public function handle(): void
     {
         $import = Import::findOrFail($this->importId);
+
+        if ($import->status === 'cancelled') {
+            return;
+        }
+
         $import->update([
             'status' => 'processing',
             'total_rows' => $this->countRows(),
@@ -45,7 +51,7 @@ class ImportProductsJob implements ShouldQueue
 
         $filePath = Storage::disk('public')->path($import->file_path);
 
-        $service = new ProductImportService();
+        $service = new ProductImportService($this->importId);
 
         try {
             $importObj = new ProductsImport($service);
@@ -59,6 +65,8 @@ class ImportProductsJob implements ShouldQueue
             }
 
             Excel::import($importObj, $filePath, null, $readerType);
+
+            $service->finalizeProgress();
 
             $failedRows = $service->getFailedRows();
             $successCount = $service->getSuccessCount();
@@ -77,6 +85,15 @@ class ImportProductsJob implements ShouldQueue
                 'success_rows' => $successCount,
                 'failed_rows' => count($failedRows),
                 'errors' => $failedRows,
+            ]);
+        } catch (ImportCancelledException $e) {
+            $service->rollbackCreatedData();
+            $import->update([
+                'status' => 'cancelled',
+                'processed_rows' => $service->getSuccessCount() + count($service->getFailedRows()),
+                'success_rows' => $service->getSuccessCount(),
+                'failed_rows' => count($service->getFailedRows()),
+                'errors' => $service->getFailedRows(),
             ]);
         } catch (Throwable $e) {
             $import->update([

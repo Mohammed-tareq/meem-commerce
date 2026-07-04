@@ -14,11 +14,13 @@ use Marvel\Database\Models\AttributeValue;
 use Marvel\Database\Models\Brand;
 use Marvel\Database\Models\Category;
 use Marvel\Database\Models\FlashSale;
+use Marvel\Database\Models\Import;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
 use Marvel\Database\Models\Slider;
 use Marvel\Enums\DiscountType;
 use Marvel\Enums\ProductType;
+use Marvel\Exceptions\ImportCancelledException;
 use Marvel\Services\Import\ImageHandlers\UrlImageHandler;
 use Marvel\Services\Pricing\ProductPricingService;
 
@@ -32,9 +34,18 @@ class ProductImportService
 
     protected array $keptVariantIds = [];
 
-    public function __construct()
+    protected array $createdProductIds = [];
+
+    protected ?int $importId = null;
+
+    protected int $processedCount = 0;
+
+    protected const FLUSH_THRESHOLD = 50;
+
+    public function __construct(?int $importId = null)
     {
         $this->urlHandler = new UrlImageHandler();
+        $this->importId = $importId;
     }
 
     public function getFailedRows(): array
@@ -45,6 +56,77 @@ class ProductImportService
     public function getSuccessCount(): int
     {
         return $this->successCount;
+    }
+
+    protected function flushProgress(): void
+    {
+        if ($this->importId === null) {
+            return;
+        }
+
+        $this->processedCount = $this->successCount + count($this->failedRows);
+
+        if ($this->processedCount % self::FLUSH_THRESHOLD !== 0) {
+            return;
+        }
+
+        $updated = Import::where('id', $this->importId)
+            ->where('status', 'processing')
+            ->update([
+                'processed_rows' => $this->processedCount,
+                'success_rows' => $this->successCount,
+                'failed_rows' => count($this->failedRows),
+            ]);
+
+        if ($updated === 0 && $this->isCancelled()) {
+            throw new ImportCancelledException();
+        }
+    }
+
+    public function finalizeProgress(): void
+    {
+        if ($this->importId === null) {
+            return;
+        }
+
+        $this->processedCount = $this->successCount + count($this->failedRows);
+
+        Import::where('id', $this->importId)
+            ->update([
+                'processed_rows' => $this->processedCount,
+                'success_rows' => $this->successCount,
+                'failed_rows' => count($this->failedRows),
+            ]);
+    }
+
+    public function getCreatedProductIds(): array
+    {
+        return $this->createdProductIds;
+    }
+
+    public function getKeptVariantIds(): array
+    {
+        return $this->keptVariantIds;
+    }
+
+    protected function isCancelled(): bool
+    {
+        if ($this->importId === null) {
+            return false;
+        }
+
+        return Import::where('id', $this->importId)->value('status') === 'cancelled';
+    }
+
+    public function rollbackCreatedData(): void
+    {
+        foreach ($this->keptVariantIds as $productId => $variantIds) {
+            ProductVariant::whereIn('id', $variantIds)->forceDelete();
+        }
+
+        if (!empty($this->createdProductIds)) {
+            Product::whereIn('id', $this->createdProductIds)->forceDelete();
+        }
     }
 
     public function processProductRow(array $row, int $rowIndex): void
@@ -68,13 +150,14 @@ class ProductImportService
             }
 
             if ($product) {
-               
+                
                 $data['slug'] = $product->slug;
                 $product->fill($data)->saveQuietly();
             } else {
                 $data['slug'] = $this->generateSlug($row, $product->id ?? null);
                 $product = new Product($data);
                 $product->saveQuietly();
+                $this->createdProductIds[] = $product->id;
             }
 
             if (!empty($sku) && $product->sku !== $sku) {
@@ -103,6 +186,8 @@ class ProductImportService
             ];
 
         }
+
+        $this->flushProgress();
     }
 
     public function processVariantRow(array $row, int $rowIndex): void
@@ -120,6 +205,7 @@ class ProductImportService
                 'sku' => $productSku,
                 'error_message' => "Product with SKU '{$productSku}' not found",
             ];
+            $this->flushProgress();
             return;
         }
 
@@ -170,6 +256,8 @@ class ProductImportService
             ];
 
         }
+
+        $this->flushProgress();
     }
 
     protected function findVariantByFields(int $productId, array $row): ?ProductVariant

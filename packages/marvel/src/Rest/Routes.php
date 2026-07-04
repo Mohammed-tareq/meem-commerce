@@ -753,8 +753,23 @@ Route::group([
         'only' => ['update', 'destroy'],
     ]);
     Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
+    Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->name('admin.products.import.cancel');
     Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
     Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
+
+    /**
+     * Dashboard API — accessible by super_admin, store_owner, and staff
+     * Permission scoping is handled internally in DashboardService
+     */
+    Route::prefix('dashboard')->group(function () {
+        Route::get('overview', [\App\Http\Controllers\Api\DashboardController::class, 'overview']);
+        Route::get('revenue', [\App\Http\Controllers\Api\DashboardController::class, 'revenue']);
+        Route::get('order-stats', [\App\Http\Controllers\Api\DashboardController::class, 'orderStats']);
+        Route::get('recent-orders', [\App\Http\Controllers\Api\DashboardController::class, 'recentOrders']);
+        Route::get('top-products', [\App\Http\Controllers\Api\DashboardController::class, 'topProducts']);
+        Route::get('category-stats', [\App\Http\Controllers\Api\DashboardController::class, 'categoryStats']);
+        Route::get('low-stock', [\App\Http\Controllers\Api\DashboardController::class, 'lowStock']);
+    });
 });
 Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::get('cart', [CartController::class, 'index']);

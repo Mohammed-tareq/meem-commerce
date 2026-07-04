@@ -223,6 +223,8 @@ return [
     'MESSAGE.IMPORT_STATUS_FETCHED' => 'Import status fetched',
     'MESSAGE.EXPORT_STARTED_SUCCESSFULLY' => 'Export started successfully',
     'MESSAGE.IMPORT_NO_ERRORS' => 'No errors found',
+    'MESSAGE.IMPORT_CANCELLED_SUCCESSFULLY' => 'Import cancelled successfully',
+    'MESSAGE.IMPORT_CANNOT_CANCEL' => 'Cannot cancel import in its current state',
     'MESSAGE.PRODUCTS_DELETED_SUCCESSFULLY' => 'Products deleted successfully',
     'IMPORT.VALIDATION.FILE_REQUIRED' => 'An Excel file is required',
     'IMPORT.VALIDATION.FILE_MIMES' => 'The file must be a valid Excel file (xlsx, xls, or ods)',

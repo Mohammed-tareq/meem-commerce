@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
+use Marvel\Database\Models\Import;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\User;
 use Marvel\Enums\Permission as PermissionEnum;
@@ -354,5 +355,461 @@ class ProductImportTest extends TestCase
 
         $this->assertNotNull($product1);
         $this->assertNotNull($product2);
+    }
+
+    public function test_service_does_not_update_db_progress_without_import_id(): void
+    {
+        $user = User::create([
+            'name' => 'Import User',
+            'email' => 'import-user-' . uniqid() . '@example.com',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'type' => 'admin',
+            'phone_number' => '+1-555-0000',
+        ]);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 60,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $service = new ProductImportService();
+
+        for ($i = 1; $i <= 3; $i++) {
+            $service->processProductRow([
+                'sku' => 'NO-ID-PROGRESS-' . str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+                'name_en' => 'Progress Test ' . $i,
+                'price' => 100,
+                'quantity' => 10,
+                'product_type' => 'simple',
+                'status' => 1,
+                'in_stock' => 1,
+            ], $i + 1);
+        }
+
+        $import->refresh();
+        $this->assertEquals(0, $import->processed_rows, 'processed_rows should remain 0 when no importId is provided');
+        $this->assertEquals(0, $import->success_rows);
+        $this->assertEquals(0, $import->failed_rows);
+    }
+
+    public function test_service_flushes_progress_to_db_at_threshold(): void
+    {
+        $user = User::create([
+            'name' => 'Import User',
+            'email' => 'import-user-' . uniqid() . '@example.com',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'type' => 'admin',
+            'phone_number' => '+1-555-0000',
+        ]);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 60,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $service = new ProductImportService($import->id);
+
+        $this->assertEquals(0, $import->processed_rows);
+
+        for ($i = 1; $i <= 49; $i++) {
+            $service->processProductRow([
+                'sku' => 'PROGRESS-THRESHOLD-' . str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+                'name_en' => 'Threshold Test ' . $i,
+                'price' => 100,
+                'quantity' => 10,
+                'product_type' => 'simple',
+                'status' => 1,
+                'in_stock' => 1,
+            ], $i + 1);
+        }
+
+        $import->refresh();
+        $this->assertEquals(
+            0,
+            $import->processed_rows,
+            'processed_rows should still be 0 after 49 rows (below 50 threshold)'
+        );
+
+        $service->processProductRow([
+            'sku' => 'PROGRESS-THRESHOLD-050',
+            'name_en' => 'Threshold Test 50',
+            'price' => 100,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ], 51);
+
+        $import->refresh();
+        $this->assertEquals(50, $import->processed_rows, 'processed_rows should be 50 after hitting threshold');
+        $this->assertEquals(50, $import->success_rows);
+        $this->assertEquals(0, $import->failed_rows);
+    }
+
+    public function test_service_finalizeProgress_flushes_remaining_rows(): void
+    {
+        $user = User::create([
+            'name' => 'Import User',
+            'email' => 'import-user-' . uniqid() . '@example.com',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'type' => 'admin',
+            'phone_number' => '+1-555-0000',
+        ]);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 12,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $service = new ProductImportService($import->id);
+
+        for ($i = 1; $i <= 12; $i++) {
+            $service->processProductRow([
+                'sku' => 'FINALIZE-TEST-' . str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+                'name_en' => 'Finalize Test ' . $i,
+                'price' => 100,
+                'quantity' => 10,
+                'product_type' => 'simple',
+                'status' => 1,
+                'in_stock' => 1,
+            ], $i + 1);
+        }
+
+        $import->refresh();
+        $this->assertEquals(0, $import->processed_rows, 'processed_rows should still be 0 before finalize (12 < 50 threshold)');
+
+        $service->finalizeProgress();
+
+        $import->refresh();
+        $this->assertEquals(12, $import->processed_rows, 'finalizeProgress should flush remaining 12 rows');
+        $this->assertEquals(12, $import->success_rows);
+        $this->assertEquals(0, $import->failed_rows);
+    }
+
+    public function test_progress_includes_both_success_and_failure_counts(): void
+    {
+        $user = User::create([
+            'name' => 'Import User',
+            'email' => 'import-user-' . uniqid() . '@example.com',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'type' => 'admin',
+            'phone_number' => '+1-555-0000',
+        ]);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 100,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $service = new ProductImportService($import->id);
+
+        for ($i = 1; $i <= 50; $i++) {
+            $service->processProductRow([
+                'sku' => 'MIXED-TEST-' . str_pad((string) $i, 3, '0', STR_PAD_LEFT),
+                'name_en' => 'Mixed Test ' . $i,
+                'price' => 100,
+                'quantity' => 10,
+                'product_type' => 'simple',
+                'status' => 1,
+                'in_stock' => 1,
+            ], $i + 1);
+        }
+
+        $import->refresh();
+        $this->assertEquals(50, $import->processed_rows, '50 successful rows should be flushed');
+
+        $this->assertEquals(50, $import->success_rows);
+        $this->assertEquals(0, $import->failed_rows);
+
+        $service->processProductRow([
+            'sku' => 'MIXED-TEST-051',
+            'name_en' => 'Mixed Test 51',
+            'price' => 100,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ], 52);
+
+        $import->refresh();
+        $this->assertEquals(50, $import->processed_rows, 'processed_rows stays at 50 after 51st row (51 % 50 != 0, no flush)');
+
+        $service->finalizeProgress();
+
+        $import->refresh();
+        $this->assertEquals(51, $import->processed_rows, 'finalizeProgress flushes all 51 rows');
+        $this->assertEquals(51, $import->success_rows);
+        $this->assertEquals(0, $import->failed_rows);
+    }
+
+    public function test_unauthenticated_user_cannot_cancel_import(): void
+    {
+        $response = $this->postJson(self::PREFIX . '/products/import/1/cancel');
+
+        $response->assertUnauthorized();
+    }
+
+    public function test_cancel_import_returns_success(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 100,
+            'processed_rows' => 30,
+            'success_rows' => 30,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $response = $this->postJson(self::PREFIX . "/products/import/{$import->id}/cancel");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.status', 'cancelled');
+        $response->assertJsonStructure(['data' => ['import_id', 'status']]);
+
+        $this->assertDatabaseHas('imports', [
+            'id' => $import->id,
+            'status' => 'cancelled',
+        ]);
+    }
+
+    public function test_cannot_cancel_completed_import(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'completed',
+            'total_rows' => 10,
+            'processed_rows' => 10,
+            'success_rows' => 10,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $response = $this->postJson(self::PREFIX . "/products/import/{$import->id}/cancel");
+
+        $response->assertStatus(409);
+    }
+
+    public function test_cannot_cancel_failed_import(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'failed',
+            'total_rows' => 10,
+            'processed_rows' => 5,
+            'success_rows' => 3,
+            'failed_rows' => 2,
+            'created_by' => $user->id,
+        ]);
+
+        $response = $this->postJson(self::PREFIX . "/products/import/{$import->id}/cancel");
+
+        $response->assertStatus(409);
+    }
+
+    public function test_cannot_cancel_nonexistent_import(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $response = $this->postJson(self::PREFIX . '/products/import/99999/cancel');
+
+        $response->assertNotFound();
+    }
+
+    public function test_cancelled_import_job_does_not_process(): void
+    {
+        Queue::fake();
+
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        Storage::fake('public');
+
+        $file = UploadedFile::fake()->create('products.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+
+        $response = $this->postJson(self::PREFIX . '/products/import', [
+            'file' => $file,
+        ]);
+
+        $response->assertStatus(202);
+        $importId = $response->json('data.import_id');
+
+        Import::where('id', $importId)->update(['status' => 'cancelled']);
+
+        $job = new \Marvel\Jobs\ImportProductsJob($importId);
+        $job->handle();
+
+        $this->assertDatabaseHas('imports', [
+            'id' => $importId,
+            'status' => 'cancelled',
+            'processed_rows' => 0,
+        ]);
+    }
+
+    public function test_service_rollback_deletes_created_products_and_variants(): void
+    {
+        $user = User::create([
+            'name' => 'Import User',
+            'email' => 'import-rollback-' . uniqid() . '@example.com',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'type' => 'admin',
+            'phone_number' => '+1-555-0000',
+        ]);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 60,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $service = new ProductImportService($import->id);
+
+        $service->processProductRow([
+            'sku' => 'ROLLBACK-TEST-001',
+            'name_en' => 'Rollback Test 1',
+            'price' => 100,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ], 2);
+
+        $service->processProductRow([
+            'sku' => 'ROLLBACK-TEST-002',
+            'name_en' => 'Rollback Test 2',
+            'price' => 200,
+            'quantity' => 20,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ], 3);
+
+        $this->assertDatabaseHas('products', ['sku' => 'ROLLBACK-TEST-001']);
+        $this->assertDatabaseHas('products', ['sku' => 'ROLLBACK-TEST-002']);
+
+        $service->rollbackCreatedData();
+
+        $this->assertDatabaseMissing('products', ['sku' => 'ROLLBACK-TEST-001']);
+        $this->assertDatabaseMissing('products', ['sku' => 'ROLLBACK-TEST-002']);
+    }
+
+    public function test_service_rollback_does_not_delete_existing_products(): void
+    {
+        $user = User::create([
+            'name' => 'Import User',
+            'email' => 'import-existing-' . uniqid() . '@example.com',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'type' => 'admin',
+            'phone_number' => '+1-555-0000',
+        ]);
+
+        $existingProduct = Product::create([
+            'sku' => 'EXISTING-PRODUCT',
+            'name' => ['en' => 'Existing Product'],
+            'price' => 50,
+            'quantity' => 5,
+            'stock_quantity' => 5,
+            'product_type' => 'simple',
+            'slug' => 'existing-product',
+            'status' => 'publish',
+            'in_stock' => true,
+            'is_active' => true,
+            'type' => 'simple',
+        ]);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 60,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $service = new ProductImportService($import->id);
+
+        $service->processProductRow([
+            'sku' => 'EXISTING-PRODUCT',
+            'name_en' => 'Updated Existing Product',
+            'price' => 75,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ], 2);
+
+        $service->processProductRow([
+            'sku' => 'NEW-ROLLBACK-PRODUCT',
+            'name_en' => 'New Rollback Product',
+            'price' => 100,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ], 3);
+
+        $service->rollbackCreatedData();
+
+        $this->assertDatabaseHas('products', ['sku' => 'EXISTING-PRODUCT']);
+        $this->assertDatabaseMissing('products', ['sku' => 'NEW-ROLLBACK-PRODUCT']);
     }
 }

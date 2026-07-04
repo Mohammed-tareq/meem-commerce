@@ -11,4 +11,5 @@ final class ImportStatus extends Enum
     const COMPLETED = 'completed';
     const COMPLETED_WITH_ERRORS = 'completed_with_errors';
     const FAILED = 'failed';
+    const CANCELLED = 'cancelled';
 }

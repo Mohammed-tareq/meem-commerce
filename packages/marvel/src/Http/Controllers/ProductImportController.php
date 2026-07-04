@@ -109,6 +109,24 @@ class ProductImportController extends Controller
         )->deleteFileAfterSend(true);
     }
 
+    public function cancel(int $id): JsonResponse
+    {
+        $import = Import::findOrFail($id);
+
+        if (in_array($import->status, ['completed', 'completed_with_errors', 'failed', 'cancelled'], true)) {
+            return $this->apiResponse(__('message.MESSAGE.IMPORT_CANNOT_CANCEL'), 409, false);
+        }
+
+        $import->update([
+            'status' => 'cancelled',
+        ]);
+
+        return $this->apiResponse(__('message.MESSAGE.IMPORT_CANCELLED_SUCCESSFULLY'), 200, true, [
+            'import_id' => $import->id,
+            'status' => $import->status,
+        ]);
+    }
+
     public function downloadSample(): BinaryFileResponse
     {
         $samplePath = base_path('packages/marvel/resources/products/product-import-sample.xlsx');

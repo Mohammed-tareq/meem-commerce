@@ -223,6 +223,8 @@ return [
     'MESSAGE.IMPORT_STATUS_FETCHED' => 'تم جلب حالة الاستيراد',
     'MESSAGE.EXPORT_STARTED_SUCCESSFULLY' => 'بدأ التصدير بنجاح',
     'MESSAGE.IMPORT_NO_ERRORS' => 'لم يتم العثور على أخطاء',
+    'MESSAGE.IMPORT_CANCELLED_SUCCESSFULLY' => 'تم إلغاء الاستيراد بنجاح',
+    'MESSAGE.IMPORT_CANNOT_CANCEL' => 'لا يمكن إلغاء الاستيراد في حالته الحالية',
     'MESSAGE.PRODUCTS_DELETED_SUCCESSFULLY' => 'تم حذف المنتجات بنجاح',
     'IMPORT.VALIDATION.FILE_REQUIRED' => 'ملف Excel مطلوب',
     'IMPORT.VALIDATION.FILE_MIMES' => 'يجب أن يكون الملف بصيغة Excel صالحة (xlsx, xls, or ods)',
