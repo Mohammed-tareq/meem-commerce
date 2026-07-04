@@ -131,11 +131,7 @@ Route::group(
         Route::apiResource('sliders', SliderController::class);
 
         //==================================== order  controllers =============================================//
-        // GET /api/v1/orders - List all orders (paginated). Filters: status, user_id, user_email, promotion_id,
-        //   promotion_name, product_id, product_name, flash_sale_name, shipping_method, created_from, created_to, search, limit, page
         Route::get('orders', [OrderController::class, 'index']);
-        // GET /api/v1/orders/{id} - Show order by ID or tracking number. Includes items, transactions, user.
-        //   Examples: GET /api/v1/orders/42    GET /api/v1/orders/ORD-abc123
         Route::get('orders/{id}', [OrderController::class, 'show']);
 
         //==================================== faqs  controllers =============================================//

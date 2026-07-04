@@ -2,7 +2,6 @@
 
 namespace Marvel\Http\Controllers\Order;
 
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Promotion;
