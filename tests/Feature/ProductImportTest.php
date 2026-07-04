@@ -441,9 +441,9 @@ class ProductImportTest extends TestCase
 
         $import->refresh();
         $this->assertEquals(
-            0,
+            49,
             $import->processed_rows,
-            'processed_rows should still be 0 after 49 rows (below 50 threshold)'
+            'processed_rows should be 49 after 49 rows (every row flushes now)'
         );
 
         $service->processProductRow([
@@ -457,7 +457,7 @@ class ProductImportTest extends TestCase
         ], 51);
 
         $import->refresh();
-        $this->assertEquals(50, $import->processed_rows, 'processed_rows should be 50 after hitting threshold');
+        $this->assertEquals(50, $import->processed_rows, 'processed_rows should be 50 after 50 rows');
         $this->assertEquals(50, $import->success_rows);
         $this->assertEquals(0, $import->failed_rows);
     }
@@ -500,12 +500,12 @@ class ProductImportTest extends TestCase
         }
 
         $import->refresh();
-        $this->assertEquals(0, $import->processed_rows, 'processed_rows should still be 0 before finalize (12 < 50 threshold)');
+        $this->assertEquals(12, $import->processed_rows, 'processed_rows should be 12 after 12 rows (every row flushes now)');
 
         $service->finalizeProgress();
 
         $import->refresh();
-        $this->assertEquals(12, $import->processed_rows, 'finalizeProgress should flush remaining 12 rows');
+        $this->assertEquals(12, $import->processed_rows, 'finalizeProgress should keep 12 rows');
         $this->assertEquals(12, $import->success_rows);
         $this->assertEquals(0, $import->failed_rows);
     }
@@ -564,12 +564,12 @@ class ProductImportTest extends TestCase
         ], 52);
 
         $import->refresh();
-        $this->assertEquals(50, $import->processed_rows, 'processed_rows stays at 50 after 51st row (51 % 50 != 0, no flush)');
+        $this->assertEquals(51, $import->processed_rows, 'processed_rows should be 51 after 51st row (every row flushes now)');
 
         $service->finalizeProgress();
 
         $import->refresh();
-        $this->assertEquals(51, $import->processed_rows, 'finalizeProgress flushes all 51 rows');
+        $this->assertEquals(51, $import->processed_rows, 'finalizeProgress keeps all 51 rows');
         $this->assertEquals(51, $import->success_rows);
         $this->assertEquals(0, $import->failed_rows);
     }
@@ -746,6 +746,107 @@ class ProductImportTest extends TestCase
 
         $this->assertDatabaseMissing('products', ['sku' => 'ROLLBACK-TEST-001']);
         $this->assertDatabaseMissing('products', ['sku' => 'ROLLBACK-TEST-002']);
+    }
+
+    public function test_cancellation_detected_immediately_not_just_at_threshold(): void
+    {
+        $user = User::create([
+            'name' => 'Import User',
+            'email' => 'import-cancel-immediate-' . uniqid() . '@example.com',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'type' => 'admin',
+            'phone_number' => '+1-555-0000',
+        ]);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 100,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $service = new ProductImportService($import->id);
+
+        $service->processProductRow([
+            'sku' => 'CANCEL-IMMEDIATE-001',
+            'name_en' => 'Cancel Test 1',
+            'price' => 100,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ], 2);
+
+        $import->refresh();
+        $this->assertEquals(1, $import->processed_rows, 'progress should be 1 after 1st row');
+
+        $import->update(['status' => 'cancelled']);
+
+        $this->expectException(\Marvel\Exceptions\ImportCancelledException::class);
+
+        try {
+            $service->processProductRow([
+                'sku' => 'CANCEL-IMMEDIATE-002',
+                'name_en' => 'Cancel Test 2',
+                'price' => 200,
+                'quantity' => 20,
+                'product_type' => 'simple',
+                'status' => 1,
+                'in_stock' => 1,
+            ], 3);
+        } catch (\Marvel\Exceptions\ImportCancelledException $e) {
+            $import->refresh();
+            $this->assertEquals(1, $import->processed_rows, 'progress should remain 1 (row 2 cancelled before processing)');
+            $this->assertEquals('cancelled', $import->status, 'status should remain cancelled');
+            throw $e;
+        }
+    }
+
+    public function test_finalizeProgress_throws_if_cancelled(): void
+    {
+        $user = User::create([
+            'name' => 'Import User',
+            'email' => 'import-finalize-cancel-' . uniqid() . '@example.com',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'type' => 'admin',
+            'phone_number' => '+1-555-0000',
+        ]);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 10,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $service = new ProductImportService($import->id);
+
+        $service->processProductRow([
+            'sku' => 'FINALIZE-CANCEL-001',
+            'name_en' => 'Finalize Cancel Test',
+            'price' => 100,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ], 2);
+
+        $import->update(['status' => 'cancelled']);
+
+        $this->expectException(\Marvel\Exceptions\ImportCancelledException::class);
+        $service->finalizeProgress();
     }
 
     public function test_service_rollback_does_not_delete_existing_products(): void

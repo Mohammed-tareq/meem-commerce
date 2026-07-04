@@ -40,8 +40,6 @@ class ProductImportService
 
     protected int $processedCount = 0;
 
-    protected const FLUSH_THRESHOLD = 50;
-
     public function __construct(?int $importId = null)
     {
         $this->urlHandler = new UrlImageHandler();
@@ -66,21 +64,23 @@ class ProductImportService
 
         $this->processedCount = $this->successCount + count($this->failedRows);
 
-        if ($this->processedCount % self::FLUSH_THRESHOLD !== 0) {
-            return;
+        if ($this->isCancelled()) {
+            $this->writeProgress();
+            throw new ImportCancelledException();
         }
 
-        $updated = Import::where('id', $this->importId)
+        $this->writeProgress();
+    }
+
+    protected function writeProgress(): void
+    {
+        Import::where('id', $this->importId)
             ->where('status', 'processing')
             ->update([
                 'processed_rows' => $this->processedCount,
                 'success_rows' => $this->successCount,
                 'failed_rows' => count($this->failedRows),
             ]);
-
-        if ($updated === 0 && $this->isCancelled()) {
-            throw new ImportCancelledException();
-        }
     }
 
     public function finalizeProgress(): void
@@ -90,6 +90,10 @@ class ProductImportService
         }
 
         $this->processedCount = $this->successCount + count($this->failedRows);
+
+        if ($this->isCancelled()) {
+            throw new ImportCancelledException();
+        }
 
         Import::where('id', $this->importId)
             ->update([
