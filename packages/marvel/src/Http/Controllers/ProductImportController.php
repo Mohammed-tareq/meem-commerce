@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Marvel\Database\Models\Import;
 use Marvel\Http\Requests\ProductImportRequest;
 use Marvel\Jobs\ImportProductsJob;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Storage;
 use Marvel\Enums\Permission;
@@ -21,6 +22,41 @@ class ProductImportController extends Controller
     {
         $this->middleware('auth:sanctum');
         $this->middleware('permission:' . Permission::CREATE_PRODUCT . '|' . Permission::SUPER_ADMIN);
+    }
+
+    protected function readSignalFile(int $importId, string $type): ?array
+    {
+        $path = storage_path("app/imports/{$type}_{$importId}.json");
+        clearstatcache(true, $path);
+        if (!file_exists($path)) {
+            return null;
+        }
+        try {
+            $contents = file_get_contents($path);
+            return json_decode($contents, true) ?: null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    protected function signalFileExists(int $importId, string $type): bool
+    {
+        $path = storage_path("app/imports/{$type}_{$importId}.json");
+        clearstatcache(true, $path);
+        return file_exists($path);
+    }
+
+    protected function writeSignalFile(int $importId, string $type, array $data = []): void
+    {
+        $dir = storage_path('app/imports');
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        try {
+            file_put_contents($dir . "/{$type}_{$importId}.json", json_encode($data), LOCK_EX);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public function import(ProductImportRequest $request): JsonResponse
@@ -47,21 +83,45 @@ class ProductImportController extends Controller
 
     public function status(int $id): JsonResponse
     {
-        $import = Import::findOrFail($id);
+        $import = Import::select(['id', 'status', 'total_rows', 'processed_rows', 'success_rows', 'failed_rows', 'errors'])->findOrFail($id);
+
+        $cancelPending = $this->signalFileExists($id, 'cancel');
+        $progressData = $this->readSignalFile($id, 'progress');
+
+        $effectiveStatus = $cancelPending ? 'cancelling' : $import->status;
+
+        if ($progressData && $import->status === 'processing' && !$cancelPending) {
+            $processedRows = $progressData['processed_rows'];
+            $successRows = $progressData['success_rows'];
+            $failedRows = $progressData['failed_rows'];
+        } else {
+            $processedRows = $import->processed_rows;
+            $successRows = $import->success_rows;
+            $failedRows = $import->failed_rows;
+        }
 
         $total = $import->total_rows ?: 1;
-        $progress = round(($import->processed_rows / $total) * 100, 2);
+        $progress = round(($processedRows / $total) * 100, 2);
 
-        return $this->apiResponse(__('message.MESSAGE.IMPORT_STATUS_FETCHED'), 200, true, [
-            'id' => $import->id,
-            'status' => $import->status,
-            'total_rows' => $import->total_rows,
-            'processed_rows' => $import->processed_rows,
-            'success_rows' => $import->success_rows,
-            'failed_rows' => $import->failed_rows,
-            'progress' => min($progress, 100),
-            'errors' => $import->errors,
-        ]);
+        return response()
+            ->json([
+                'status' => 200,
+                'message' => __('message.MESSAGE.IMPORT_STATUS_FETCHED'),
+                'success' => true,
+                'data' => [
+                    'id' => $import->id,
+                    'status' => $effectiveStatus,
+                    'total_rows' => $import->total_rows,
+                    'processed_rows' => $processedRows,
+                    'success_rows' => $successRows,
+                    'failed_rows' => $failedRows,
+                    'progress' => min($progress, 100),
+                    'errors' => $import->errors,
+                ],
+            ])
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     public function downloadErrors(int $id): BinaryFileResponse|JsonResponse
@@ -117,13 +177,21 @@ class ProductImportController extends Controller
             return $this->apiResponse(__('message.MESSAGE.IMPORT_CANNOT_CANCEL'), 409, false);
         }
 
-        $import->update([
-            'status' => 'cancelled',
-        ]);
+        $this->writeSignalFile($import->id, 'cancel', ['cancelled_at' => now()->toIso8601String()]);
+
+        try {
+            Import::where('id', $import->id)->update([
+                'status' => 'cancelled',
+            ]);
+
+            $import->refresh();
+        } catch (QueryException $e) {
+            report($e);
+        }
 
         return $this->apiResponse(__('message.MESSAGE.IMPORT_CANCELLED_SUCCESSFULLY'), 200, true, [
             'import_id' => $import->id,
-            'status' => $import->status,
+            'status' => 'cancelled',
         ]);
     }
 

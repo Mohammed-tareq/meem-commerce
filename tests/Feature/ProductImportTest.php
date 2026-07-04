@@ -27,6 +27,19 @@ class ProductImportTest extends TestCase
     private const GUARD = 'api';
     private const PREFIX = '/api/v1';
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $dir = storage_path('app/imports');
+        if (is_dir($dir)) {
+            $files = glob($dir . '/*.json');
+            foreach ($files as $file) {
+                @unlink($file);
+            }
+        }
+    }
+
     private function createSuperAdminUser(): User
     {
         $permissions = [
@@ -66,6 +79,44 @@ class ProductImportTest extends TestCase
         }
 
         return $user;
+    }
+
+    protected function signalDir(): string
+    {
+        $dir = storage_path('app/imports');
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+        return $dir;
+    }
+
+    protected function writeSignalFile(int $importId, string $type, array $data = []): void
+    {
+        $path = $this->signalDir() . "/{$type}_{$importId}.json";
+        file_put_contents($path, json_encode($data), LOCK_EX);
+    }
+
+    protected function readSignalFile(int $importId, string $type): ?array
+    {
+        $path = $this->signalDir() . "/{$type}_{$importId}.json";
+        if (!file_exists($path)) {
+            return null;
+        }
+        $contents = file_get_contents($path);
+        return json_decode($contents, true) ?: null;
+    }
+
+    protected function signalFileExists(int $importId, string $type): bool
+    {
+        return file_exists($this->signalDir() . "/{$type}_{$importId}.json");
+    }
+
+    protected function removeSignalFile(int $importId, string $type): void
+    {
+        $path = $this->signalDir() . "/{$type}_{$importId}.json";
+        if (file_exists($path)) {
+            @unlink($path);
+        }
     }
 
     public function test_unauthenticated_user_cannot_import(): void
@@ -400,7 +451,7 @@ class ProductImportTest extends TestCase
         $this->assertEquals(0, $import->failed_rows);
     }
 
-    public function test_service_flushes_progress_to_db_at_threshold(): void
+    public function test_signal_progress_written_every_row_db_at_threshold(): void
     {
         $user = User::create([
             'name' => 'Import User',
@@ -427,7 +478,7 @@ class ProductImportTest extends TestCase
 
         $this->assertEquals(0, $import->processed_rows);
 
-        for ($i = 1; $i <= 49; $i++) {
+        for ($i = 1; $i <= 22; $i++) {
             $service->processProductRow([
                 'sku' => 'PROGRESS-THRESHOLD-' . str_pad((string) $i, 3, '0', STR_PAD_LEFT),
                 'name_en' => 'Threshold Test ' . $i,
@@ -441,25 +492,32 @@ class ProductImportTest extends TestCase
 
         $import->refresh();
         $this->assertEquals(
-            49,
+            20,
             $import->processed_rows,
-            'processed_rows should be 49 after 49 rows (every row flushes now)'
+            'DB shows 20 after 22 rows (flushed at 10, 20)'
         );
 
+        $signal = $this->readSignalFile($import->id, 'progress');
+        $this->assertNotNull($signal, 'Signal file should have data');
+        $this->assertEquals(22, $signal['processed_rows'], 'Signal file has fresher value (22)');
+        $this->assertEquals(22, $signal['success_rows']);
+        $this->assertEquals(0, $signal['failed_rows']);
+
         $service->processProductRow([
-            'sku' => 'PROGRESS-THRESHOLD-050',
-            'name_en' => 'Threshold Test 50',
+            'sku' => 'PROGRESS-THRESHOLD-023',
+            'name_en' => 'Threshold Test 23',
             'price' => 100,
             'quantity' => 10,
             'product_type' => 'simple',
             'status' => 1,
             'in_stock' => 1,
-        ], 51);
+        ], 24);
 
         $import->refresh();
-        $this->assertEquals(50, $import->processed_rows, 'processed_rows should be 50 after 50 rows');
-        $this->assertEquals(50, $import->success_rows);
-        $this->assertEquals(0, $import->failed_rows);
+        $this->assertEquals(20, $import->processed_rows, 'DB still 20 after 23rd row (threshold not hit)');
+
+        $signal = $this->readSignalFile($import->id, 'progress');
+        $this->assertEquals(23, $signal['processed_rows'], 'Signal file shows 23 immediately');
     }
 
     public function test_service_finalizeProgress_flushes_remaining_rows(): void
@@ -500,12 +558,12 @@ class ProductImportTest extends TestCase
         }
 
         $import->refresh();
-        $this->assertEquals(12, $import->processed_rows, 'processed_rows should be 12 after 12 rows (every row flushes now)');
+        $this->assertEquals(10, $import->processed_rows, 'DB shows 10 after 12 rows (threshold at 10)');
 
         $service->finalizeProgress();
 
         $import->refresh();
-        $this->assertEquals(12, $import->processed_rows, 'finalizeProgress should keep 12 rows');
+        $this->assertEquals(12, $import->processed_rows, 'finalizeProgress flushes remaining 2 rows');
         $this->assertEquals(12, $import->success_rows);
         $this->assertEquals(0, $import->failed_rows);
     }
@@ -564,12 +622,12 @@ class ProductImportTest extends TestCase
         ], 52);
 
         $import->refresh();
-        $this->assertEquals(51, $import->processed_rows, 'processed_rows should be 51 after 51st row (every row flushes now)');
+        $this->assertEquals(50, $import->processed_rows, 'DB shows 50 after 51st row (threshold at 50)');
 
         $service->finalizeProgress();
 
         $import->refresh();
-        $this->assertEquals(51, $import->processed_rows, 'finalizeProgress keeps all 51 rows');
+        $this->assertEquals(51, $import->processed_rows, 'finalizeProgress flushes remaining 1 row');
         $this->assertEquals(51, $import->success_rows);
         $this->assertEquals(0, $import->failed_rows);
     }
@@ -784,11 +842,10 @@ class ProductImportTest extends TestCase
         ], 2);
 
         $import->refresh();
-        $this->assertEquals(1, $import->processed_rows, 'progress should be 1 after 1st row');
+        $this->assertEquals(0, $import->processed_rows, 'DB shows 0 after 1st row (threshold not hit)');
 
+        $this->writeSignalFile($import->id, 'cancel', ['cancelled_at' => now()->toIso8601String()]);
         $import->update(['status' => 'cancelled']);
-
-        $this->expectException(\Marvel\Exceptions\ImportCancelledException::class);
 
         try {
             $service->processProductRow([
@@ -800,11 +857,11 @@ class ProductImportTest extends TestCase
                 'status' => 1,
                 'in_stock' => 1,
             ], 3);
+            $this->fail('ImportCancelledException should have been thrown');
         } catch (\Marvel\Exceptions\ImportCancelledException $e) {
             $import->refresh();
-            $this->assertEquals(1, $import->processed_rows, 'progress should remain 1 (row 2 cancelled before processing)');
+            $this->assertEquals(2, $import->processed_rows, 'progress saved as 2 on cancellation (row 2 succeeded before flushProgress detected cancel)');
             $this->assertEquals('cancelled', $import->status, 'status should remain cancelled');
-            throw $e;
         }
     }
 
@@ -843,6 +900,7 @@ class ProductImportTest extends TestCase
             'in_stock' => 1,
         ], 2);
 
+        $this->writeSignalFile($import->id, 'cancel', ['cancelled_at' => now()->toIso8601String()]);
         $import->update(['status' => 'cancelled']);
 
         $this->expectException(\Marvel\Exceptions\ImportCancelledException::class);
@@ -912,5 +970,189 @@ class ProductImportTest extends TestCase
 
         $this->assertDatabaseHas('products', ['sku' => 'EXISTING-PRODUCT']);
         $this->assertDatabaseMissing('products', ['sku' => 'NEW-ROLLBACK-PRODUCT']);
+    }
+
+    public function test_signal_progress_written_on_every_row(): void
+    {
+        $user = User::create([
+            'name' => 'Import User',
+            'email' => 'import-signal-' . uniqid() . '@example.com',
+            'password' => Hash::make('password'),
+            'is_active' => true,
+            'type' => 'admin',
+            'phone_number' => '+1-555-0000',
+        ]);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 10,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $service = new ProductImportService($import->id);
+
+        $this->assertNull($this->readSignalFile($import->id, 'progress'));
+
+        $service->processProductRow([
+            'sku' => 'SIGNAL-PROGRESS-001',
+            'name_en' => 'Signal Progress Test',
+            'price' => 100,
+            'quantity' => 10,
+            'product_type' => 'simple',
+            'status' => 1,
+            'in_stock' => 1,
+        ], 2);
+
+        $signal = $this->readSignalFile($import->id, 'progress');
+        $this->assertNotNull($signal, 'Signal file should be set after first row');
+        $this->assertEquals(1, $signal['processed_rows']);
+        $this->assertEquals(1, $signal['success_rows']);
+        $this->assertEquals(0, $signal['failed_rows']);
+    }
+
+    public function test_status_endpoint_reads_from_signal_during_processing(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 100,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $this->writeSignalFile($import->id, 'progress', [
+            'processed_rows' => 42,
+            'success_rows' => 40,
+            'failed_rows' => 2,
+        ]);
+
+        $response = $this->getJson(self::PREFIX . "/products/import/{$import->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.processed_rows', 42);
+        $response->assertJsonPath('data.success_rows', 40);
+        $response->assertJsonPath('data.failed_rows', 2);
+        $response->assertJsonPath('data.status', 'processing');
+    }
+
+    public function test_status_endpoint_falls_back_to_db_when_no_signal(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'completed_with_errors',
+            'total_rows' => 10,
+            'processed_rows' => 8,
+            'success_rows' => 6,
+            'failed_rows' => 2,
+            'created_by' => $user->id,
+        ]);
+
+        $this->removeSignalFile($import->id, 'progress');
+
+        $response = $this->getJson(self::PREFIX . "/products/import/{$import->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.processed_rows', 8);
+        $response->assertJsonPath('data.success_rows', 6);
+        $response->assertJsonPath('data.failed_rows', 2);
+        $response->assertJsonPath('data.status', 'completed_with_errors');
+    }
+
+    public function test_cancelled_job_deletes_uploaded_file(): void
+    {
+        Queue::fake();
+        Storage::fake('public');
+
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $file = UploadedFile::fake()->create('products.xlsx', 100, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response = $this->postJson(self::PREFIX . '/products/import', ['file' => $file]);
+        $response->assertStatus(202);
+        $importId = $response->json('data.import_id');
+
+        $import = Import::find($importId);
+        Storage::disk('public')->assertExists($import->file_path);
+
+        $import->update(['status' => 'cancelled']);
+
+        $job = new \Marvel\Jobs\ImportProductsJob($importId);
+        $job->handle();
+
+        Storage::disk('public')->assertMissing($import->file_path);
+
+        $this->assertDatabaseHas('imports', [
+            'id' => $importId,
+            'status' => 'cancelled',
+        ]);
+    }
+
+    public function test_status_endpoint_shows_cancelling_when_cancel_signal_set(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 100,
+            'processed_rows' => 15,
+            'success_rows' => 15,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $this->writeSignalFile($import->id, 'cancel', ['cancelled_at' => now()->toIso8601String()]);
+
+        $response = $this->getJson(self::PREFIX . "/products/import/{$import->id}");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.status', 'cancelling');
+        $response->assertJsonPath('data.processed_rows', 15);
+    }
+
+    public function test_cancel_always_returns_success_even_if_db_update_fails(): void
+    {
+        $user = $this->createSuperAdminUser();
+        Sanctum::actingAs($user);
+
+        $import = Import::create([
+            'type' => 'product',
+            'file_path' => 'imports/test.xlsx',
+            'file_name' => 'test.xlsx',
+            'status' => 'processing',
+            'total_rows' => 10,
+            'processed_rows' => 0,
+            'success_rows' => 0,
+            'failed_rows' => 0,
+            'created_by' => $user->id,
+        ]);
+
+        $response = $this->postJson(self::PREFIX . "/products/import/{$import->id}/cancel");
+
+        $response->assertOk();
+        $response->assertJsonPath('data.status', 'cancelled');
+
+        $this->assertTrue($this->signalFileExists($import->id, 'cancel'), 'Cancel signal file should be set');
     }
 }

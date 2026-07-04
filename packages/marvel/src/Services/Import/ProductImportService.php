@@ -6,7 +6,6 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-
 use Illuminate\Support\Str;
 use Marvel\Database\Models\Attribute;
 use Marvel\Database\Models\AttributeProduct;
@@ -28,6 +27,8 @@ class ProductImportService
 {
     protected ?UrlImageHandler $urlHandler = null;
 
+    protected ProductPricingService $pricingService;
+
     protected array $failedRows = [];
 
     protected int $successCount = 0;
@@ -40,10 +41,74 @@ class ProductImportService
 
     protected int $processedCount = 0;
 
-    public function __construct(?int $importId = null)
+    protected const FLUSH_THRESHOLD = 10;
+
+    protected const SIGNAL_DIR = 'imports';
+
+    public function __construct(?int $importId = null, ?ProductPricingService $pricingService = null)
     {
         $this->urlHandler = new UrlImageHandler();
         $this->importId = $importId;
+        $this->pricingService = $pricingService ?? app(ProductPricingService::class);
+        $this->ensureSignalDir();
+    }
+
+    protected function ensureSignalDir(): void
+    {
+        $dir = storage_path('app/' . self::SIGNAL_DIR);
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0755, true);
+        }
+    }
+
+    protected function signalPath(string $type): ?string
+    {
+        if ($this->importId === null) {
+            return null;
+        }
+        return storage_path('app/' . self::SIGNAL_DIR) . '/' . $type . '_' . $this->importId . '.json';
+    }
+
+    protected function writeSignal(string $type, array $data = []): void
+    {
+        $path = $this->signalPath($type);
+        if ($path === null) {
+            return;
+        }
+        try {
+            file_put_contents($path, json_encode($data));
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+
+    protected function readSignal(string $type): ?array
+    {
+        $path = $this->signalPath($type);
+        if ($path === null || !file_exists($path)) {
+            return null;
+        }
+        try {
+            $contents = file_get_contents($path);
+            return json_decode($contents, true) ?: null;
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    protected function removeSignal(string $type): void
+    {
+        $path = $this->signalPath($type);
+        if ($path === null) {
+            return;
+        }
+        try {
+            if (file_exists($path)) {
+                @unlink($path);
+            }
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public function getFailedRows(): array
@@ -64,23 +129,39 @@ class ProductImportService
 
         $this->processedCount = $this->successCount + count($this->failedRows);
 
+        $this->writeSignal('progress', [
+            'processed_rows' => $this->processedCount,
+            'success_rows' => $this->successCount,
+            'failed_rows' => count($this->failedRows),
+        ]);
+
         if ($this->isCancelled()) {
-            $this->writeProgress();
+            $this->writeProgress(true);
             throw new ImportCancelledException();
         }
 
-        $this->writeProgress();
+        if ($this->processedCount % self::FLUSH_THRESHOLD === 0) {
+            $this->writeProgress();
+        }
     }
 
-    protected function writeProgress(): void
+    protected function writeProgress(bool $ignoreStatus = false): void
     {
-        Import::where('id', $this->importId)
-            ->where('status', 'processing')
-            ->update([
+        try {
+            $query = Import::where('id', $this->importId);
+
+            if (!$ignoreStatus) {
+                $query->where('status', 'processing');
+            }
+
+            $query->update([
                 'processed_rows' => $this->processedCount,
                 'success_rows' => $this->successCount,
                 'failed_rows' => count($this->failedRows),
             ]);
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 
     public function finalizeProgress(): void
@@ -101,6 +182,8 @@ class ProductImportService
                 'success_rows' => $this->successCount,
                 'failed_rows' => count($this->failedRows),
             ]);
+
+        $this->removeSignal('progress');
     }
 
     public function getCreatedProductIds(): array
@@ -119,17 +202,30 @@ class ProductImportService
             return false;
         }
 
-        return Import::where('id', $this->importId)->value('status') === 'cancelled';
+        return file_exists(storage_path('app/' . self::SIGNAL_DIR) . '/cancel_' . $this->importId . '.json');
     }
 
     public function rollbackCreatedData(): void
     {
         foreach ($this->keptVariantIds as $productId => $variantIds) {
+            AttributeProduct::whereIn('product_variant_id', $variantIds)->delete();
             ProductVariant::whereIn('id', $variantIds)->forceDelete();
         }
 
         if (!empty($this->createdProductIds)) {
-            Product::whereIn('id', $this->createdProductIds)->forceDelete();
+            $createdProducts = Product::whereIn('id', $this->createdProductIds)->get();
+            foreach ($createdProducts as $product) {
+                $product->categories()->detach();
+                $product->brands()->detach();
+                $product->flash_sales()->detach();
+                $product->sliders()->detach();
+                try {
+                    $product->clearMediaCollection('products');
+                } catch (\Throwable $e) {
+                    report($e);
+                }
+                $product->forceDelete();
+            }
         }
     }
 
@@ -169,7 +265,7 @@ class ProductImportService
                 $product->saveQuietly();
             }
 
-            $pricing = app(ProductPricingService::class)->calculateProductPricingFromData(
+            $pricing = $this->pricingService->calculateProductPricingFromData(
                 $product->toArray(),
                 $product->getActiveFlashSale()
             );

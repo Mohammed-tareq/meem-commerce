@@ -21,7 +21,7 @@ class ImportProductsJob implements ShouldQueue
 
     public int $tries = 3;
 
-    public int $timeout = 3600;
+    public int $timeout = 1500;
 
     public array $backoff = [60, 120, 240];
 
@@ -33,11 +33,32 @@ class ImportProductsJob implements ShouldQueue
         $this->onQueue('high');
     }
 
+    protected function removeSignalFile(string $type): void
+    {
+        $path = storage_path("app/imports/{$type}_{$this->importId}.json");
+        if (file_exists($path)) {
+            @unlink($path);
+        }
+    }
+
+    protected function cancelSignalFileExists(): bool
+    {
+        return file_exists(storage_path("app/imports/cancel_{$this->importId}.json"));
+    }
+
+    protected function cleanSignals(): void
+    {
+        $this->removeSignalFile('cancel');
+        $this->removeSignalFile('progress');
+    }
+
     public function handle(): void
     {
-        $import = Import::findOrFail($this->importId);
+        $import = Import::select(['id', 'status', 'file_path', 'file_name'])->findOrFail($this->importId);
 
-        if ($import->status === 'cancelled') {
+        if ($import->status === 'cancelled' || $this->cancelSignalFileExists()) {
+            Storage::disk('public')->delete($import->file_path);
+            $this->removeSignalFile('cancel');
             return;
         }
 
@@ -86,10 +107,16 @@ class ImportProductsJob implements ShouldQueue
                 'failed_rows' => count($failedRows),
                 'errors' => $failedRows,
             ]);
+
+            Storage::disk('public')->delete($import->file_path);
+            $this->removeSignalFile('progress');
         } catch (ImportCancelledException $e) {
             $service->rollbackCreatedData();
+            Storage::disk('public')->delete($import->file_path);
+            $this->cleanSignals();
             $import->update([
                 'status' => 'cancelled',
+                'total_rows' => $service->getSuccessCount() + count($service->getFailedRows()),
                 'processed_rows' => $service->getSuccessCount() + count($service->getFailedRows()),
                 'success_rows' => $service->getSuccessCount(),
                 'failed_rows' => count($service->getFailedRows()),
@@ -115,20 +142,24 @@ class ImportProductsJob implements ShouldQueue
 
             $filePath = Storage::disk('public')->path($import->file_path);
 
-            $readerType = \Maatwebsite\Excel\Excel::XLSX;
-            $extension = strtolower(pathinfo($import->file_name, PATHINFO_EXTENSION));
-            if ($extension === 'xls') {
-                $readerType = \Maatwebsite\Excel\Excel::XLS;
-            } elseif ($extension === 'ods') {
-                $readerType = \Maatwebsite\Excel\Excel::ODS;
+            if (!file_exists($filePath)) {
+                return 0;
             }
 
-            $allRows = Excel::toArray(new ProductsImport(new ProductImportService()), $filePath, null, $readerType);
+            $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReaderForFile($filePath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($filePath);
 
             $total = 0;
-            foreach ($allRows as $sheetRows) {
-                $total += count($sheetRows);
+            foreach ($spreadsheet->getSheetNames() as $name) {
+                $sheet = $spreadsheet->getSheetByName($name);
+                if ($sheet) {
+                    $total += $sheet->getHighestDataRow();
+                }
             }
+
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet, $reader);
 
             return $total;
         } catch (Throwable $e) {

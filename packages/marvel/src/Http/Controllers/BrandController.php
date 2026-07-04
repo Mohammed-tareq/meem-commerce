@@ -52,7 +52,7 @@ class BrandController extends CoreController
             $brandsQuery = $brandsQuery->orderBy($order, $sortedBy === 'desc' ? 'desc' : 'asc');
         }
 
-        $brands = $brandsQuery->paginate($limit);
+        $brands = $brandsQuery->ordered()->paginate($limit);
         $data = BrandResource::collection($brands)->response()->getData(true);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, [
             "data" => $data['data'] ?? [],
