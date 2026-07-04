@@ -41,6 +41,8 @@ class ProductImportService
 
     protected int $processedCount = 0;
 
+    protected float $startedAt;
+
     protected const FLUSH_THRESHOLD = 10;
 
     protected const SIGNAL_DIR = 'imports';
@@ -50,6 +52,7 @@ class ProductImportService
         $this->urlHandler = new UrlImageHandler();
         $this->importId = $importId;
         $this->pricingService = $pricingService ?? app(ProductPricingService::class);
+        $this->startedAt = microtime(true);
         $this->ensureSignalDir();
     }
 
@@ -162,12 +165,13 @@ class ProductImportService
     protected function calculateSmoothProgress(): float
     {
         $processed = $this->successCount + count($this->failedRows);
+        $elapsed = max(microtime(true) - $this->startedAt, 0);
 
-        $base = 2.0;
-        $range = 86.0;
-        $curve = $processed / ($processed + 20);
+        $timeBased = 99.0 * (1 - exp(-$elapsed / 60));
+        $rowBased = 99.0 * (2 / M_PI) * atan($processed / 200);
+        $progress = max($timeBased, $rowBased);
 
-        return round(min($base + $range * $curve, 88.0), 2);
+        return round(min($progress, 99.0), 2);
     }
 
     protected function writeProgress(bool $ignoreStatus = false): void

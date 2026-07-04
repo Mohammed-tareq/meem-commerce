@@ -129,17 +129,17 @@ class ProductImportController extends Controller
 
         $effectiveStatus = $cancelPending ? 'cancelling' : $import->status;
 
-        if ($progressData && $import->status === 'processing' && !$cancelPending) {
-            $processedRows = $progressData['processed_rows'];
-            $successRows = $progressData['success_rows'];
-            $failedRows = $progressData['failed_rows'];
-            $progress = $progressData['progress'] ?? $this->fallbackProgress($import);
+        if ($import->status === 'completed' || $import->status === 'completed_with_errors') {
+            $progress = 100.0;
+        } elseif ($progressData && $import->status === 'processing' && !$cancelPending) {
+            $progress = $progressData['progress'] ?? 99.0;
         } else {
-            $processedRows = $import->processed_rows;
-            $successRows = $import->success_rows;
-            $failedRows = $import->failed_rows;
-            $progress = $this->finalProgress($import);
+            $progress = 0.0;
         }
+
+        $processedRows = $progressData['processed_rows'] ?? $import->processed_rows;
+        $successRows = $progressData['success_rows'] ?? $import->success_rows;
+        $failedRows = $progressData['failed_rows'] ?? $import->failed_rows;
 
         return response()
             ->json([
@@ -160,21 +160,6 @@ class ProductImportController extends Controller
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
-    }
-
-    protected function fallbackProgress(Import $import): float
-    {
-        $total = max($import->total_rows, 1);
-        return round(min(($import->processed_rows / $total) * 100, 99.0), 2);
-    }
-
-    protected function finalProgress(Import $import): float
-    {
-        return match ($import->status) {
-            'completed', 'completed_with_errors' => 100.0,
-            'failed', 'cancelled' => 0.0,
-            default => 0.0,
-        };
     }
 
     public function downloadErrors(int $id): BinaryFileResponse|JsonResponse
