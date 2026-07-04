@@ -461,7 +461,7 @@ Route::group(
             'only' => ['store', 'update', 'destroy'],
         ]);
         Route::get('orders', [OrderController::class, 'index']);
-        Route::get('orders/{id}', [OrderController::class, 'show']);
+        Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
 
 
         Route::post('banner/change-status', [BannerController::class, 'changeStatus']);
