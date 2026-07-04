@@ -123,12 +123,135 @@ class DashboardController extends Controller
         }
     }
 
+    // =========================================================================
+    // Advanced Analytics Endpoints
+    // =========================================================================
+
+    public function salesAnalytics(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->dashboardService->getSalesAnalytics($request);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('message.DASHBOARD.SALES_ANALYTICS_FETCHED'),
+                'data'    => $data,
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function customerAnalytics(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->dashboardService->getCustomerAnalytics($request);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('message.DASHBOARD.CUSTOMER_ANALYTICS_FETCHED'),
+                'data'    => $data,
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function productAnalytics(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->dashboardService->getProductAnalytics($request);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('message.DASHBOARD.PRODUCT_ANALYTICS_FETCHED'),
+                'data'    => $data,
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function orderAnalytics(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->dashboardService->getOrderAnalytics($request);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('message.DASHBOARD.ORDER_ANALYTICS_FETCHED'),
+                'data'    => $data,
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function categoryAnalytics(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->dashboardService->getCategoryAnalytics($request);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('message.DASHBOARD.CATEGORY_ANALYTICS_FETCHED'),
+                'data'    => $data,
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function couponAnalytics(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->dashboardService->getCouponAnalytics($request);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('message.DASHBOARD.COUPON_ANALYTICS_FETCHED'),
+                'data'    => $data,
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function cartAnalytics(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->dashboardService->getCartAnalytics($request);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('message.DASHBOARD.CART_ANALYTICS_FETCHED'),
+                'data'    => $data,
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
+    public function financeAnalytics(Request $request): JsonResponse
+    {
+        try {
+            $data = $this->dashboardService->getFinanceAnalytics($request);
+
+            return response()->json([
+                'success' => true,
+                'message' => __('message.DASHBOARD.FINANCE_ANALYTICS_FETCHED'),
+                'data'    => $data,
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
     protected function errorResponse(Throwable $e): JsonResponse
     {
+        $message = __('message.ERROR.SOMETHING_WENT_WRONG');
         if ($e instanceof QueryException) {
             $message = __('message.DASHBOARD.DATABASE_ERROR');
-        } else {
-            $message = $e->getMessage();
         }
 
         return response()->json([

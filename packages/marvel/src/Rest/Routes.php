@@ -760,7 +760,7 @@ Route::group([
     /**
      * Dashboard API — platform-wide metrics
      */
-    Route::prefix('dashboard')->group(function () {
+    Route::middleware(['throttle:analytics'])->prefix('dashboard')->group(function () {
         Route::get('overview', [\App\Http\Controllers\Api\DashboardController::class, 'overview']);
         Route::get('revenue', [\App\Http\Controllers\Api\DashboardController::class, 'revenue']);
         Route::get('order-stats', [\App\Http\Controllers\Api\DashboardController::class, 'orderStats']);
@@ -768,6 +768,15 @@ Route::group([
         Route::get('top-products', [\App\Http\Controllers\Api\DashboardController::class, 'topProducts']);
         Route::get('category-stats', [\App\Http\Controllers\Api\DashboardController::class, 'categoryStats']);
         Route::get('low-stock', [\App\Http\Controllers\Api\DashboardController::class, 'lowStock']);
+
+        Route::get('sales', [\App\Http\Controllers\Api\DashboardController::class, 'salesAnalytics']);
+        Route::get('customers', [\App\Http\Controllers\Api\DashboardController::class, 'customerAnalytics']);
+        Route::get('products', [\App\Http\Controllers\Api\DashboardController::class, 'productAnalytics']);
+        Route::get('orders', [\App\Http\Controllers\Api\DashboardController::class, 'orderAnalytics']);
+        Route::get('categories', [\App\Http\Controllers\Api\DashboardController::class, 'categoryAnalytics']);
+        Route::get('coupons', [\App\Http\Controllers\Api\DashboardController::class, 'couponAnalytics']);
+        Route::get('cart', [\App\Http\Controllers\Api\DashboardController::class, 'cartAnalytics']);
+        Route::get('finance', [\App\Http\Controllers\Api\DashboardController::class, 'financeAnalytics']);
     });
 });
 Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {

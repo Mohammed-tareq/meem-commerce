@@ -240,4 +240,12 @@ return [
     'DASHBOARD.CATEGORY_STATS_FETCHED' => 'Category statistics fetched successfully',
     'DASHBOARD.LOW_STOCK_FETCHED' => 'Low stock products fetched successfully',
     'DASHBOARD.DATABASE_ERROR' => 'Database error occurred. Please check your request and try again.',
+    'DASHBOARD.SALES_ANALYTICS_FETCHED' => 'Sales analytics fetched successfully',
+    'DASHBOARD.CUSTOMER_ANALYTICS_FETCHED' => 'Customer analytics fetched successfully',
+    'DASHBOARD.PRODUCT_ANALYTICS_FETCHED' => 'Product analytics fetched successfully',
+    'DASHBOARD.ORDER_ANALYTICS_FETCHED' => 'Order analytics fetched successfully',
+    'DASHBOARD.CATEGORY_ANALYTICS_FETCHED' => 'Category analytics fetched successfully',
+    'DASHBOARD.COUPON_ANALYTICS_FETCHED' => 'Coupon analytics fetched successfully',
+    'DASHBOARD.CART_ANALYTICS_FETCHED' => 'Cart analytics fetched successfully',
+    'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'Finance analytics fetched successfully',
 ];

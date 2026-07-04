@@ -240,4 +240,12 @@ return [
     'DASHBOARD.CATEGORY_STATS_FETCHED' => 'تم جلب إحصائيات الفئات بنجاح',
     'DASHBOARD.LOW_STOCK_FETCHED' => 'تم جلب المنتجات منخفضة المخزون بنجاح',
     'DASHBOARD.DATABASE_ERROR' => 'حدث خطأ في قاعدة البيانات. يرجى التحقق من طلبك والمحاولة مرة أخرى.',
+    'DASHBOARD.SALES_ANALYTICS_FETCHED' => 'تم جلب تحليلات المبيعات بنجاح',
+    'DASHBOARD.CUSTOMER_ANALYTICS_FETCHED' => 'تم جلب تحليلات العملاء بنجاح',
+    'DASHBOARD.PRODUCT_ANALYTICS_FETCHED' => 'تم جلب تحليلات المنتجات بنجاح',
+    'DASHBOARD.ORDER_ANALYTICS_FETCHED' => 'تم جلب تحليلات الطلبات بنجاح',
+    'DASHBOARD.CATEGORY_ANALYTICS_FETCHED' => 'تم جلب تحليلات الفئات بنجاح',
+    'DASHBOARD.COUPON_ANALYTICS_FETCHED' => 'تم جلب تحليلات القسائم بنجاح',
+    'DASHBOARD.CART_ANALYTICS_FETCHED' => 'تم جلب تحليلات السلة بنجاح',
+    'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'تم جلب تحليلات المالية بنجاح',
 ];

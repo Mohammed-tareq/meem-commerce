@@ -16,5 +16,13 @@ return [
     'DASHBOARD.CATEGORY_STATS_FETCHED' => 'Kategoriestatistiken erfolgreich abgerufen',
     'DASHBOARD.LOW_STOCK_FETCHED' => 'Produkte mit niedrigem Bestand erfolgreich abgerufen',
     'DASHBOARD.DATABASE_ERROR' => 'Datenbankfehler. Bitte überprüfen Sie Ihre Anfrage und versuchen Sie es erneut.',
+    'DASHBOARD.SALES_ANALYTICS_FETCHED' => 'Verkaufsanalysen erfolgreich abgerufen',
+    'DASHBOARD.CUSTOMER_ANALYTICS_FETCHED' => 'Kundenanalysen erfolgreich abgerufen',
+    'DASHBOARD.PRODUCT_ANALYTICS_FETCHED' => 'Produktanalysen erfolgreich abgerufen',
+    'DASHBOARD.ORDER_ANALYTICS_FETCHED' => 'Bestellanalysen erfolgreich abgerufen',
+    'DASHBOARD.CATEGORY_ANALYTICS_FETCHED' => 'Kategorieanalysen erfolgreich abgerufen',
+    'DASHBOARD.COUPON_ANALYTICS_FETCHED' => 'Gutscheinanalysen erfolgreich abgerufen',
+    'DASHBOARD.CART_ANALYTICS_FETCHED' => 'Warenkorbanalysen erfolgreich abgerufen',
+    'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'Finanzanalysen erfolgreich abgerufen',
 ];
 
