@@ -19,10 +19,8 @@ class DashboardController extends Controller
      * Main dashboard summary with key metrics:
      * - total_revenue, todays_revenue, total_refunds
      * - total_orders, total_products, total_customers, new_customers
-     * - total_shops, total_vendors
      *
-     * Access: Super Admin (platform-wide), Store Owner/Staff (shop-scoped)
-     * Middleware: auth:sanctum, role:super_admin|store_owner|staff
+     * Middleware: auth:sanctum
      */
     public function overview(Request $request): JsonResponse
     {
@@ -43,8 +41,7 @@ class DashboardController extends Controller
      * - todays_revenue (last 24 hours)
      * - monthly_breakdown (current year, by month)
      *
-     * Access: Super Admin (platform-wide), Store Owner/Staff (shop-scoped)
-     * Middleware: auth:sanctum, role:super_admin|store_owner|staff
+     * Middleware: auth:sanctum
      */
     public function revenue(Request $request): JsonResponse
     {
@@ -65,8 +62,7 @@ class DashboardController extends Controller
      * Each range returns counts by: pending, processing, completed,
      * cancelled, refunded, failed, local_facility, out_for_delivery
      *
-     * Access: Super Admin (platform-wide), Store Owner/Staff (shop-scoped)
-     * Middleware: auth:sanctum, role:super_admin|store_owner|staff
+     * Middleware: auth:sanctum
      */
     public function orderStats(Request $request): JsonResponse
     {
@@ -82,11 +78,10 @@ class DashboardController extends Controller
     /**
      * GET /api/v1/dashboard/recent-orders
      *
-     * Latest orders with eager-loaded relations (products, user, shop).
+     * Latest orders with eager-loaded relations (products, user).
      * Supports ?limit=N query param (default: 10, max: 50).
      *
-     * Access: Super Admin (all orders), Store Owner/Staff (shop-scoped)
-     * Middleware: auth:sanctum, role:super_admin|store_owner|staff
+     * Middleware: auth:sanctum
      */
     public function recentOrders(Request $request): JsonResponse
     {
@@ -106,8 +101,7 @@ class DashboardController extends Controller
      * Top selling products ranked by sold_quantity descending.
      * Supports ?limit=N query param (default: 10, max: 50).
      *
-     * Access: Super Admin (all products), Store Owner/Staff (shop-scoped)
-     * Middleware: auth:sanctum, role:super_admin|store_owner|staff
+     * Middleware: auth:sanctum
      */
     public function topProducts(Request $request): JsonResponse
     {
@@ -129,8 +123,7 @@ class DashboardController extends Controller
      * - sales_distribution: sales volume per category
      *
      * Supports ?language=en query param.
-     * Access: Super Admin (all), Store Owner/Staff (shop-scoped)
-     * Middleware: auth:sanctum, role:super_admin|store_owner|staff
+     * Middleware: auth:sanctum
      */
     public function categoryStats(Request $request): JsonResponse
     {
@@ -147,10 +140,9 @@ class DashboardController extends Controller
      * GET /api/v1/dashboard/low-stock
      *
      * Products with quantity below 10 units.
-     * Supports ?limit=N and ?shop_id=X query params.
+     * Supports ?limit=N query param.
      *
-     * Access: Super Admin (all), Store Owner/Staff (shop-scoped)
-     * Middleware: auth:sanctum, role:super_admin|store_owner|staff
+     * Middleware: auth:sanctum
      */
     public function lowStock(Request $request): JsonResponse
     {

@@ -758,8 +758,7 @@ Route::group([
     Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
 
     /**
-     * Dashboard API — accessible by super_admin, store_owner, and staff
-     * Permission scoping is handled internally in DashboardService
+     * Dashboard API — platform-wide metrics
      */
     Route::prefix('dashboard')->group(function () {
         Route::get('overview', [\App\Http\Controllers\Api\DashboardController::class, 'overview']);
