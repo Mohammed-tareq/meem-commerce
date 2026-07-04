@@ -9,54 +9,25 @@ use Marvel\Database\Models\Category;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Product;
 use Marvel\Database\Models\User;
-use Marvel\Enums\OrderStatus;
 use Marvel\Enums\Permission;
 
 class DashboardService
 {
     public function getOverview(Request $request): array
     {
-        $totalRevenue = DB::table('orders as childOrder')
-            ->whereDate('childOrder.created_at', '<=', Carbon::now())
-            ->where('childOrder.order_status', OrderStatus::COMPLETED)
-            ->whereNotNull('childOrder.parent_id')
-            ->join('orders as parentOrder', 'childOrder.parent_id', '=', 'parentOrder.id')
-            ->whereDate('parentOrder.created_at', '<=', Carbon::now())
-            ->where('parentOrder.order_status', OrderStatus::COMPLETED)
-            ->select(
-                'childOrder.id',
-                'childOrder.parent_id',
-                'childOrder.paid_total',
-                'parentOrder.delivery_fee',
-                'parentOrder.sales_tax',
-            )
-            ->get();
+        $totalRevenue = (float) Order::where('status', 'completed')
+            ->whereDate('created_at', '<=', Carbon::now())
+            ->sum('total_price');
 
-        $totalRevenueSum = $totalRevenue->sum('paid_total')
-            + $totalRevenue->unique('parent_id')->sum('delivery_fee')
-            + $totalRevenue->unique('parent_id')->sum('sales_tax');
-
-        $todaysRevenue = DB::table('orders as A')
-            ->whereDate('A.created_at', '>', Carbon::now()->subDays(1))
-            ->where('A.order_status', OrderStatus::COMPLETED)
-            ->whereNotNull('A.parent_id')
-            ->join('orders as B', 'A.parent_id', '=', 'B.id')
-            ->where('B.order_status', OrderStatus::COMPLETED)
-            ->select('A.id', 'A.parent_id', 'A.paid_total', 'B.delivery_fee', 'B.sales_tax')
-            ->get();
-
-        $todaysRevenueSum = $todaysRevenue->sum('paid_total')
-            + $todaysRevenue->unique('parent_id')->sum('delivery_fee')
-            + $todaysRevenue->unique('parent_id')->sum('sales_tax');
+        $todaysRevenue = (float) Order::where('status', 'completed')
+            ->whereDate('created_at', '>', Carbon::now()->subDays(1))
+            ->sum('total_price');
 
         $totalRefunds = (float) DB::table('refunds')
             ->whereDate('created_at', '<', Carbon::now())
             ->sum('amount');
 
-        $totalOrders = DB::table('orders')
-            ->whereDate('created_at', '<=', Carbon::now())
-            ->whereNull('parent_id')
-            ->count();
+        $totalOrders = Order::whereDate('created_at', '<=', Carbon::now())->count();
 
         $totalProducts = Product::count();
 
@@ -66,8 +37,8 @@ class DashboardService
             ->count();
 
         return [
-            'total_revenue'     => round($totalRevenueSum, 2),
-            'todays_revenue'    => round($todaysRevenueSum, 2),
+            'total_revenue'     => round($totalRevenue, 2),
+            'todays_revenue'    => round($todaysRevenue, 2),
             'total_refunds'     => round($totalRefunds, 2),
             'total_orders'      => $totalOrders,
             'total_products'    => $totalProducts,
@@ -78,63 +49,37 @@ class DashboardService
 
     public function getRevenueOverview(Request $request): array
     {
-        $totalRevenue = DB::table('orders as childOrder')
-            ->whereDate('childOrder.created_at', '<=', Carbon::now())
-            ->where('childOrder.order_status', OrderStatus::COMPLETED)
-            ->whereNotNull('childOrder.parent_id')
-            ->join('orders as parentOrder', 'childOrder.parent_id', '=', 'parentOrder.id')
-            ->whereDate('parentOrder.created_at', '<=', Carbon::now())
-            ->where('parentOrder.order_status', OrderStatus::COMPLETED)
-            ->select(
-                'childOrder.id',
-                'childOrder.parent_id',
-                'childOrder.paid_total',
-                'parentOrder.delivery_fee',
-                'parentOrder.sales_tax',
-            )
-            ->get();
+        $totalRevenue = (float) Order::where('status', 'completed')
+            ->whereDate('created_at', '<=', Carbon::now())
+            ->sum('total_price');
 
-        $totalRevenueSum = $totalRevenue->sum('paid_total')
-            + $totalRevenue->unique('parent_id')->sum('delivery_fee')
-            + $totalRevenue->unique('parent_id')->sum('sales_tax');
-
-        $todaysRevenue = DB::table('orders as A')
-            ->whereDate('A.created_at', '>', Carbon::now()->subDays(1))
-            ->where('A.order_status', OrderStatus::COMPLETED)
-            ->whereNotNull('A.parent_id')
-            ->join('orders as B', 'A.parent_id', '=', 'B.id')
-            ->where('B.order_status', OrderStatus::COMPLETED)
-            ->select('A.id', 'A.parent_id', 'A.paid_total', 'B.delivery_fee', 'B.sales_tax')
-            ->get();
-
-        $todaysRevenueSum = $todaysRevenue->sum('paid_total')
-            + $todaysRevenue->unique('parent_id')->sum('delivery_fee')
-            + $todaysRevenue->unique('parent_id')->sum('sales_tax');
+        $todaysRevenue = (float) Order::where('status', 'completed')
+            ->whereDate('created_at', '>', Carbon::now()->subDays(1))
+            ->sum('total_price');
 
         $months = [
             'January', 'February', 'March', 'April', 'May', 'June',
             'July', 'August', 'September', 'October', 'November', 'December',
         ];
 
-        $salesByMonth = DB::table('orders as A')
-            ->where('A.order_status', OrderStatus::COMPLETED)
-            ->whereYear('A.created_at', Carbon::now()->year)
-            ->whereNull('A.parent_id')
-            ->join('orders as B', 'A.id', '=', 'B.parent_id')
-            ->where('B.order_status', OrderStatus::COMPLETED)
-            ->select(DB::raw("SUM(A.paid_total) as total"), DB::raw("DATE_FORMAT(A.created_at, '%M') as month"))
+        $salesByMonth = Order::select(
+                DB::raw("SUM(total_price) as total"),
+                DB::raw("DATE_FORMAT(created_at, '%M') as month")
+            )
+            ->where('status', 'completed')
+            ->whereYear('created_at', Carbon::now()->year)
             ->groupBy('month')
             ->pluck('total', 'month')
             ->toArray();
 
         $monthlyBreakdown = array_map(fn ($month) => [
             'month' => $month,
-            'total' => round($salesByMonth[$month] ?? 0, 2),
+            'total' => round((float) ($salesByMonth[$month] ?? 0), 2),
         ], $months);
 
         return [
-            'total_revenue'      => round($totalRevenueSum, 2),
-            'todays_revenue'     => round($todaysRevenueSum, 2),
+            'total_revenue'      => round($totalRevenue, 2),
+            'todays_revenue'     => round($todaysRevenue, 2),
             'monthly_breakdown'  => $monthlyBreakdown,
         ];
     }
@@ -142,22 +87,20 @@ class DashboardService
     public function getOrderStatusOverview(Request $request): array
     {
         $countByDays = function (int $days): array {
-            $results = DB::table('orders as A')
-                ->whereDate('A.created_at', '>', Carbon::now()->subDays($days))
-                ->whereNull('A.parent_id')
-                ->select('A.order_status', DB::raw('count(*) as order_count'))
-                ->groupBy('A.order_status')
-                ->pluck('order_count', 'order_status');
+            $results = Order::select('status', DB::raw('count(*) as order_count'))
+                ->whereDate('created_at', '>', Carbon::now()->subDays($days))
+                ->groupBy('status')
+                ->pluck('order_count', 'status');
 
             return [
-                'pending'           => $results[OrderStatus::PENDING]           ?? 0,
-                'processing'        => $results[OrderStatus::PROCESSING]        ?? 0,
-                'completed'         => $results[OrderStatus::COMPLETED]         ?? 0,
-                'cancelled'         => $results[OrderStatus::CANCELLED]         ?? 0,
-                'refunded'          => $results[OrderStatus::REFUNDED]          ?? 0,
-                'failed'            => $results[OrderStatus::FAILED]            ?? 0,
-                'local_facility'    => $results[OrderStatus::AT_LOCAL_FACILITY] ?? 0,
-                'out_for_delivery'  => $results[OrderStatus::OUT_FOR_DELIVERY]  ?? 0,
+                'pending'           => (int) ($results['pending'] ?? 0),
+                'processing'        => 0,
+                'completed'         => (int) ($results['completed'] ?? 0),
+                'cancelled'         => (int) ($results['cancelled'] ?? 0),
+                'refunded'          => 0,
+                'failed'            => 0,
+                'local_facility'    => 0,
+                'out_for_delivery'  => 0,
             ];
         };
 
@@ -172,7 +115,6 @@ class DashboardService
     public function getRecentOrders(Request $request, int $limit = 10)
     {
         return Order::with(['products', 'user'])
-            ->whereNull('parent_id')
             ->take($limit)
             ->get();
     }
@@ -182,7 +124,7 @@ class DashboardService
         return Product::where('sold_quantity', '>', 0)
             ->orderBy('sold_quantity', 'desc')
             ->take($limit)
-            ->get(['id', 'name', 'slug', 'price', 'sold_quantity', 'image']);
+            ->get(['id', 'name', 'slug', 'price', 'sold_quantity']);
     }
 
     public function getLowStockProducts(Request $request, int $limit = 10)
@@ -215,14 +157,13 @@ class DashboardService
             ->select(
                 'categories.id as category_id',
                 'categories.name as category_name',
-                DB::raw('COALESCE(SUM(order_product.order_quantity), 0) as total_sales')
+                DB::raw('COALESCE(SUM(order_product.product_quantity), 0) as total_sales')
             )
             ->leftJoin('category_product', 'category_product.category_id', '=', 'categories.id')
             ->leftJoin('products', 'category_product.product_id', '=', 'products.id')
             ->leftJoin('order_product', 'order_product.product_id', '=', 'products.id')
             ->leftJoin('orders', 'order_product.order_id', '=', 'orders.id')
-            ->where('orders.parent_id', null)
-            ->where('orders.order_status', OrderStatus::COMPLETED)
+            ->where('orders.status', 'completed')
             ->where('categories.language', $language)
             ->groupBy('categories.id', 'categories.name')
             ->orderBy('total_sales', 'desc')
