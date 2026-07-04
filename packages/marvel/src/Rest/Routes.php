@@ -30,7 +30,7 @@ use Marvel\Http\Controllers\FlashSaleController;
 use Marvel\Http\Controllers\FlashSaleVendorRequestController;
 use Marvel\Http\Controllers\ManufacturerController;
 use Marvel\Http\Controllers\MessageController;
-use Marvel\Http\Controllers\OrderController;
+use Marvel\Http\Controllers\Order\OrderController;
 use Marvel\Http\Controllers\PaymentIntentController;
 use Marvel\Http\Controllers\PaymentMethodController;
 use Marvel\Http\Controllers\ProductController;
@@ -255,15 +255,15 @@ Route::post('orders/checkout/verify', [CheckoutController::class, 'verify']);
  * Protects against order spam and inventory locking attacks
  */
 Route::middleware(['throttle:orders'])->group(function () {
-    Route::apiResource('orders', OrderController::class, [
-        'only' => ['store'],
-    ]);
+    // Route::apiResource('orders', OrderController::class, [
+    //     'only' => ['store'],
+    // ]);
 });
 
 // Order viewing is not rate limited - users need to check their order status
-Route::apiResource('orders', OrderController::class, [
-    'only' => ['show'],
-]);
+// Route::apiResource('orders', OrderController::class, [
+//     'only' => ['show'],
+// ]);
 
 Route::post('/email/verification-notification', [UserController::class, 'sendVerificationEmail'])
     ->middleware(['auth:sanctum', 'throttle:6,1'])
@@ -336,9 +336,9 @@ Route::group(
 Route::group(['middleware' => ['auth:sanctum', 'email.verified']], function () {
     Route::post('/update-email', [UserController::class, 'updateUserEmail']);
     // Route::get('me', [UserController::class, 'me']);
-    Route::apiResource('orders', OrderController::class, [
-        'only' => ['index'],
-    ]);
+    // Route::apiResource('orders', OrderController::class, [
+    //     'only' => ['index'],
+    // ]);
 // });
 
     /**
