@@ -31,8 +31,8 @@ class DashboardService
 
         $totalProducts = Product::count();
 
-        $totalCustomers = User::permission(Permission::CUSTOMER)->count();
-        $newCustomers = User::permission(Permission::CUSTOMER)
+        $totalCustomers = User::where('type', 'user')->count();
+        $newCustomers = User::where('type', 'user')
             ->whereDate('created_at', '>', Carbon::now()->subDays(30))
             ->count();
 
