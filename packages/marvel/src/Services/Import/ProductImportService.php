@@ -133,6 +133,7 @@ class ProductImportService
             'processed_rows' => $this->processedCount,
             'success_rows' => $this->successCount,
             'failed_rows' => count($this->failedRows),
+            'progress' => $this->calculateSmoothProgress(),
         ]);
 
         if ($this->isCancelled()) {
@@ -143,6 +144,30 @@ class ProductImportService
         if ($this->processedCount % self::FLUSH_THRESHOLD === 0) {
             $this->writeProgress();
         }
+    }
+
+    public function writeExplicitProgress(float $progress): void
+    {
+        if ($this->importId === null) {
+            return;
+        }
+        $this->writeSignal('progress', [
+            'processed_rows' => $this->successCount + count($this->failedRows),
+            'success_rows' => $this->successCount,
+            'failed_rows' => count($this->failedRows),
+            'progress' => $progress,
+        ]);
+    }
+
+    protected function calculateSmoothProgress(): float
+    {
+        $processed = $this->successCount + count($this->failedRows);
+
+        $base = 2.0;
+        $range = 86.0;
+        $curve = $processed / ($processed + 20);
+
+        return round(min($base + $range * $curve, 88.0), 2);
     }
 
     protected function writeProgress(bool $ignoreStatus = false): void

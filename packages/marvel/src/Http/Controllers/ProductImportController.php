@@ -133,14 +133,13 @@ class ProductImportController extends Controller
             $processedRows = $progressData['processed_rows'];
             $successRows = $progressData['success_rows'];
             $failedRows = $progressData['failed_rows'];
+            $progress = $progressData['progress'] ?? $this->fallbackProgress($import);
         } else {
             $processedRows = $import->processed_rows;
             $successRows = $import->success_rows;
             $failedRows = $import->failed_rows;
+            $progress = $this->finalProgress($import);
         }
-
-        $total = $import->total_rows ?: 1;
-        $progress = round(($processedRows / $total) * 100, 2);
 
         return response()
             ->json([
@@ -154,13 +153,28 @@ class ProductImportController extends Controller
                     'processed_rows' => $processedRows,
                     'success_rows' => $successRows,
                     'failed_rows' => $failedRows,
-                    'progress' => min($progress, 100),
+                    'progress' => $progress,
                     'errors' => $import->errors,
                 ],
             ])
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
             ->header('Pragma', 'no-cache')
             ->header('Expires', '0');
+    }
+
+    protected function fallbackProgress(Import $import): float
+    {
+        $total = max($import->total_rows, 1);
+        return round(min(($import->processed_rows / $total) * 100, 99.0), 2);
+    }
+
+    protected function finalProgress(Import $import): float
+    {
+        return match ($import->status) {
+            'completed', 'completed_with_errors' => 100.0,
+            'failed', 'cancelled' => 0.0,
+            default => 0.0,
+        };
     }
 
     public function downloadErrors(int $id): BinaryFileResponse|JsonResponse
