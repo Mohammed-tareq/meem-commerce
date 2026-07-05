@@ -91,6 +91,7 @@ class DatabaseSeeder extends Seeder
             SectionSeeder::class,
             DashboardDataSeeder::class,
             NotificationSeeder::class,
+            ActivityLogSeeder::class,
         ]);
     }
 }
