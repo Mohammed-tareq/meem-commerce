@@ -90,6 +90,7 @@ class DatabaseSeeder extends Seeder
             ContentPageSeeder::class,
             SectionSeeder::class,
             DashboardDataSeeder::class,
+            NotificationSeeder::class,
         ]);
     }
 }
