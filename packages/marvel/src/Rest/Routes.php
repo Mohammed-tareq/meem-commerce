@@ -724,6 +724,16 @@ Route::group([
     Route::delete('admin-users/delete-forever/{id}', [UserController::class, 'adminDeleteUsersForever']);
     Route::get('logs/activity', [ActivityLogController::class, 'index']);
 
+    // Notifications
+    Route::controller(NotificationController::class)->group(function () {
+        Route::get('notifications', 'index');
+        Route::get('notifications/unread', 'unread');
+        Route::patch('notifications/{id}/read', 'markAsRead');
+        Route::patch('notifications/read-all', 'markAllAsRead');
+        Route::delete('notifications/{id}', 'destroy');
+        Route::delete('notifications', 'destroyAll');
+    });
+
     Route::get('/customers/list', [UserController::class, 'customers']);
     Route::get('my-staffs', [UserController::class, 'myStaffs']);
     Route::get('all-staffs', [UserController::class, 'allStaffs']);
