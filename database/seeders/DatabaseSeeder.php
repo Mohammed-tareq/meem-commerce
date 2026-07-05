@@ -89,6 +89,7 @@ class DatabaseSeeder extends Seeder
             SectionTypeSettingSeeder::class,
             ContentPageSeeder::class,
             SectionSeeder::class,
+            DashboardDataSeeder::class,
         ]);
     }
 }
