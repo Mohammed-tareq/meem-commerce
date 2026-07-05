@@ -235,7 +235,7 @@ class OrderController extends Controller
         }
 
         if ($request->type === 'mobile') {
-            return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
+            return $this->apiResponse(PAYMENT_FAILED, 400, false, [
                 'status' => 'failed',
                 'error' => $errorMessage,
                 'payment_id' => $paymentId,
