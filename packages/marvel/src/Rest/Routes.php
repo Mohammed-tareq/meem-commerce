@@ -725,7 +725,7 @@ Route::group([
     Route::get('logs/activity', [ActivityLogController::class, 'index']);
 
     // Notifications
-    Route::controller(NotificationController::class)->group(function () {
+    Route::prefix('admin')->controller(NotificationController::class)->group(function () {
         Route::get('notifications', 'index');
         Route::get('notifications/unread', 'unread');
         Route::patch('notifications/{id}/read', 'markAsRead');
