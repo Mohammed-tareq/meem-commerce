@@ -180,5 +180,3 @@ Route::get('/test-mail', function () {
     return 'sent';
 });
 
-require __DIR__.'/notifications.php';
-

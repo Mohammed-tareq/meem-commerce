@@ -252,37 +252,37 @@ class NotificationTest extends TestCase
 
     public function test_unauthenticated_user_cannot_access_notifications(): void
     {
-        $response = $this->getJson(self::PREFIX . '/admin/notifications');
+        $response = $this->getJson(self::PREFIX . '/notifications');
         $response->assertStatus(401);
     }
 
     public function test_unauthenticated_user_cannot_access_unread(): void
     {
-        $response = $this->getJson(self::PREFIX . '/admin/notifications/unread');
+        $response = $this->getJson(self::PREFIX . '/notifications/unread');
         $response->assertStatus(401);
     }
 
     public function test_unauthenticated_user_cannot_mark_as_read(): void
     {
-        $response = $this->patchJson(self::PREFIX . '/admin/notifications/fake-id/read');
+        $response = $this->patchJson(self::PREFIX . '/notifications/fake-id/read');
         $response->assertStatus(401);
     }
 
     public function test_unauthenticated_user_cannot_mark_all_as_read(): void
     {
-        $response = $this->patchJson(self::PREFIX . '/admin/notifications/read-all');
+        $response = $this->patchJson(self::PREFIX . '/notifications/read-all');
         $response->assertStatus(401);
     }
 
     public function test_unauthenticated_user_cannot_delete_notification(): void
     {
-        $response = $this->deleteJson(self::PREFIX . '/admin/notifications/fake-id');
+        $response = $this->deleteJson(self::PREFIX . '/notifications/fake-id');
         $response->assertStatus(401);
     }
 
     public function test_unauthenticated_user_cannot_delete_all_notifications(): void
     {
-        $response = $this->deleteJson(self::PREFIX . '/admin/notifications');
+        $response = $this->deleteJson(self::PREFIX . '/notifications');
         $response->assertStatus(401);
     }
 
@@ -293,7 +293,7 @@ class NotificationTest extends TestCase
         $user = $this->createRegularUser();
         Sanctum::actingAs($user);
 
-        $response = $this->getJson(self::PREFIX . '/admin/notifications');
+        $response = $this->getJson(self::PREFIX . '/notifications');
         $response->assertStatus(403);
     }
 
@@ -302,7 +302,7 @@ class NotificationTest extends TestCase
         $user = $this->createRegularUser();
         Sanctum::actingAs($user);
 
-        $response = $this->patchJson(self::PREFIX . '/admin/notifications/fake-id/read');
+        $response = $this->patchJson(self::PREFIX . '/notifications/fake-id/read');
         $response->assertStatus(403);
     }
 
@@ -311,7 +311,7 @@ class NotificationTest extends TestCase
         $user = $this->createRegularUser();
         Sanctum::actingAs($user);
 
-        $response = $this->deleteJson(self::PREFIX . '/admin/notifications/fake-id');
+        $response = $this->deleteJson(self::PREFIX . '/notifications/fake-id');
         $response->assertStatus(403);
     }
 
@@ -330,7 +330,7 @@ class NotificationTest extends TestCase
         ]);
         Sanctum::actingAs($user);
 
-        $response = $this->getJson(self::PREFIX . '/admin/notifications');
+        $response = $this->getJson(self::PREFIX . '/notifications');
         $response->assertStatus(403);
     }
 
@@ -340,7 +340,7 @@ class NotificationTest extends TestCase
         Sanctum::actingAs($user);
 
         $notification = $this->createNotification($user);
-        $response = $this->patchJson(self::PREFIX . "/admin/notifications/{$notification->id}/read");
+        $response = $this->patchJson(self::PREFIX . "/notifications/{$notification->id}/read");
         $response->assertStatus(403);
     }
 
@@ -350,7 +350,7 @@ class NotificationTest extends TestCase
         Sanctum::actingAs($user);
 
         $notification = $this->createNotification($user);
-        $response = $this->deleteJson(self::PREFIX . "/admin/notifications/{$notification->id}");
+        $response = $this->deleteJson(self::PREFIX . "/notifications/{$notification->id}");
         $response->assertStatus(403);
     }
 
@@ -359,7 +359,7 @@ class NotificationTest extends TestCase
         $user = $this->createAdminWithViewOnly();
         Sanctum::actingAs($user);
 
-        $response = $this->patchJson(self::PREFIX . '/admin/notifications/read-all');
+        $response = $this->patchJson(self::PREFIX . '/notifications/read-all');
         $response->assertStatus(403);
     }
 
@@ -368,7 +368,7 @@ class NotificationTest extends TestCase
         $user = $this->createAdminWithViewOnly();
         Sanctum::actingAs($user);
 
-        $response = $this->deleteJson(self::PREFIX . '/admin/notifications');
+        $response = $this->deleteJson(self::PREFIX . '/notifications');
         $response->assertStatus(403);
     }
 
@@ -382,7 +382,7 @@ class NotificationTest extends TestCase
         $this->createNotification($user);
         $this->createNotification($user);
 
-        $response = $this->getJson(self::PREFIX . '/admin/notifications');
+        $response = $this->getJson(self::PREFIX . '/notifications');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -405,7 +405,7 @@ class NotificationTest extends TestCase
         $user = $this->createSuperAdmin();
         Sanctum::actingAs($user);
 
-        $response = $this->getJson(self::PREFIX . '/admin/notifications');
+        $response = $this->getJson(self::PREFIX . '/notifications');
 
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
@@ -425,7 +425,7 @@ class NotificationTest extends TestCase
         $this->createNotification($admin1);
         $this->createNotification($admin2);
 
-        $response = $this->getJson(self::PREFIX . '/admin/notifications');
+        $response = $this->getJson(self::PREFIX . '/notifications');
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.meta.total', 1);
@@ -440,7 +440,7 @@ class NotificationTest extends TestCase
             $this->createNotification($user);
         }
 
-        $response = $this->getJson(self::PREFIX . '/admin/notifications?per_page=2');
+        $response = $this->getJson(self::PREFIX . '/notifications?per_page=2');
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.meta.per_page', 2);
@@ -460,7 +460,7 @@ class NotificationTest extends TestCase
         $this->createNotification($user, false);
         $this->createNotification($user, true);
 
-        $response = $this->getJson(self::PREFIX . '/admin/notifications/unread');
+        $response = $this->getJson(self::PREFIX . '/notifications/unread');
 
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
@@ -475,7 +475,7 @@ class NotificationTest extends TestCase
         $this->createNotification($user, true);
         $this->createNotification($user, true);
 
-        $response = $this->getJson(self::PREFIX . '/admin/notifications/unread');
+        $response = $this->getJson(self::PREFIX . '/notifications/unread');
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.meta.total', 0);
@@ -491,7 +491,7 @@ class NotificationTest extends TestCase
 
         $notification = $this->createNotification($user, false);
 
-        $response = $this->patchJson(self::PREFIX . "/admin/notifications/{$notification->id}/read");
+        $response = $this->patchJson(self::PREFIX . "/notifications/{$notification->id}/read");
 
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
@@ -507,7 +507,7 @@ class NotificationTest extends TestCase
 
         $notification = $this->createNotification($user, true);
 
-        $response = $this->patchJson(self::PREFIX . "/admin/notifications/{$notification->id}/read");
+        $response = $this->patchJson(self::PREFIX . "/notifications/{$notification->id}/read");
 
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
@@ -518,7 +518,7 @@ class NotificationTest extends TestCase
         $user = $this->createSuperAdmin();
         Sanctum::actingAs($user);
 
-        $response = $this->patchJson(self::PREFIX . '/admin/notifications/nonexistent-id/read');
+        $response = $this->patchJson(self::PREFIX . '/notifications/nonexistent-id/read');
 
         $response->assertStatus(404);
     }
@@ -534,7 +534,7 @@ class NotificationTest extends TestCase
         $this->createNotification($user, false);
         $this->createNotification($user, false);
 
-        $response = $this->patchJson(self::PREFIX . '/admin/notifications/read-all');
+        $response = $this->patchJson(self::PREFIX . '/notifications/read-all');
 
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
@@ -551,7 +551,7 @@ class NotificationTest extends TestCase
 
         $this->createNotification($user, true);
 
-        $response = $this->patchJson(self::PREFIX . '/admin/notifications/read-all');
+        $response = $this->patchJson(self::PREFIX . '/notifications/read-all');
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.marked_count', 0);
@@ -566,7 +566,7 @@ class NotificationTest extends TestCase
 
         $notification = $this->createNotification($user);
 
-        $response = $this->deleteJson(self::PREFIX . "/admin/notifications/{$notification->id}");
+        $response = $this->deleteJson(self::PREFIX . "/notifications/{$notification->id}");
 
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
@@ -579,7 +579,7 @@ class NotificationTest extends TestCase
         $user = $this->createSuperAdmin();
         Sanctum::actingAs($user);
 
-        $response = $this->deleteJson(self::PREFIX . '/admin/notifications/nonexistent-id');
+        $response = $this->deleteJson(self::PREFIX . '/notifications/nonexistent-id');
 
         $response->assertStatus(404);
     }
@@ -595,7 +595,7 @@ class NotificationTest extends TestCase
         $this->createNotification($user);
         $this->createNotification($user);
 
-        $response = $this->deleteJson(self::PREFIX . '/admin/notifications');
+        $response = $this->deleteJson(self::PREFIX . '/notifications');
 
         $response->assertStatus(200);
         $response->assertJsonPath('success', true);
@@ -609,7 +609,7 @@ class NotificationTest extends TestCase
         $user = $this->createSuperAdmin();
         Sanctum::actingAs($user);
 
-        $response = $this->deleteJson(self::PREFIX . '/admin/notifications');
+        $response = $this->deleteJson(self::PREFIX . '/notifications');
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.deleted_count', 0);
@@ -628,7 +628,7 @@ class NotificationTest extends TestCase
         $this->createNotification($admin1);
         $this->createNotification($admin2);
 
-        $response = $this->deleteJson(self::PREFIX . '/admin/notifications');
+        $response = $this->deleteJson(self::PREFIX . '/notifications');
 
         $response->assertStatus(200);
         $response->assertJsonPath('data.deleted_count', 2);
@@ -700,7 +700,7 @@ class NotificationTest extends TestCase
 
         $this->createNotification($user);
 
-        $response = $this->getJson(self::PREFIX . '/admin/notifications');
+        $response = $this->getJson(self::PREFIX . '/notifications');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -741,7 +741,7 @@ class NotificationTest extends TestCase
 
         $this->createNotification($user, false);
 
-        $response = $this->getJson(self::PREFIX . '/admin/notifications/unread');
+        $response = $this->getJson(self::PREFIX . '/notifications/unread');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -777,7 +777,7 @@ class NotificationTest extends TestCase
 
         $notification = $this->createNotification($user, false);
 
-        $response = $this->patchJson(self::PREFIX . "/admin/notifications/{$notification->id}/read");
+        $response = $this->patchJson(self::PREFIX . "/notifications/{$notification->id}/read");
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -806,7 +806,7 @@ class NotificationTest extends TestCase
 
         $this->createNotification($user);
 
-        $response = $this->patchJson(self::PREFIX . '/admin/notifications/read-all');
+        $response = $this->patchJson(self::PREFIX . '/notifications/read-all');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
@@ -826,7 +826,7 @@ class NotificationTest extends TestCase
 
         $this->createNotification($user);
 
-        $response = $this->deleteJson(self::PREFIX . '/admin/notifications');
+        $response = $this->deleteJson(self::PREFIX . '/notifications');
 
         $response->assertStatus(200);
         $response->assertJsonStructure([
