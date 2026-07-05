@@ -17,12 +17,20 @@ final class Permission extends Enum
     public const STORE_OWNER = 'store_owner';
     public const STAFF = 'staff';
     public const CUSTOMER = 'customer';
+    
 
 
     public const VIEW_SLIDER = 'view-slider';
     public const CREATE_SLIDER = 'create-slider';
     public const UPDATE_SLIDER = 'update-slider';
     public const DELETE_SLIDER = 'delete-slider';
+    public const VIEW_NOTIFICATTIONS = 'view-notifications';
+    public const MANAGE_NOTIFICATTIONS = 'manage-notifications';
+
+    public const VIEW_ACTIVITY_LOG = 'view-activity-log';
+
+    public const VIEW_NOTIFICATIONS = 'view-notifications';
+    public const MANAGE_NOTIFICATIONS = 'manage-notifications';
 
 
     // 🔓 Public

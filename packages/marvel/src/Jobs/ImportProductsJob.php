@@ -49,7 +49,6 @@ class ImportProductsJob implements ShouldQueue
     protected function cleanSignals(): void
     {
         $this->removeSignalFile('cancel');
-        $this->removeSignalFile('progress');
     }
 
     public function handle(): void

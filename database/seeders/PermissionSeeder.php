@@ -55,6 +55,9 @@ class PermissionSeeder extends Seeder
             'delete-country',
             'view-order',
             'view-orders',
+            'view-activity-log',
+            'view-notifications',
+            'manage-notifications',
 
             'view-city',
             'create-city',

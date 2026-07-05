@@ -29,6 +29,7 @@ use Marvel\Database\Models\Wallet;
 use Marvel\Database\Repositories\UserRepository;
 use Marvel\Enums\Permission;
 use Marvel\Enums\Role;
+use App\Events\AdminLoggedIn;
 use Marvel\Events\ProcessUserData;
 use Marvel\Exceptions\MarvelException;
 use Marvel\Exceptions\MarvelNotFoundException;
@@ -600,6 +601,7 @@ class UserController extends CoreController
             "email_verified" => $email_verified,
             "role" => $user->roles->pluck('name')
         ];
+        AdminLoggedIn::dispatch($user, request()->ip(), request()->userAgent());
         return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
     }
     public function loginWithOutEmailVerification(UserAuthEmailAndPasswordRequest $request)

@@ -151,7 +151,7 @@ class ProductController extends CoreController
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
-    private function applyProductSearch(Builder $query, string $term, string $locale): void
+    private function applyProductSearch($query, string $term, string $locale): void
     {
         $query->where(function (Builder $builder) use ($term, $locale) {
             $this->applyTranslatableLike($builder, 'name', $term, $locale);
@@ -1137,7 +1137,7 @@ class ProductController extends CoreController
                 'is_fast_shipping_available' => ['required', 'boolean'],
             ]);
             $product->update($validated);
-            return $this->apiResponse(UPDATE_PRODUCT_SUCCESSFULLY, 200, true, ProductResource::make($product->load('variations', 'categories', 'flash_sales', 'shops')));
+            return $this->apiResponse(UPDATE_PRODUCT_SUCCESSFULLY, 200, true, ProductResource::make($product->load('variations', 'categories', 'flash_sales')));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }

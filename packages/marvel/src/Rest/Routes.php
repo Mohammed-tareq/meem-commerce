@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\General\DashboardController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 use Marvel\Enums\Role;
 use Marvel\Http\Controllers\AbusiveReportController;
+use Marvel\Http\Controllers\ActivityLogController;
 use Marvel\Http\Controllers\AddressController;
 use Marvel\Http\Controllers\AiController;
 use Marvel\Http\Controllers\AnalyticsController;
@@ -66,6 +68,7 @@ use Marvel\Http\Controllers\ContentPageController;
 use Marvel\Http\Controllers\CountryController;
 use Marvel\Http\Controllers\FastShippingController;
 use Marvel\Http\Controllers\GovernorateController;
+use Marvel\Http\Controllers\NotificationController;
 use Marvel\Http\Controllers\ProductExportController;
 use Marvel\Http\Controllers\ShippingPriceController;
 
@@ -719,6 +722,8 @@ Route::group([
     Route::delete('admin-users/delete/{id}', [UserController::class, 'adminDeleteUsers']);
     Route::put('admin-users/restore/{id}', [UserController::class, 'adminRestoreUser']);
     Route::delete('admin-users/delete-forever/{id}', [UserController::class, 'adminDeleteUsersForever']);
+    Route::get('logs/activity', [ActivityLogController::class, 'index']);
+
     Route::get('/customers/list', [UserController::class, 'customers']);
     Route::get('my-staffs', [UserController::class, 'myStaffs']);
     Route::get('all-staffs', [UserController::class, 'allStaffs']);
@@ -761,22 +766,21 @@ Route::group([
      * Dashboard API — platform-wide metrics
      */
     Route::middleware(['throttle:analytics'])->prefix('dashboard')->group(function () {
-        Route::get('overview', [\App\Http\Controllers\Api\DashboardController::class, 'overview']);
-        Route::get('revenue', [\App\Http\Controllers\Api\DashboardController::class, 'revenue']);
-        Route::get('order-stats', [\App\Http\Controllers\Api\DashboardController::class, 'orderStats']);
-        Route::get('recent-orders', [\App\Http\Controllers\Api\DashboardController::class, 'recentOrders']);
-        Route::get('top-products', [\App\Http\Controllers\Api\DashboardController::class, 'topProducts']);
-        Route::get('category-stats', [\App\Http\Controllers\Api\DashboardController::class, 'categoryStats']);
-        Route::get('low-stock', [\App\Http\Controllers\Api\DashboardController::class, 'lowStock']);
-
-        Route::get('sales', [\App\Http\Controllers\Api\DashboardController::class, 'salesAnalytics']);
-        Route::get('customers', [\App\Http\Controllers\Api\DashboardController::class, 'customerAnalytics']);
-        Route::get('products', [\App\Http\Controllers\Api\DashboardController::class, 'productAnalytics']);
-        Route::get('orders', [\App\Http\Controllers\Api\DashboardController::class, 'orderAnalytics']);
-        Route::get('categories', [\App\Http\Controllers\Api\DashboardController::class, 'categoryAnalytics']);
-        Route::get('coupons', [\App\Http\Controllers\Api\DashboardController::class, 'couponAnalytics']);
-        Route::get('cart', [\App\Http\Controllers\Api\DashboardController::class, 'cartAnalytics']);
-        Route::get('finance', [\App\Http\Controllers\Api\DashboardController::class, 'financeAnalytics']);
+        Route::get('overview', [DashboardController::class, 'overview']);
+        Route::get('revenue', [DashboardController::class, 'revenue']);
+        Route::get('order-stats', [DashboardController::class, 'orderStats']);
+        Route::get('recent-orders', [DashboardController::class, 'recentOrders']);
+        Route::get('top-products', [DashboardController::class, 'topProducts']);
+        Route::get('category-stats', [DashboardController::class, 'categoryStats']);
+        Route::get('low-stock', [DashboardController::class, 'lowStock']);
+        Route::get('sales', [DashboardController::class, 'salesAnalytics']);
+        Route::get('customers', [DashboardController::class, 'customerAnalytics']);
+        Route::get('products', [DashboardController::class, 'productAnalytics']);
+        Route::get('orders', [DashboardController::class, 'orderAnalytics']);
+        Route::get('categories', [DashboardController::class, 'categoryAnalytics']);
+        Route::get('coupons', [DashboardController::class, 'couponAnalytics']);
+        Route::get('cart', [DashboardController::class, 'cartAnalytics']);
+        Route::get('finance', [DashboardController::class, 'financeAnalytics']);
     });
 });
 Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {

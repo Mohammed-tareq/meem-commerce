@@ -10,6 +10,7 @@ use Marvel\Database\Models\CouponUsage;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
+use App\Events\OrderCreated;
 use Marvel\Events\OrderCancelled;
 use Marvel\Services\Pricing\ProductPricingService;
 
@@ -110,6 +111,7 @@ class OrderService
             }
             $this->promotionService->incrementUsage($checkoutTotals['promotion']['id'] ?? null);
             DB::commit();
+            OrderCreated::dispatch($order);
             return $order;
         } catch (\InvalidArgumentException $e) {
             DB::rollBack();

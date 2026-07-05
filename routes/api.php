@@ -1,7 +1,6 @@
 <?php
 
-use Marvel\Http\Controllers\ProductImportController;
-use Marvel\Http\Controllers\ProductExportController;
+
 use App\Http\Controllers\Api\General\BannerController;
 use App\Http\Controllers\Api\General\BrandController;
 use Illuminate\Support\Facades\Route;
@@ -180,3 +179,6 @@ Route::get('/test-mail', function () {
 
     return 'sent';
 });
+
+require __DIR__.'/notifications.php';
+

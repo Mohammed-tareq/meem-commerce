@@ -248,4 +248,10 @@ return [
     'DASHBOARD.COUPON_ANALYTICS_FETCHED' => 'Coupon analytics fetched successfully',
     'DASHBOARD.CART_ANALYTICS_FETCHED' => 'Cart analytics fetched successfully',
     'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'Finance analytics fetched successfully',
+    'MESSAGE.NOTIFICATIONS_FETCHED' => 'Notifications fetched successfully.',
+    'MESSAGE.UNREAD_NOTIFICATIONS_FETCHED' => 'Unread notifications fetched successfully.',
+    'MESSAGE.NOTIFICATION_MARKED_READ' => 'Notification marked as read.',
+    'MESSAGE.ALL_NOTIFICATIONS_MARKED_READ' => 'All notifications marked as read.',
+    'MESSAGE.NOTIFICATION_DELETED' => 'Notification deleted.',
+    'MESSAGE.ALL_NOTIFICATIONS_DELETED' => 'All notifications deleted.',
 ];

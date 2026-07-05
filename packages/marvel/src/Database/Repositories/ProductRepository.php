@@ -103,7 +103,7 @@ class ProductRepository extends BaseRepository
 
             $this->syncRelation($product, $request, $data);
             DB::commit();
-            return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales', 'shops');
+            return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());
@@ -164,7 +164,7 @@ class ProductRepository extends BaseRepository
             $this->syncRelation($product, $request, $data);
             DB::commit();
 
-            return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales', 'shops');
+            return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales');
         } catch (Exception $e) {
             DB::rollBack();
             throw new HttpException(500, $e->getMessage());

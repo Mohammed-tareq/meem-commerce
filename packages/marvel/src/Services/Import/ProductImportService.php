@@ -43,6 +43,12 @@ class ProductImportService
 
     protected float $startedAt;
 
+    protected float $lastTickTime;
+
+    protected int $lastTickProcessedCount = 0;
+
+    protected float $currentProgress = 0.0;
+
     protected const FLUSH_THRESHOLD = 10;
 
     protected const SIGNAL_DIR = 'imports';
@@ -52,7 +58,9 @@ class ProductImportService
         $this->urlHandler = new UrlImageHandler();
         $this->importId = $importId;
         $this->pricingService = $pricingService ?? app(ProductPricingService::class);
-        $this->startedAt = microtime(true);
+        $now = microtime(true);
+        $this->startedAt = $now;
+        $this->lastTickTime = $now;
         $this->ensureSignalDir();
     }
 
@@ -132,11 +140,20 @@ class ProductImportService
 
         $this->processedCount = $this->successCount + count($this->failedRows);
 
+        $rowsSinceLastTick = $this->processedCount - $this->lastTickProcessedCount;
+        $timeSinceLastTick = microtime(true) - $this->lastTickTime;
+
+        if ($rowsSinceLastTick >= 10 || $timeSinceLastTick >= 30) {
+            $this->currentProgress = $this->calculateSmoothProgress();
+            $this->lastTickProcessedCount = $this->processedCount;
+            $this->lastTickTime = microtime(true);
+        }
+
         $this->writeSignal('progress', [
             'processed_rows' => $this->processedCount,
             'success_rows' => $this->successCount,
             'failed_rows' => count($this->failedRows),
-            'progress' => $this->calculateSmoothProgress(),
+            'progress' => $this->currentProgress,
         ]);
 
         if ($this->isCancelled()) {
@@ -154,6 +171,9 @@ class ProductImportService
         if ($this->importId === null) {
             return;
         }
+        $this->currentProgress = $progress;
+        $this->lastTickProcessedCount = $this->successCount + count($this->failedRows);
+        $this->lastTickTime = microtime(true);
         $this->writeSignal('progress', [
             'processed_rows' => $this->successCount + count($this->failedRows),
             'success_rows' => $this->successCount,

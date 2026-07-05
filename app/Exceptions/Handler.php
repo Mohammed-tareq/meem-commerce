@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Validation\ValidationException;
+use Marvel\Exceptions\MarvelException;
 use Illuminate\Support\Facades\Lang;
 use Spatie\Permission\Exceptions\GuardDoesNotMatch;
 use Spatie\Permission\Exceptions\PermissionAlreadyExists;
@@ -178,6 +179,18 @@ class Handler extends ExceptionHandler
             if (app()->environment('local')) {
                 $message .= ' ' . $exception->getMessage();
             }
+        }
+        // Handle MarvelException
+        elseif ($exception instanceof MarvelException) {
+            $exceptionMessage = $exception->getMessage();
+            if (str_contains($exceptionMessage, 'NOT_FOUND')) {
+                $statusCode = 404;
+            } elseif (str_contains($exceptionMessage, 'NOT_AUTHORIZED')) {
+                $statusCode = 403;
+            } else {
+                $statusCode = 500;
+            }
+            $message = $exceptionMessage;
         }
         // Handle other exceptions
         else {

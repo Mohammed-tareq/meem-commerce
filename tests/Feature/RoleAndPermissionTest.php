@@ -124,6 +124,19 @@ class RoleAndPermissionTest extends TestCase
             $table->primary(['permission_id', 'role_id'],
                 'role_has_permissions_permission_id_role_id_primary');
         });
+
+        Schema::create('activity_log', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('log_name')->nullable();
+            $table->text('description');
+            $table->nullableMorphs('subject', 'subject');
+            $table->nullableMorphs('causer', 'causer');
+            $table->string('event')->nullable();
+            $table->json('properties')->nullable();
+            $table->uuid('batch_uuid')->nullable();
+            $table->timestamps();
+            $table->index('log_name');
+        });
     }
 
     private function createSuperAdminUser(): User
@@ -306,7 +319,7 @@ class RoleAndPermissionTest extends TestCase
             'display_name' => ['en' => 'Ghost', 'ar' => 'شبح'],
         ]);
 
-        $response->assertStatus(500);
+        $response->assertStatus(404);
     }
 
     public function test_super_admin_can_delete_role(): void
@@ -364,7 +377,7 @@ class RoleAndPermissionTest extends TestCase
 
         $response = $this->deleteJson(self::PREFIX . '/roles/99999');
 
-        $response->assertStatus(500);
+        $response->assertStatus(404);
     }
 
     public function test_get_all_roles_supports_search(): void
@@ -455,7 +468,7 @@ class RoleAndPermissionTest extends TestCase
             'permissions' => [$perm1->id],
         ]);
 
-        $response->assertStatus(500);
+        $response->assertStatus(404);
     }
 
     public function test_assign_permissions_validates_ids_exist(): void
@@ -627,7 +640,7 @@ class RoleAndPermissionTest extends TestCase
             'role_ids' => [$role->id],
         ]);
 
-        $response->assertStatus(500);
+        $response->assertStatus(404);
     }
 
     public function test_remove_role_without_permission_returns_403(): void

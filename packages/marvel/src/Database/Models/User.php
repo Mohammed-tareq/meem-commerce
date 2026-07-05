@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Notifications\Notifiable;
+use App\Events\UserRolesUpdated;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -27,7 +28,11 @@ use Spatie\OneTimePasswords\Models\Concerns\HasOneTimePasswords;
 class User extends Authenticatable implements MustVerifyEmail, HasMedia
 {
     // DISABLED: use Notifiable;
-    use HasRoles;
+    use HasRoles {
+        assignRole as protected assignRoleViaTrait;
+        syncRoles as protected syncRolesViaTrait;
+        removeRole as protected removeRoleViaTrait;
+    }
     use HasApiTokens;
     use Notifiable;
     use SoftDeletes;
@@ -84,6 +89,42 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         static::addGlobalScope('order', function (Builder $builder) {
             $builder->orderBy('updated_at', 'desc');
         });
+    }
+
+    public function assignRole(...$roles)
+    {
+        $oldRoles = $this->roles->pluck('name')->toArray();
+        $result = $this->assignRoleViaTrait(...$roles);
+        $this->unsetRelation('roles');
+        $newRoles = $this->roles->pluck('name')->toArray();
+        if ($oldRoles !== $newRoles) {
+            event(new UserRolesUpdated($this, $oldRoles, $newRoles));
+        }
+        return $result;
+    }
+
+    public function syncRoles(...$roles)
+    {
+        $oldRoles = $this->roles->pluck('name')->toArray();
+        $result = $this->syncRolesViaTrait(...$roles);
+        $this->unsetRelation('roles');
+        $newRoles = $this->roles->pluck('name')->toArray();
+        if ($oldRoles !== $newRoles) {
+            event(new UserRolesUpdated($this, $oldRoles, $newRoles));
+        }
+        return $result;
+    }
+
+    public function removeRole($role)
+    {
+        $oldRoles = $this->roles->pluck('name')->toArray();
+        $result = $this->removeRoleViaTrait($role);
+        $this->unsetRelation('roles');
+        $newRoles = $this->roles->pluck('name')->toArray();
+        if ($oldRoles !== $newRoles) {
+            event(new UserRolesUpdated($this, $oldRoles, $newRoles));
+        }
+        return $result;
     }
 
     public function getEmailVerifiedAttribute(): bool

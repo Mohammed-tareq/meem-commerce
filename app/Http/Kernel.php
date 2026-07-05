@@ -70,5 +70,6 @@ class Kernel extends HttpKernel
         'cache.api' => \App\Http\Middleware\CacheApiResponse::class,
         'check-lang' => \App\Http\Middleware\CheckLangMiddleware::class,
         'check-email' => \App\Http\Middleware\VirifiyEmailMiddleware::class,
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
     ];
 }

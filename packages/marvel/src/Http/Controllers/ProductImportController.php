@@ -129,8 +129,10 @@ class ProductImportController extends Controller
 
         $effectiveStatus = $cancelPending ? 'cancelling' : $import->status;
 
-        if ($import->status === 'completed' || $import->status === 'completed_with_errors') {
+        if (in_array($import->status, ['completed', 'completed_with_errors'], true)) {
             $progress = 100.0;
+        } elseif ($import->status === 'failed' || $import->status === 'cancelled') {
+            $progress = $progressData['progress'] ?? 0.0;
         } elseif ($progressData && $import->status === 'processing' && !$cancelPending) {
             $progress = $progressData['progress'] ?? 99.0;
         } else {

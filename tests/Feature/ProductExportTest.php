@@ -20,7 +20,7 @@ class ProductExportTest extends TestCase
     use RefreshDatabase;
 
     private const GUARD = 'api';
-    private const PREFIX = '/api/v1/admin';
+    private const PREFIX = '/api/v1';
 
     private function createSuperAdminUser(): User
     {
