@@ -33,6 +33,7 @@ class OrderCreateRequest extends FormRequest
             'notes' => ['nullable', 'string'],
             'selected_promotion_id' => ['nullable', 'integer', 'exists:promotions,id'],
             'selected_gift_product_id' => ['nullable', 'integer', 'exists:products,id'],
+            'type' => ['nullable', 'in:mobile,web'],
         ];
     }
 

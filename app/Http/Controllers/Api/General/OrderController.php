@@ -76,6 +76,14 @@ class OrderController extends Controller
             return $this->apiResponse(FILED_TO_CREATE_ORDER_TRY_AGAIN, 500, false);
         }
         
+        $callbackUrl = route('api.checkout.callback');
+        $errorUrl = route('api.checkout.errorCallback');
+
+        if ($request->type === 'mobile') {
+            $callbackUrl .= '?type=mobile';
+            $errorUrl .= '?type=mobile';
+        }
+
         $data = [
             'InvoiceValue' => $orderPrice,
             'CustomerName' => "{$orderDataUser['name']}",
@@ -85,8 +93,8 @@ class OrderController extends Controller
             'CustomerMobile' => $orderDataUser['user_phone'],
             'CustomerEmail' => $orderDataUser['user_email'],
             'language' => app()->getLocale() == 'ar' ? 'ar' : 'en',
-            'CallBackUrl' => route('api.checkout.callback'),
-            'ErrorUrl' => route('api.checkout.errorCallback'),
+            'CallBackUrl' => $callbackUrl,
+            'ErrorUrl' => $errorUrl,
         ];
         
         $invoice = $this->myfatoraService->createInvoice($data);
@@ -178,12 +186,22 @@ class OrderController extends Controller
             }
         }
 
+        if (request()->type === 'mobile') {
+            return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
+                'status' => 'success',
+                'message' => __(PAYMENT_SUCCESSFUL),
+                'payment_id' => $paymentId,
+                'order_id' => $order?->id,
+            ]);
+        }
+
         return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/success?' . http_build_query([
             'status' => 'success',
             'message' => __(PAYMENT_SUCCESSFUL),
             'payment_id' => $paymentId,
             'order_id' => $order?->id,
         ]));
+       
     }
 
     public function checkoutErrorCallback(Request $request)
@@ -214,6 +232,14 @@ class OrderController extends Controller
                     $this->cartInventoryService->releaseCart($cart, false);
                 }
             }
+        }
+
+        if ($request->type === 'mobile') {
+            return $this->apiResponse(CHECKOUT_SUCCESSFUL, 200, true, [
+                'status' => 'failed',
+                'error' => $errorMessage,
+                'payment_id' => $paymentId,
+            ]);
         }
 
         return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/failed?' . http_build_query([
