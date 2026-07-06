@@ -36,7 +36,6 @@ class ProductResource extends JsonResource
             'quantity'               => (int) $this->stock_quantity,
             'sold_quantity'          => (int) ($this->sold_quantity ?? 0),
             'in_stock'               => $this->in_stock,
-            'status'                 => (bool)$this->status,
             'product_type'           => $this->product_type,
             'height'                 => $this->height,
             'width'                  => $this->width,

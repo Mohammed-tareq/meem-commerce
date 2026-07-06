@@ -36,7 +36,6 @@ class ProductMiniResource extends JsonResource
             'weight' => $this->weight,
             'quantity' => (int) $this->stock_quantity,
             'in_stock'               =>(bool) $this->in_stock,
-            'status'                 => (bool) $this->status,
             'discount_valid' => (bool) $this->isDiscountActive(),
             'ratings' => round((float) ($this->reviews_avg_rating ?? $this->reviews()->avg('rating') ?? 0), 2),
             'image' => [
