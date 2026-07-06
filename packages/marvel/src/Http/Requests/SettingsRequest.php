@@ -35,8 +35,8 @@ class SettingsRequest extends FormRequest
                 "meta_desc.*" => ['required','string','min:3' , "max:2000"],
                 "site_copy_right" => ['required','array'],
                 "site_copy_right.*" => ['required','string','min:3' , "max:200"],
-                // "logo" =>['required',"image", "mimes:jpeg,png,jpg,gif,svg", "max:2048"],
-                // "favicon" =>['required',"image", "mimes:jpeg,png,jpg,gif,svg", "max:2048"],
+                "logo" =>['required',"image", "mimes:jpeg,png,jpg,gif,svg", "max:2048"],
+                "favicon" =>['required',"image", "mimes:jpeg,png,jpg,gif,svg", "max:2048"],
                 "site_email" => ['required','email'],
                 "email_support" => ['required','email'],
                 "facebook" => ['required','url'],
@@ -45,6 +45,7 @@ class SettingsRequest extends FormRequest
                 "promotion_video_url" => ['sometimes','url'],
                 'youtube' => ['required','url'],
                 'phone' => ['required','string'],
+                'fast_shipping_page_publish' => ['required', 'in:0,1'],
             'options' => ['sometimes', 'array'],
         ];
     }

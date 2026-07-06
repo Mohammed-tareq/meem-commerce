@@ -20,7 +20,24 @@ class Settings extends Model implements HasMedia
         'site_copy_right',
     ];
 
-    public $guarded = [];
+    public $fillable = [
+        'site_name',
+        'site_desc',
+        'meta_desc',
+        'site_copy_right',
+        'logo',
+        'favicon',
+        'site_email',
+        'email_support',
+        'facebook',
+        'instagram',
+        'linkedin',
+        'promotion_video_url',
+        'youtube',
+        'phone',
+        'fast_shipping_page_publish',
+        'options',
+    ];
 
     protected $casts = [
         'options'   => 'array',

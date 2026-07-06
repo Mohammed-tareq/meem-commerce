@@ -321,6 +321,7 @@ class CreateMarvelTables extends Migration
             $table->string('promotion_video_url')->nullable();
             $table->string('youtube')->nullable();
             $table->string('phone')->nullable();
+            $table->boolean('fast_shipping_page_publish')->default(true);
             $table->json('options')->nullable();
             $table->timestamps();
         });
