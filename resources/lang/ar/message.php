@@ -208,6 +208,8 @@ return [
     'MESSAGE.FAST_SHIPPING_GOVERNORATE_DISABLED' => 'الشحن السريع غير متاح في محافظتك',
     'MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE' => 'منتج أو أكثر غير مؤهل للشحن السريع',
     'MESSAGE.FAST_SHIPPING_MIXED_CART' => 'لا يمكن خلط الشحن السريع مع الشحن المجدول في نفس الطلب',
+    'ERROR.VARIANT_STOCK_EXCEEDED' => 'كمية ":product_name" تتجاوز المخزون المتاح.',
+    'ERROR.PRODUCT_STOCK_EXCEEDED' => '":product_name" يتجاوز المخزون المتاح.',
     'MESSAGE.USER_RESTORED_SUCCESSFULLY' => 'تمت استعادة المستخدم بنجاح',
     'ERROR.USER_CANNOT_BE_RESTORED' => 'لا يمكن استعادة المستخدم',
     'MESSAGE.USER_TRASHED_LIST_RETRIEVED_SUCCESSFULLY' => 'تم استرجاع قائمة المستخدمين المحذوفين بنجاح',

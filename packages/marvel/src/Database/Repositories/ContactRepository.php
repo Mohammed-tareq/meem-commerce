@@ -5,6 +5,7 @@ namespace Marvel\Database\Repositories;
 use Marvel\Database\Models\Contact;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
+use App\Events\ContactMessageReceived;
 
 class ContactRepository extends BaseRepository
 {
@@ -15,6 +16,7 @@ class ContactRepository extends BaseRepository
     ];
 
     protected $dataArray = [
+        'name',
         'email',
         'subject',
         'message',
@@ -39,7 +41,10 @@ class ContactRepository extends BaseRepository
 
     public function saveContact($data)
     {
-        return $this->create($data->only($this->dataArray));
+        $contact = $this->create($data->only($this->dataArray));
+        ContactMessageReceived::dispatch($contact);
+
+        return $contact;
     }
 
     public function markAsRead($id)

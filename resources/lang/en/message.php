@@ -208,6 +208,8 @@ return [
     'MESSAGE.FAST_SHIPPING_GOVERNORATE_DISABLED' => 'Fast shipping is not available in your governorate',
     'MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE' => 'One or more products are not eligible for fast shipping',
     'MESSAGE.FAST_SHIPPING_MIXED_CART' => 'Cannot mix fast shipping and scheduled shipping items in the same order',
+    'ERROR.VARIANT_STOCK_EXCEEDED' => '":product_name" quantity exceeds available stock.',
+    'ERROR.PRODUCT_STOCK_EXCEEDED' => '":product_name" exceeds available stock.',
     'MESSAGE.USER_RESTORED_SUCCESSFULLY' => 'User restored successfully',
     'ERROR.USER_CANNOT_BE_RESTORED' => 'User cannot be restored',
     'MESSAGE.USER_TRASHED_LIST_RETRIEVED_SUCCESSFULLY' => 'Trashed users retrieved successfully',

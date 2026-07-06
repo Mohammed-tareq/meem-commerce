@@ -103,9 +103,10 @@ class CartRepository extends BaseRepository
         }
 
         $product = Product::findOrFail($productId);
+        $productName = is_array($product->name) ? ($product->name[app()->getLocale()] ?? $product->name['en'] ?? '') : $product->name;
 
         if ($shippingMethod === 'fast' && !$product->is_fast_shipping_available) {
-            throw new Exception(FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE);
+            throw new Exception(__('message.MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE', ['product_name' => $productName]));
         }
 
         $inventoryService = app(CartInventoryService::class);
@@ -113,11 +114,11 @@ class CartRepository extends BaseRepository
         if ($variantId) {
             $variant = $product->variations()->whereKey($variantId)->first();
             if (!$variant) {
-                throw new Exception(INVALID_ITEM_DATA);
+                throw new Exception(__('message.ERROR.INVALID_ITEM_DATA', ['product_name' => $productName]));
             }
 
             if ($variant->available_stock < $quantity) {
-                throw new Exception('Quantity exceeds available stock.');
+                throw new Exception(__('message.ERROR.VARIANT_STOCK_EXCEEDED', ['product_name' => $productName]));
             }
 
             $inventoryService->reserveItem($cart, $product, $variant, $quantity, $mode, $attributes, $shippingMethod);
@@ -125,11 +126,11 @@ class CartRepository extends BaseRepository
         }
 
         if ($product->product_type === 'variable') {
-            throw new Exception(INVALID_ITEM_DATA);
+            throw new Exception(__('message.ERROR.INVALID_ITEM_DATA', ['product_name' => $productName]));
         }
 
         if ($product->available_stock < $quantity) {
-            throw new Exception('Product exceeds available stock.');
+            throw new Exception(__('message.ERROR.PRODUCT_STOCK_EXCEEDED', ['product_name' => $productName]));
         }
 
         $inventoryService->reserveItem($cart, $product, null, $quantity, $mode, $attributes, $shippingMethod);
