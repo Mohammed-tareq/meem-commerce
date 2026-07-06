@@ -82,7 +82,7 @@ class UserController extends CoreController
         $this->middleware("permission:" . Permission::VIEW_USERS, ["only" => ["index", "show", "admins", "adminTrashedUsers"]]);
         $this->middleware("permission:" . Permission::CREATE_USER, ["only" => ["adminCreateUsers"]]);
         $this->middleware("permission:" . Permission::DELETE_USER, ["only" => ["adminDeleteUsers", "adminDeleteUsersForever"]]);
-        $this->middleware("permission:" . Permission::EDIT_USER, ["only" => ["adminUpdateActivationUsers","update"]]);
+        $this->middleware("permission:" . Permission::EDIT_USER, ["only" => ["adminUpdateActivationUsers", "update"]]);
         $this->middleware("permission:" . Permission::RESTORE_USER, ["only" => ["adminRestoreUser"]]);
     }
 
@@ -247,7 +247,7 @@ class UserController extends CoreController
             if ($search = $request->query('search')) {
                 $query = $query->where(function ($q) use ($search) {
                     $q->where('name', 'LIKE', "%{$search}%")
-                      ->orWhere('email', 'LIKE', "%{$search}%");
+                        ->orWhere('email', 'LIKE', "%{$search}%");
                 });
             }
 
@@ -577,6 +577,8 @@ class UserController extends CoreController
             "token" => $user->createToken('auth_token')->plainTextToken,
             "email_verified" => $email_verified
         ];
+        AdminLoggedIn::dispatch($user, request()->ip(), request()->userAgent());
+
         return $this->apiResponse(USER_LOGGED_IN_SUCCESSFULLY, 200, true, $data);
     }
     public function adminToken(UserAuthEmailAndPasswordRequest $request)
@@ -588,7 +590,7 @@ class UserController extends CoreController
         if (!$user || !Hash::check($request->password, $user->password)) {
             return $this->apiResponse(INVALID_CREDENTIALS, 404, false);
         }
-        if($user->type !== 'admin'){
+        if ($user->type !== 'admin') {
             return $this->apiResponse(USER_NOT_FOUND, 404, false);
         }
         $email_verified = $user->hasVerifiedEmail();
@@ -1057,7 +1059,7 @@ class UserController extends CoreController
                 [
                     'email_verified_at' => now(),
                     'name' => $user->getName(),
-                    'password' =>Hash::make('password')
+                    'password' => Hash::make('password')
                 ]
             );
 
