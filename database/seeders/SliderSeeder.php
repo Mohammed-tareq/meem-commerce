@@ -28,7 +28,7 @@ class SliderSeeder extends Seeder
             [
                 'title' => ['en' => 'Ramadan Offers', 'ar' => 'عروض رمضان'],
                 'order'=> 3,
-                'status' => false,
+                'status' => true,
             ],
             [
                 'title' => ['en' => 'Winter Clearance', 'ar' => 'تصفية الشتاء'],
@@ -48,7 +48,7 @@ class SliderSeeder extends Seeder
             [
                 'title' => ['en' => 'Flash Sale', 'ar' => 'تخفيضات سريعة'],
                 'order'=> 7,
-                'status' => false,
+                'status' => true,
             ],
             [
                 'title' => ['en' => 'Valentine’s Day', 'ar' => 'عيد الحب'],

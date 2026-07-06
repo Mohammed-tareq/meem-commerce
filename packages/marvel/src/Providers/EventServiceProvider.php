@@ -15,7 +15,6 @@ use Marvel\Events\FlashSaleProcessed;
 use Marvel\Events\Maintenance;
 use Marvel\Events\MessageSent;
 use Marvel\Events\OrderCancelled;
-use Marvel\Events\OrderCreated;
 use Marvel\Events\OrderDelivered;
 use Marvel\Events\OrderProcessed;
 use Marvel\Events\OrderReceived;
@@ -43,12 +42,10 @@ use Marvel\Listeners\DigitalProductNotifyLogsListener;
 use Marvel\Listeners\FlashSaleProductProcess;
 use Marvel\Listeners\MaintenanceNotification;
 use Marvel\Listeners\OwnershipTransferStatusControlListener;
-use Marvel\Listeners\ProductInventoryDecrement;
 use Marvel\Listeners\ProductInventoryRestore;
 use Marvel\Listeners\ProductReviewApprovedListener;
 use Marvel\Listeners\ProductReviewRejectedListener;
 use Marvel\Listeners\Refund\SendRefundUpdateNotification;
-use Marvel\Listeners\SendOrderCreationNotification;
 use Marvel\Listeners\SendOrderCancelledNotification;
 use Marvel\Listeners\SendOrderDeliveredNotification;
 use Marvel\Listeners\SendOrderReceivedNotification;
@@ -57,7 +54,6 @@ use Marvel\Listeners\SendPaymentFailedNotification;
 use Marvel\Listeners\SendPaymentSuccessNotification;
 use Marvel\Listeners\SendRefundRequestedNotification;
 use Marvel\Listeners\StoredMessagedNotifyLogsListener;
-use Marvel\Listeners\StoredOrderNotifyLogsListener;
 use Marvel\Listeners\StoredStoreNoticeNotifyLogsListener;
 use Marvel\Listeners\TransferredShopOwnershipNotification;
 
@@ -84,15 +80,13 @@ class EventServiceProvider extends ServiceProvider
             SendMessageNotification::class,
             StoredMessagedNotifyLogsListener::class
         ],
-        OrderCreated::class => [
-            SendOrderCreationNotification::class,
-            StoredOrderNotifyLogsListener::class
-        ],
         OrderReceived::class => [
             SendOrderReceivedNotification::class
         ],
         OrderProcessed::class => [
-            ProductInventoryDecrement::class,
+            // ProductInventoryDecrement is intentionally removed:
+            // Stock is already decremented synchronously in OrderRepository::deductStock().
+            // This listener was redundant AND broken (relied on commented-out ->products() relationship).
         ],
         OrderCancelled::class => [
             ProductInventoryRestore::class,

@@ -29,7 +29,6 @@ use Marvel\Enums\Permission;
 use Marvel\Enums\ProductType;
 use Marvel\Enums\PaymentGatewayType;
 use Marvel\Enums\PaymentStatus;
-use Marvel\Events\OrderCreated;
 use Marvel\Events\OrderProcessed;
 use Marvel\Events\OrderReceived;
 use Marvel\Exceptions\MarvelBadRequestException;
@@ -342,13 +341,11 @@ class OrderRepository extends BaseRepository
             }
 
             if ($variationId) {
-                // Deduct from variation
                 Variation::where('id', $variationId)
                     ->decrement('quantity', $orderQuantity);
             } else {
-                // Deduct from main product
                 Product::where('id', $productId)
-                    ->decrement('quantity', $orderQuantity);
+                    ->decrement('stock_quantity', $orderQuantity);
             }
         }
     }
@@ -506,10 +503,6 @@ class OrderRepository extends BaseRepository
             $products = $this->processProducts($request['products'], $request['customer_id'], $order);
             $order->products()->attach($products);
             $this->createChildOrder($order->id, $request);
-            //  $this->calculateShopIncome($order);
-            $invoiceData = $this->createInvoiceDataForEmail($request, $order);
-            $customer = $request->user() ?? null;
-            event(new OrderCreated($order, $invoiceData, $customer));
             return $order;
         } catch (Exception $e) {
             throw $e;

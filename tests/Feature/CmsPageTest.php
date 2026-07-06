@@ -56,7 +56,6 @@ class CmsPageTest extends TestCase
             'path' => '/home',
             'slug' => 'home',
             'title' => 'Home',
-            'path' => 'home',
             'content' => [
                 ['type' => 'B', 'order' => 2],
                 ['type' => 'A', 'order' => 1],
@@ -80,7 +79,6 @@ class CmsPageTest extends TestCase
         $createPayload = [
             'path' => '/landing',
             'slug' => 'landing',
-            'path' => 'landing',
             'title' => 'Landing',
             'content' => [
                 ['type' => 'Hero', 'order' => 2],

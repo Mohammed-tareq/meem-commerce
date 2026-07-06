@@ -67,7 +67,6 @@ class DatabaseSeeder extends Seeder
         // }
 
         $this->call([
-            // ShopSeeder::class,
             CategorySeeder::class,
             AttributeSeeder::class,
             BannerSeeder::class,
@@ -86,10 +85,13 @@ class DatabaseSeeder extends Seeder
             CouponSeeder::class,
             LocationSeeder::class,
             PromotionSeeder::class,
-            // ShopRelationsSeeder::class,
             WishlistSeeder::class,
+            SectionTypeSettingSeeder::class,
             ContentPageSeeder::class,
             SectionSeeder::class,
+            DashboardDataSeeder::class,
+            NotificationSeeder::class,
+            ActivityLogSeeder::class,
         ]);
     }
 }

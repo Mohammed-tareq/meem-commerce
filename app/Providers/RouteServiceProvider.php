@@ -109,5 +109,11 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('cart', function (Request $request) {
             return Limit::perMinute(20)->by($request->ip());
         });
+
+        // Analytics/dashboard endpoints - per authenticated user
+        // Protects against heavy query abuse (all data is cached at 5min TTL)
+        RateLimiter::for('analytics', function (Request $request) {
+            return Limit::perMinute(30)->by(optional($request->user())->id ?: $request->ip());
+        });
     }
 }

@@ -26,39 +26,6 @@ class CreateReviewsTable extends Migration
             $table->timestamps();
         });
 
-        Schema::create('questions', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->unsignedBigInteger('shop_id');
-            $table->foreign('shop_id')->references('id')->on('shops')->onDelete('cascade');
-            $table->unsignedBigInteger('product_id');
-            $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
-            $table->text('question');
-            $table->text('answer')->nullable();
-            $table->softDeletes();
-            $table->timestamps();
-        });
-
-        Schema::create('feedbacks', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->morphs('model');
-            $table->boolean('positive')->nullable();
-            $table->boolean('negative')->nullable();
-            $table->timestamps();
-        });
-
-        Schema::create('abusive_reports', function (Blueprint $table) {
-            $table->bigIncrements('id');
-            $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->morphs('model');
-            $table->text('message');
-            $table->timestamps();
-        });
-
         Schema::create('wishlists', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('user_id');
@@ -78,10 +45,6 @@ class CreateReviewsTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('reviews');
-        Schema::dropIfExists('questions');
-        Schema::dropIfExists('feedbacks');
-        Schema::dropIfExists('abusive_reports');
         Schema::dropIfExists('wishlists');
     }
 }

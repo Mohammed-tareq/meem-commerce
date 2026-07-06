@@ -10,6 +10,9 @@ class SectionSeeder extends Seeder
 {
     public function run(): void
     {
+        $today = now()->format('Y-m-d');
+        $nextMonth = now()->addMonth()->format('Y-m-d');
+
         $types = [
             [
                 'type' => 'banners',
@@ -22,8 +25,8 @@ class SectionSeeder extends Seeder
                 'type' => 'sliders',
                 'front' => ['autoplay' => true, 'slider_speed' => 5000],
                 'back'  => [
-                    'start_date' => '2026-06-01',
-                    'end_date' => '2026-06-20',
+                    'start_date' => $today,
+                    'end_date' => $nextMonth,
                     'limit' => 10,
                     'slidersId' => [],
                     'order' => 'desc',
@@ -69,8 +72,8 @@ class SectionSeeder extends Seeder
                 'type' => 'flash-sales',
                 'front' => ['autoplay' => true, 'slider_speed' => 5000],
                 'back'  => [
-                    'start_date' => '2026-06-01',
-                    'end_date' => '2026-06-20',
+                    'start_date' => $today,
+                    'end_date' => $nextMonth,
                     'limit' => 10,
                     'flashSalesId' => [],
                     'order' => 'desc',
@@ -80,8 +83,8 @@ class SectionSeeder extends Seeder
                 'type' => 'brands',
                 'front' => ['autoplay' => true, 'slider_speed' => 5000],
                 'back'  => [
-                    'start_date' => '2026-06-01',
-                    'end_date' => '2026-06-20',
+                    'start_date' => $today,
+                    'end_date' => $nextMonth,
                     'limit' => 10,
                     'brandsId' => [],
                     'order' => 'desc',
@@ -91,8 +94,8 @@ class SectionSeeder extends Seeder
                 'type' => 'coupons',
                 'front' => ['autoplay' => true, 'slider_speed' => 5000],
                 'back'  => [
-                    'start_date' => '2026-06-01',
-                    'end_date' => '2026-06-20',
+                    'start_date' => $today,
+                    'end_date' => $nextMonth,
                     'limit' => 10,
                     'couponsId' => [],
                     'order' => 'desc',

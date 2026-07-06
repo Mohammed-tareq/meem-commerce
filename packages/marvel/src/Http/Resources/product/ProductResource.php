@@ -8,9 +8,9 @@ class ProductResource extends Resource
     {
         return [
             'id'                     => $this->id,
-            'name'                   => $this->getTranslation('name', app()->getLocale()),
+            'name'                   => request()->routeIs('products.index') ? $this->getTranslation('name', app()->getLocale()) : $this->getRawOriginal('name'),
             'slug'                   => $this->slug,
-            'description'            => $this->getTranslation('description', app()->getLocale()), // Array فيه en/ar
+            'description'            => request()->routeIs('products.index') ? $this->getTranslation('description', app()->getLocale()) : $this->getRawOriginal('description'), // Array فيه en/ar`
             'price'                  => $this->roundMoney($this->price),
             'current_price'          => $this->roundMoney($this->current_price),
             'price_after_discount'    => $this->roundMoney($this->price_after_discount),
@@ -90,6 +90,8 @@ class ProductResource extends Resource
                 'reserved_quantity' => $variant->reserved_quantity ?? 0,
                 'available_stock' => $variant->available_stock,
                 'quantity' => $variant->quantity,
+                                // 'sold_quantity' => $variant->sold_quantity,
+
                 'height' => $variant->height,
                 'width' => $variant->width,
                 'length' => $variant->length,

@@ -16,6 +16,8 @@ return new class extends Migration
             $table->text('faq_title');
             $table->text('faq_description');
             $table->boolean('status')->default(true);
+            $table->integer('order')->default(0);
+
             $table->softDeletes();
             $table->timestamps();
         });

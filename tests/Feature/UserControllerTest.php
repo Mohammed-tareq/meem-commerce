@@ -126,6 +126,19 @@ class UserControllerTest extends TestCase
             $table->primary(['permission_id', 'role_id'],
                 'role_has_permissions_permission_id_role_id_primary');
         });
+
+        Schema::create('activity_log', function (Blueprint $table) {
+            $table->bigIncrements('id');
+            $table->string('log_name')->nullable();
+            $table->text('description');
+            $table->nullableMorphs('subject', 'subject');
+            $table->nullableMorphs('causer', 'causer');
+            $table->string('event')->nullable();
+            $table->json('properties')->nullable();
+            $table->uuid('batch_uuid')->nullable();
+            $table->timestamps();
+            $table->index('log_name');
+        });
     }
 
     private function createSuperAdminUser(): User
@@ -153,6 +166,7 @@ class UserControllerTest extends TestCase
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
             'is_active' => true,
+            'phone_number' => '01000000001',
         ]);
 
         $user->assignRole($role);
@@ -174,6 +188,7 @@ class UserControllerTest extends TestCase
             'email' => 'active@example.com',
             'password' => Hash::make('password'),
             'is_active' => true,
+            'phone_number' => '01000000002',
         ]);
 
         User::create([
@@ -181,6 +196,7 @@ class UserControllerTest extends TestCase
             'email' => 'inactive@example.com',
             'password' => Hash::make('password'),
             'is_active' => false,
+            'phone_number' => '01000000003',
         ]);
 
         Sanctum::actingAs($admin);
@@ -207,6 +223,7 @@ class UserControllerTest extends TestCase
             'email' => 'active@example.com',
             'password' => Hash::make('password'),
             'is_active' => true,
+            'phone_number' => '01000000004',
         ]);
 
         User::create([
@@ -214,6 +231,7 @@ class UserControllerTest extends TestCase
             'email' => 'inactive@example.com',
             'password' => Hash::make('password'),
             'is_active' => false,
+            'phone_number' => '01000000005',
         ]);
 
         Sanctum::actingAs($admin);
@@ -238,6 +256,7 @@ class UserControllerTest extends TestCase
             'email' => 'active@example.com',
             'password' => Hash::make('password'),
             'is_active' => true,
+            'phone_number' => '01000000006',
         ]);
 
         User::create([
@@ -245,6 +264,7 @@ class UserControllerTest extends TestCase
             'email' => 'inactive@example.com',
             'password' => Hash::make('password'),
             'is_active' => false,
+            'phone_number' => '01000000007',
         ]);
 
         Sanctum::actingAs($admin);

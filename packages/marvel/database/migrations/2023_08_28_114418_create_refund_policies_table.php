@@ -18,14 +18,21 @@ return new class extends Migration {
             $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->enum('target', RefundPolicyTarget::getValues())->default(RefundPolicyTarget::VENDOR);
-            $table->string('language')->default(DEFAULT_LANGUAGE);
             $table->enum('status', RefundPolicyStatus::getValues())->default(RefundPolicyStatus::PENDING);
-            $table->foreignId('shop_id')->nullable()->constrained('shops')->onDelete('set null');
             $table->timestamps();
             $table->softDeletes();
         });
-        Schema::table('refunds', function (Blueprint $table) {
+        Schema::create('refunds', function (Blueprint $table) {
+            $table->id();
             $table->foreignId('refund_policy_id')->nullable()->constrained('refund_policies')->onDelete('set null');
+            $table->decimal('amount', 10, 2);
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->enum('status', RefundPolicyStatus::getValues())->default(RefundPolicyStatus::PENDING);
+            $table->foreignId('order_id')->nullable()->constrained('orders')->onDelete('set null');
+            $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('set null');
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 

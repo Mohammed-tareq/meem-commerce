@@ -53,6 +53,11 @@ class PermissionSeeder extends Seeder
             'create-country',
             'update-country',
             'delete-country',
+            'view-order',
+            'view-orders',
+            'view-activity-log',
+            'view-notifications',
+            'manage-notifications',
 
             'view-city',
             'create-city',
@@ -349,7 +354,7 @@ class PermissionSeeder extends Seeder
         ];
 
         $permissionsData = [];
-        foreach ($permissions as $permission) {
+        foreach (array_unique($permissions) as $permission) {
             $permissionsData[] = Permission::firstOrCreate([
                 'name' => $permission,
                 'guard_name' => 'api',

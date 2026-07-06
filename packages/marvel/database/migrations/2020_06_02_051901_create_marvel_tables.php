@@ -16,14 +16,14 @@ class CreateMarvelTables extends Migration
      */
     public function up()
     {
-        Schema::create('shipping_classes', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->double('amount');
-            $table->string('is_global')->default(true);
-            $table->enum('type', ShippingType::getValues())->default(ShippingType::FIXED);
-            $table->timestamps();
-        });
+        // Schema::create('shipping_classes', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->string('name');
+        //     $table->double('amount');
+        //     $table->string('is_global')->default(true);
+        //     $table->enum('type', ShippingType::getValues())->default(ShippingType::FIXED);
+        //     $table->timestamps();
+        // });
         Schema::create('coupons', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
@@ -43,46 +43,46 @@ class CreateMarvelTables extends Migration
         });
 
 
-        Schema::create('types', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('slug');
-            $table->string('icon')->nullable();
-            $table->json('promotional_sliders')->nullable();
-            $table->json('images')->nullable();
-            $table->timestamps();
-        });
+        // Schema::create('types', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->string('name');
+        //     $table->string('slug');
+        //     $table->string('icon')->nullable();
+        //     $table->json('promotional_sliders')->nullable();
+        //     $table->json('images')->nullable();
+        //     $table->timestamps();
+        // });
 
-        Schema::create('authors', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->boolean('is_approved')->default(false);
-            $table->json('image')->nullable();
-            $table->json('cover_image')->nullable();
-            $table->string('slug');
-            $table->text('bio')->nullable();
-            $table->text('quote')->nullable();
-            $table->string('born')->nullable();
-            $table->string('death')->nullable();
-            $table->string('languages')->nullable();
-            $table->json('socials')->nullable();
-            $table->timestamps();
-        });
+        // Schema::create('authors', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->string('name');
+        //     $table->boolean('is_approved')->default(false);
+        //     $table->json('image')->nullable();
+        //     $table->json('cover_image')->nullable();
+        //     $table->string('slug');
+        //     $table->text('bio')->nullable();
+        //     $table->text('quote')->nullable();
+        //     $table->string('born')->nullable();
+        //     $table->string('death')->nullable();
+        //     $table->string('languages')->nullable();
+        //     $table->json('socials')->nullable();
+        //     $table->timestamps();
+        // });
 
-        Schema::create('manufacturers', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->boolean('is_approved')->default(false);
-            $table->json('image')->nullable();
-            $table->json('cover_image')->nullable();
-            $table->string('slug');
-            $table->unsignedBigInteger('type_id');
-            $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
-            $table->text('description')->nullable();
-            $table->string('website')->nullable();
-            $table->json('socials')->nullable();
-            $table->timestamps();
-        });
+        // Schema::create('manufacturers', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->string('name');
+        //     $table->boolean('is_approved')->default(false);
+        //     $table->json('image')->nullable();
+        //     $table->json('cover_image')->nullable();
+        //     $table->string('slug');
+        //     $table->unsignedBigInteger('type_id');
+        //     $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
+        //     $table->text('description')->nullable();
+        //     $table->string('website')->nullable();
+        //     $table->json('socials')->nullable();
+        //     $table->timestamps();
+        // });
         Schema::create('banners', function (Blueprint $table) {
             $table->id();
             $table->string('title');
@@ -92,9 +92,6 @@ class CreateMarvelTables extends Migration
             $table->boolean('status')->default(false);
             $table->softDeletes();
             $table->timestamps();
-            // $table->json('image')->nullable();
-            // $table->unsignedBigInteger('type_id');
-            // $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
         });
         Schema::create('sliders', function (Blueprint $table) {
             $table->id();
@@ -104,10 +101,6 @@ class CreateMarvelTables extends Migration
             $table->boolean('status')->default(false);
             $table->timestamps();
             $table->softDeletes();
-
-            // $table->json('image')->nullable();
-            // $table->unsignedBigInteger('type_id');
-            // $table->foreign('type_id')->references('id')->on('types')->onDelete('cascade');
         });
 
         Schema::create('products', function (Blueprint $table) {
@@ -136,12 +129,16 @@ class CreateMarvelTables extends Migration
             $table->date('end_date')->nullable();
             $table->decimal('price_after_discount', 10, 2)->nullable();
             $table->decimal('price_after_flash_sale', 10, 2)->nullable();
+            $table->integer('stock_quantity')->default(0);
+            $table->integer('reserved_quantity')->default(0);
+            $table->boolean('is_fast_shipping_available')->default(false);
             $table->softDeletes();
             $table->timestamps();
         });
 
         Schema::create('product_variants', function (Blueprint $table) {
             $table->id();
+            $table->string('sku')->nullable()->unique();
             $table->double('price', 10, 2);
             $table->double('sale_price', 10, 2)->nullable();
             $table->boolean('in_stock')->default(true);
@@ -152,46 +149,41 @@ class CreateMarvelTables extends Migration
             $table->string('length')->nullable();
             $table->unsignedBigInteger('product_id');
             $table->foreign('product_id')->references('id')->on('products')->onDelete('cascade');
+            $table->integer('stock_quantity')->default(0);
+            $table->integer('reserved_quantity')->default(0);
+            $table->integer('sold_quantity')->default(0);
             $table->timestamps();
         });
 
         Schema::create('orders', function (Blueprint $table) {
-
-
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('user_phone');
             $table->string('user_email');
             $table->json('address');
-
-
             $table->string('notes')->nullable();
-
             $table->decimal('shipping_price', 8, 3)->nullable();
             $table->decimal('total_price', 8, 3);
             $table->decimal('price', 8, 3);
-
             $table->string('coupon')->nullable();
             $table->decimal('coupon_discount', 10, 3)->nullable();
             $table->string('coupon_discount_type')->nullable();
             $table->decimal('coupon_discount_max_amount', 10, 3)->nullable();
-
             $table->enum('status', ['pending', 'completed', 'delivered', 'cancelled'])->default('pending');
+            $table->enum('shipping_method', ['SCHEDULED', 'FAST'])->default('SCHEDULED');
+            $table->dateTime('expected_delivery_at')->nullable();
+            $table->decimal('fast_shipping_fee', 12, 2)->default(0);
             $table->softDeletes();
             $table->timestamps();
         });
 
         Schema::create('order_products', function (Blueprint $table) {
-
-
             $table->id();
             $table->foreignId('order_id')->constrained()->cascadeOnDelete();
             $table->foreignId('product_id')->nullable()->constrained()->nullOnDelete();
-
             $table->string('product_name');
             $table->string('product_sku')->nullable();
-            $table->string('shop_name')->nullable();
             $table->foreignId('product_variant_id')->nullable()->constrained('product_variants')->nullOnDelete();
             $table->json('attributes')->nullable();
             $table->integer('product_quantity');
@@ -199,6 +191,7 @@ class CreateMarvelTables extends Migration
             $table->decimal('product_total_price', 8, 3);
             $table->decimal('product_discount_price', 10, 3)->nullable();
             $table->decimal('product_flash_sale_price', 10, 3)->nullable();
+            $table->decimal('promotion_discount_amount', 10, 2)->default(0);
             $table->timestamps();
         });
         Schema::create('transactions', function (Blueprint $table) {
@@ -236,6 +229,10 @@ class CreateMarvelTables extends Migration
             $table->string('coupon')->nullable();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
             $table->decimal('total_price', 10, 2)->default(0);
+            $table->enum('status', ['active', 'expired', 'checked_out'])->default('active');
+            $table->timestamp('reserved_at')->nullable();
+            $table->timestamp('expires_at')->nullable();
+            $table->unique('user_id');
             $table->timestamps();
         });
 
@@ -266,6 +263,9 @@ class CreateMarvelTables extends Migration
             $table->decimal('price', 10, 2);
             $table->decimal('total_price', 10, 2);
             $table->json('attributes')->nullable();
+            $table->integer('reserved_quantity')->default(0);
+            $table->decimal('discount_amount', 10, 2)->default(0);
+            $table->string('shipping_method', 20)->default('SCHEDULED');
             $table->timestamps();
         });
 
@@ -279,19 +279,19 @@ class CreateMarvelTables extends Migration
         });
 
 
-        Schema::create('tax_classes', function (Blueprint $table) {
-            $table->id();
-            $table->string('country')->nullable();
-            $table->string('state')->nullable();
-            $table->string('zip')->nullable();
-            $table->string('city')->nullable();
-            $table->double('rate');
-            $table->string('name')->nullable();
-            $table->integer('is_global')->nullable();
-            $table->integer('priority')->nullable();
-            $table->boolean('on_shipping')->default(1);
-            $table->timestamps();
-        });
+        // Schema::create('tax_classes', function (Blueprint $table) {
+        //     $table->id();
+        //     $table->string('country')->nullable();
+        //     $table->string('state')->nullable();
+        //     $table->string('zip')->nullable();
+        //     $table->string('city')->nullable();
+        //     $table->double('rate');
+        //     $table->string('name')->nullable();
+        //     $table->integer('is_global')->nullable();
+        //     $table->integer('priority')->nullable();
+        //     $table->boolean('on_shipping')->default(1);
+        //     $table->timestamps();
+        // });
 
         Schema::create('address', function (Blueprint $table) {
             $table->id();
@@ -352,7 +352,7 @@ class CreateMarvelTables extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('shipping_classes');
+        // Schema::dropIfExists('shipping_classes');
         Schema::dropIfExists('coupons');
         Schema::dropIfExists('product_variants');
         Schema::dropIfExists('types');
@@ -364,13 +364,13 @@ class CreateMarvelTables extends Migration
         Schema::dropIfExists('attributes');
         Schema::dropIfExists('attribute_values');
         Schema::dropIfExists('attribute_product');
-        Schema::dropIfExists('tax_classes');
+        // Schema::dropIfExists('tax_classes');
         Schema::dropIfExists('address');
         Schema::dropIfExists('settings');
         Schema::dropIfExists('user_profiles');
         Schema::dropIfExists('attachments');
-        Schema::dropIfExists('authors');
-        Schema::dropIfExists('manufacturers');
+        // Schema::dropIfExists('authors');
+        // Schema::dropIfExists('manufacturers');
         Schema::dropIfExists('banners');
         Schema::dropIfExists('sliders');
         Schema::dropIfExists('carts');

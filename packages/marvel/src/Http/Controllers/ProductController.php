@@ -14,6 +14,7 @@ use Marvel\Database\Models\Wishlist;
 use Marvel\Database\Models\Variation;
 use Marvel\Exceptions\MarvelException;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Marvel\Database\Models\Author;
 use Marvel\Database\Models\Category;
@@ -29,10 +30,12 @@ use Marvel\Database\Models\Tag;
 use Marvel\Exceptions\MarvelNotFoundException;
 use \OpenAI;
 use Marvel\Enums\Permission;
+use Marvel\Http\Requests\BulkDeleteProductsRequest;
 use Marvel\Http\Resources\GetSingleProductResource;
 use Marvel\Http\Resources\product\ProductCollection;
 use Marvel\Http\Resources\ProductResource;
 
+use const Dom\NOT_FOUND_ERR;
 
 /**
  * @OA\Tag(name="Products", description="Product catalog endpoints - browse, search, and manage products")
@@ -103,7 +106,7 @@ class ProductController extends CoreController
         $this->middleware("permission:" . Permission::VIEW_PRODUCTS, ["only" => ["index", "show"]]);
         $this->middleware("permission:" . Permission::CREATE_PRODUCT, ["only" => ["store"]]);
         $this->middleware("permission:" . Permission::UPDATE_PRODUCT, ["only" => ["update"]]);
-        $this->middleware("permission:" . Permission::DELETE_PRODUCT, ["only" => ["destroy"]]);
+        $this->middleware("permission:" . Permission::DELETE_PRODUCT, ["only" => ["destroy" , 'destroyAll', 'destroyBulk']]);
     }
 
 
@@ -117,11 +120,64 @@ class ProductController extends CoreController
     public function index(Request $request)
     {
         $limit = $request->limit ? $request->limit : 15;
-        $products = $this->fetchProducts($request)->with(['variations','categories','shops','flash_sales'])->paginate($limit)->withQueryString();
-        $data = new  ProductCollection($products);
+        $term = trim((string) $request->get('search', ''));
+        $sort = trim((string) $request->get('sort', ''));
+        $orderBy = trim((string) $request->get('orderBy', 'created_at'));
+        $orderDir = trim((string) $request->get('orderDir', 'desc'));
+
+        $products = $this->fetchProducts($request)->with(['variations', 'categories', 'flash_sales']);
+
+        if ($term !== '') {
+            $this->applyProductSearch($products, $term, app()->getLocale());
+        }
+
+        $sortable = ['created_at', 'updated_at', 'name', 'price', 'sold_quantity', 'sku', 'id'];
+        if ($sort !== '') {
+            $dir = strtolower($sort) === 'asc' ? 'asc' : 'desc';
+            $products = $products->orderBy('created_at', $dir);
+        } elseif (in_array($orderBy, $sortable)) {
+            $dir = strtolower($orderDir) === 'asc' ? 'asc' : 'desc';
+            if ($orderBy === 'name') {
+                $products = $products->orderBy('name->' . app()->getLocale(), $dir);
+            } else {
+                $products = $products->orderBy($orderBy, $dir);
+            }
+        } else {
+            $products = $products->orderBy('created_at', 'desc');
+        }
+
+        $products = $products->paginate($limit)->withQueryString();
+        $data = new ProductCollection($products);
         return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 200, true, $data);
     }
 
+    private function applyProductSearch($query, string $term, string $locale): void
+    {
+        $query->where(function (Builder $builder) use ($term, $locale) {
+            $this->applyTranslatableLike($builder, 'name', $term, $locale);
+
+            $builder->orWhere(function (Builder $sub) use ($term, $locale) {
+                $this->applyTranslatableLike($sub, 'description', $term, $locale);
+            });
+
+            $builder->orWhere('sku', 'like', "%{$term}%");
+
+            $builder->orWhereHas('variations', function (Builder $variantQuery) use ($term) {
+                $variantQuery->where('sku', 'like', "%{$term}%");
+            });
+        });
+    }
+
+    /**
+     * Apply a LIKE search on a translatable JSON field for the given locale.
+     */
+    private function applyTranslatableLike(Builder $query, string $field, string $term, string $locale): void
+    {
+        $query->where(function ($q) use ($field, $term, $locale) {
+            $q->where($field . '->' . $locale, 'like', "%$term%")
+                ->orWhere($field, 'like', "%$term%");
+        });
+    }
 
 
     /**
@@ -132,20 +188,38 @@ class ProductController extends CoreController
      */
     public function fetchProducts(Request $request)
     {
-        $unavailableProducts = [];
+        $products_query = $this->repository;
 
-
-        if (isset($request->date_range)) {
-            $dateRange = explode('//', $request->date_range);
-            $unavailableProducts = $this->repository->getUnavailableProducts($dateRange[0], $dateRange[1]);
+        if ($request->has('status') && $request->status !== null) {
+            $products_query = $products_query->where('status', '=', $request->status);
         }
-        if (in_array('variation_options.digital_files', explode(';', $request->with)) || in_array('digital_files', explode(';', $request->with))) {
-            throw new AuthorizationException(NOT_AUTHORIZED);
-        }
-        $products_query = $this->repository->whereNotIn('id', $unavailableProducts);
 
-        if ($request->flash_sale_builder) {
-            $products_query = $this->repository->processFlashSaleProducts($request, $products_query);
+        if ($request->has('category')) {
+            $categorySlug = trim((string) $request->category);
+            $products_query->whereHas('categories', function (Builder $q) use ($categorySlug) {
+                $q->where('slug', $categorySlug);
+            });
+        }
+
+        if ($request->has('banner')) {
+            $bannerSlug = trim((string) $request->banner);
+            $products_query->whereHas('banners', function (Builder $q) use ($bannerSlug) {
+                $q->where('slug', $bannerSlug);
+            });
+        }
+
+        if ($request->has('flash_sale')) {
+            $flashSaleSlug = trim((string) $request->flash_sale);
+            $products_query->whereHas('flash_sales', function (Builder $q) use ($flashSaleSlug) {
+                $q->where('slug', $flashSaleSlug);
+            });
+        }
+
+        if ($request->has('slider')) {
+            $sliderSlug = trim((string) $request->slider);
+            $products_query->whereHas('sliders', function (Builder $q) use ($sliderSlug) {
+                $q->where('slug', $sliderSlug);
+            });
         }
 
         return $products_query;
@@ -219,7 +293,7 @@ class ProductController extends CoreController
 
             return $product->load('variations', 'categories', 'flash_sales', 'banners', 'sliders', 'brands', 'reviews');
         } catch (Exception $e) {
-            throw new MarvelNotFoundException();
+            throw new MarvelNotFoundException(NOT_FOUND);
         }
     }
 
@@ -274,17 +348,12 @@ class ProductController extends CoreController
     }
 
 
-    /**
-     * destroyProduct
-     *
-     * @param  Request $request
-     * @return void
-     */
+
     public function destroyProduct(Request $request)
     {
         try {
             $product = $this->repository->findOrFail($request->id);
-            $product->delete();
+            $this->forceDeleteProduct($product);
             return $this->apiResponse(DELETE_PRODUCT_SUCCESSFULLY, 200, true);
         } catch (MarvelException $e) {
             throw new MarvelException($e->getMessage());
@@ -292,6 +361,59 @@ class ProductController extends CoreController
     }
 
 
+        public function destroyAll(Request $request)
+    {
+        try {
+            $count = Product::count();
+
+            Product::chunk(100, function ($products) {
+                foreach ($products as $product) {
+                    $this->deleteProduct($product);
+                }
+            });
+
+            return $this->apiResponse(PRODUCTS_DELETED_SUCCESSFULLY, 200, true, [
+                'deleted_count' => $count,
+            ]);
+        } catch (MarvelException $e) {
+            throw new MarvelException($e->getMessage());
+        }
+    }
+
+
+    /**
+     * destroyBulk
+     *
+     * Force delete specific products by IDs with their variants, relations, and media.
+     *
+     * @param  BulkDeleteProductsRequest $request
+     * @return JsonResponse
+     */
+    public function destroyBulk(BulkDeleteProductsRequest $request): JsonResponse
+    {
+        try {
+            $ids = $request->input('ids');
+
+            Product::whereIn('id', $ids)->chunk(100, function ($products) {
+                foreach ($products as $product) {
+                    $this->deleteProduct($product);
+                }
+            });
+
+            return $this->apiResponse(PRODUCTS_DELETED_SUCCESSFULLY, 200, true, [
+                'deleted_ids' => $ids,
+            ]);
+        } catch (MarvelException $e) {
+            throw new MarvelException($e->getMessage());
+        }
+    }
+
+
+    private function deleteProduct(Product $product): void
+    {
+
+        $product->delete();
+    }
 
     /**
      * relatedProducts
@@ -953,7 +1075,7 @@ class ProductController extends CoreController
         $user = $request->user();
         $language = $request->language ? $request->language : DEFAULT_LANGUAGE;
 
-        $products_query = $this->repository->with(['type', 'shop'])->where('language', $language)->where('quantity', '<', 10);
+        $products_query = $this->repository->with(['type', 'shop'])->where('language', $language)->where('stock_quantity', '<', 10);
 
         switch ($user) {
             case $user->hasPermissionTo(Permission::SUPER_ADMIN):
@@ -1015,7 +1137,7 @@ class ProductController extends CoreController
                 'is_fast_shipping_available' => ['required', 'boolean'],
             ]);
             $product->update($validated);
-            return $this->apiResponse(UPDATE_PRODUCT_SUCCESSFULLY, 200, true, ProductResource::make($product->load('variations', 'categories', 'flash_sales', 'shops')));
+            return $this->apiResponse(UPDATE_PRODUCT_SUCCESSFULLY, 200, true, ProductResource::make($product->load('variations', 'categories', 'flash_sales')));
         } catch (MarvelException $e) {
             throw new MarvelException(NOT_FOUND);
         }

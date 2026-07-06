@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\General\DashboardController;
 use Illuminate\Support\Facades\Broadcast;
 use Illuminate\Support\Facades\Route;
 use Marvel\Enums\Role;
 use Marvel\Http\Controllers\AbusiveReportController;
+use Marvel\Http\Controllers\ActivityLogController;
 use Marvel\Http\Controllers\AddressController;
 use Marvel\Http\Controllers\AiController;
 use Marvel\Http\Controllers\AnalyticsController;
@@ -30,10 +32,11 @@ use Marvel\Http\Controllers\FlashSaleController;
 use Marvel\Http\Controllers\FlashSaleVendorRequestController;
 use Marvel\Http\Controllers\ManufacturerController;
 use Marvel\Http\Controllers\MessageController;
-use Marvel\Http\Controllers\OrderController;
+use Marvel\Http\Controllers\Order\OrderController;
 use Marvel\Http\Controllers\PaymentIntentController;
 use Marvel\Http\Controllers\PaymentMethodController;
 use Marvel\Http\Controllers\ProductController;
+use Marvel\Http\Controllers\ProductImportController;
 use Marvel\Http\Controllers\PromotionController;
 use Marvel\Http\Controllers\QuestionController;
 use Marvel\Http\Controllers\RefundController;
@@ -65,6 +68,8 @@ use Marvel\Http\Controllers\ContentPageController;
 use Marvel\Http\Controllers\CountryController;
 use Marvel\Http\Controllers\FastShippingController;
 use Marvel\Http\Controllers\GovernorateController;
+use Marvel\Http\Controllers\NotificationController;
+use Marvel\Http\Controllers\ProductExportController;
 use Marvel\Http\Controllers\ShippingPriceController;
 
 // use Illuminate\Support\Facades\Auth;
@@ -127,6 +132,7 @@ Route::get("products/calculate-rental-price", [ProductController::class, 'calcul
  * Import/Export Routes - Rate Limited (uploads)
  * Protects against storage and processing abuse
  */
+Route::get('samples/product-import', [ProductImportController::class, 'downloadSample']);
 Route::middleware(['throttle:uploads'])->group(function () {
     Route::post('import-products', [ProductController::class, 'importProducts']);
     Route::post('import-variation-options', [ProductController::class, 'importVariationOptions']);
@@ -138,7 +144,7 @@ Route::get('export-variation-options/{shop_id}', [ProductController::class, 'exp
 Route::post('generate-description', [ProductController::class, 'generateDescription']);
 Route::get('export-attributes/{shop_id}', [AttributeController::class, 'exportAttributes']);
 Route::get('download_url/token/{token}', [DownloadController::class, 'downloadFile'])->name('download_url.token');
-Route::get('export-order/token/{token}', [OrderController::class, 'exportOrder'])->name('export_order.token');
+
 Route::post('subscribe-to-newsletter', [UserController::class, 'subscribeToNewsletter'])->name('subscribeToNewsletter');
 Route::get('download-invoice/token/{token}', [OrderController::class, 'downloadInvoice'])->name('download_invoice.token');
 
@@ -165,6 +171,7 @@ Route::get('near-by-shop/{lat}/{lng}', [ShopController::class, 'nearByShop']);
 
 Route::get('store-notices', [StoreNoticeController::class, 'index'])->name('store-notices.index');
 
+Route::get('products/export', [ProductExportController::class, 'export'])->name('admin.products.export');
 Route::apiResource('products', ProductController::class, [
     'only' => ['index', 'show'],
 ]);
@@ -251,15 +258,15 @@ Route::post('orders/checkout/verify', [CheckoutController::class, 'verify']);
  * Protects against order spam and inventory locking attacks
  */
 Route::middleware(['throttle:orders'])->group(function () {
-    Route::apiResource('orders', OrderController::class, [
-        'only' => ['store'],
-    ]);
+    // Route::apiResource('orders', OrderController::class, [
+    //     'only' => ['store'],
+    // ]);
 });
 
 // Order viewing is not rate limited - users need to check their order status
-Route::apiResource('orders', OrderController::class, [
-    'only' => ['show'],
-]);
+// Route::apiResource('orders', OrderController::class, [
+//     'only' => ['show'],
+// ]);
 
 Route::post('/email/verification-notification', [UserController::class, 'sendVerificationEmail'])
     ->middleware(['auth:sanctum', 'throttle:6,1'])
@@ -332,9 +339,9 @@ Route::group(
 Route::group(['middleware' => ['auth:sanctum', 'email.verified']], function () {
     Route::post('/update-email', [UserController::class, 'updateUserEmail']);
     // Route::get('me', [UserController::class, 'me']);
-    Route::apiResource('orders', OrderController::class, [
-        'only' => ['index'],
-    ]);
+    // Route::apiResource('orders', OrderController::class, [
+    //     'only' => ['index'],
+    // ]);
 // });
 
     /**
@@ -441,8 +448,10 @@ Route::get('popular-products', 'Marvel\Http\Controllers\ProductController@popula
 Route::group(
     ['middleware' => ['role:' . Role::SUPER_ADMIN, 'auth:sanctum', 'email.verified']],
     function () {
+        Route::post('products/bulk-delete', [ProductController::class, 'destroyBulk']);
+        Route::delete('products/all', [ProductController::class, 'destroyAll']);
         Route::apiResource('products', ProductController::class, [
-            'only' => ['store', 'update', 'destroy'],
+            'only' => ['store', 'show', 'update', 'destroy'],
         ]);
         Route::put('products/{id}/fast-shipping', [ProductController::class, 'toggleFastShipping']);
         Route::apiResource('resources', ResourceController::class, [
@@ -454,9 +463,26 @@ Route::group(
         Route::apiResource('attribute-values', AttributeValueController::class, [
             'only' => ['store', 'update', 'destroy'],
         ]);
-        Route::apiResource('orders', OrderController::class, [
-            'only' => ['update', 'destroy'],
-        ]);
+        /**
+         * GET /api/v1/orders
+         * List all orders (paginated). Super Admins see all orders. Store Owners/Staff
+         * see orders scoped to their shop. Customers see only their own orders.
+         * Supports filtering by shop_id and tracking_number.
+         * Middleware: role:super_admin | auth:sanctum | email.verified
+         */
+        Route::get('orders', [OrderController::class, 'index'])->name('orders.index');
+
+        /**
+         * GET /api/v1/orders/{id}
+         * Get a single order by ID or tracking number. Includes eager-loaded
+         * relations: products, shop, children.shop, wallet_point.
+         * Authorization is role-based: Super Admin (all), Owner/Staff (shop-scoped),
+         * Customer (own only).
+         * Middleware: role:super_admin | auth:sanctum | email.verified
+         */
+        Route::get('orders/{id}', [OrderController::class, 'show'])->name('orders.show');
+
+
         Route::post('banner/change-status', [BannerController::class, 'changeStatus']);
         Route::post('banner/reorder', [BannerController::class, 'reorder']);
         Route::patch('sliders/change-status', [SliderController::class, 'changeStatus']);
@@ -696,6 +722,18 @@ Route::group([
     Route::delete('admin-users/delete/{id}', [UserController::class, 'adminDeleteUsers']);
     Route::put('admin-users/restore/{id}', [UserController::class, 'adminRestoreUser']);
     Route::delete('admin-users/delete-forever/{id}', [UserController::class, 'adminDeleteUsersForever']);
+    Route::get('logs/activity', [ActivityLogController::class, 'index']);
+
+    // Notifications
+    Route::prefix('admin')->controller(NotificationController::class)->group(function () {
+        Route::get('notifications', 'index');
+        Route::get('notifications/unread', 'unread');
+        Route::patch('notifications/{id}/read', 'markAsRead');
+        Route::patch('notifications/read-all', 'markAllAsRead');
+        Route::delete('notifications/{id}', 'destroy');
+        Route::delete('notifications', 'destroyAll');
+    });
+
     Route::get('/customers/list', [UserController::class, 'customers']);
     Route::get('my-staffs', [UserController::class, 'myStaffs']);
     Route::get('all-staffs', [UserController::class, 'allStaffs']);
@@ -729,6 +767,31 @@ Route::group([
     Route::apiResource('ownership-transfer', OwnershipTransferController::class, [
         'only' => ['update', 'destroy'],
     ]);
+    Route::post('products/import', [ProductImportController::class, 'import'])->name('admin.products.import');
+    Route::post('products/import/{id}/cancel', [ProductImportController::class, 'cancel'])->name('admin.products.import.cancel');
+    Route::get('products/import/{id}', [ProductImportController::class, 'status'])->name('admin.products.import.status');
+    Route::get('products/import/{id}/download-errors', [ProductImportController::class, 'downloadErrors'])->name('admin.products.import.download-errors');
+
+    /**
+     * Dashboard API — platform-wide metrics
+     */
+    Route::middleware(['throttle:analytics'])->prefix('dashboard')->group(function () {
+        Route::get('overview', [DashboardController::class, 'overview']);
+        Route::get('revenue', [DashboardController::class, 'revenue']);
+        Route::get('order-stats', [DashboardController::class, 'orderStats']);
+        Route::get('recent-orders', [DashboardController::class, 'recentOrders']);
+        Route::get('top-products', [DashboardController::class, 'topProducts']);
+        Route::get('category-stats', [DashboardController::class, 'categoryStats']);
+        Route::get('low-stock', [DashboardController::class, 'lowStock']);
+        Route::get('sales', [DashboardController::class, 'salesAnalytics']);
+        Route::get('customers', [DashboardController::class, 'customerAnalytics']);
+        Route::get('products', [DashboardController::class, 'productAnalytics']);
+        Route::get('orders', [DashboardController::class, 'orderAnalytics']);
+        Route::get('categories', [DashboardController::class, 'categoryAnalytics']);
+        Route::get('coupons', [DashboardController::class, 'couponAnalytics']);
+        Route::get('cart', [DashboardController::class, 'cartAnalytics']);
+        Route::get('finance', [DashboardController::class, 'financeAnalytics']);
+    });
 });
 Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {
     Route::get('cart', [CartController::class, 'index']);

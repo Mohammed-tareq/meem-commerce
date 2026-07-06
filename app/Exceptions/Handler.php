@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Validation\ValidationException;
+use Marvel\Exceptions\MarvelException;
 use Illuminate\Support\Facades\Lang;
 use Spatie\Permission\Exceptions\GuardDoesNotMatch;
 use Spatie\Permission\Exceptions\PermissionAlreadyExists;
@@ -118,8 +119,13 @@ class Handler extends ExceptionHandler
         }
         // Handle Spatie permission exceptions
         elseif ($exception instanceof SpatieUnauthorizedException) {
-            $statusCode = 403;
-            $message = $this->messageForSpatieUnauthorized($exception);
+            if ($exception->getMessage() === 'User is not logged in.') {
+                $statusCode = 401;
+                $message = $this->messageForSpatieUnauthorized($exception);
+            } else {
+                $statusCode = 403;
+                $message = $this->messageForSpatieUnauthorized($exception);
+            }
         } elseif ($exception instanceof PermissionDoesNotExist) {
             $statusCode = 404;
             $message = $this->messageForPermissionDoesNotExist($exception);
@@ -158,8 +164,8 @@ class Handler extends ExceptionHandler
         // Handle ValidationException
         elseif ($exception instanceof ValidationException) {
             $statusCode = 422;
-            $message =  $exception->getMessage();
-            $errors = $exception->validator->errors()->all();
+            $message = $exception->getMessage();
+            $errors = $exception->validator->errors()->toArray();
         }
         // Handle HttpException (includes various HTTP status codes)
         elseif ($exception instanceof HttpException) {
@@ -174,16 +180,34 @@ class Handler extends ExceptionHandler
                 $message .= ' ' . $exception->getMessage();
             }
         }
+        // Handle MarvelException
+        elseif ($exception instanceof MarvelException) {
+            $exceptionMessage = $exception->getMessage();
+            if (str_contains($exceptionMessage, 'NOT_FOUND')) {
+                $statusCode = 404;
+            } elseif (str_contains($exceptionMessage, 'NOT_AUTHORIZED')) {
+                $statusCode = 403;
+            } else {
+                $statusCode = 500;
+            }
+            $message = $exceptionMessage;
+        }
         // Handle other exceptions
         else {
             $statusCode = 500;
             $message = config('app.debug') ? $exception->getMessage() : 'Internal Server Error';
         }
 
-        return response()->json([
+        $responseData = [
             'message' => $message,
             'status' => false,
-        ], $statusCode);
+        ];
+
+        if (!empty($errors)) {
+            $responseData['errors'] = $errors;
+        }
+
+        return response()->json($responseData, $statusCode);
     }
 
     private function translateNotice(string $key, array $replace = []): string

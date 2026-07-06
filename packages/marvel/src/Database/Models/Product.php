@@ -103,12 +103,12 @@ class Product extends Model implements HasMedia
         static::creating(function ($product) {
             // Only set SKU if not already provided
             if (empty($product->sku)) {
-                $product->sku = 'PRD-' . Str::uuid();
+                $lastId = static::max('id') + 1;
+
+                $product->sku = 'PRD-' . str_pad($lastId, 3, '0', STR_PAD_LEFT);
             }
         });
-       
     }
-
 
 
     public function isDiscountActive(): bool
@@ -283,7 +283,7 @@ class Product extends Model implements HasMedia
      */
     public function categories(): BelongsToMany
     {
-        return $this->belongsToMany(Category::class, 'category_product','product_id','category_id');
+        return $this->belongsToMany(Category::class, 'category_product', 'product_id', 'category_id');
     }
 
     /**
@@ -291,7 +291,7 @@ class Product extends Model implements HasMedia
      */
     public function brands(): BelongsToMany
     {
-        return $this->belongsToMany(Brand::class, 'brand_product','product_id','brand_id');
+        return $this->belongsToMany(Brand::class, 'brand_product', 'product_id', 'brand_id');
     }
 
     /**

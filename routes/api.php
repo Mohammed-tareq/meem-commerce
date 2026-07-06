@@ -1,5 +1,6 @@
 <?php
 
+
 use App\Http\Controllers\Api\General\BannerController;
 use App\Http\Controllers\Api\General\BrandController;
 use Illuminate\Support\Facades\Route;
@@ -23,7 +24,6 @@ Route::prefix('general')->middleware(['api', 'check-lang'])->group(function () {
 
     //========================= home=========================//
     Route::controller(HomeController::class)->group(function () {
-        // Route::get('home', 'index')->name('home');
         Route::get('categories-with-children', 'navData')->name('categories-with-children');
     });
 
@@ -179,3 +179,4 @@ Route::get('/test-mail', function () {
 
     return 'sent';
 });
+

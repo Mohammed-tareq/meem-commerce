@@ -10,7 +10,7 @@ class OneTimePasswordNotification extends SpatieNotification
     public function toMail(object $notifiable)
     {
         return (new MailMessage)
-            ->from(env('MAIL_FROM_ADDRESS', 'meemmarket@mohammedtareq.me'), config('app.name', 'ChawkBazar'))
+            ->from(env('MAIL_FROM_ADDRESS', 'default@default.com'), config('app.name', 'ChawkBazar'))
             ->subject($this->subject() ?? __('Your OTP Code'))
             ->markdown('emails.one-time-passwords', [
                 'oneTimePassword' => $this->oneTimePassword,

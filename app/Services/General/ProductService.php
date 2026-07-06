@@ -659,13 +659,19 @@ class ProductService
                 });
             });
 
+            $builder->orWhere('sku', 'like', "%{$term}%");
+
+            $builder->orWhereHas('variations', function (Builder $variantQuery) use ($term) {
+                $variantQuery->where('sku', 'like', "%{$term}%");
+            });
+
             $builder->orWhereHas('reviews', function (Builder $reviewQuery) use ($term) {
                 $reviewQuery->where('comment', 'like', '%' . $term . '%');
             });
 
-            $builder->orWhereHas('shops', function (Builder $shopQuery) use ($term, $locale) {
-                $this->applyTranslatableLike($shopQuery, 'name', $term, $locale);
-            });
+            // $builder->orWhereHas('shops', function (Builder $shopQuery) use ($term, $locale) {
+            //     $this->applyTranslatableLike($shopQuery, 'name', $term, $locale);
+            // });
 
             $builder->orWhereHas('categories', function (Builder $categoryQuery) use ($term, $locale) {
                 $this->applyTranslatableLike($categoryQuery, 'name', $term, $locale);

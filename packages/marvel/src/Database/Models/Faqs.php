@@ -26,12 +26,8 @@ class Faqs extends Model implements Sortable
     ];
 
     public $fillable = [
-        'user_id',
-        'shop_id',
         'faq_title',
         'faq_description',
-        'faq_type',
-        'issued_by',
         'status',
         'order',
     ];

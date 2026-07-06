@@ -19,6 +19,7 @@ class CreateBrandsTable extends Migration
             $table->string('slug');
             $table->text('details')->nullable();
             $table->boolean('status')->default(true);
+            $table->integer('order')->default(0);
             $table->timestamps();
             $table->softDeletes();
         });
