@@ -15,17 +15,16 @@ class CartItemResource extends Resource
             'product_id' => $this->product_id,
             'product_variant_id' => $this->product_variant_id,
             'quantity' => $this->quantity,
-            // 'reserved_quantity' => $this->reserved_quantity,
             'price' => $this->price,
             'total_price' => $this->total_price,
             'attributes' => $this?->attributes,
+            'shipping_method' => $this->shipping_method ?? 'SCHEDULED',
             'product' => [
                 'id' => $this->product->id,
                 'name' => $this->product->name,
                 'slug' => $this->product->slug,
                 'thumbnail' => $this->product->getFirstMediaUrl('products'),
             ],
-
         ];
     }
 }

@@ -8,8 +8,10 @@ use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\CouponUsage;
 use Marvel\Database\Models\Cart;
+use Marvel\Database\Models\CartItem;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
+use Marvel\Enums\ShippingMethod;
 use App\Events\OrderCreated;
 use Marvel\Events\OrderCancelled;
 use Marvel\Services\Pricing\ProductPricingService;
@@ -70,7 +72,7 @@ class OrderService
         try {
             DB::beginTransaction();
             $cart = $this->getCartUser();
-            if (!$cart || !$cart->items()->exists()) {
+            if (!$cart || $cart->items->isEmpty()) {
                 return null;
             }
             $checkoutTotals = $this->calculateCheckoutTotals(
@@ -95,7 +97,7 @@ class OrderService
         try {
             DB::beginTransaction();
             $cart = $this->getCartUser();
-            if (!$cart || !$cart->items()->exists()) {
+            if (!$cart || $cart->items->isEmpty()) {
                 return null;
             }
             $checkoutTotals = $this->getCheckoutTotalsFromCart($cart);
@@ -104,7 +106,6 @@ class OrderService
                 DB::rollBack();
                 return null;
             }
-            $cart->load(['items.product', 'items.productVariant']);
             if (!$this->createOrderItems($order, $cart)) {
                 DB::rollBack();
                 return null;
@@ -234,7 +235,7 @@ class OrderService
         return Cart::query()
             ->where('user_id', auth()->id())
             ->where('status', 'active')
-            ->with(['items.product', 'items.productVariant'])
+            ->with(['items' => fn($q) => $q->where('shipping_method', ShippingMethod::SCHEDULED), 'items.product', 'items.productVariant'])
             ->first();
     }
 

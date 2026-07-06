@@ -16,9 +16,9 @@ class CartInventoryService
 {
     private const CART_TTL_DAYS = 3;
 
-    public function reserveItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, string $mode = 'add', array $attributes = []): CartItem
+    public function reserveItem(Cart $cart, Product $product, ?ProductVariant $variant, int $quantity, string $mode = 'add', array $attributes = [], string $shippingMethod = 'SCHEDULED'): CartItem
     {
-        return DB::transaction(function () use ($cart, $product, $variant, $quantity, $mode, $attributes) {
+        return DB::transaction(function () use ($cart, $product, $variant, $quantity, $mode, $attributes, $shippingMethod) {
             $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
             $item = $this->findCartItemForLock($cart, $product->id, $variant?->id);
             $desiredQuantity = $mode === 'set'
@@ -53,6 +53,7 @@ class CartInventoryService
                 'price' => $price,
                 'total_price' => $price * $desiredQuantity,
                 'attributes' => $variant ? $this->getVariantAttributes($variant) : ($attributes ?: null),
+                'shipping_method' => $shippingMethod,
             ];
 
             if ($item) {
@@ -213,6 +214,44 @@ class CartInventoryService
                 'reserved_at' => null,
                 'total_price' => 0,
             ]);
+
+            return true;
+        });
+    }
+
+    public function finalizeItemsByShippingMethod(Cart $cart, string $shippingMethod): bool
+    {
+        return DB::transaction(function () use ($cart, $shippingMethod) {
+            $cart = Cart::whereKey($cart->id)->lockForUpdate()->firstOrFail();
+
+            $items = CartItem::where('cart_id', $cart->id)
+                ->where('shipping_method', $shippingMethod)
+                ->lockForUpdate()
+                ->get();
+
+            foreach ($items as $item) {
+                if ($item->reserved_quantity > 0) {
+                    $stock = $this->lockInventoryRowByItem($item);
+                    $this->finalizeStock($stock, (int) $item->reserved_quantity);
+                }
+
+                $item->delete();
+            }
+
+            $remainingItems = CartItem::where('cart_id', $cart->id)->count();
+
+            if ($remainingItems === 0) {
+                $cart->update([
+                    'status' => 'checked_out',
+                    'expires_at' => null,
+                    'reserved_at' => null,
+                    'total_price' => 0,
+                ]);
+            } else {
+                $cart->update([
+                    'total_price' => CartItem::where('cart_id', $cart->id)->sum('total_price'),
+                ]);
+            }
 
             return true;
         });

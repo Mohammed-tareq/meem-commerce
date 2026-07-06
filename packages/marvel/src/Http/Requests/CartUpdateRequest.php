@@ -21,6 +21,7 @@ class CartUpdateRequest extends FormRequest
             'item.quantity' => ['required_with:item', 'integer', 'min:1'],
             'item.product_variant_id' => ['sometimes', 'nullable', 'integer', 'exists:product_variants,id'],
             'item.attributes' => ['sometimes', 'array'],
+            'item.shipping_method' => ['sometimes', 'string', 'in:SCHEDULED,FAST'],
         ];
     }
 
