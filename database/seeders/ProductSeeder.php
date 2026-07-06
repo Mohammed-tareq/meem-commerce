@@ -357,6 +357,7 @@ class ProductSeeder extends Seeder
                     'end_date' => $this->maybeDate(30),
                     'price_after_discount' => null,
                     'price_after_flash_sale' => null,
+                    'is_fast_shipping_available' => random_int(0, 1) == 1 ? true : false,
                 ]);
 
                 // images
