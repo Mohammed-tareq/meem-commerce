@@ -265,7 +265,7 @@ class CreateMarvelTables extends Migration
             $table->json('attributes')->nullable();
             $table->integer('reserved_quantity')->default(0);
             $table->decimal('discount_amount', 10, 2)->default(0);
-            $table->string('shipping_method', 20)->default('SCHEDULED');
+            $table->string('shipping_method', 20)->default('scheduled');
             $table->timestamps();
         });
 

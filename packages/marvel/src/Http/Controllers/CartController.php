@@ -59,7 +59,7 @@ class CartController extends CoreController
     {
         try {
             $cart = $this->repository->storeCart($request);
-            return $this->apiResponse(FETCH_DATA_SUCCESSFULLY, 201, true, CartResource::make($cart));
+            return $this->apiResponse(CREATE_CART_SUCCESSFULLY, 201, true, CartResource::make($cart));
         } catch (\Exception $e) {
             return $this->apiResponse($e->getMessage(), 400, false);
         }
@@ -145,6 +145,7 @@ class CartController extends CoreController
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.product_variant_id' => 'nullable|exists:product_variants,id',
+            'items.*.shipping_method' => 'required|string|in:scheduled,fast',
         ]);
         
         foreach ($request->items as $item) {

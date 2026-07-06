@@ -18,7 +18,7 @@ class CartItemResource extends Resource
             'price' => $this->price,
             'total_price' => $this->total_price,
             'attributes' => $this?->attributes,
-            'shipping_method' => $this->shipping_method ?? 'SCHEDULED',
+            'shipping_method' => $this->shipping_method,
             'product' => [
                 'id' => $this->product->id,
                 'name' => $this->product->name,

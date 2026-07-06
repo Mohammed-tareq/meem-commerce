@@ -96,7 +96,7 @@ class CartRepository extends BaseRepository
         $quantity = (int) ($item['quantity'] ?? 0);
         $variantId = $item['product_variant_id'] ?? null;
         $attributes = $item['attributes'] ?? [];
-        $shippingMethod = $item['shipping_method'] ?? 'SCHEDULED';
+        $shippingMethod = $item['shipping_method'] ?? 'scheduled';
 
         if (!$productId || $quantity < 1) {
             return false;
@@ -104,7 +104,7 @@ class CartRepository extends BaseRepository
 
         $product = Product::findOrFail($productId);
 
-        if ($shippingMethod === 'FAST' && !$product->is_fast_shipping_available) {
+        if ($shippingMethod === 'fast' && !$product->is_fast_shipping_available) {
             throw new Exception(FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE);
         }
 

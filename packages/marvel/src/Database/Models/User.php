@@ -334,6 +334,11 @@ class User extends Authenticatable implements MustVerifyEmail, HasMedia
         return method_exists($result, 'isOk') ? $result->isOk() : false;
     }
 
+    public function receivesBroadcastNotificationsOn(): string
+    {
+        return 'users.' . $this->id;
+    }
+
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('user-image')->useDisk('users');

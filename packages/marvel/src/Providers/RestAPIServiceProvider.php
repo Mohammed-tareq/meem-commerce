@@ -19,6 +19,11 @@ class RestApiServiceProvider extends ServiceProvider
         $this->loadRoutes();
     }
 
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__ . '/../../config/shop.php', 'shop');
+    }
+
     public function loadRoutes(): void
     {
         Route::prefix('api/v1')

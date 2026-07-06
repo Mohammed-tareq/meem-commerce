@@ -11,8 +11,8 @@ class CartResource extends Resource
         $items = $this->whenLoaded('items');
 
         if ($items) {
-            $normalItems = $items->where('shipping_method', 'SCHEDULED')->values();
-            $fastItems = $items->where('shipping_method', 'FAST')->values();
+            $normalItems = $items->where('shipping_method', 'scheduled')->values();
+            $fastItems = $items->where('shipping_method', 'fast')->values();
         } else {
             $normalItems = collect();
             $fastItems = collect();
