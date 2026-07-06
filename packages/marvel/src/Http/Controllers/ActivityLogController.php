@@ -25,10 +25,7 @@ class ActivityLogController extends CoreController
             $query->where('event', $request->event);
         }
 
-        if ($request->filled('subject_type')) {
-            $query->where('subject_type', $request->subject_type);
-        }
-
+       
         if ($request->filled('causer_id')) {
             $query->where('causer_id', $request->causer_id);
         }

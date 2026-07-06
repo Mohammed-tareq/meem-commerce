@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\AttributeProduct;
 use Marvel\Database\Models\Availability;
@@ -103,6 +104,7 @@ class ProductRepository extends BaseRepository
 
             $this->syncRelation($product, $request, $data);
             DB::commit();
+            Cache::forget('dashboard_product_analytics');
             return $product->load('variations', 'categories', 'brands', 'banners', 'sliders', 'flash_sales');
         } catch (Exception $e) {
             DB::rollBack();
