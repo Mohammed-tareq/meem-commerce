@@ -24,7 +24,7 @@ class ProductMiniResource extends JsonResource
             'price' => $this->roundMoney($this->price),
             'has_variants' => $this->product_type !== 'simple' ? true : false,
             'current_price' => $this->roundMoney($this->getRawOrComputedValue('current_price')),
-            'is_fast_shipping_available' => (Bool_)$this->is_fast_shipping_available,
+            'is_fast_shipping_available' => (bool) $this->is_fast_shipping_available,
             'price_after_discount' => $this->roundMoney($this->getRawOrComputedValue('price_after_discount')),
             'price_after_flash_sale' => $this->roundMoney($this->getRawOrComputedValue('price_after_flash_sale')),
             'has_discount' => $this->has_discount,
