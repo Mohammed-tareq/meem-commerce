@@ -24,15 +24,38 @@ Route::get('/test-pusher', function () {
         return response()->json(['error' => 'No admin user found'], 404);
     }
 
-    broadcast(new \App\Events\AdminLoggedIn($user, request()->ip(), request()->userAgent()));
+    try {
+        broadcast(new \App\Events\AdminLoggedIn($user, request()->ip(), request()->userAgent()));
+        $result = 'Broadcast dispatched';
+    } catch (\Exception $e) {
+        $result = 'Broadcast ERROR: ' . $e->getMessage();
+    }
+
+    $pusher = new \Pusher\Pusher(
+        config('broadcasting.connections.pusher.key'),
+        config('broadcasting.connections.pusher.secret'),
+        config('broadcasting.connections.pusher.app_id'),
+        config('broadcasting.connections.pusher.options')
+    );
+
+    try {
+        $directResult = $pusher->trigger('private-admin.notifications', 'admin.logged.in', [
+            'name' => $user->name,
+            'email' => $user->email,
+        ]);
+    } catch (\Exception $e) {
+        $directResult = 'Direct ERROR: ' . $e->getMessage();
+    }
 
     return response()->json([
         'success' => true,
-        'message' => 'Pusher test event broadcast to ' . $user->email,
-        'event' => 'AdminLoggedIn',
+        'broadcast_result' => $result,
+        'direct_pusher_result' => $directResult,
+        'event' => 'admin.logged.in',
         'channel' => 'private-admin.notifications',
-        'channel_type' => 'PrivateChannel',
-        'notification_channel' => 'private-users.' . $user->id,
+        'auth_endpoint_for_frontend' => url('/api/v1/broadcasting/auth'),
+        'pusher_key' => config('broadcasting.connections.pusher.key'),
+        'pusher_cluster' => config('broadcasting.connections.pusher.options.cluster'),
     ]);
 });
 
