@@ -33,7 +33,7 @@ class ProductResource extends JsonResource
             'start_date'             => $this->start_date,
             'end_date'               => $this->end_date,
             'sku'                    => $this->sku,
-            'quantity'               => (int) $this->quantity,
+            'quantity'               => (int) $this->stock_quantity,
             'sold_quantity'          => (int) ($this->sold_quantity ?? 0),
             'in_stock'               => $this->in_stock,
             'status'                 => (bool)$this->status,
