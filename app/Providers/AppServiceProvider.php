@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Contexts\ChannelContext;
+use App\Models\Scopes\FastShippingScope;
 use App\Observers\BrandObserver;
 use App\Observers\CategoryObserver;
 use App\Observers\CouponObserver;
@@ -32,7 +34,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->scoped(ChannelContext::class, function () {
+            return new ChannelContext();
+        });
     }
 
     /**
@@ -63,5 +67,7 @@ class AppServiceProvider extends ServiceProvider
         Promotion::observe(PromotionObserver::class);
         Role::observe(RoleObserver::class);
         User::observe(UserObserver::class);
+
+        Product::addGlobalScope(new FastShippingScope());
     }
 }

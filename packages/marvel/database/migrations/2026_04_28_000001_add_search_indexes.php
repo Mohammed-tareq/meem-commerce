@@ -14,6 +14,7 @@ class AddSearchIndexes extends Migration
             $table->index('name');
             $table->index('slug');
             $table->index('sku');
+            $table->index('is_fast_shipping_available');
         });
         Schema::table('categories', function (Blueprint $table) {
             $table->index('name');
@@ -59,6 +60,7 @@ class AddSearchIndexes extends Migration
             $table->dropIndex(['name']);
             $table->dropIndex(['slug']);
             $table->dropIndex(['sku']);
+            $table->dropIndex(['is_fast_shipping_available']);
         });
         Schema::table('product_variants', function (Blueprint $table) {
             $table->dropIndex(['product_id']);

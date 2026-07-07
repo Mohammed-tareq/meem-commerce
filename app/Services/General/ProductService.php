@@ -2,6 +2,7 @@
 
 namespace App\Services\General;
 
+use App\Contexts\ChannelContext;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
@@ -33,6 +34,7 @@ class ProductService
             ->withAvg(['reviews' => fn(Builder $builder) => $builder->approved()], 'rating')
             ->withCount(['reviews' => fn(Builder $builder) => $builder->approved()]);
 
+        $this->applyChannelHomeFilter($query);
         $this->applyProductFilters($query, $request);
         $this->applyIdsFilter($query, $request, 'productsId');
         $this->applyRelationIdsFilters($query, $request);
@@ -67,6 +69,7 @@ class ProductService
             ->withAvg(['reviews' => fn(Builder $b) => $b->approved()], 'rating')
             ->withCount(['reviews' => fn(Builder $b) => $b->approved()]);
 
+        $this->applyChannelHomeFilter($query);
         $this->applyProductFilters($query, $request);
         $this->applyIdsFilter($query, $request, 'productsId');
         $this->applyRelationIdsFilters($query, $request);
@@ -518,6 +521,23 @@ class ProductService
             ->where('id', '!=', $product->id)
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * When the current channel is HOME, exclude fast-shipping products
+     * so only regular products appear in the general listing.
+     */
+    private function applyChannelHomeFilter(Builder $query): void
+    {
+        if (!config('channel.enabled', true)) {
+            return;
+        }
+
+        $context = app(ChannelContext::class);
+
+        if ($context->isHome()) {
+            $query->where('is_fast_shipping_available', false);
+        }
     }
 
     /**
