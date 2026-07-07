@@ -112,13 +112,18 @@ class OrderService
             }
             $this->promotionService->incrementUsage($checkoutTotals['promotion']['id'] ?? null);
             DB::commit();
-            OrderCreated::dispatch($order);
+            try {
+                OrderCreated::dispatch($order);
+            } catch (\Throwable $e) {
+                report($e);
+            }
             return $order;
         } catch (\InvalidArgumentException $e) {
             DB::rollBack();
             throw $e;
         } catch (\Exception $e) {
             DB::rollBack();
+            report($e);
             return null;
         }
     }
@@ -273,7 +278,7 @@ class OrderService
         }), 2);
 
         $promotionDiscount = round((float) $items->sum(fn($item) => (float) ($item->discount_amount ?? 0)), 2);
-        $finalTotal = round((float) ($cart->total_price ?? 0), 2);
+        $finalTotal = round((float) $items->sum('total_price'), 2);
 
         $promotionItem = $items->first(fn($item) => !is_null($item->promotion_id));
         $promotionData = null;
