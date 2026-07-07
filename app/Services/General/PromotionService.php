@@ -54,7 +54,7 @@ class PromotionService
     public function applySelectedPromotion(Cart $cart, ?int $promotionId, ?int $selectedGiftProductId = null): array
     {
         $this->removeGiftItems($cart);
-        $cart->load(['items.product', 'items.productVariant']);
+        $cart->items->load(['product', 'productVariant']);
 
         $subtotal = $this->subtotal($cart);
         $subtotalCents = (int) round((float) $subtotal * 100);
@@ -96,22 +96,29 @@ class PromotionService
             if ($amountCents > 0) {
                 $discountOutcome = new DiscountOutcome($amountCents, $evaluation->matchedSubtotalCents);
                 $discountDetails = $this->applicator->applyOutcome($cart, $promotion, $discountOutcome);
+                $itemIds = $cart->items->pluck('id');
                 $cart->refresh();
-                $cart->load(['items.product', 'items.productVariant']);
+                $cart->load(['items' => fn($q) => $q->whereIn('id', $itemIds), 'items.product', 'items.productVariant']);
             }
 
             if (!empty($result->giftItems)) {
                 $selectedGiftItem = $this->resolveSelectedGiftItem($result->giftItems, $selectedGiftProductId);
                 $giftOutcome = new GiftOutcome([$selectedGiftItem]);
                 $giftDetails = $this->applicator->applyOutcome($cart, $promotion, $giftOutcome);
+                $itemIds = $cart->items->pluck('id');
                 $cart->refresh();
-                $cart->load(['items.product', 'items.productVariant']);
+                $cart->load(['items' => fn($q) => $q->whereIn('id', $itemIds), 'items.product', 'items.productVariant']);
             }
         }
         return [
             'subtotal' => round((float) $subtotal, 2),
             'discount' => round((float) ($discountDetails['discount'] ?? 0), 2),
-            'final_total' => round((float) $cart->total_price, 2),
+            'final_total' => round(
+                (float) $cart->items
+                    ->reject(fn($item) => (bool) ($item->is_gift ?? false))
+                    ->sum('total_price'),
+                2
+            ),
             'promotion' => $result ? [
                 'id' => $result->promotion->id,
                 'type' => $result->promotion->type_amount,
