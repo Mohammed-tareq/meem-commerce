@@ -2,7 +2,7 @@
 
 > **Audience**: Frontend Developers  
 > **Purpose**: Integrate the Fast Shipping feature into your application  
-> **Version**: 1.0.0
+> **Version**: 1.1.0
 
 ---
 
@@ -47,11 +47,11 @@ Not all products support fast delivery. Large furniture, custom items, or out-of
 
 ### What Changes for the User
 
-| Aspect | Before (Home) | After (Fast Shipping) |
-|---|---|---|
-| Product catalog | All active products | Only fast-shipping-eligible products |
-| Search results | Full catalog matches | Fast-shipping-only matches |
-| Product detail page | Full product info + standard shipping | ETA badge and fast checkout button |
+| Aspect | Home Channel | Fast Shipping Channel |
+|---|---|---|---|
+| Product catalog | Standard-shipping products only (fast-shipping excluded) | Only fast-shipping-eligible products |
+| Search results | Standard-product matches only | Fast-shipping-only matches |
+| Product detail page | Standard product info; 404 for fast-shipping products | ETA badge and fast checkout button |
 | Checkout | Standard shipping options | Flat fee + delivery ETA |
 | Order tracking | Standard status | Real-time ETA + fast shipping status |
 
@@ -68,22 +68,23 @@ X-Channel: fast-shipping
 ### Accepted Values
 
 | Value | Effect |
-|---|---|
-| `home` | Default. Returns all products with standard shipping. |
+|---|---|---|
+| `home` | Default. Returns only standard-shipping products (excludes fast-shipping). |
 | `fast-shipping` | Filters all responses to fast-shipping-eligible data only. |
 
 ### What Happens If the Header Is Omitted
 
-The API defaults to `home` mode. All products are returned normally. No fast-shipping filtering occurs. Your application will behave as if Fast Shipping does not exist — this is safe but means the feature is invisible to users.
+The API defaults to `home` mode. Only standard-shipping products are returned. Your application will behave as if Fast Shipping does not exist — fast-shipping products are hidden from view.
 
 ### Difference Between Channels
 
 | Aspect | `home` | `fast-shipping` |
-|---|---|---|
-| Products | All active products | Only products with `is_fast_shipping_available = true` |
-| Categories | All categories with full product counts | Same categories, counts reflect only fast-shipping products |
-| Flash Sales | All active flash sales | Flash sales containing at least one fast-shipping product |
-| Search | Full catalog search | Fast-shipping-only results |
+|---|---|---|---|
+| Products | Only products with `is_fast_shipping_available = false` | Only products with `is_fast_shipping_available = true` |
+| Categories | Same categories, counts reflect only standard products | Same categories, counts reflect only fast-shipping products |
+| Flash Sales | Flash sales with standard products only | Flash sales containing at least one fast-shipping product |
+| Search | Standard-product matches only | Fast-shipping-only results |
+| Product Detail | Returns 404 for fast-shipping products | Returns 404 for non-fast-shipping products |
 | Checkout | Standard checkout flow | Fast checkout with flat fee and ETA |
 | Orders | All orders regardless of method | Only fast-shipping orders |
 
@@ -312,6 +313,7 @@ X-Channel: fast-shipping
 
 **Notes:**
 - When `X-Channel: fast-shipping`, only products with `is_fast_shipping_available: true` are returned
+- When `X-Channel: home`, only products with `is_fast_shipping_available: false` are returned
 - The `is_fast_shipping_available` field is for UI display (badges, labels) — do NOT use it for client-side filtering
 - Products without discounts have `has_discount: false` and omit discount fields
 
@@ -377,7 +379,18 @@ X-Channel: fast-shipping
 }
 ```
 
-**Error Response (Non-Fast-Shipping Product Under Fast-Shipping Channel):**
+**Error Responses:**
+
+**Non-Fast-Shipping Product Under Fast-Shipping Channel:**
+```json
+{
+  "message": "Product not found.",
+  "success": false
+}
+```
+Status: **404 Not Found**
+
+**Fast-Shipping Product Under Home Channel:**
 ```json
 {
   "message": "Product not found.",
@@ -387,10 +400,11 @@ X-Channel: fast-shipping
 Status: **404 Not Found**
 
 **Notes:**
-- If a product is not fast-shipping-eligible and the channel is `fast-shipping`, the API returns 404
-- Handle this gracefully — show a message and suggest switching to standard shipping
-- When the channel is `home`, all active products are returned regardless of fast-shipping eligibility
-- `related_products` may contain non-fast-shipping products even in fast-shipping mode (they are informational)
+- If a product does not match the current channel, the API returns 404
+- `home` channel: fast-shipping products return 404
+- `fast-shipping` channel: non-fast-shipping products return 404
+- Handle 404 gracefully — show a message and suggest switching channels
+- `related_products` may contain products from either shipping type (they are informational)
 
 ---
 
@@ -1053,35 +1067,18 @@ GET /api/general/products
 X-Channel: home
 ```
 
-Returns **all** active products. Each product includes `is_fast_shipping_available` for display purposes:
+Returns **only** standard-shipping products (`is_fast_shipping_available: false`). Fast-shipping products are automatically excluded:
 
 ```json
 {
   "data": [
-    { "id": 1, "name": "Wireless Headphones", "is_fast_shipping_available": true },
-    { "id": 2, "name": "Large Desk", "is_fast_shipping_available": false },
-    { "id": 3, "name": "Bluetooth Speaker", "is_fast_shipping_available": true }
+    { "id": 2, "name": "Large Desk", "is_fast_shipping_available": false }
   ],
-  "meta": { "total": 3 }
+  "meta": { "total": 1 }
 }
 ```
 
-**UI recommendation:** Show a "Fast Shipping" badge on products where `is_fast_shipping_available` is `true`:
-
-```jsx
-function ProductCard({ product }) {
-  return (
-    <div className="product-card">
-      <img src={product.image.thumbnail} alt={product.name} />
-      <h3>{product.name}</h3>
-      <p>${product.current_price}</p>
-      {product.is_fast_shipping_available && (
-        <span className="badge badge--fast">Fast Shipping</span>
-      )}
-    </div>
-  );
-}
-```
+**UI note:** Since fast-shipping products are excluded from the home channel, the `is_fast_shipping_available` field will always be `false` in this mode. Do not rely on this field to detect fast-shipping eligibility — switch to the `fast-shipping` channel instead.
 
 ### Under Fast Shipping Channel
 
@@ -1104,19 +1101,19 @@ Returns **only** products where `is_fast_shipping_available` is `true`. The API 
 
 ### What the Frontend Should NOT Do
 
-**BAD** â€” Do NOT filter the array returned by the API:
+**BAD** — Do NOT filter the array returned by the API:
 ```javascript
-// WRONG â€” the backend already filtered
+// WRONG — the backend already filtered
 const filtered = response.data.filter(p => p.is_fast_shipping_available);
 ```
 
-**BAD** â€” Do NOT hide products based on `is_fast_shipping_available`:
+**BAD** — Do NOT hide products based on `is_fast_shipping_available`:
 ```javascript
-// WRONG â€” redundant, backend handles this
+// WRONG — redundant, backend handles this
 if (!product.is_fast_shipping_available) return null;
 ```
 
-**GOOD** â€” Just change the header and re-fetch:
+**GOOD** — Just change the header and re-fetch:
 ```javascript
 // CORRECT
 setChannel('fast-shipping');
@@ -1132,6 +1129,8 @@ const { data } = await client.get('/products');
 
 When the product has `is_fast_shipping_available: true`:
 
+- This product is visible **only** in the `fast-shipping` channel
+- In `home` channel, the API returns **404** — the product is not accessible
 - Show a green "Fast Shipping" badge
 - Show estimated delivery: "Delivered in ~90 minutes"
 - Show the fast shipping fee: "+$5.99 shipping fee"
@@ -1151,7 +1150,7 @@ function ProductDetail({ product, channel }) {
         </div>
       )}
 
-      {channel === 'fast-shipping' && product.is_fast_shipping_available ? (
+      {channel === 'fast-shipping' ? (
         <button className="btn btn--fast">Fast Checkout</button>
       ) : (
         <button className="btn btn--standard">Add to Cart</button>
@@ -1169,6 +1168,7 @@ When the product has `is_fast_shipping_available: false`:
 - Hide the fast checkout button
 - Show standard delivery estimates
 - If the user is in `fast-shipping` channel, the API returns **404** (product is not visible at all)
+- If the user is in `home` channel, the product is returned normally
 
 ### Handling 404 Responses
 
@@ -1200,15 +1200,17 @@ export default function ProductPage() {
   }, [slug, channel]);
 
   if (notFound) {
+    const isFastChannel = channel === 'fast-shipping';
     return (
       <div className="product-not-found">
-        <h2>Product Not Available for Fast Shipping</h2>
+        <h2>Product Not Available in This Channel</h2>
         <p>
-          This product is not available for Fast Shipping.
-          Switch to Standard Shipping to view it.
+          {isFastChannel
+            ? 'This product is not available for Fast Shipping. Switch to Standard Shipping to view it.'
+            : 'This is a Fast Shipping product. Switch to Fast Shipping to view it.'}
         </p>
-        <button onClick={() => setChannel('home')}>
-          Switch to Standard Shipping
+        <button onClick={() => setChannel(isFastChannel ? 'home' : 'fast-shipping')}>
+          Switch to {isFastChannel ? 'Standard Shipping' : 'Fast Shipping'}
         </button>
       </div>
     );
@@ -1289,18 +1291,18 @@ When the user switches to Fast Shipping, every section on the home page automati
 ### Section-by-Section Behavior
 
 | Home Section | Under `home` | Under `fast-shipping` |
-|---|---|---|
-| **Sliders** | All active sliders | All sliders (products within may be empty) |
-| **Flash Sales** | All active flash sales | Only flash sales with fast-shipping products |
-| **Best Categories** | Top categories | Same categories, counts reflect fast shipping |
-| **Discount Products Ending Today** | All discounted products | Only fast-shipping discounted products |
-| **Banners** | All active banners | Banners with empty product arrays if no fast products |
-| **Brands** | All brands | Unchanged (brands have no product data) |
+|---|---|---|---|
+| **Sliders** | All active sliders (products within filtered to standard only) | All active sliders (products within filtered to fast only) |
+| **Flash Sales** | Flash sales with standard products only | Only flash sales with fast-shipping products |
+| **Best Categories** | Top categories (counts reflect standard products) | Same categories, counts reflect fast shipping |
+| **Discount Products Ending Today** | Only standard discounted products | Only fast-shipping discounted products |
+| **Banners** | All active banners (products within filtered to standard only) | Banners with empty product arrays if no fast products |
+| **Brands** | All brands (products within filtered to standard only) | Unchanged |
 | **Coupons** | All coupons | Unchanged |
-| **Flash Sale Products** | All flash sale products | Only fast-shipping flash sale products |
-| **Weekly Products** | Featured weekly products | Only fast-shipping weekly products |
-| **All Discount Products** | All discount products | Only fast-shipping discount products |
-| **New Arrivals** | All new arrivals | Only fast-shipping new arrivals |
+| **Flash Sale Products** | Only standard flash sale products | Only fast-shipping flash sale products |
+| **Weekly Products** | Only standard weekly products | Only fast-shipping weekly products |
+| **All Discount Products** | Only standard discount products | Only fast-shipping discount products |
+| **New Arrivals** | Only standard new arrivals | Only fast-shipping new arrivals |
 
 ### Implementation
 
@@ -2277,7 +2279,7 @@ The status endpoint returns `{ enabled: false }` or `{ available: false }`. Hide
 
 ### What if the header is forgotten?
 
-The backend defaults to `home`. Your app behaves normally with all products. This is safe but may confuse users if they expect fast-shipping mode. Always attach the header via an Axios interceptor or a fetch wrapper.
+The backend defaults to `home`. Your app behaves in standard-shipping mode with fast-shipping products hidden. Always attach the header via an Axios interceptor or a fetch wrapper.
 
 ### Does the backend remember my channel?
 
@@ -2316,7 +2318,9 @@ Each product response includes `is_fast_shipping_available`. Use it to show a ba
 
 ### Can I show fast-shipping products while in home mode?
 
-**Yes.** The product response includes `is_fast_shipping_available` even in `home` mode. You can show a "Fast Shipping" badge on eligible products, or a "Deliver in 90 min" CTA, while still showing all products. The full fast-shipping experience (filtered catalog, special checkout) only activates when you send `X-Channel: fast-shipping`.
+**No.** In `home` mode, the API only returns standard-shipping products (`is_fast_shipping_available: false`). Fast-shipping products are completely excluded from every endpoint including products, categories, banners, sliders, flash sales, brands, and home page sections. To see fast-shipping products, switch to the `fast-shipping` channel by sending `X-Channel: fast-shipping`.
+
+**To show a "Switch to Fast Shipping" CTA in home mode:** Use the fast-shipping status endpoint to check availability, and if enabled, show a banner or button that calls `setChannel('fast-shipping')`.
 
 ### What if the status endpoint fails?
 
@@ -2351,6 +2355,6 @@ Fast Shipping is a client-side feature toggled by the user. It does not affect s
 
 ---
 
-> **Document Version**: 1.0.0  
+> **Document Version**: 1.1.0  
 > **Last Updated**: 2026-07-07  
 > **Questions?** Contact the API team.
