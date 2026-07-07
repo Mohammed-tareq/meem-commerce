@@ -763,12 +763,20 @@ class FastShippingControllerTest extends TestCase
     }
 
     /** @test */
-    public function product_detail_works_in_home_channel_regardless_of_fast_shipping()
+    public function product_detail_returns_normal_product_in_home_channel()
     {
         $response = $this->getJson(self::PREFIX . '/general/products/normal-product');
 
         $response->assertOk();
         $this->assertEquals('Normal Product', $response->json('data.name'));
+    }
+
+    /** @test */
+    public function product_detail_returns_404_for_fast_product_in_home_channel()
+    {
+        $response = $this->getJson(self::PREFIX . '/general/products/fast-product');
+
+        $response->assertStatus(404);
     }
 
     /** @test */

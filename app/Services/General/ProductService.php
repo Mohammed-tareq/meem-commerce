@@ -110,6 +110,7 @@ class ProductService
             ->withAvg(['reviews' => fn(Builder $builder) => $builder->approved()], 'rating')
             ->withCount(['reviews' => fn(Builder $builder) => $builder->approved()]);
 
+        $this->applyChannelHomeFilter($query);
         $this->applyProductFilters($query, $request);
         $this->applyFlashSaleFilter($query);
 
@@ -128,7 +129,7 @@ class ProductService
      */
     public function getProductBySlug($slug, int $limit = 10): ?Product
     {
-        $product = Product::query()
+        $query = Product::query()
             ->active()
             ->search('slug', $slug, app()->getLocale())
             ->with([
@@ -140,8 +141,11 @@ class ProductService
                 'reviews' => fn($builder) => $builder->approved()->with('user'),
             ])
             ->withAvg(['reviews' => fn($builder) => $builder->approved()], 'rating')
-            ->withCount(['reviews' => fn($builder) => $builder->approved()])
-            ->first();
+            ->withCount(['reviews' => fn($builder) => $builder->approved()]);
+
+        $this->applyChannelHomeFilter($query);
+
+        $product = $query->first();
 
         if (!$product) {
             return null;
@@ -161,7 +165,7 @@ class ProductService
     public function getDiscountEndingTodayOrLowStockProducts($request)
     {
         $limit = $request->query('limit', 10);
-        $products = Product::query()
+        $query = Product::query()
             ->with(['categories', 'variations', 'brands'])
             ->where('status', true)
             ->where(function ($query) {
@@ -172,9 +176,11 @@ class ProductService
                     ->orWhere(function ($q) {
                         $q->whereBetween('stock_quantity', [1, 9]);
                     });
-            })
-            ->limit($limit)
-            ->get();
+            });
+
+        $this->applyChannelHomeFilter($query);
+
+        $products = $query->limit($limit)->get();
 
         return $products->map(function (Product $product) {
             $product->setAttribute(
@@ -243,7 +249,7 @@ class ProductService
         $limit = $request->query('limit', 10);
         $weekEnd = now()->endOfWeek();
 
-        $products = Product::query()
+        $query = Product::query()
             ->with(['categories', 'variations', 'brands'])
             ->select([
                 'id', 'name', 'slug', 'price', 'quantity',
@@ -263,7 +269,11 @@ class ProductService
                     ->where('flash_sales.status', true)
                     ->whereNotNull('flash_sales.end_date')
                     ->whereBetween('flash_sales.end_date', [today(), $weekEnd]);
-            })
+            });
+
+        $this->applyChannelHomeFilter($query);
+
+        $products = $query
             ->orderByDesc('id')
             ->limit($limit)
             ->get();
@@ -283,7 +293,7 @@ class ProductService
     {
         $limit = $request->query('limit', 10);
 
-        $products = Product::query()
+        $query = Product::query()
             ->with(['categories', 'variations', 'brands'])
             ->select([
                 'id', 'name', 'slug', 'price', 'quantity',
@@ -303,7 +313,11 @@ class ProductService
                     ->where('flash_sales.status', true)
                     ->whereNotNull('flash_sales.end_date')
                     ->whereDate('flash_sales.end_date', today());
-            })
+            });
+
+        $this->applyChannelHomeFilter($query);
+
+        $products = $query
             ->orderByDesc('id')
             ->limit($limit)
             ->get();
@@ -322,7 +336,7 @@ class ProductService
     public function getAllDiscountProducts($request)
     {
         $limit = $request->query('limit', 10);
-        $products = Product::query()
+        $query = Product::query()
             ->select([
                 'id', 'name', 'slug', 'price', 'quantity',
                 'has_flash_sale', 'has_discount', 'discount_type', 'discount_amount',
@@ -332,10 +346,11 @@ class ProductService
             ->with(['reviews', 'media', 'categories', 'variations', 'brands'])
             ->whereNull('deleted_at')
             ->where('status', true)
-            ->where('has_discount', true)
-            ->orderByDesc('id')
-            ->limit($limit)
-            ->get();
+            ->where('has_discount', true);
+
+        $this->applyChannelHomeFilter($query);
+
+        $products = $query->orderByDesc('id')->limit($limit)->get();
 
         return $products->map(function (Product $product) {
             $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
@@ -379,7 +394,7 @@ class ProductService
     public function getNewArrivals($request)
     {
         $limit = $request->get('limit', 10);
-        $products = Product::query()
+        $query = Product::query()
             ->select([
                 'id', 'name', 'slug', 'price', 'quantity',
                 'has_flash_sale', 'has_discount', 'discount_type', 'discount_amount',
@@ -390,10 +405,11 @@ class ProductService
             ->whereNull('deleted_at')
             ->where('status', true)
             ->where('has_flash_sale', false)
-            ->whereDate('created_at', '>=', now()->subDays(15))
-            ->orderByDesc('created_at')
-            ->limit($limit)
-            ->get();
+            ->whereDate('created_at', '>=', now()->subDays(15));
+
+        $this->applyChannelHomeFilter($query);
+
+        $products = $query->orderByDesc('created_at')->limit($limit)->get();
 
         return $products->map(function (Product $product) {
             $product->setAttribute('current_price', $this->moneyValue($product->price_after_discount ?? $product->price ?? null));
@@ -470,10 +486,13 @@ class ProductService
     {
         $limit = $request->get('limit', 10);
 
-        return Product::query()
+        $query = Product::query()
             ->active()
-            ->with(['categories', 'variations', 'brands'])
-            ->orderByDesc('sold_quantity')
+            ->with(['categories', 'variations', 'brands']);
+
+        $this->applyChannelHomeFilter($query);
+
+        return $query->orderByDesc('sold_quantity')
             ->limit($limit)
             ->get();
     }
@@ -488,13 +507,16 @@ class ProductService
         $limit = $request->integer('limit', 10);
         $ParentCategories = Category::query()->whereNull('parent_id')->pluck('id');
 
-        return Product::query()
+        $query = Product::query()
             ->active()
             ->with(['categories', 'variations', 'brands'])
             ->whereHas('categories', function (Builder $query) use ($ParentCategories) {
                 $query->whereIn('categories.id', $ParentCategories);
-            })
-            ->orderByDesc('id')
+            });
+
+        $this->applyChannelHomeFilter($query);
+
+        return $query->orderByDesc('id')
             ->limit($limit)
             ->get();
     }
@@ -512,15 +534,17 @@ class ProductService
             return collect();
         }
 
-        return Product::query()
+        $query = Product::query()
             ->active()
             ->with(['categories', 'variations', 'brands'])
             ->whereHas('categories', function (Builder $query) use ($categories) {
                 $query->whereIn('categories.id', $categories);
             })
-            ->where('id', '!=', $product->id)
-            ->limit($limit)
-            ->get();
+            ->where('id', '!=', $product->id);
+
+        $this->applyChannelHomeFilter($query);
+
+        return $query->limit($limit)->get();
     }
 
     /**

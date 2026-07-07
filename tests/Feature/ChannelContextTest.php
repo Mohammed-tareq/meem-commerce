@@ -226,4 +226,29 @@ class ChannelContextTest extends TestCase
         $response->assertOk();
         $this->assertEquals('Fast Shipping Product', $response->json('data.name'));
     }
+
+    /** @test */
+    public function product_detail_returns_404_for_fast_product_in_home_channel()
+    {
+        [$normal, $fast] = $this->seedProducts();
+
+        config(['scout.driver' => 'null']);
+
+        $response = $this->getJson(self::PREFIX . '/general/products/fast-product');
+
+        $response->assertStatus(404);
+    }
+
+    /** @test */
+    public function product_detail_returns_normal_product_in_home_channel()
+    {
+        [$normal, $fast] = $this->seedProducts();
+
+        config(['scout.driver' => 'null']);
+
+        $response = $this->getJson(self::PREFIX . '/general/products/normal-product');
+
+        $response->assertOk();
+        $this->assertEquals('Normal Product', $response->json('data.name'));
+    }
 }
