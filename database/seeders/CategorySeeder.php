@@ -19,220 +19,190 @@ class CategorySeeder extends Seeder
         // Structured categories matching the provided image (English + Arabic)
         $structured = [
             [
-                'name' => ['en' => 'Fresh Food', 'ar' => 'أطعمة طازجة'],
+                'name' => ['en' => 'Face', 'ar' => 'مكياج الوجه'],
                 'children' => [
-                    ['name' => ['en' => 'Vegetables & Fruits', 'ar' => 'الخضار والفواكه'], 'children' => [
-                        ['name' => ['en' => 'Leafy Greens', 'ar' => 'خضراوات ورقية']],
-                        ['name' => ['en' => 'Root Vegetables', 'ar' => 'خضروات جذرية']],
-                        ['name' => ['en' => 'Fresh Fruits', 'ar' => 'فواكه طازجة']],
-                        ['name' => ['en' => 'Organic Produce', 'ar' => 'منتجات عضوية']],
-                    ]],
-                    ['name' => ['en' => 'Dairy & Eggs', 'ar' => 'منتجات الألبان والبيض'], 'children' => [
-                        ['name' => ['en' => 'Milk & Alternatives', 'ar' => 'حليب ومشتقاته']],
-                        ['name' => ['en' => 'Cheese', 'ar' => 'جبن']],
-                        ['name' => ['en' => 'Eggs', 'ar' => 'بيض']],
-                        ['name' => ['en' => 'Yogurt & Desserts', 'ar' => 'زبادي وحلويات']],
-                    ]],
-                    ['name' => ['en' => 'Meat & Poultry', 'ar' => 'اللحوم والدواجن'], 'children' => [
-                        ['name' => ['en' => 'Beef', 'ar' => 'لحم بقر']],
-                        ['name' => ['en' => 'Chicken', 'ar' => 'دواجن']],
-                        ['name' => ['en' => 'Lamb', 'ar' => 'لحم ضأن']],
-                        ['name' => ['en' => 'Processed Meats', 'ar' => 'لحوم مصنعة']],
-                    ]],
-                    ['name' => ['en' => 'Seafood', 'ar' => 'السمك والمأكولات البحرية'], 'children' => [
-                        ['name' => ['en' => 'Fish', 'ar' => 'أسماك']],
-                        ['name' => ['en' => 'Shellfish', 'ar' => 'محاريات']],
-                        ['name' => ['en' => 'Frozen Seafood', 'ar' => 'مأكولات بحرية مجمدة']],
-                    ]],
-                    ['name' => ['en' => 'Bakery', 'ar' => 'مخبوزات'], 'children' => [
-                        ['name' => ['en' => 'Bread', 'ar' => 'خبز']],
-                        ['name' => ['en' => 'Pastries', 'ar' => 'معجنات']],
-                        ['name' => ['en' => 'Cakes & Desserts', 'ar' => 'كعك وحلويات']],
-                    ]],
+                    [
+                        'name' => ['en' => 'Foundation', 'ar' => 'فاونديشن'],
+                        'children' => [
+                            ['name' => ['en' => 'Liquid Foundation', 'ar' => 'فاونديشن سائل']],
+                            ['name' => ['en' => 'Powder Foundation', 'ar' => 'فاونديشن بودرة']],
+                            ['name' => ['en' => 'Stick Foundation', 'ar' => 'فاونديشن ستيك']],
+                            ['name' => ['en' => 'BB & CC Cream', 'ar' => 'بي بي وسي سي كريم']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Concealer', 'ar' => 'كونسيلر'],
+                        'children' => [
+                            ['name' => ['en' => 'Liquid Concealer', 'ar' => 'كونسيلر سائل']],
+                            ['name' => ['en' => 'Cream Concealer', 'ar' => 'كونسيلر كريم']],
+                            ['name' => ['en' => 'Color Corrector', 'ar' => 'مصححات الألوان']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Powder', 'ar' => 'بودرة'],
+                        'children' => [
+                            ['name' => ['en' => 'Loose Powder', 'ar' => 'بودرة سائبة']],
+                            ['name' => ['en' => 'Pressed Powder', 'ar' => 'بودرة مضغوطة']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Blush & Bronzer', 'ar' => 'بلاشر وبرونزر'],
+                        'children' => [
+                            ['name' => ['en' => 'Blush', 'ar' => 'بلاشر']],
+                            ['name' => ['en' => 'Bronzer', 'ar' => 'برونزر']],
+                            ['name' => ['en' => 'Contour', 'ar' => 'كونتور']],
+                            ['name' => ['en' => 'Highlighter', 'ar' => 'هايلايتر']],
+                        ],
+                    ],
                 ],
             ],
+
             [
-                'name' => ['en' => 'Supermarket', 'ar' => 'السوبر ماركت'],
+                'name' => ['en' => 'Eyes', 'ar' => 'مكياج العيون'],
                 'children' => [
-                    ['name' => ['en' => 'Snacks & Biscuits', 'ar' => 'بسكويت ووجبات خفيفة'], 'children' => [
-                        ['name' => ['en' => 'Chips & Crisps', 'ar' => 'رقائق']],
-                        ['name' => ['en' => 'Chocolate & Sweets', 'ar' => 'شوكولاتة وحلويات']],
-                        ['name' => ['en' => 'Nuts & Seeds', 'ar' => 'مكسرات وبذور']],
-                    ]],
-                    ['name' => ['en' => 'Breakfast & Cereals', 'ar' => 'إفطار وحبوب'], 'children' => [
-                        ['name' => ['en' => 'Oats & Porridge', 'ar' => 'شوفان']],
-                        ['name' => ['en' => 'Cereals', 'ar' => 'حبوب']],
-                        ['name' => ['en' => 'Granola & Muesli', 'ar' => 'غرانولا وميسلي']],
-                    ]],
-                    ['name' => ['en' => 'Rice & Pasta', 'ar' => 'أرز ومعكرونة'], 'children' => [
-                        ['name' => ['en' => 'White Rice', 'ar' => 'أرز أبيض']],
-                        ['name' => ['en' => 'Pasta', 'ar' => 'معكرونة']],
-                        ['name' => ['en' => 'Brown & Specialty Rice', 'ar' => 'أرز بني ومنتجات خاصة']],
-                    ]],
-                    ['name' => ['en' => 'Cooking Essentials', 'ar' => 'مكونات الطبخ'], 'children' => [
-                        ['name' => ['en' => 'Oils & Vinegar', 'ar' => 'زيوت وخل']],
-                        ['name' => ['en' => 'Spices & Seasonings', 'ar' => 'بهارات وتوابل']],
-                        ['name' => ['en' => 'Sauces & Condiments', 'ar' => 'صلصات وتوابل']],
-                    ]],
+                    [
+                        'name' => ['en' => 'Eyeshadow', 'ar' => 'آيشادو'],
+                        'children' => [
+                            ['name' => ['en' => 'Palettes', 'ar' => 'باليت']],
+                            ['name' => ['en' => 'Single Eyeshadow', 'ar' => 'آيشادو مفرد']],
+                            ['name' => ['en' => 'Cream Eyeshadow', 'ar' => 'آيشادو كريم']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Mascara', 'ar' => 'ماسكارا'],
+                        'children' => [
+                            ['name' => ['en' => 'Volume Mascara', 'ar' => 'ماسكارا كثافة']],
+                            ['name' => ['en' => 'Lengthening Mascara', 'ar' => 'ماسكارا تطويل']],
+                            ['name' => ['en' => 'Waterproof Mascara', 'ar' => 'ماسكارا مقاومة للماء']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Eyeliner', 'ar' => 'آيلاينر'],
+                        'children' => [
+                            ['name' => ['en' => 'Liquid Eyeliner', 'ar' => 'آيلاينر سائل']],
+                            ['name' => ['en' => 'Gel Eyeliner', 'ar' => 'آيلاينر جل']],
+                            ['name' => ['en' => 'Pencil Eyeliner', 'ar' => 'آيلاينر قلم']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Eyebrows', 'ar' => 'الحواجب'],
+                        'children' => [
+                            ['name' => ['en' => 'Brow Pencil', 'ar' => 'قلم حواجب']],
+                            ['name' => ['en' => 'Brow Gel', 'ar' => 'جل حواجب']],
+                            ['name' => ['en' => 'Brow Powder', 'ar' => 'بودرة حواجب']],
+                        ],
+                    ],
                 ],
             ],
+
             [
-                'name' => ['en' => 'Drinks', 'ar' => 'المشروبات'],
+                'name' => ['en' => 'Lips', 'ar' => 'مكياج الشفاه'],
                 'children' => [
-                    ['name' => ['en' => 'Coffee', 'ar' => 'قهوة'], 'children' => [
-                        ['name' => ['en' => 'Ground Coffee', 'ar' => 'قهوة مطحونة']],
-                        ['name' => ['en' => 'Instant Coffee', 'ar' => 'قهوة سريعة']],
-                        ['name' => ['en' => 'Cold Brew & Ready Coffee', 'ar' => 'قهوة باردة وجاهزة']],
-                    ]],
-                    ['name' => ['en' => 'Tea', 'ar' => 'شاي'], 'children' => [
-                        ['name' => ['en' => 'Black Tea', 'ar' => 'شاي أسود']],
-                        ['name' => ['en' => 'Herbal Tea', 'ar' => 'شاي أعشاب']],
-                        ['name' => ['en' => 'Tea Bags & Accessories', 'ar' => 'أكياس الشاي وملحقاتها']],
-                    ]],
-                    ['name' => ['en' => 'Juices', 'ar' => 'عصائر'], 'children' => [
-                        ['name' => ['en' => 'Fruit Juices', 'ar' => 'عصائر فواكه']],
-                        ['name' => ['en' => 'Vegetable Juices', 'ar' => 'عصائر خضار']],
-                        ['name' => ['en' => 'Smoothies & Blends', 'ar' => 'سموذي وخلطات']],
-                    ]],
-                    ['name' => ['en' => 'Water', 'ar' => 'ماء'], 'children' => [
-                        ['name' => ['en' => 'Mineral Water', 'ar' => 'مياه معدنية']],
-                        ['name' => ['en' => 'Sparkling Water', 'ar' => 'مياه غازية']],
-                        ['name' => ['en' => 'Flavored Water', 'ar' => 'مياه منكهة']],
-                    ]],
+                    [
+                        'name' => ['en' => 'Lipstick', 'ar' => 'روج'],
+                        'children' => [
+                            ['name' => ['en' => 'Matte Lipstick', 'ar' => 'روج مطفي']],
+                            ['name' => ['en' => 'Cream Lipstick', 'ar' => 'روج كريمي']],
+                            ['name' => ['en' => 'Satin Lipstick', 'ar' => 'روج ساتان']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Lip Gloss', 'ar' => 'ملمع شفاه'],
+                        'children' => [
+                            ['name' => ['en' => 'Clear Gloss', 'ar' => 'جلوس شفاف']],
+                            ['name' => ['en' => 'Tinted Gloss', 'ar' => 'جلوس ملون']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Lip Liner', 'ar' => 'محدد شفاه'],
+                        'children' => [
+                            ['name' => ['en' => 'Wood Pencil', 'ar' => 'قلم خشبي']],
+                            ['name' => ['en' => 'Retractable Pencil', 'ar' => 'قلم أوتوماتيك']],
+                        ],
+                    ],
                 ],
             ],
+
             [
-                'name' => ['en' => 'Frozen & Ready Meals', 'ar' => 'أطعمة مجمدة'],
+                'name' => ['en' => 'Skincare', 'ar' => 'العناية بالبشرة'],
                 'children' => [
-                    ['name' => ['en' => 'Frozen Vegetables', 'ar' => 'خضروات مجمدة'], 'children' => [
-                        ['name' => ['en' => 'Mixed Veg Packs', 'ar' => 'خليط خضروات مجمدة']],
-                        ['name' => ['en' => 'Single Veg Packs', 'ar' => 'خضروات مفردة مجمدة']],
-                        ['name' => ['en' => 'Frozen Herbs', 'ar' => 'أعشاب مجمدة']],
-                    ]],
-                    ['name' => ['en' => 'Ready Meals', 'ar' => 'وجبات جاهزة'], 'children' => [
-                        ['name' => ['en' => 'Frozen Pizzas', 'ar' => 'بيتزا مجمدة']],
-                        ['name' => ['en' => 'Microwave Meals', 'ar' => 'وجبات ميكروويف']],
-                        ['name' => ['en' => 'Ice Cream & Desserts', 'ar' => 'آيس كريم وحلويات']],
-                    ]],
+                    [
+                        'name' => ['en' => 'Cleanser', 'ar' => 'غسول'],
+                        'children' => [
+                            ['name' => ['en' => 'Foam Cleanser', 'ar' => 'غسول رغوي']],
+                            ['name' => ['en' => 'Gel Cleanser', 'ar' => 'غسول جل']],
+                            ['name' => ['en' => 'Oil Cleanser', 'ar' => 'غسول زيتي']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Moisturizer', 'ar' => 'مرطب'],
+                        'children' => [
+                            ['name' => ['en' => 'Day Cream', 'ar' => 'كريم نهاري']],
+                            ['name' => ['en' => 'Night Cream', 'ar' => 'كريم ليلي']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Serums', 'ar' => 'سيروم'],
+                        'children' => [
+                            ['name' => ['en' => 'Vitamin C', 'ar' => 'فيتامين سي']],
+                            ['name' => ['en' => 'Hyaluronic Acid', 'ar' => 'هيالورونيك أسيد']],
+                            ['name' => ['en' => 'Niacinamide', 'ar' => 'نياسيناميد']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Sunscreen', 'ar' => 'واقي شمس'],
+                        'children' => [
+                            ['name' => ['en' => 'SPF 30', 'ar' => 'SPF 30']],
+                            ['name' => ['en' => 'SPF 50+', 'ar' => 'SPF 50+']],
+                        ],
+                    ],
                 ],
             ],
+
             [
-                'name' => ['en' => 'Health & Beauty', 'ar' => 'الصحة والجمال'],
+                'name' => ['en' => 'Brushes & Tools', 'ar' => 'فرش وأدوات'],
                 'children' => [
-                    ['name' => ['en' => 'Skin Care', 'ar' => 'العناية بالبشرة'], 'children' => [
-                        ['name' => ['en' => 'Facial Care', 'ar' => 'العناية بالوجه']],
-                        ['name' => ['en' => 'Body Care', 'ar' => 'العناية بالجسم']],
-                        ['name' => ['en' => 'Makeup', 'ar' => 'مكياج']],
-                    ]],
-                    ['name' => ['en' => 'Hair Care', 'ar' => 'العناية بالشعر'], 'children' => [
-                        ['name' => ['en' => 'Shampoos', 'ar' => 'شامبو']],
-                        ['name' => ['en' => 'Conditioners', 'ar' => 'بلسم']],
-                        ['name' => ['en' => 'Hair Treatments', 'ar' => 'علاجات الشعر']],
-                    ]],
-                    ['name' => ['en' => 'Oral Care', 'ar' => 'العناية بالفم'], 'children' => [
-                        ['name' => ['en' => 'Toothpaste', 'ar' => 'معجون اسنان']],
-                        ['name' => ['en' => 'Mouthwash', 'ar' => 'مضمضة']],
-                        ['name' => ['en' => 'Dental Tools', 'ar' => 'أدوات الأسنان']],
-                    ]],
-                    ['name' => ['en' => 'Fragrances', 'ar' => 'عطور'], 'children' => [
-                        ['name' => ['en' => 'Perfumes', 'ar' => 'عطور']],
-                        ['name' => ['en' => 'Deodorants', 'ar' => 'مزيلات العرق']],
-                    ]],
+                    [
+                        'name' => ['en' => 'Brushes', 'ar' => 'فرش'],
+                        'children' => [
+                            ['name' => ['en' => 'Foundation Brush', 'ar' => 'فرشاة فاونديشن']],
+                            ['name' => ['en' => 'Powder Brush', 'ar' => 'فرشاة بودرة']],
+                            ['name' => ['en' => 'Blush Brush', 'ar' => 'فرشاة بلاشر']],
+                            ['name' => ['en' => 'Eyeshadow Brush', 'ar' => 'فرشاة آيشادو']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Beauty Tools', 'ar' => 'أدوات تجميل'],
+                        'children' => [
+                            ['name' => ['en' => 'Beauty Blender', 'ar' => 'بيوتي بلندر']],
+                            ['name' => ['en' => 'Eyelash Curler', 'ar' => 'مكبس رموش']],
+                            ['name' => ['en' => 'Tweezers', 'ar' => 'ملقاط']],
+                            ['name' => ['en' => 'Makeup Bag', 'ar' => 'حقيبة مكياج']],
+                        ],
+                    ],
                 ],
             ],
+
             [
-                'name' => ['en' => 'Electronics', 'ar' => 'إلكترونيات'],
+                'name' => ['en' => 'Fragrance', 'ar' => 'العطور'],
                 'children' => [
-                    ['name' => ['en' => 'Mobile Phones', 'ar' => 'الهواتف المحمولة'], 'children' => [
-                        ['name' => ['en' => 'Smartphones', 'ar' => 'هواتف ذكية']],
-                        ['name' => ['en' => 'Feature Phones', 'ar' => 'هواتف عادية']],
-                        ['name' => ['en' => 'Refurbished Phones', 'ar' => 'هواتف مجددة']],
-                    ]],
-                    ['name' => ['en' => 'Computers', 'ar' => 'الحواسيب'], 'children' => [
-                        ['name' => ['en' => 'Laptops', 'ar' => 'حاسبات محمولة']],
-                        ['name' => ['en' => 'Desktops', 'ar' => 'حاسبات مكتبية']],
-                        ['name' => ['en' => 'Monitors & Peripherals', 'ar' => 'شاشات وملحقات']],
-                    ]],
-                    ['name' => ['en' => 'Accessories', 'ar' => 'ملحقات'], 'children' => [
-                        ['name' => ['en' => 'Chargers & Cables', 'ar' => 'شواحن وكابلات']],
-                        ['name' => ['en' => 'Cases & Covers', 'ar' => 'أغطية وحافظات']],
-                        ['name' => ['en' => 'Audio & Headphones', 'ar' => 'صوت وسماعات']],
-                    ]],
-                    ['name' => ['en' => 'TV & Home Audio', 'ar' => 'تلفاز وصوت منزلي'], 'children' => [
-                        ['name' => ['en' => 'Televisions', 'ar' => 'تلفزيونات']],
-                        ['name' => ['en' => 'Speakers', 'ar' => 'مكبرات صوت']],
-                    ]],
-                ],
-            ],
-            [
-                'name' => ['en' => 'Clothing & Accessories', 'ar' => 'ملابس وإكسسوارات'],
-                'children' => [
-                    ['name' => ['en' => 'Men', 'ar' => 'رجالي'], 'children' => [
-                        ['name' => ['en' => 'Shirts', 'ar' => 'قمصان']],
-                        ['name' => ['en' => 'T-Shirts', 'ar' => 'تيشيرتات']],
-                        ['name' => ['en' => 'Pants', 'ar' => 'بناطيل']],
-                    ]],
-                    ['name' => ['en' => 'Women', 'ar' => 'نسائي'], 'children' => [
-                        ['name' => ['en' => 'Dresses', 'ar' => 'فساتين']],
-                        ['name' => ['en' => 'Tops', 'ar' => 'بلوزات']],
-                        ['name' => ['en' => 'Skirts', 'ar' => 'تنانير']],
-                    ]],
-                    ['name' => ['en' => 'Accessories', 'ar' => 'إكسسوارات'], 'children' => [
-                        ['name' => ['en' => 'Bags', 'ar' => 'حقائب']],
-                        ['name' => ['en' => 'Belts', 'ar' => 'أحزمة']],
-                        ['name' => ['en' => 'Hats', 'ar' => 'قبعات']],
-                    ]],
-                ],
-            ],
-            [
-                'name' => ['en' => 'Baby & Kids', 'ar' => 'أطفال ورضع'],
-                'children' => [
-                    ['name' => ['en' => 'Baby Care', 'ar' => 'رعاية الطفل'], 'children' => [
-                        ['name' => ['en' => 'Diapers', 'ar' => 'حفاظات']],
-                        ['name' => ['en' => 'Feeding', 'ar' => 'تغذية']],
-                    ]],
-                    ['name' => ['en' => 'Kids Clothing', 'ar' => 'ملابس أطفال'], 'children' => [
-                        ['name' => ['en' => 'Boys', 'ar' => 'ملابس أولاد']],
-                        ['name' => ['en' => 'Girls', 'ar' => 'ملابس بنات']],
-                    ]],
-                    ['name' => ['en' => 'Toys & Games', 'ar' => 'ألعاب'], 'children' => [
-                        ['name' => ['en' => 'Educational Toys', 'ar' => 'ألعاب تعليمية']],
-                        ['name' => ['en' => 'Outdoor Play', 'ar' => 'ألعاب خارجية']],
-                    ]],
-                ],
-            ],
-            [
-                'name' => ['en' => 'Home & Furniture', 'ar' => 'المنزل والأثاث'],
-                'children' => [
-                    ['name' => ['en' => 'Living Room', 'ar' => 'غرفة المعيشة'], 'children' => [
-                        ['name' => ['en' => 'Sofas', 'ar' => 'كنب']],
-                        ['name' => ['en' => 'Coffee Tables', 'ar' => 'طاولات قهوة']],
-                    ]],
-                    ['name' => ['en' => 'Bedroom', 'ar' => 'غرفة النوم'], 'children' => [
-                        ['name' => ['en' => 'Beds', 'ar' => 'أسرة']],
-                        ['name' => ['en' => 'Wardrobes', 'ar' => 'دولاب']],
-                    ]],
-                    ['name' => ['en' => 'Kitchen & Dining', 'ar' => 'المطبخ وتناول الطعام'], 'children' => [
-                        ['name' => ['en' => 'Dining Sets', 'ar' => 'طقم سفرة']],
-                        ['name' => ['en' => 'Cookware', 'ar' => 'أواني طهي']],
-                    ]],
-                ],
-            ],
-            [
-                'name' => ['en' => 'Sports & Outdoors', 'ar' => 'الرياضة والهواء الطلق'],
-                'children' => [
-                    ['name' => ['en' => 'Fitness', 'ar' => 'لياقة'], 'children' => [
-                        ['name' => ['en' => 'Exercise Equipment', 'ar' => 'معدات رياضية']],
-                        ['name' => ['en' => 'Supplements', 'ar' => 'مكملات']],
-                    ]],
-                    ['name' => ['en' => 'Outdoor', 'ar' => 'نشاطات خارجية'], 'children' => [
-                        ['name' => ['en' => 'Camping', 'ar' => 'التخييم']],
-                        ['name' => ['en' => 'Cycling', 'ar' => 'ركوب الدراجات']],
-                    ]],
+                    [
+                        'name' => ['en' => 'Women Perfume', 'ar' => 'عطور نسائية'],
+                        'children' => [
+                            ['name' => ['en' => 'Eau De Parfum', 'ar' => 'أو دو بارفيوم']],
+                            ['name' => ['en' => 'Eau De Toilette', 'ar' => 'أو دو تواليت']],
+                        ],
+                    ],
+                    [
+                        'name' => ['en' => 'Men Perfume', 'ar' => 'عطور رجالية'],
+                        'children' => [
+                            ['name' => ['en' => 'Luxury Perfumes', 'ar' => 'عطور فاخرة']],
+                            ['name' => ['en' => 'Daily Perfumes', 'ar' => 'عطور يومية']],
+                        ],
+                    ],
                 ],
             ],
         ];
-
         // Walk the structure and seed categories recursively
         foreach ($structured as $node) {
             $root = $this->seedCategoryWithChildren($node, null, $categoryImages, $categoryImagesCount);
