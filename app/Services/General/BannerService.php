@@ -2,10 +2,12 @@
 
 namespace App\Services\General;
 
+use App\Traits\HasChannelFilter;
 use Marvel\Database\Models\Banner;
 
 class BannerService
 {
+    use HasChannelFilter;
 
     public function getBanners($request)
     {
@@ -35,12 +37,10 @@ class BannerService
     }
     public function getBannerBySlug($slug, $with_products = false)
     {
-        $banner =  Banner::active()->search('slug', $slug, app()->getLocale())->first();
+        $banner = Banner::active()->search('slug', $slug, app()->getLocale())->first();
         if ($banner && $with_products !== 'false') {
-            $banner->load('products');
+            $banner->load(['products' => fn($q) => $this->applyChannelHomeFilter($q)]);
         }
         return $banner;
     }
-
-    
 }

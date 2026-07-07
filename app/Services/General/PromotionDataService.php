@@ -2,10 +2,12 @@
 
 namespace App\Services\General;
 
+use App\Traits\HasChannelFilter;
 use Marvel\Database\Models\Promotion;
 
 class PromotionDataService
 {
+    use HasChannelFilter;
 
     public function paginatePromotion($request)
     {
@@ -37,7 +39,7 @@ class PromotionDataService
     {
         $Promotion = Promotion::search('slug', $slug, app()->getLocale())->first();
         if ($Promotion) {
-            $Promotion->load('products');
+            $Promotion->load(['products' => fn($q) => $this->applyChannelHomeFilter($q)]);
         }
         return $Promotion;
     }

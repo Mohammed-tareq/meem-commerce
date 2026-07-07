@@ -2,10 +2,12 @@
 
 namespace App\Services\General;
 
+use App\Traits\HasChannelFilter;
 use Marvel\Database\Models\Brand;
 
 class BrandService
 {
+    use HasChannelFilter;
 
     public function getBrands($request)
     {
@@ -35,9 +37,9 @@ class BrandService
     }
     public function getBrandBySlug($slug)
     {
-        $brand =  Brand::active()->search('slug', $slug, app()->getLocale())->first();
+        $brand = Brand::active()->search('slug', $slug, app()->getLocale())->first();
         if ($brand) {
-            $brand->load('products');
+            $brand->load(['products' => fn($q) => $this->applyChannelHomeFilter($q)]);
         }
         return $brand;
     }
@@ -56,6 +58,7 @@ class BrandService
                 $query->where('created_at', '<=', $end_date);
             })
             ->with(['products' => function ($query) use ($qty) {
+                $this->applyChannelHomeFilter($query);
                 $query->limit($qty);
             }])
             ->limit($qtyBrand)

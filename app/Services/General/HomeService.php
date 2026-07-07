@@ -2,6 +2,7 @@
 
 namespace App\Services\General;
 
+use App\Traits\HasChannelFilter;
 use App\Http\Resources\Banner\BannerResource;
 use App\Http\Resources\Brand\BrandResource;
 use App\Http\Resources\Category\CategoryHomeResource;
@@ -23,6 +24,8 @@ use Marvel\Database\Models\Slider;
 
 class HomeService
 {
+    use HasChannelFilter;
+
     public function __construct(private readonly CategoryHierarchyService $hierarchyService) {}
 
     public function getNavData(?int $level = null)
@@ -172,6 +175,7 @@ class HomeService
     public function getDiscountEndingTodayOrLowStockProducts(): Collection
     {
         $products = Product::query()
+            ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
                 'name',
@@ -211,6 +215,7 @@ class HomeService
     public function getNewArrivals(int $limit = 10): Collection
     {
         $products = Product::query()
+            ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
                 'name',
@@ -247,6 +252,7 @@ class HomeService
         $weekEnd = now()->endOfWeek();
 
         $products = Product::query()
+            ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
                 'name',
@@ -293,6 +299,7 @@ class HomeService
         $categoryIds = $categoryTree->pluck('id')->all();
 
         $products = Product::query()
+            ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
                 'name',
@@ -333,6 +340,7 @@ class HomeService
     public function getAllDiscountProducts(): Collection
     {
         $products = Product::query()
+            ->when(true, fn($q) => $this->applyChannelHomeFilter($q))
             ->select([
                 'id',
                 'name',

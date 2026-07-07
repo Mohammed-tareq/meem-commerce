@@ -2,10 +2,12 @@
 
 namespace App\Services\General;
 
+use App\Traits\HasChannelFilter;
 use Marvel\Database\Models\Slider;
 
 class SliderService
 {
+    use HasChannelFilter;
 
     public function getSliders($request)
     {
@@ -38,7 +40,7 @@ class SliderService
     {
         $slider = Slider::active()->where('slug', $slug)->first();
         if ($slider) {
-            $slider->load('products');
+            $slider->load(['products' => fn($q) => $this->applyChannelHomeFilter($q)]);
         }
         return $slider;
     }

@@ -2,12 +2,14 @@
 
 namespace App\Services\General;
 
+use App\Traits\HasChannelFilter;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\FlashSale;
 use Marvel\Database\Models\Product;
 
 class FlashSaleService
 {
+    use HasChannelFilter;
 
     public function paginateFlashSales($request)
     {
@@ -40,7 +42,7 @@ class FlashSaleService
     {
         $FlashSale = FlashSale::search('slug', $slug, app()->getLocale())->first();
         if ($FlashSale) {
-            $FlashSale->load('products');
+            $FlashSale->load(['products' => fn($q) => $this->applyChannelHomeFilter($q)]);
         }
         return $FlashSale;
     }
@@ -59,6 +61,7 @@ class FlashSaleService
             })
             ->with([
                 'products' => function ($query) use ($qty) {
+                    $this->applyChannelHomeFilter($query);
                     $query->limit($qty);
                 }
             ])->get()

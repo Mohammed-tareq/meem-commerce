@@ -2,7 +2,7 @@
 
 namespace App\Services\General;
 
-use App\Contexts\ChannelContext;
+use App\Traits\HasChannelFilter;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
@@ -22,6 +22,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class ProductService
 {
+    use HasChannelFilter;
     use MediaManager;
 
     /**
@@ -377,6 +378,7 @@ class ProductService
                 $query->where('created_at', '<=', $end_date);
             })
             ->with(['products' => function ($query) use ($qty) {
+                $this->applyChannelHomeFilter($query);
                 $query->with(['categories', 'variations', 'brands'])->limit($qty);
             }])
             ->get()
@@ -545,23 +547,6 @@ class ProductService
         $this->applyChannelHomeFilter($query);
 
         return $query->limit($limit)->get();
-    }
-
-    /**
-     * When the current channel is HOME, exclude fast-shipping products
-     * so only regular products appear in the general listing.
-     */
-    private function applyChannelHomeFilter(Builder $query): void
-    {
-        if (!config('channel.enabled', true)) {
-            return;
-        }
-
-        $context = app(ChannelContext::class);
-
-        if ($context->isHome()) {
-            $query->where('is_fast_shipping_available', false);
-        }
     }
 
     /**

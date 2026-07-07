@@ -2,12 +2,14 @@
 
 namespace App\Services\General;
 
+use App\Traits\HasChannelFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Marvel\Database\Models\Category;
 
 class CategoryService
 {
+    use HasChannelFilter;
     public function paginate(Request $request)
     {
         $limit = $this->getLimit($request);
@@ -51,7 +53,7 @@ class CategoryService
     {
         return Category::query()
             ->active()
-            ->with(['products', 'children' => function ($query) {
+            ->with(['products' => fn($q) => $this->applyChannelHomeFilter($q), 'children' => function ($query) {
                 $query->active()->withCount('products');
             }])
             ->withCount('products')
