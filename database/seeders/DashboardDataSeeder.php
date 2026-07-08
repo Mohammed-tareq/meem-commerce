@@ -9,6 +9,7 @@ use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Product;
+use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\User;
 
 class DashboardDataSeeder extends Seeder
@@ -256,13 +257,14 @@ class DashboardDataSeeder extends Seeder
 
         foreach ($completedOrders as $order) {
             $method = $this->weightedPick($this->paymentMethods, $this->paymentWeights, $order->id);
-            DB::table('transactions')->insert([
+            Transaction::create([
                 'order_id' => $order->id,
                 'invoice_id' => 'INV-' . str_pad((string) $order->id, 8, '0', STR_PAD_LEFT),
                 'payment_method' => $method,
                 'user_id' => $order->user_id,
-                'created_at' => $order->created_at,
-                'updated_at' => $order->updated_at,
+                'status' => 'paid',
+                'amount' => $order->total_price,
+                'currency' => config('payment.default_currency', 'EGP'),
             ]);
         }
     }
