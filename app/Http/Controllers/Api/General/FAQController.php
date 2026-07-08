@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Banner\FaqResource;
 use App\Services\General\faqService;
-use Marvel\Http\Resources\FaqResource;
 use Marvel\Traits\ApiResponse;
 
 class FAQController extends Controller
