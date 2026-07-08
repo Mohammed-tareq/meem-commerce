@@ -2,7 +2,6 @@
 
 namespace App\Http\Resources\Faqs;
 
-use App\Http\Resources\Product\ProductMiniResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
