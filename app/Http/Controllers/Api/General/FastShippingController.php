@@ -4,10 +4,11 @@ namespace App\Http\Controllers\Api\General;
 
 use App\Http\Controllers\Controller;
 use App\Services\General\FastShippingService;
-use App\Services\General\MyfatoraService;
 use App\Services\General\CartInventoryService;
+use App\Services\Payment\PaymentCheckoutHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Marvel\Enums\ShippingMethod;
 use Marvel\Http\Requests\FastCheckoutRequest;
 use Marvel\Traits\ApiResponse;
 
@@ -17,8 +18,8 @@ class FastShippingController extends Controller
 
     public function __construct(
         private FastShippingService $fastShippingService,
-        private MyfatoraService $myfatoraService,
         private CartInventoryService $cartInventoryService,
+        private PaymentCheckoutHandler $paymentCheckoutHandler,
     ) {}
 
     public function status(): JsonResponse
@@ -60,44 +61,27 @@ class FastShippingController extends Controller
             return $this->apiResponse(FILED_TO_CREATE_ORDER_TRY_AGAIN, 500, false);
         }
 
-        $data = [
-            'InvoiceValue' => $order->total_price,
-            'CustomerName' => $requestData['name'],
-            'NotificationOption' => 'LNK',
-            'DisplayCurrencyIso' => 'EGP',
-            'MobileCountryCode' => '+20',
-            'CustomerMobile' => $requestData['user_phone'],
-            'CustomerEmail' => $requestData['user_email'],
-            'language' => app()->getLocale() == 'ar' ? 'ar' : 'en',
-            'CallBackUrl' => route('api.checkout.callback'),
-            'ErrorUrl' => route('api.checkout.errorCallback'),
-        ];
+        $paymentMethod = $request->input('payment_method', 'online');
+        $gateway = $request->input('gateway', config('payment.default_gateway', 'myfatoorah'));
+        $fulfillmentType = $request->input('fulfillment_type', 'delivery');
 
-        $invoice = $this->myfatoraService->createInvoice($data);
-
-        if (!is_array($invoice)) {
-            return $this->apiResponse('Error creating invoice', 500, false);
+        if ($paymentMethod === 'cod' && $fulfillmentType === 'pickup') {
+            return $this->apiResponse('COD is not available for pickup. Use pay_at_cashier instead.', 422, false);
         }
 
-        $invoiceUrl = data_get($invoice, 'Data.InvoiceURL');
-        $invoiceId = data_get($invoice, 'Data.InvoiceId');
-
-        if (!$invoiceUrl || !$invoiceId) {
-            return $this->apiResponse('Error creating invoice', 500, false);
+        if ($paymentMethod === 'online') {
+            return $this->paymentCheckoutHandler->handleOnlinePayment($request, $order, $order->total_price, $gateway);
         }
 
-        $transaction = \Marvel\Database\Models\Transaction::create([
-            'order_id' => $order->id,
-            'user_id' => $request->user()->id,
-            'invoice_id' => $invoiceId,
-            'payment_method' => 'myfatoorah',
-        ]);
-
-        if (!$transaction) {
-            return $this->apiResponse('Error creating transaction', 500, false);
+        if ($paymentMethod === 'cod') {
+            return $this->paymentCheckoutHandler->handleCodPayment($request, $order, ShippingMethod::FAST);
         }
 
-        return $this->apiResponse('Checkout successful', 200, true, ['url' => $invoiceUrl]);
+        if ($paymentMethod === 'pay_at_cashier') {
+            return $this->paymentCheckoutHandler->handleCashierQrPayment($request, $order, ShippingMethod::FAST);
+        }
+
+        return $this->apiResponse('Invalid payment method', 422, false);
     }
 
     public function orders(Request $request): JsonResponse

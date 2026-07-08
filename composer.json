@@ -11,9 +11,10 @@
     "require": {
         "php": "^8.0|^8.1",
         "barryvdh/laravel-dompdf": "2.0.1",
+        "chillerlan/php-qrcode": "^6.0",
         "codezero/laravel-unique-translation": "^4.3",
         "darkaonline/l5-swagger": "8.5",
-        "doctrine/dbal": "3.7.1",
+        "doctrine/dbal": "^3.10",
         "guzzlehttp/guzzle": "7.8.0",
         "karim007/laravel-bkash-tokenize": "dev-main",
         "kingflamez/laravelrave": "dev-master",

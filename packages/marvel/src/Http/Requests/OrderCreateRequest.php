@@ -5,6 +5,7 @@ namespace Marvel\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Validation\Rule;
 
 class OrderCreateRequest extends FormRequest
 {
@@ -34,6 +35,15 @@ class OrderCreateRequest extends FormRequest
             'selected_promotion_id' => ['nullable', 'integer', 'exists:promotions,id'],
             'selected_gift_product_id' => ['nullable', 'integer', 'exists:products,id'],
             'type' => ['nullable', 'in:mobile,web'],
+            'fulfillment_type' => ['nullable', 'string', 'in:delivery,pickup'],
+            'payment_method' => ['nullable', 'string', 'in:online,cod,pay_at_cashier'],
+            'gateway' => ['nullable', 'string', 'max:50'],
+            // 'pickup_location_id' => [
+            //     'nullable',
+            //     'integer',
+            //     Rule::requiredIf(fn () => $this->input('fulfillment_type') === 'pickup'),
+            //     'exists:resources,id',
+            // ],
         ];
     }
 

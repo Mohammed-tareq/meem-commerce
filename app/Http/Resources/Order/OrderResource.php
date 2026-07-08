@@ -4,6 +4,7 @@ namespace App\Http\Resources\Order;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Marvel\Http\Resources\Order\OrderTransactionResource;
 use Marvel\Http\Resources\ShopResource;
 
 class OrderResource extends JsonResource
@@ -25,8 +26,13 @@ class OrderResource extends JsonResource
                 'type' => $this->promotion_type,
                 'code' => $this->promotion_code,
             ] : null,
+            'fulfillment_type' => $this->fulfillment_type,
+            'payment_method' => $this->payment_method,
+            'payment_gateway' => $this->payment_gateway,
+            'pickup_location_id' => $this->pickup_location_id,
             'created_at' => $this->created_at?->toIso8601String(),
             'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
+            'transactions' => OrderTransactionResource::collection($this->whenLoaded('transactions')),
         ];
     }
 

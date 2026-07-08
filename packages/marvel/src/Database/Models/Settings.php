@@ -43,9 +43,4 @@ class Settings extends Model implements HasMedia
         'options'   => 'array',
     ];
 
-    // public function scopeActive($query)
-    // {
-    //     return $query->where('active', true);
-    // }
-
 }

@@ -2,9 +2,12 @@
 
 namespace App\Services\General;
 
+use App\Events\OrderCreated;
+use App\Services\Checkout\OrderCreationService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\CouponUsage;
 use Marvel\Database\Models\Cart;
@@ -12,8 +15,8 @@ use Marvel\Database\Models\CartItem;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
 use Marvel\Enums\ShippingMethod;
-use App\Events\OrderCreated;
 use Marvel\Events\OrderCancelled;
+use Marvel\Events\OrderStatusChanged;
 use Marvel\Services\Pricing\ProductPricingService;
 
 class OrderService
@@ -30,7 +33,10 @@ class OrderService
         'notes',
     ];
 
-    public function __construct(private PromotionService $promotionService) {}
+    public function __construct(
+        private PromotionService $promotionService,
+        private OrderCreationService $orderCreationService,
+    ) {}
 
     public function paginateForUser(Request $request): LengthAwarePaginator
     {
@@ -52,6 +58,7 @@ class OrderService
         return [
             'orderItems.product.media',
             'orderItems.productVariant.attributeProducts.attributeValue',
+            'transactions',
         ];
     }
 
@@ -68,12 +75,16 @@ class OrderService
 
     public function calcInvoicePrice($request)
     {
-
         try {
             DB::beginTransaction();
             $cart = $this->getCartUser();
-            if (!$cart || $cart->items->isEmpty()) {
-                return null;
+            if (!$cart) {
+                DB::rollBack();
+                throw new \InvalidArgumentException(__('checkout.cart_not_found'));
+            }
+            if ($cart->items->isEmpty()) {
+                DB::rollBack();
+                throw new \InvalidArgumentException(__('checkout.cart_empty'));
             }
             $checkoutTotals = $this->calculateCheckoutTotals(
                 $cart,
@@ -89,9 +100,10 @@ class OrderService
         } catch (\Exception $e) {
             DB::rollBack();
             report($e);
-            return null;
+            throw new \InvalidArgumentException($e->getMessage(), 0, $e);
         }
     }
+
     public function addItemsInOrder($request)
     {
         try {
@@ -101,23 +113,25 @@ class OrderService
                 return null;
             }
             $checkoutTotals = $this->getCheckoutTotalsFromCart($cart);
-            $order = $this->saveOrderInDatabase($request->only($this->dataArray), $cart, $checkoutTotals);
+
+            $orderData = $request->only(array_merge($this->dataArray, [
+                'fulfillment_type', 'payment_method', 'payment_gateway', 'pickup_location_id',
+            ]));
+            $orderData['user_id'] = $request->user()->id;
+
+            $order = $this->orderCreationService->createOrder($orderData, $cart, $checkoutTotals);
             if (!$order) {
                 DB::rollBack();
                 return null;
             }
-            if (!$this->createOrderItems($order, $cart)) {
+            if (!$this->orderCreationService->createOrderItems($order, $cart)) {
                 DB::rollBack();
                 return null;
             }
-            $this->promotionService->incrementUsage($checkoutTotals['promotion']['id'] ?? null);
+            $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
             DB::commit();
-            try {
-                OrderCreated::dispatch($order);
-            } catch (\Throwable $e) {
-                report($e);
-            }
-            return $order;
+
+            return $order->load(['orderItems.product', 'orderItems.productVariant']);
         } catch (\InvalidArgumentException $e) {
             DB::rollBack();
             throw $e;
@@ -137,101 +151,6 @@ class OrderService
 
         return $this->promotionService->eligiblePromotionsPayload($cart);
     }
-
-    protected function saveOrderInDatabase($order, $cart, array $checkoutTotals)
-    {
-        $couponData = $this->getCoupon($cart?->coupon ?? null);
-        $order = Order::create([
-            'user_id' => auth()->user()->id,
-            'name' => $order['name'],
-            'user_phone' => $order['user_phone'],
-            'user_email' => $order['user_email'],
-            'address' => $order['address'],
-            'notes' => $order['notes'] ?? null,
-            'price' => $checkoutTotals['subtotal'],
-            'shipping_price' => null,
-            'total_price' => $checkoutTotals['final_total'],
-            'coupon' => $couponData?->code ?? null,
-            'coupon_discount' => $checkoutTotals['coupon_discount'] ?: null,
-            'coupon_discount_type' => $couponData?->discount_type ?? null,
-            'coupon_discount_max_amount' => $couponData?->max_discount_amount ?? null,
-            'promotion_id' => $checkoutTotals['promotion']['id'] ?? null,
-            'promotion_code' => $checkoutTotals['promotion']['code'] ?? null,
-            'promotion_type' => $checkoutTotals['promotion']['type'] ?? null,
-            'promotion_discount' => $checkoutTotals['promotion_discount'],
-            'status' => 'pending',
-        ]);
-        return $order;
-    }
-    private function createOrderItems($order, $cart)
-    {
-        foreach ($cart->items as $item) {
-            try {
-                $quantity = max(1, (int) ($item->quantity ?? 0));
-                $lineTotal = (float) ($item->total_price ?? 0);
-                $effectiveUnitPrice = round($lineTotal / $quantity, 2);
-                $promotionDiscountAmount = round(max(0, ((float) ($item->price ?? 0) * $quantity) - $lineTotal), 2);
-
-                $product = $item->product ?? null;
-                $productName = $product->name ?? 'No Name';
-                $productSku = $product->sku ?? null;
-
-                $flashSalePrice = null;
-                if ($product && ($product->has_flash_sale ?? false)) {
-                    $flashSale = $product->flash_sales()->valid()->where('id', $item->product->flash_sale_id)->first();
-                    $flashSalePrice = $flashSale?->price ?? null;
-                }
-
-                $discountPrice = null;
-                if ($product && ($product->has_discount ?? false)) {
-                    $discountPrice = $product->discount_amount ?? null;
-                }
-
-                $orderItem = $order->orderItems()->create([
-                    'product_id' => $item->product_id,
-                    'product_variant_id' => $item->product_variant_id,
-                    'product_name' => $productName,
-                    'product_quantity' => $quantity,
-                    'product_price' => $effectiveUnitPrice,
-                    'product_total_price' => round($lineTotal, 2),
-                    'product_sku' => $productSku,
-                    'product_flash_sale_price' => $flashSalePrice,
-                    'product_discount_price' => $discountPrice,
-                    'promotion_discount_amount' => $promotionDiscountAmount,
-                    'attributes' => $item->attributes ?? null,
-                    'is_gift' => (bool) ($item->is_gift ?? false),
-                    'promotion_id' => $item->promotion_id,
-                ]);
-
-                if (!$orderItem) {
-                    return false;
-                }
-            } catch (\Exception $e) {
-                report($e);
-                return false;
-            }
-        }
-        return true;
-    }
-
-
-
-
-    public function createTransaction($orderId, $invoiceId, string $paymentType)
-    {
-        $transaction = Transaction::create([
-            'order_id' => $orderId,
-            'user_id' => auth()->user()->id,
-            'invoice_id' => $invoiceId,
-            'payment_method' => $paymentType,
-        ]);
-        if (!$transaction) {
-            return false;
-        }
-        return $transaction;
-    }
-
-
 
 
 
@@ -359,13 +278,29 @@ class OrderService
         return (bool) $cart->items()->delete();
     }
 
-    public function changeOrderStatus($invoiceId, $status)
+    public function changeOrderStatus($invoiceId, $status, $orderId = null)
     {
-        $transaction = Transaction::where('invoice_id', $invoiceId)->first();
-        if (!$transaction) {
+        $order = null;
+        $transaction = null;
+
+        if ($invoiceId) {
+            $transaction = Transaction::where('invoice_id', $invoiceId)->first();
+            if ($transaction) {
+                $order = $transaction->order;
+            }
+        }
+
+        if (!$order && $orderId) {
+            $order = Order::find($orderId);
+            if ($order) {
+                $transaction = $order->transactions()->latest()->first();
+            }
+        }
+
+        if (!$order) {
             return false;
         }
-        $order = $transaction->order;
+
         $previousStatus = $order->status;
 
         if (!$order->update(['status' => $status])) {
@@ -376,11 +311,76 @@ class OrderService
             $this->recordCouponUsage($order);
         }
 
+        if ($transaction) {
+            if ($status === 'completed') {
+                $transaction->update([
+                    'status' => 'paid',
+                    'paid_at' => now(),
+                ]);
+            }
+
+            if ($status === 'cancelled') {
+                $transaction->update([
+                    'status' => 'failed',
+                ]);
+            }
+        }
+
+        event(new OrderStatusChanged($order));
+
         if ($status === 'cancelled' && $previousStatus === 'completed') {
             event(new OrderCancelled($order));
         }
 
         return $order;
+    }
+
+    public function markCodAsPaid(Order $order): void
+    {
+        $transaction = $order->transactions()
+            ->where('payment_method', 'cod')
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        if (!$transaction) {
+            throw new \RuntimeException('No pending COD transaction found.');
+        }
+
+        $transaction->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
+
+        $order->update(['status' => 'completed']);
+
+        $this->recordCouponUsage($order);
+
+        event(new \Marvel\Events\PaymentSuccess($order));
+    }
+
+    public function markCashierPaid(Order $order): void
+    {
+        $transaction = $order->transactions()
+            ->where('payment_method', 'pay_at_cashier')
+            ->where('status', 'pending')
+            ->latest()
+            ->first();
+
+        if (!$transaction) {
+            throw new \RuntimeException('No pending Pay at Cashier transaction found.');
+        }
+
+        $transaction->update([
+            'status' => 'paid',
+            'paid_at' => now(),
+        ]);
+
+        $order->update(['status' => 'completed']);
+
+        $this->recordCouponUsage($order);
+
+        event(new \Marvel\Events\PaymentSuccess($order));
     }
 
     private function recordCouponUsage($order): void
@@ -405,22 +405,4 @@ class OrderService
             ]
         );
     }
-
-    // public function getOrder($transactionId)
-    // {
-    //     $transaction = Transaction::where('invoice_id', $transactionId)->first();
-    //     if (!$transaction) {
-    //         return false;
-    //     }
-    //     return $order = $transaction->order;
-
-    // }
-
-    // public function sendAdminNotification($order)
-    // {
-    //     $admins = Admin::active()->whereHas('role', function ($q) {
-    //         $q->whereJsonContains('permissions', 'notification');
-    //     })->get();
-    //     Notification::send($admins, new CreateOrderNotification($order));
-    // }
 }

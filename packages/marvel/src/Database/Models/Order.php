@@ -14,7 +14,6 @@ class Order extends Model
 {
     use SoftDeletes;
 
-
     protected $table = 'orders';
 
     public $fillable = [
@@ -27,6 +26,10 @@ class Order extends Model
         'shipping_method',
         'expected_delivery_at',
         'fast_shipping_fee',
+        'fulfillment_type',
+        'payment_method',
+        'payment_gateway',
+        'pickup_location_id',
         'price',
         'shipping_price',
         'total_price',
@@ -46,7 +49,6 @@ class Order extends Model
         'expected_delivery_at' => 'datetime',
     ];
 
-
     protected $hidden = [
         'deleted_at'
     ];
@@ -54,94 +56,10 @@ class Order extends Model
     protected static function boot()
     {
         parent::boot();
-        // Order by created_at desc
         static::addGlobalScope('order', function (Builder $builder) {
             $builder->orderBy('created_at', 'desc');
         });
     }
-
-    // protected $with = ['customer', 'products.variation_options'];
-
-    /**
-     * @return belongsToMany
-     */
-    // public function products(): belongsToMany
-    // {
-    //     return $this->belongsToMany(Product::class)
-    //         ->withPivot('order_quantity', 'unit_price', 'subtotal', 'variation_option_id')
-    //         ->withTimestamps();
-    // }
-
-    /**
-     * @return belongsTo
-     */
-    // public function coupon(): belongsTo
-    // {
-    //     return $this->belongsTo(Coupon::class, 'coupon_id');
-    // }
-
-    // /**
-    //  * @return belongsTo
-    //  */
-    // public function customer(): belongsTo
-    // {
-    //     return $this->belongsTo(User::class, 'customer_id');
-    // }
-
-    // /**
-    //  * @return BelongsTo
-    //  */
-    // public function shop(): BelongsTo
-    // {
-    //     return $this->belongsTo(Shop::class, 'shop_id');
-    // }
-
-    // /**
-    //  * @return HasMany
-    //  */
-    // public function children()
-    // {
-    //     return $this->hasMany('Marvel\Database\Models\Order', 'parent_id', 'id');
-    // }
-
-    // /**
-    //  * @return HasOne
-    //  */
-    // public function parent_order()
-    // {
-    //     return $this->hasOne('Marvel\Database\Models\Order', 'id', 'parent_id');
-    // }
-
-    // /**
-    //  * @return HasOne
-    //  */
-    // public function refund()
-    // {
-    //     return $this->hasOne(Refund::class, 'order_id');
-    // }
-    // /**
-    //  * @return HasOne
-    //  */
-    // public function wallet_point()
-    // {
-    //     return $this->hasOne(OrderWalletPoint::class, 'order_id');
-    // }
-
-    // /**
-    //  * @return HasMany
-    //  */
-    // public function payment_intent()
-    // {
-    //     return $this->hasMany(PaymentIntent::class);
-    // }
-
-    // /**
-    //  * @return HasMany
-    //  */
-    // public function reviews(): HasMany
-    // {
-    //     return $this->hasMany(Review::class);
-    // }
 
     public function user(): BelongsTo
     {
@@ -158,7 +76,10 @@ class Order extends Model
         return $this->hasMany(Transaction::class);
     }
 
-  
+    public function pickupLocation(): BelongsTo
+    {
+        return $this->belongsTo(Resource::class, 'pickup_location_id');
+    }
 
     public function scopeForUser(Builder $query, int $userId): Builder
     {
@@ -175,6 +96,16 @@ class Order extends Model
         return $query->where('shipping_method', 'FAST');
     }
 
+    public function scopeDelivery(Builder $query): Builder
+    {
+        return $query->where('fulfillment_type', 'delivery');
+    }
+
+    public function scopePickup(Builder $query): Builder
+    {
+        return $query->where('fulfillment_type', 'pickup');
+    }
+
     public function getOrderNumberAttribute(): string
     {
         return 'ORD-' . str_pad((string) $this->id, 8, '0', STR_PAD_LEFT);
@@ -182,6 +113,21 @@ class Order extends Model
 
     public function getPaymentStatusAttribute(): string
     {
+        if (in_array($this->payment_method, ['cod', 'pay_at_cashier'])) {
+            $latestTransaction = $this->transactions()->latest()->first();
+            if ($latestTransaction) {
+                return match ($latestTransaction->status) {
+                    'paid' => PaymentStatus::SUCCESS,
+                    'failed' => PaymentStatus::FAILED,
+                    default => PaymentStatus::PENDING,
+                };
+            }
+            if (in_array($this->status, ['completed', 'delivered'])) {
+                return PaymentStatus::SUCCESS;
+            }
+            return PaymentStatus::PENDING;
+        }
+
         return match ($this->status) {
             'completed', 'delivered' => PaymentStatus::SUCCESS,
             'cancelled' => PaymentStatus::FAILED,

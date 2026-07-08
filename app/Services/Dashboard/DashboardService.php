@@ -124,7 +124,7 @@ class DashboardService
     public function getRecentOrders(Request $request, int $limit = 10)
     {
         return Cache::remember("dashboard_recent_orders_{$limit}", 300, function () use ($limit) {
-            return Order::with('user')
+            return Order::with(['user', 'pickupLocation'])
                 ->take($limit)
                 ->get();
         });
@@ -249,6 +249,15 @@ class DashboardService
                 return ['method' => $method, 'total' => round((float) $total, 2)];
             })->values();
 
+            $revenueByFulfillment = Order::where('status', 'completed')
+                ->select('fulfillment_type', DB::raw('SUM(total_price) as total'))
+                ->groupBy('fulfillment_type')
+                ->pluck('total', 'fulfillment_type');
+
+            $revenueByFulfillmentType = $revenueByFulfillment->map(function ($total, $type) {
+                return ['fulfillment_type' => $type ?: 'delivery', 'total' => round((float) $total, 2)];
+            })->values();
+
             return [
                 'daily_revenue' => [
                     'today'      => round($today, 2),
@@ -275,6 +284,7 @@ class DashboardService
                 ],
                 'average_order_value' => $aov,
                 'revenue_by_payment_method' => $revenueByPaymentMethod,
+                'revenue_by_fulfillment_type' => $revenueByFulfillmentType,
             ];
         });
     }

@@ -53,9 +53,12 @@ class CategoryService
     {
         return Category::query()
             ->active()
-            ->with(['products' => fn($q) => $this->applyChannelHomeFilter($q), 'children' => function ($query) {
-                $query->active()->withCount('products');
-            }])
+            ->with([
+                'products' => fn($q) => $this->applyChannelHomeFilter($q),
+                'children' => function ($query) {
+                    $query->active()->withCount('products');
+                },
+            ])
             ->withCount('products')
             ->where('slug', $slug)
             ->firstOrFail();

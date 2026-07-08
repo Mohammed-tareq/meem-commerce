@@ -32,6 +32,10 @@ class Kernel extends ConsoleKernel
         $schedule->command('cart:expire')
             ->hourly()
             ->withoutOverlapping();
+
+        $schedule->command('orders:cancel-unpaid')
+            ->hourly()
+            ->withoutOverlapping();
         Schedule::command('model:prune', [
             '--model' => [OneTimePassword::class],
         ])->daily();

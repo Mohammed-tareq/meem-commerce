@@ -2,6 +2,8 @@
 
 namespace App\Services\General;
 
+use App\Events\OrderCreated;
+use App\Services\Checkout\OrderCreationService;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -22,6 +24,7 @@ class FastShippingService
         private FastShippingRepository $fastShippingRepo,
         private PromotionService $promotionService,
         private CartInventoryService $cartInventoryService,
+        private OrderCreationService $orderCreationService,
     ) {}
 
     public function getStatus(): array
@@ -86,42 +89,36 @@ class FastShippingService
 
             $finalTotal = round(max(0, (float) $checkoutTotals['final_total'] + $fastShippingFee), 2);
 
-            $orderData = $request->only(['name', 'user_phone', 'user_email', 'address', 'notes']);
-            $order = Order::create([
-                'user_id' => $user->id,
-                'name' => $orderData['name'],
-                'user_phone' => $orderData['user_phone'],
-                'user_email' => $orderData['user_email'],
-                'address' => $orderData['address'],
-                'notes' => $orderData['notes'] ?? null,
-                'shipping_method' => ShippingMethod::FAST,
-                'expected_delivery_at' => $eta,
-                'fast_shipping_fee' => $fastShippingFee,
-                'price' => $checkoutTotals['subtotal'],
-                'shipping_price' => null,
-                'total_price' => $finalTotal,
-                'coupon' => $checkoutTotals['coupon'] ?? null,
-                'coupon_discount' => $checkoutTotals['coupon_discount'] ?? null,
-                'coupon_discount_type' => $checkoutTotals['coupon_discount_type'] ?? null,
-                'coupon_discount_max_amount' => $checkoutTotals['coupon_discount_max_amount'] ?? null,
-                'promotion_id' => $checkoutTotals['promotion']['id'] ?? null,
-                'promotion_code' => $checkoutTotals['promotion']['code'] ?? null,
-                'promotion_type' => $checkoutTotals['promotion']['type'] ?? null,
-                'promotion_discount' => $checkoutTotals['promotion_discount'],
-                'status' => 'pending',
+            $orderData = $request->only(['name', 'user_phone', 'user_email', 'address', 'notes',
+                'fulfillment_type', 'payment_method', 'payment_gateway', 'pickup_location_id',
             ]);
+            $orderData['user_id'] = $user->id;
+
+            $checkoutTotals['final_total'] = $finalTotal;
+            $checkoutTotals['coupon'] = $cart->coupon;
+            $checkoutTotals['coupon_discount_type'] = $checkoutTotals['coupon_discount_type'] ?? null;
+            $checkoutTotals['coupon_discount_max_amount'] = $checkoutTotals['coupon_discount_max_amount'] ?? null;
+
+            $order = $this->orderCreationService->createOrder(
+                $orderData,
+                $cart,
+                $checkoutTotals,
+                ShippingMethod::FAST,
+                $eta,
+                $fastShippingFee
+            );
 
             if (!$order) {
                 DB::rollBack();
                 throw new Exception('Failed to create order.');
             }
 
-            if (!$this->createOrderItems($order, $cart)) {
+            if (!$this->orderCreationService->createOrderItems($order, $cart)) {
                 DB::rollBack();
                 throw new Exception('Failed to add items to order.');
             }
 
-            $this->promotionService->incrementUsage($checkoutTotals['promotion']['id'] ?? null);
+            $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
 
             $cart->update(['total_price' => $finalTotal]);
 
@@ -189,63 +186,6 @@ class FastShippingService
     {
         return app(\Marvel\Services\Pricing\ProductPricingService::class)
             ->calculateCouponPrice($coupon, $price);
-    }
-
-    private function createOrderItems(Order $order, Cart $cart): bool
-    {
-        foreach ($cart->items as $item) {
-            try {
-                $quantity = max(1, (int) ($item->quantity ?? 0));
-                $lineTotal = (float) ($item->total_price ?? 0);
-                $effectiveUnitPrice = $quantity > 0 ? round($lineTotal / $quantity, 2) : 0;
-                $promotionDiscountAmount = round(max(0, ((float) ($item->price ?? 0) * $quantity) - $lineTotal), 2);
-
-                $product = $item->product;
-                $productName = $product?->name ?? 'No Name';
-                $productSku = $product?->sku ?? null;
-                $shopName = null;
-                if ($product && method_exists($product, 'shops')) {
-                    $shopName = $product->shops()->first()?->name ?? null;
-                }
-
-                $flashSalePrice = null;
-                if ($product && ($product->has_flash_sale ?? false)) {
-                    $flashSale = $product->flash_sales()->valid()->where('id', $product->flash_sale_id)->first();
-                    $flashSalePrice = $flashSale?->price ?? null;
-                }
-
-                $discountPrice = null;
-                if ($product && ($product->has_discount ?? false)) {
-                    $discountPrice = $product->discount_amount ?? null;
-                }
-
-                $orderItem = $order->orderItems()->create([
-                    'product_id' => $item->product_id,
-                    'product_variant_id' => $item->product_variant_id,
-                    'product_name' => $productName,
-                    'product_quantity' => $quantity,
-                    'product_price' => $effectiveUnitPrice,
-                    'product_total_price' => round($lineTotal, 2),
-                    'product_sku' => $productSku,
-                    'shop_name' => $shopName,
-                    'product_flash_sale_price' => $flashSalePrice,
-                    'product_discount_price' => $discountPrice,
-                    'promotion_discount_amount' => $promotionDiscountAmount,
-                    'attributes' => $item->attributes ?? null,
-                    'is_gift' => (bool) ($item->is_gift ?? false),
-                    'promotion_id' => $item->promotion_id,
-                ]);
-
-                if (!$orderItem) {
-                    return false;
-                }
-            } catch (Exception $e) {
-                report($e);
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private function getLimit(Request $request): int

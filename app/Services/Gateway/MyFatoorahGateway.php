@@ -1,0 +1,107 @@
+<?php
+
+namespace App\Services\Gateway;
+
+use App\DTOs\GatewayResult;
+use App\Services\General\MyfatoraService;
+use App\Services\Payment\Contracts\PaymentGatewayContract;
+use Marvel\Database\Models\Order;
+
+class MyFatoorahGateway implements PaymentGatewayContract
+{
+    public function __construct(
+        private MyfatoraService $myfatoraService,
+    ) {}
+
+    public function createInvoice(
+        Order $order,
+        float $amount,
+        string $callbackUrl,
+        string $errorUrl,
+        array $metadata = []
+    ): GatewayResult {
+        $data = [
+            'InvoiceValue' => $amount,
+            'CustomerName' => $order->name ?? 'Customer',
+            'NotificationOption' => 'LNK',
+            'DisplayCurrencyIso' => 'EGP',
+            'MobileCountryCode' => '+20',
+            'CustomerMobile' => $order->user_phone,
+            'CustomerEmail' => $order->user_email,
+            'language' => app()->getLocale() == 'ar' ? 'ar' : 'en',
+            'CallBackUrl' => $callbackUrl,
+            'ErrorUrl' => $errorUrl,
+        ];
+
+        $response = $this->myfatoraService->createInvoice($data);
+
+        if (!is_array($response)) {
+            return new GatewayResult(
+                success: false,
+                errorMessage: 'No response from payment gateway',
+            );
+        }
+
+        $invoiceUrl = data_get($response, 'Data.InvoiceURL');
+        $invoiceId = data_get($response, 'Data.InvoiceId');
+
+        if (!$invoiceUrl || !$invoiceId) {
+            return new GatewayResult(
+                success: false,
+                errorMessage: data_get($response, 'Data.InvoiceError') ?? 'Invalid gateway response',
+                rawResponse: $response,
+            );
+        }
+
+        return new GatewayResult(
+            success: true,
+            redirectUrl: $invoiceUrl,
+            gatewayTransactionId: (string) $invoiceId,
+            status: 'pending',
+            rawResponse: $response,
+        );
+    }
+
+    public function verifyPayment(string $gatewayTransactionId): GatewayResult
+    {
+        $data = [
+            'Key' => $gatewayTransactionId,
+            'KeyType' => 'PaymentId',
+        ];
+
+        $response = $this->myfatoraService->checkInvoice($data);
+
+        if (!is_array($response)) {
+            return new GatewayResult(
+                success: false,
+                errorMessage: 'No response from payment gateway',
+            );
+        }
+
+        $invoiceStatus = data_get($response, 'Data.InvoiceStatus');
+        $invoiceId = data_get($response, 'Data.InvoiceId');
+
+        if (!$invoiceStatus) {
+            return new GatewayResult(
+                success: false,
+                errorMessage: 'Invalid gateway response',
+                rawResponse: $response,
+            );
+        }
+
+        $isPaid = $invoiceStatus === 'Paid';
+
+        return new GatewayResult(
+            success: $isPaid,
+            gatewayTransactionId: (string) $invoiceId,
+            status: $isPaid ? 'paid' : 'failed',
+            errorMessage: $isPaid ? null : (data_get($response, 'Data.InvoiceError') ?? 'Payment not completed'),
+            rawResponse: $response,
+        );
+    }
+
+    public function name(): string
+    {
+        return 'myfatoorah';
+    }
+}

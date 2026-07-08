@@ -50,6 +50,11 @@ Route::prefix('general')->middleware(['api', 'check-lang'])->group(function () {
         Route::post('checkout', 'checkout')->middleware(['auth:sanctum', 'check-email']);
         Route::get('checkout/callback', 'checkoutCallback')->name('api.checkout.callback');
         Route::get('checkout/error', 'checkoutErrorCallback')->name('api.checkout.errorCallback');
+        //========================= payment =========================//
+        Route::get('transactions/{uuid}/qr', 'getTransactionQr')->middleware(['auth:sanctum', 'check-email']);
+        //========================= payment admin =========================//
+        Route::post('orders/{orderId}/mark-cod-paid', 'markCodAsPaid')->middleware(['auth:sanctum', 'permission:update-order-status', 'check-email']);
+        Route::post('orders/{orderId}/mark-paid', 'markCashierPaid')->middleware(['auth:sanctum', 'permission:update-order-status', 'check-email']);
     });
 
     //========================= fast shipping =========================//

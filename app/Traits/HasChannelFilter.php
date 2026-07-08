@@ -3,11 +3,10 @@
 namespace App\Traits;
 
 use App\Contexts\ChannelContext;
-use Illuminate\Database\Eloquent\Builder;
 
 trait HasChannelFilter
 {
-    private function applyChannelHomeFilter(Builder $query): void
+    private function applyChannelHomeFilter($query): void
     {
         if (!config('channel.enabled', true)) {
             return;

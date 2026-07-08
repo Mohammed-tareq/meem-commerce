@@ -1,0 +1,115 @@
+<?php
+
+namespace App\Services\Checkout;
+
+use App\Events\OrderCreated;
+use Illuminate\Support\Facades\DB;
+use Marvel\Database\Models\Cart;
+use Marvel\Database\Models\Order;
+use Marvel\Database\Models\Promotion;
+
+class OrderCreationService
+{
+    public function __construct(
+        private \App\Services\General\PromotionService $promotionService,
+    ) {}
+
+    public function createOrder(array $orderData, Cart $cart, array $checkoutTotals, ?string $shippingMethod = null, ?\DateTime $eta = null, ?float $fastShippingFee = null): ?Order
+    {
+        $order = Order::create([
+            'user_id' => $orderData['user_id'] ?? auth()->id(),
+            'name' => $orderData['name'] ?? null,
+            'user_phone' => $orderData['user_phone'] ?? null,
+            'user_email' => $orderData['user_email'] ?? null,
+            'address' => $orderData['address'] ?? null,
+            'notes' => $orderData['notes'] ?? null,
+            'shipping_method' => $shippingMethod ?? 'SCHEDULED',
+            'expected_delivery_at' => $eta,
+            'fast_shipping_fee' => $fastShippingFee ?? 0,
+            'fulfillment_type' => $orderData['fulfillment_type'] ?? 'delivery',
+            'payment_method' => $orderData['payment_method'] ?? 'online',
+            'payment_gateway' => $orderData['payment_gateway'] ?? null,
+            'pickup_location_id' => $orderData['pickup_location_id'] ?? null,
+            'price' => $checkoutTotals['subtotal'],
+            'shipping_price' => null,
+            'total_price' => $checkoutTotals['final_total'],
+            'coupon' => $checkoutTotals['coupon'] ?? $cart->coupon ?? null,
+            'coupon_discount' => $checkoutTotals['coupon_discount'] ?: null,
+            'coupon_discount_type' => $checkoutTotals['coupon_discount_type'] ?? null,
+            'coupon_discount_max_amount' => $checkoutTotals['coupon_discount_max_amount'] ?? null,
+            'promotion_id' => $checkoutTotals['promotion']['id'] ?? null,
+            'promotion_code' => $checkoutTotals['promotion']['code'] ?? null,
+            'promotion_type' => $checkoutTotals['promotion']['type'] ?? null,
+            'promotion_discount' => $checkoutTotals['promotion_discount'] ?? 0,
+            'status' => 'pending',
+        ]);
+
+        if (!$order) {
+            return null;
+        }
+
+        return $order;
+    }
+
+    public function createOrderItems(Order $order, Cart $cart): bool
+    {
+        foreach ($cart->items as $item) {
+            try {
+                $quantity = max(1, (int) ($item->quantity ?? 0));
+                $lineTotal = (float) ($item->total_price ?? 0);
+                $effectiveUnitPrice = $quantity > 0 ? round($lineTotal / $quantity, 2) : 0;
+                $promotionDiscountAmount = round(max(0, ((float) ($item->price ?? 0) * $quantity) - $lineTotal), 2);
+
+                $product = $item->product ?? null;
+                $productName = $product->name ?? 'No Name';
+                $productSku = $product->sku ?? null;
+
+                $flashSalePrice = null;
+                if ($product && ($product->has_flash_sale ?? false)) {
+                    $flashSale = $product->flash_sales()->valid()->where('id', $item->product->flash_sale_id)->first();
+                    $flashSalePrice = $flashSale?->price ?? null;
+                }
+
+                $discountPrice = null;
+                if ($product && ($product->has_discount ?? false)) {
+                    $discountPrice = $product->discount_amount ?? null;
+                }
+
+                $orderItem = $order->orderItems()->create([
+                    'product_id' => $item->product_id,
+                    'product_variant_id' => $item->product_variant_id,
+                    'product_name' => $productName,
+                    'product_quantity' => $quantity,
+                    'product_price' => $effectiveUnitPrice,
+                    'product_total_price' => round($lineTotal, 2),
+                    'product_sku' => $productSku,
+                    'product_flash_sale_price' => $flashSalePrice,
+                    'product_discount_price' => $discountPrice,
+                    'promotion_discount_amount' => $promotionDiscountAmount,
+                    'attributes' => $item->attributes ?? null,
+                    'is_gift' => (bool) ($item->is_gift ?? false),
+                    'promotion_id' => $item->promotion_id,
+                ]);
+
+                if (!$orderItem) {
+                    return false;
+                }
+            } catch (\Exception $e) {
+                report($e);
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public function finalizeOrder(Order $order, array $checkoutTotals): void
+    {
+        $this->promotionService->incrementUsage($checkoutTotals['promotion']['id'] ?? null);
+
+        try {
+            OrderCreated::dispatch($order);
+        } catch (\Throwable $e) {
+            report($e);
+        }
+    }
+}
