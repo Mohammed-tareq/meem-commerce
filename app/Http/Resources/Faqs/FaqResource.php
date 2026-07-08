@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Resources\Banner;
+namespace App\Http\Resources\Faqs;
 
 use App\Http\Resources\Product\ProductMiniResource;
 use Illuminate\Http\Request;
