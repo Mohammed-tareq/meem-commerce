@@ -67,5 +67,17 @@ return [
     'user_activated' => 'User activated',
     'user_deactivated' => 'User deactivated',
     'user_role_changed' => 'User role changed',
+    'order_created' => 'Order created',
+    'order_cancelled' => 'Order cancelled',
+    'order_status_changed' => 'Order status changed',
+    'payment_succeeded' => 'Payment succeeded',
+    'payment_failed' => 'Payment failed',
+
     'logs_fetched' => 'Activity logs fetched successfully.',
+
+    'pickup_location_created' => 'Pickup location created',
+    'pickup_location_updated' => 'Pickup location updated',
+    'pickup_location_deleted' => 'Pickup location deleted',
+    'pickup_location_activated' => 'Pickup location activated',
+    'pickup_location_deactivated' => 'Pickup location deactivated',
 ];

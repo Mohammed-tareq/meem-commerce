@@ -16,9 +16,9 @@ use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\User;
 use Marvel\Enums\ShippingMethod;
-use Marvel\Events\OrderCancelled;
-use Marvel\Events\PaymentFailed;
-use Marvel\Events\PaymentSuccess;
+use App\Events\OrderCancelled;
+use App\Events\PaymentFailed;
+use App\Events\PaymentSucceeded;
 use Marvel\Http\Requests\OrderCreateRequest;
 use Marvel\Traits\ApiResponse;
 
@@ -93,7 +93,7 @@ class OrderController extends Controller
         $fulfillmentType = $request->input('fulfillment_type', 'delivery');
 
         if ($paymentMethod === 'cod' && $fulfillmentType === 'pickup') {
-            return $this->apiResponse('COD is not available for pickup. Use pay_at_cashier instead.', 422, false);
+            return $this->apiResponse(COD_NOT_AVAILABLE_FOR_PICKUP, 422, false);
         }
 
         $request->merge([
@@ -124,7 +124,7 @@ class OrderController extends Controller
             return $this->paymentCheckoutHandler->handleCashierQrPayment($request, $order);
         }
 
-        return $this->apiResponse('Invalid payment method', 422, false);
+        return $this->apiResponse(INVALID_PAYMENT_METHOD, 422, false);
     }
 
     public function markCodAsPaid(int $orderId, Request $request): JsonResponse
@@ -158,12 +158,12 @@ class OrderController extends Controller
         $transaction = Transaction::byUuid($uuid)->first();
 
         if (!$transaction) {
-            return $this->apiResponse('Transaction not found', 404, false);
+            return $this->apiResponse(TRANSACTION_NOT_FOUND, 404, false);
         }
 
         $order = $transaction->order;
         if (!$order || $order->user_id !== $request->user()->id) {
-            return $this->apiResponse('Unauthorized', 403, false);
+            return $this->apiResponse(UNAUTHORIZED_TRANSACTION_ACCESS, 403, false);
         }
 
         $svg = $this->cashierQrService->generateSvg($transaction);
@@ -182,7 +182,7 @@ class OrderController extends Controller
         try {
             $gateway = $this->paymentGatewayFactory->make('myfatoorah');
         } catch (\App\Exceptions\UnsupportedGatewayException $e) {
-            return $this->apiResponse('Payment gateway unavailable', 500, false);
+            return $this->apiResponse(PAYMENT_GATEWAY_UNAVAILABLE, 500, false);
         }
 
         $result = $gateway->verifyPayment($paymentId);
@@ -207,13 +207,6 @@ class OrderController extends Controller
             if ($transaction) {
                 $order = $transaction->order;
                 $this->orderService->changeOrderStatus($transaction->invoice_id, 'cancelled');
-                try {
-                    if ($order) {
-                        event(new OrderCancelled($order));
-                    }
-                } catch (\Throwable $e) {
-                    report($e);
-                }
                 if ($order && ($user = User::find($order->user_id))) {
                     $cart = $this->cartInventoryService->getActiveCartForUser($user);
                     if ($cart) {
@@ -242,6 +235,24 @@ class OrderController extends Controller
         $order = null;
         if ($transaction) {
             $order = $this->orderService->changeOrderStatus($transaction->invoice_id, 'completed');
+
+            if ($order && $result->amount !== null && abs((float) $result->amount - (float) $order->total_price) > 0.01) {
+                \Log::warning('Payment amount mismatch', [
+                    'order_id' => $order->id,
+                    'expected' => (float) $order->total_price,
+                    'received' => $result->amount,
+                    'currency' => $result->currency,
+                ]);
+            }
+
+            if ($order && $result->currency !== null && $result->currency !== config('payment.default_currency', 'EGP')) {
+                \Log::warning('Payment currency mismatch', [
+                    'order_id' => $order->id,
+                    'expected' => config('payment.default_currency', 'EGP'),
+                    'received' => $result->currency,
+                ]);
+            }
+
             if ($order) {
                 if ($user = User::find($order->user_id)) {
                     $cart = $this->cartInventoryService->getActiveCartForUser($user);
@@ -259,7 +270,7 @@ class OrderController extends Controller
 
         try {
             if ($order) {
-                event(new PaymentSuccess($order));
+                event(new PaymentSucceeded($order));
             }
         } catch (\Throwable $e) {
             report($e);
@@ -293,7 +304,7 @@ class OrderController extends Controller
         try {
             $gateway = $this->paymentGatewayFactory->make('myfatoorah');
         } catch (\App\Exceptions\UnsupportedGatewayException $e) {
-            return $this->apiResponse('Payment gateway unavailable', 500, false);
+            return $this->apiResponse(PAYMENT_GATEWAY_UNAVAILABLE, 500, false);
         }
 
         $result = $gateway->verifyPayment($paymentId);
@@ -316,13 +327,6 @@ class OrderController extends Controller
 
         if ($transaction && (!$invoiceStatus || $invoiceStatus !== 'paid')) {
             $order = $this->orderService->changeOrderStatus($transaction->invoice_id, 'cancelled');
-            try {
-                if (isset($order) && $order) {
-                    event(new OrderCancelled($order));
-                }
-            } catch (\Throwable $e) {
-                report($e);
-            }
             if ($order && ($user = User::find($order->user_id))) {
                 $cart = $this->cartInventoryService->getActiveCartForUser($user);
                 if ($cart) {

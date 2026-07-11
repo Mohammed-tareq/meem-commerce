@@ -32,7 +32,7 @@ class FastCheckoutRequest extends FormRequest
                 'nullable',
                 'integer',
                 Rule::requiredIf(fn () => $this->input('fulfillment_type') === 'pickup'),
-                'exists:resources,id',
+                'exists:pickup_locations,id',
             ],
         ];
     }

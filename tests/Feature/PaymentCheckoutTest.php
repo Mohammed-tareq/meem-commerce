@@ -30,7 +30,7 @@ use Marvel\Database\Models\Order;
 use Marvel\Database\Models\OrderProduct;
 use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\Country;
-use Marvel\Database\Models\Resource;
+use Marvel\Database\Models\PickupLocation;
 use Marvel\Enums\ShippingMethod;
 use Tests\TestCase;
 
@@ -124,6 +124,16 @@ class PaymentCheckoutTest extends TestCase
             $table->string('name');
             $table->boolean('status')->default(true);
             $table->boolean('is_fast_shipping_enabled')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('shipping_prices', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('governorate_id')->constrained()->cascadeOnDelete();
+            $table->decimal('price', 10, 2)->default(0);
+            $table->integer('estimated_days')->nullable();
+            $table->decimal('free_shipping_over', 10, 2)->nullable();
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
 
@@ -268,9 +278,25 @@ class PaymentCheckoutTest extends TestCase
             $table->timestamps();
         });
 
+        Schema::create('pickup_locations', function (Blueprint $table) {
+            $table->id();
+            $table->string('store_name');
+            $table->text('address');
+            $table->string('phone');
+            $table->string('email')->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
+            $table->json('working_hours')->nullable();
+            $table->boolean('status')->default(true);
+            $table->integer('display_order')->default(0);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('governorate_id')->nullable();
             $table->string('name')->nullable();
             $table->string('user_phone')->nullable();
             $table->string('user_email')->nullable();
@@ -281,6 +307,10 @@ class PaymentCheckoutTest extends TestCase
             $table->string('payment_method', 30)->nullable();
             $table->string('payment_gateway', 50)->nullable();
             $table->unsignedBigInteger('pickup_location_id')->nullable();
+            $table->string('pickup_location_name')->nullable();
+            $table->text('pickup_location_address')->nullable();
+            $table->string('pickup_location_phone')->nullable();
+            $table->string('pickup_location_coordinates')->nullable();
             $table->dateTime('expected_delivery_at')->nullable();
             $table->decimal('fast_shipping_fee', 10, 2)->default(0);
             $table->decimal('price', 10, 2)->default(0);
@@ -448,6 +478,20 @@ class PaymentCheckoutTest extends TestCase
             'language' => 'en',
             'options' => [],
         ]);
+
+        Country::create(['name' => 'Egypt', 'slug' => 'egypt', 'status' => true]);
+        Governorate::create([
+            'country_id' => 1,
+            'name' => 'Cairo',
+            'status' => true,
+        ]);
+        \Marvel\Database\Models\ShippingPrice::create([
+            'governorate_id' => 1,
+            'price' => 50.00,
+            'estimated_days' => 3,
+            'free_shipping_over' => 500.00,
+            'status' => true,
+        ]);
     }
 
     private function createActiveCart(): Cart
@@ -502,12 +546,12 @@ class PaymentCheckoutTest extends TestCase
         return $cart;
     }
 
-    private function createPickupLocation(): Resource
+    private function createPickupLocation(): PickupLocation
     {
-        return Resource::create([
-            'name' => 'Main Store',
-            'slug' => 'main-store',
-            'type' => 'pickup_location',
+        return PickupLocation::create([
+            'store_name' => 'Main Store',
+            'address' => '123 Main St',
+            'phone' => '01000000000',
             'status' => true,
         ]);
     }
@@ -565,6 +609,7 @@ class PaymentCheckoutTest extends TestCase
             'address' => ['street' => 'Test St'],
             'payment_method' => 'cod',
             'fulfillment_type' => 'delivery',
+            'governorate_id' => 1,
         ]);
 
         $response->assertStatus(200);
@@ -970,6 +1015,7 @@ class PaymentCheckoutTest extends TestCase
             'address' => ['street' => 'Test St'],
             'payment_method' => 'cod',
             'fulfillment_type' => 'delivery',
+            'governorate_id' => 1,
         ]);
 
         $response->assertStatus(200);
@@ -1119,7 +1165,7 @@ class PaymentCheckoutTest extends TestCase
     /** @test */
     public function mark_cod_as_paid_updates_transaction_and_order()
     {
-        Event::fake([\Marvel\Events\PaymentSuccess::class]);
+        Event::fake([\App\Events\PaymentSucceeded::class]);
 
         $order = Order::create([
             'user_id' => $this->user->id,
@@ -1202,5 +1248,160 @@ class PaymentCheckoutTest extends TestCase
     {
         $this->assertTrue(defined(\Marvel\Enums\OrderStatus::class . '::READY_FOR_PICKUP'));
         $this->assertEquals('order-ready-for-pickup', \Marvel\Enums\OrderStatus::READY_FOR_PICKUP);
+    }
+
+    // ========== Governorate Shipping Price ==========
+
+    /** @test */
+    public function checkout_with_delivery_and_governorate_stores_shipping_price()
+    {
+        Sanctum::actingAs($this->user);
+        $this->createActiveCart();
+
+        $response = $this->postJson(self::PREFIX . '/general/checkout', [
+            'name' => 'Test User',
+            'user_phone' => '01000000000',
+            'user_email' => 'test@test.com',
+            'address' => ['street' => 'Test St'],
+            'payment_method' => 'cod',
+            'fulfillment_type' => 'delivery',
+            'governorate_id' => 1,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+
+        $order = Order::where('user_id', $this->user->id)->latest()->first();
+        $this->assertEquals(1, $order->governorate_id);
+        $this->assertEquals(50.00, $order->shipping_price);
+        $this->assertEquals(150.00, $order->total_price);
+    }
+
+    /** @test */
+    public function checkout_with_governorate_missing_shipping_price_defaults_to_zero()
+    {
+        Sanctum::actingAs($this->user);
+        $this->createActiveCart();
+
+        Governorate::create([
+            'country_id' => 1,
+            'name' => 'Alexandria',
+            'status' => true,
+        ]);
+
+        $response = $this->postJson(self::PREFIX . '/general/checkout', [
+            'name' => 'Test User',
+            'user_phone' => '01000000000',
+            'user_email' => 'test@test.com',
+            'address' => ['street' => 'Test St'],
+            'payment_method' => 'cod',
+            'fulfillment_type' => 'delivery',
+            'governorate_id' => 2,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+
+        $order = Order::where('user_id', $this->user->id)->latest()->first();
+        $this->assertEquals(2, $order->governorate_id);
+        $this->assertEquals(0, $order->shipping_price);
+    }
+
+    /** @test */
+    public function checkout_with_free_shipping_threshold_met_charges_zero_shipping()
+    {
+        Sanctum::actingAs($this->user);
+        $cart = Cart::create([
+            'user_id' => $this->user->id,
+            'status' => 'active',
+            'total_price' => 600.00,
+        ]);
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $this->product->id,
+            'quantity' => 6,
+            'price' => 100.00,
+            'total_price' => 600.00,
+            'shipping_method' => 'SCHEDULED',
+        ]);
+
+        $response = $this->postJson(self::PREFIX . '/general/checkout', [
+            'name' => 'Test User',
+            'user_phone' => '01000000000',
+            'user_email' => 'test@test.com',
+            'address' => ['street' => 'Test St'],
+            'payment_method' => 'cod',
+            'fulfillment_type' => 'delivery',
+            'governorate_id' => 1,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+
+        $order = Order::where('user_id', $this->user->id)->latest()->first();
+        $this->assertEquals(0, $order->shipping_price);
+    }
+
+    /** @test */
+    public function checkout_without_governorate_id_still_works_for_non_delivery()
+    {
+        Sanctum::actingAs($this->user);
+        $this->createActiveCart();
+        $this->createPickupLocation();
+
+        $response = $this->postJson(self::PREFIX . '/general/checkout', [
+            'name' => 'Test User',
+            'user_phone' => '01000000000',
+            'user_email' => 'test@test.com',
+            'address' => ['street' => 'Test St'],
+            'payment_method' => 'pay_at_cashier',
+            'fulfillment_type' => 'pickup',
+            'pickup_location_id' => 1,
+        ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('success', true);
+
+        $order = Order::where('user_id', $this->user->id)->latest()->first();
+        $this->assertNull($order->governorate_id);
+    }
+
+    /** @test */
+    public function checkout_with_delivery_rejects_missing_governorate_id()
+    {
+        Sanctum::actingAs($this->user);
+        $this->createActiveCart();
+
+        $response = $this->postJson(self::PREFIX . '/general/checkout', [
+            'name' => 'Test User',
+            'user_phone' => '01000000000',
+            'user_email' => 'test@test.com',
+            'address' => ['street' => 'Test St'],
+            'payment_method' => 'cod',
+            'fulfillment_type' => 'delivery',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonFragment(['governorate_id' => ['The governorate field is required.']]);
+    }
+
+    /** @test */
+    public function checkout_with_invalid_governorate_id_is_rejected()
+    {
+        Sanctum::actingAs($this->user);
+        $this->createActiveCart();
+
+        $response = $this->postJson(self::PREFIX . '/general/checkout', [
+            'name' => 'Test User',
+            'user_phone' => '01000000000',
+            'user_email' => 'test@test.com',
+            'address' => ['street' => 'Test St'],
+            'payment_method' => 'cod',
+            'fulfillment_type' => 'delivery',
+            'governorate_id' => 999,
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonFragment(['governorate_id' => ['The selected governorate is invalid.']]);
     }
 }

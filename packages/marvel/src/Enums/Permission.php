@@ -220,4 +220,10 @@ final class Permission extends Enum
     public const REJECT_ABUSIVE_REPORT = 'reject-abusive-report';
     public const VIEW_ATTRIBUTES = 'view-attributes';
     public const MANAGE_SHIPPING_PRICES = 'manage-shipping-prices';
+
+    // 📍 Pickup Locations
+    public const VIEW_PICKUP_LOCATIONS = 'view-pickup-locations';
+    public const CREATE_PICKUP_LOCATION = 'create-pickup-location';
+    public const UPDATE_PICKUP_LOCATION = 'update-pickup-location';
+    public const DELETE_PICKUP_LOCATION = 'delete-pickup-location';
 }

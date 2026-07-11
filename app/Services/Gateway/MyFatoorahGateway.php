@@ -80,6 +80,8 @@ class MyFatoorahGateway implements PaymentGatewayContract
 
         $invoiceStatus = data_get($response, 'Data.InvoiceStatus');
         $invoiceId = data_get($response, 'Data.InvoiceId');
+        $invoiceAmount = data_get($response, 'Data.InvoiceValue');
+        $invoiceCurrency = data_get($response, 'Data.DisplayCurrencyIso');
 
         if (!$invoiceStatus) {
             return new GatewayResult(
@@ -94,6 +96,8 @@ class MyFatoorahGateway implements PaymentGatewayContract
         return new GatewayResult(
             success: $isPaid,
             gatewayTransactionId: (string) $invoiceId,
+            amount: $invoiceAmount !== null ? (float) $invoiceAmount : null,
+            currency: $invoiceCurrency,
             status: $isPaid ? 'paid' : 'failed',
             errorMessage: $isPaid ? null : (data_get($response, 'Data.InvoiceError') ?? 'Payment not completed'),
             rawResponse: $response,

@@ -195,6 +195,11 @@ return [
     'MESSAGE.CHECKOUT_SUCCESSFUL' => 'تم الدفع بنجاح',
     'ERROR.MISSING_PAYMENT_ID' => 'معرّف الدفع مفقود',
     'ERROR.INVALID_PAYMENT_RESPONSE' => 'استجابة دفع غير صالحة',
+    'ERROR.COD_NOT_AVAILABLE_FOR_PICKUP' => 'الدفع عند الاستلام غير متاح للاستلام. استخدم الدفع عند الكاشير بدلاً من ذلك.',
+    'ERROR.INVALID_PAYMENT_METHOD' => 'طريقة دفع غير صالحة',
+    'ERROR.TRANSACTION_NOT_FOUND' => 'المعاملة غير موجودة',
+    'ERROR.UNAUTHORIZED_TRANSACTION_ACCESS' => 'غير مصرح',
+    'ERROR.PAYMENT_GATEWAY_UNAVAILABLE' => 'بوابة الدفع غير متاحة',
     'MESSAGE.PAYMENT_SUCCESSFUL' => 'تم الدفع بنجاح',
     'MESSAGE.BRANDS_REORDERED_SUCCESSFULLY' => 'تمت إعادة ترتيب العلامات التجارية بنجاح',
     'MESSAGE.FLASH_SALE_REORDERED_SUCCESSFULLY' => 'تمت إعادة ترتيب التخفيضات بنجاح',
@@ -250,4 +255,8 @@ return [
     'DASHBOARD.COUPON_ANALYTICS_FETCHED' => 'تم جلب تحليلات القسائم بنجاح',
     'DASHBOARD.CART_ANALYTICS_FETCHED' => 'تم جلب تحليلات السلة بنجاح',
     'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'تم جلب تحليلات المالية بنجاح',
+
+    'MESSAGE.PICKUP_LOCATION_CREATED_SUCCESSFULLY' => 'تم إنشاء موقع الاستلام بنجاح',
+    'MESSAGE.PICKUP_LOCATION_UPDATED_SUCCESSFULLY' => 'تم تحديث موقع الاستلام بنجاح',
+    'MESSAGE.PICKUP_LOCATION_DELETED_SUCCESSFULLY' => 'تم حذف موقع الاستلام بنجاح',
 ];

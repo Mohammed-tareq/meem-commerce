@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Product;
+use Marvel\Enums\ShippingMethod;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Prettus\Repository\Exceptions\RepositoryException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -96,7 +97,7 @@ class CartRepository extends BaseRepository
         $quantity = (int) ($item['quantity'] ?? 0);
         $variantId = $item['product_variant_id'] ?? null;
         $attributes = $item['attributes'] ?? [];
-        $shippingMethod = $item['shipping_method'] ?? 'scheduled';
+        $shippingMethod = $item['shipping_method'] ?? ShippingMethod::SCHEDULED;
 
         if (!$productId || $quantity < 1) {
             return false;
@@ -105,7 +106,7 @@ class CartRepository extends BaseRepository
         $product = Product::findOrFail($productId);
         $productName = is_array($product->name) ? ($product->name[app()->getLocale()] ?? $product->name['en'] ?? '') : $product->name;
 
-        if ($shippingMethod === 'fast' && !$product->is_fast_shipping_available) {
+        if ($shippingMethod === ShippingMethod::FAST && !$product->is_fast_shipping_available) {
             throw new Exception(__('message.MESSAGE.FAST_SHIPPING_PRODUCT_NOT_ELIGIBLE', ['product_name' => $productName]));
         }
 

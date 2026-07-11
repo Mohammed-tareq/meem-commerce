@@ -181,5 +181,11 @@ return [
     'delete-governorate' => 'Delete governorate',
     'manage-shipping-prices' => 'Manage shipping prices',
 
+    // 📍 Pickup Locations
+    'view-pickup-locations' => 'View pickup locations',
+    'create-pickup-location' => 'Create pickup location',
+    'update-pickup-location' => 'Update pickup location',
+    'delete-pickup-location' => 'Delete pickup location',
+
 
 ];

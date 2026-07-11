@@ -283,6 +283,7 @@ class FastShippingControllerTest extends TestCase
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('governorate_id')->nullable();
             $table->string('name')->nullable();
             $table->string('user_phone')->nullable();
             $table->string('user_email')->nullable();
@@ -790,7 +791,9 @@ class FastShippingControllerTest extends TestCase
     /** @test */
     public function product_response_contains_required_fields()
     {
-        $response = $this->getJson(self::PREFIX . '/general/products/fast-product');
+        $response = $this->getJson(self::PREFIX . '/general/products/fast-product', [
+            self::CHANNEL_HEADER => 'fast-shipping',
+        ]);
 
         $response->assertOk();
         $product = $response->json('data');

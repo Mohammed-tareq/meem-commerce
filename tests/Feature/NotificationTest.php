@@ -138,6 +138,7 @@ class NotificationTest extends TestCase
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
+            $table->unsignedBigInteger('governorate_id')->nullable();
             $table->string('order_number')->nullable();
             $table->string('name')->nullable();
             $table->string('status')->default('pending');

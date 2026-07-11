@@ -195,6 +195,11 @@ return [
     'MESSAGE.CHECKOUT_SUCCESSFUL' => 'Checkout successful',
     'ERROR.MISSING_PAYMENT_ID' => 'Missing payment id',
     'ERROR.INVALID_PAYMENT_RESPONSE' => 'Invalid payment response',
+    'ERROR.COD_NOT_AVAILABLE_FOR_PICKUP' => 'COD is not available for pickup. Use pay_at_cashier instead.',
+    'ERROR.INVALID_PAYMENT_METHOD' => 'Invalid payment method',
+    'ERROR.TRANSACTION_NOT_FOUND' => 'Transaction not found',
+    'ERROR.UNAUTHORIZED_TRANSACTION_ACCESS' => 'Unauthorized',
+    'ERROR.PAYMENT_GATEWAY_UNAVAILABLE' => 'Payment gateway unavailable',
     'MESSAGE.PAYMENT_SUCCESSFUL' => 'Payment successful',
     'MESSAGE.BRANDS_REORDERED_SUCCESSFULLY' => 'Brands reordered successfully',
     'MESSAGE.FLASH_SALE_REORDERED_SUCCESSFULLY' => 'Flash sales reordered successfully',
@@ -256,4 +261,8 @@ return [
     'MESSAGE.ALL_NOTIFICATIONS_MARKED_READ' => 'All notifications marked as read.',
     'MESSAGE.NOTIFICATION_DELETED' => 'Notification deleted.',
     'MESSAGE.ALL_NOTIFICATIONS_DELETED' => 'All notifications deleted.',
+
+    'MESSAGE.PICKUP_LOCATION_CREATED_SUCCESSFULLY' => 'Pickup location created successfully',
+    'MESSAGE.PICKUP_LOCATION_UPDATED_SUCCESSFULLY' => 'Pickup location updated successfully',
+    'MESSAGE.PICKUP_LOCATION_DELETED_SUCCESSFULLY' => 'Pickup location deleted successfully',
 ];

@@ -22,6 +22,7 @@ class FastShippingService
 {
     public function __construct(
         private FastShippingRepository $fastShippingRepo,
+        private OrderService $orderService,
         private PromotionService $promotionService,
         private CartInventoryService $cartInventoryService,
         private OrderCreationService $orderCreationService,
@@ -87,14 +88,18 @@ class FastShippingService
             $fastShippingFee = $this->fastShippingRepo->getFee();
             $eta = $this->fastShippingRepo->calculateEta();
 
-            $finalTotal = round(max(0, (float) $checkoutTotals['final_total'] + $fastShippingFee), 2);
+            $governorateId = (int) $request->input('governorate_id');
+            $shippingInfo = $this->orderService->getGovernorateShippingInfo($governorateId);
+            $shippingPrice = $shippingInfo['price'];
+            if ($shippingInfo['free_shipping_over'] !== null && $checkoutTotals['subtotal'] > $shippingInfo['free_shipping_over']) {
+                $shippingPrice = 0;
+            }
 
             $orderData = $request->only(['name', 'user_phone', 'user_email', 'address', 'notes',
                 'fulfillment_type', 'payment_method', 'payment_gateway', 'pickup_location_id',
             ]);
             $orderData['user_id'] = $user->id;
 
-            $checkoutTotals['final_total'] = $finalTotal;
             $checkoutTotals['coupon'] = $cart->coupon;
             $checkoutTotals['coupon_discount_type'] = $checkoutTotals['coupon_discount_type'] ?? null;
             $checkoutTotals['coupon_discount_max_amount'] = $checkoutTotals['coupon_discount_max_amount'] ?? null;
@@ -105,7 +110,9 @@ class FastShippingService
                 $checkoutTotals,
                 ShippingMethod::FAST,
                 $eta,
-                $fastShippingFee
+                $fastShippingFee,
+                $shippingPrice,
+                $governorateId,
             );
 
             if (!$order) {
@@ -120,7 +127,7 @@ class FastShippingService
 
             $this->orderCreationService->finalizeOrder($order, $checkoutTotals);
 
-            $cart->update(['total_price' => $finalTotal]);
+            $cart->update(['total_price' => $order->total_price]);
 
             DB::commit();
 

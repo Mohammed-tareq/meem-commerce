@@ -69,6 +69,7 @@ use Marvel\Http\Controllers\CountryController;
 use Marvel\Http\Controllers\FastShippingController;
 use Marvel\Http\Controllers\GovernorateController;
 use Marvel\Http\Controllers\NotificationController;
+use Marvel\Http\Controllers\PickupLocationController;
 use Marvel\Http\Controllers\ProductExportController;
 use Marvel\Http\Controllers\ShippingPriceController;
 
@@ -696,6 +697,7 @@ Route::group([
     Route::apiResource('taxes', TaxController::class);
     Route::apiResource('shippings', ShippingController::class);
     Route::apiResource('shipping-prices', ShippingPriceController::class);
+    Route::apiResource('pickup-locations', PickupLocationController::class);
     Route::post('approve-shop', [ShopController::class, 'approveShop']);
     Route::post('disapprove-shop', [ShopController::class, 'disApproveShop']);
     Route::post('approve-withdraw', [WithdrawController::class, 'approveWithdraw']);

@@ -4,12 +4,21 @@ namespace App\Providers;
 
 use App\Events\AdminLoggedIn;
 use App\Events\ContactMessageReceived;
+use App\Events\OrderCancelled;
 use App\Events\OrderCreated;
+use App\Events\OrderStatusChanged;
+use App\Events\PaymentFailed;
+use App\Events\PaymentSucceeded;
 use App\Events\UserRolesUpdated;
 use App\Listeners\LogUserRolesUpdated;
+use App\Listeners\RestoreProductInventory;
 use App\Listeners\SendAdminLoginNotification;
 use App\Listeners\SendContactMessageNotification;
 use App\Listeners\SendNewOrderNotification;
+use App\Listeners\SendOrderCancelledNotification;
+use App\Listeners\SendOrderStatusChangedNotification;
+use App\Listeners\SendPaymentFailedNotification;
+use App\Listeners\SendPaymentSucceededNotification;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
@@ -37,6 +46,19 @@ class EventServiceProvider extends ServiceProvider
         ],
         AdminLoggedIn::class => [
             SendAdminLoginNotification::class,
+        ],
+        OrderCancelled::class => [
+            RestoreProductInventory::class,
+            SendOrderCancelledNotification::class,
+        ],
+        OrderStatusChanged::class => [
+            SendOrderStatusChangedNotification::class,
+        ],
+        PaymentSucceeded::class => [
+            SendPaymentSucceededNotification::class,
+        ],
+        PaymentFailed::class => [
+            SendPaymentFailedNotification::class,
         ],
     ];
 

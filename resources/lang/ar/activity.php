@@ -67,5 +67,17 @@ return [
     'user_activated' => 'تم تنشيط المستخدم',
     'user_deactivated' => 'تم تعطيل المستخدم',
     'user_role_changed' => 'تم تغيير دور المستخدم',
+    'order_created' => 'تم إنشاء الطلب',
+    'order_cancelled' => 'تم إلغاء الطلب',
+    'order_status_changed' => 'تم تغيير حالة الطلب',
+    'payment_succeeded' => 'تم الدفع بنجاح',
+    'payment_failed' => 'فشل الدفع',
+
     'logs_fetched' => 'تم جلب سجلات النشاط بنجاح.',
+
+    'pickup_location_created' => 'تم إنشاء موقع الاستلام',
+    'pickup_location_updated' => 'تم تحديث موقع الاستلام',
+    'pickup_location_deleted' => 'تم حذف موقع الاستلام',
+    'pickup_location_activated' => 'تم تنشيط موقع الاستلام',
+    'pickup_location_deactivated' => 'تم تعطيل موقع الاستلام',
 ];

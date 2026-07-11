@@ -20,12 +20,14 @@ use Marvel\Database\Models\User;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\CartItem;
 use Marvel\Database\Models\Product;
-use Marvel\Database\Models\Resource;
+use Marvel\Database\Models\PickupLocation;
+use Marvel\Database\Models\Governorate;
+use Marvel\Database\Models\Country;
 use Marvel\Enums\ShippingMethod;
-use Marvel\Events\OrderCancelled;
-use Marvel\Events\OrderStatusChanged;
-use Marvel\Events\PaymentFailed;
-use Marvel\Events\PaymentSuccess;
+use App\Events\OrderCancelled;
+use App\Events\OrderStatusChanged;
+use App\Events\PaymentFailed;
+use App\Events\PaymentSucceeded;
 use Tests\TestCase;
 
 class PaymentSystemTest extends TestCase
@@ -74,6 +76,16 @@ class PaymentSystemTest extends TestCase
             $table->string('name');
             $table->boolean('status')->default(true);
             $table->boolean('is_fast_shipping_enabled')->default(true);
+            $table->timestamps();
+        });
+
+        Schema::create('shipping_prices', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('governorate_id')->constrained()->cascadeOnDelete();
+            $table->decimal('price', 10, 2)->default(0);
+            $table->integer('estimated_days')->nullable();
+            $table->decimal('free_shipping_over', 10, 2)->nullable();
+            $table->boolean('status')->default(true);
             $table->timestamps();
         });
 
@@ -149,9 +161,25 @@ class PaymentSystemTest extends TestCase
             $table->timestamps();
         });
 
+        Schema::create('pickup_locations', function (Blueprint $table) {
+            $table->id();
+            $table->string('store_name');
+            $table->text('address');
+            $table->string('phone');
+            $table->string('email')->nullable();
+            $table->string('latitude')->nullable();
+            $table->string('longitude')->nullable();
+            $table->json('working_hours')->nullable();
+            $table->boolean('status')->default(true);
+            $table->integer('display_order')->default(0);
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('governorate_id')->nullable();
             $table->string('name')->nullable();
             $table->string('user_phone')->nullable();
             $table->string('user_email')->nullable();
@@ -162,6 +190,10 @@ class PaymentSystemTest extends TestCase
             $table->string('payment_method', 30)->nullable();
             $table->string('payment_gateway', 50)->nullable();
             $table->unsignedBigInteger('pickup_location_id')->nullable();
+            $table->string('pickup_location_name')->nullable();
+            $table->text('pickup_location_address')->nullable();
+            $table->string('pickup_location_phone')->nullable();
+            $table->string('pickup_location_coordinates')->nullable();
             $table->dateTime('expected_delivery_at')->nullable();
             $table->decimal('fast_shipping_fee', 10, 2)->default(0);
             $table->decimal('price', 10, 2)->default(0);
@@ -333,6 +365,20 @@ class PaymentSystemTest extends TestCase
             'language' => 'en',
             'options' => [],
         ]);
+
+        Country::create(['name' => 'Egypt', 'slug' => 'egypt', 'status' => true]);
+        Governorate::create([
+            'country_id' => 1,
+            'name' => 'Cairo',
+            'status' => true,
+        ]);
+        \Marvel\Database\Models\ShippingPrice::create([
+            'governorate_id' => 1,
+            'price' => 50.00,
+            'estimated_days' => 3,
+            'free_shipping_over' => 500.00,
+            'status' => true,
+        ]);
     }
 
     private function createActiveCart(): Cart
@@ -356,12 +402,12 @@ class PaymentSystemTest extends TestCase
         return $cart;
     }
 
-    private function createPickupLocation(): Resource
+    private function createPickupLocation(): PickupLocation
     {
-        return Resource::create([
-            'name' => 'Main Store',
-            'slug' => 'main-store',
-            'type' => 'pickup_location',
+        return PickupLocation::create([
+            'store_name' => 'Main Store',
+            'address' => '123 Main St',
+            'phone' => '01000000000',
             'status' => true,
         ]);
     }
@@ -393,7 +439,7 @@ class PaymentSystemTest extends TestCase
     /** @test */
     public function mark_cashier_as_paid_updates_transaction_and_order()
     {
-        Event::fake([PaymentSuccess::class]);
+        Event::fake([PaymentSucceeded::class]);
 
         $order = $this->createOrderWithPendingTransaction('pay_at_cashier');
 
@@ -415,14 +461,14 @@ class PaymentSystemTest extends TestCase
     /** @test */
     public function mark_cashier_as_paid_fires_payment_success_event()
     {
-        Event::fake([PaymentSuccess::class]);
+        Event::fake([PaymentSucceeded::class]);
 
         $order = $this->createOrderWithPendingTransaction('pay_at_cashier');
 
         $orderService = app(OrderService::class);
         $orderService->markCashierPaid($order);
 
-        Event::assertDispatched(PaymentSuccess::class, fn ($e) => $e->order->id === $order->id);
+        Event::assertDispatched(PaymentSucceeded::class, fn ($e) => $e->order->id === $order->id);
     }
 
     /** @test */
@@ -498,7 +544,7 @@ class PaymentSystemTest extends TestCase
     /** @test */
     public function mark_cod_as_paid_records_coupon_usage()
     {
-        Event::fake([PaymentSuccess::class]);
+        Event::fake([PaymentSucceeded::class]);
 
         $coupon = \Marvel\Database\Models\Coupon::create([
             'slug' => 'test10',
@@ -614,7 +660,7 @@ class PaymentSystemTest extends TestCase
     /** @test */
     public function mark_cod_as_paid_endpoint_succeeds_for_admin()
     {
-        Event::fake([PaymentSuccess::class]);
+        Event::fake([PaymentSucceeded::class]);
 
         $this->setupAdminPermissions();
 
@@ -675,7 +721,7 @@ class PaymentSystemTest extends TestCase
     /** @test */
     public function mark_paid_endpoint_succeeds_for_admin()
     {
-        Event::fake([PaymentSuccess::class]);
+        Event::fake([PaymentSucceeded::class]);
 
         $this->setupAdminPermissions();
 
@@ -818,6 +864,66 @@ class PaymentSystemTest extends TestCase
         ]);
     }
 
+    /** @test */
+    public function cancel_unpaid_orders_releases_cart_reservation()
+    {
+        Config::set('payment.order_timeout_hours', 1);
+        $cart = $this->createActiveCart();
+
+        $cartItem = $cart->items->first();
+        $cartItem->update(['reserved_quantity' => 1]);
+        $this->product->update(['reserved_quantity' => 1]);
+
+        $order = $this->createOrderWithPendingTransaction('online', 'inv-cart-release');
+        DB::table('orders')->where('id', $order->id)->update(['created_at' => now()->subHours(2)]);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'reserved_quantity' => 1,
+        ]);
+
+        $this->artisan('orders:cancel-unpaid')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'cancelled',
+        ]);
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'reserved_quantity' => 0,
+        ]);
+    }
+
+    /** @test */
+    public function cancel_unpaid_orders_skips_release_when_cart_already_checked_out()
+    {
+        Config::set('payment.order_timeout_hours', 1);
+
+        $cart = $this->createActiveCart();
+        $cart->update(['status' => 'checked_out']);
+
+        $this->product->update(['reserved_quantity' => 1]);
+
+        $order = $this->createOrderWithPendingTransaction('cod');
+        DB::table('orders')->where('id', $order->id)->update(['created_at' => now()->subHours(2)]);
+
+        $this->artisan('orders:cancel-unpaid')
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('orders', [
+            'id' => $order->id,
+            'status' => 'cancelled',
+        ]);
+
+        // Reservation should remain unchanged (cart was already checked_out, no active cart to release)
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'reserved_quantity' => 1,
+        ]);
+    }
+
     // ========== Pickup Validation: pickup_location_id required when fulfillment_type=pickup ==========
 
     /** @test */
@@ -874,6 +980,7 @@ class PaymentSystemTest extends TestCase
             'address' => ['street' => 'Test St'],
             'fulfillment_type' => 'delivery',
             'payment_method' => 'cod',
+            'governorate_id' => 1,
         ]);
 
         $response->assertStatus(200);

@@ -183,5 +183,11 @@ return [
     'view-attributes' => 'عرض الخصائص',
     'manage-shipping-prices' => 'إدارة أسعار الشحن',
 
+    // 📍 Pickup Locations
+    'view-pickup-locations' => 'عرض مواقع الاستلام',
+    'create-pickup-location' => 'إنشاء موقع استلام',
+    'update-pickup-location' => 'تعديل موقع استلام',
+    'delete-pickup-location' => 'حذف موقع استلام',
+
 
 ];

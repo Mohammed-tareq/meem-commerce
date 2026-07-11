@@ -5,13 +5,23 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Order;
+use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Transaction;
-use Marvel\Events\PaymentFailed;
+use App\Events\PaymentFailed;
+use App\Services\General\CartInventoryService;
 
 class CancelUnpaidOrders extends Command
 {
     protected $signature = 'orders:cancel-unpaid';
     protected $description = 'Cancel unpaid pending orders past their timeout period';
+
+    private CartInventoryService $cartInventoryService;
+
+    public function __construct(CartInventoryService $cartInventoryService)
+    {
+        parent::__construct();
+        $this->cartInventoryService = $cartInventoryService;
+    }
 
     public function handle(): int
     {
@@ -40,6 +50,20 @@ class CancelUnpaidOrders extends Command
 
                 $cancelledCount++;
             });
+
+            // Release reserved inventory from the user's active cart
+            try {
+                $cart = Cart::query()
+                    ->where('user_id', $order->user_id)
+                    ->where('status', 'active')
+                    ->first();
+
+                if ($cart) {
+                    $this->cartInventoryService->releaseCart($cart, false);
+                }
+            } catch (\Throwable $e) {
+                report($e);
+            }
         }
 
         $this->info("Cancelled {$cancelledCount} unpaid order(s).");

@@ -85,6 +85,7 @@ class OrderController extends CoreController
             'orderItems.product',
             'orderItems.productVariant.attributeProducts.attributeValue',
             'transactions',
+            'pickupLocation',
         ];
     }
 

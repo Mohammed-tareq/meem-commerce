@@ -92,6 +92,7 @@ class DatabaseSeeder extends Seeder
             DashboardDataSeeder::class,
             NotificationSeeder::class,
             ActivityLogSeeder::class,
+            PickupLocationSeeder::class,
         ]);
     }
 }

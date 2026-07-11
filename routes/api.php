@@ -3,6 +3,7 @@
 
 use App\Http\Controllers\Api\General\BannerController;
 use App\Http\Controllers\Api\General\BrandController;
+use App\Http\Controllers\Api\General\PickupLocationController as GeneralPickupLocationController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\General\CategoryController;
 use App\Http\Controllers\Api\General\CouponController;
@@ -103,6 +104,12 @@ Route::prefix('general')->middleware(['api', 'check-lang'])->group(function () {
     Route::controller(CouponController::class)->group(function () {
         Route::get('coupons', 'index')->name('general-coupon-index');
         Route::post('coupons/apply', 'applyCoupon')->middleware('auth:sanctum');
+    });
+
+    //========================= pickup-locations =========================//
+    Route::controller(GeneralPickupLocationController::class)->group(function () {
+        Route::get('pickup-locations', 'index')->name('general-pickup-location-index');
+        Route::get('pickup-locations/{id}', 'show')->name('general-pickup-location-show');
     });
 
     //========================= brands=========================//

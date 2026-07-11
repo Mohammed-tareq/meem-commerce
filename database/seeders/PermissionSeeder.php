@@ -203,6 +203,12 @@ class PermissionSeeder extends Seeder
             //fast-shipping
             'view-fast-shipping',
             'update-fast-shipping',
+
+            // 📍 Pickup Locations
+            'view-pickup-locations',
+            'create-pickup-location',
+            'update-pickup-location',
+            'delete-pickup-location',
         ];
 
         $customerPermission = [

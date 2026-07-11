@@ -12,11 +12,14 @@ use Marvel\Database\Models\Coupon;
 use Marvel\Database\Models\CouponUsage;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\CartItem;
+use Marvel\Database\Models\Governorate;
 use Marvel\Database\Models\Order;
+use Marvel\Database\Models\Promotion;
+use Marvel\Database\Models\ShippingPrice;
 use Marvel\Database\Models\Transaction;
 use Marvel\Enums\ShippingMethod;
-use Marvel\Events\OrderCancelled;
-use Marvel\Events\OrderStatusChanged;
+use App\Events\OrderCancelled;
+use App\Events\OrderStatusChanged;
 use Marvel\Services\Pricing\ProductPricingService;
 
 class OrderService
@@ -31,6 +34,7 @@ class OrderService
         'user_email',
         'address',
         'notes',
+        'governorate_id',
     ];
 
     public function __construct(
@@ -59,6 +63,7 @@ class OrderService
             'orderItems.product.media',
             'orderItems.productVariant.attributeProducts.attributeValue',
             'transactions',
+            'pickupLocation',
         ];
     }
 
@@ -80,7 +85,7 @@ class OrderService
             $cart = $this->getCartUser();
             if (!$cart) {
                 DB::rollBack();
-                throw new \InvalidArgumentException(__('checkout.cart_not_found'));
+                throw new \InvalidArgumentException(__('checkout.cart_not_found')); 
             }
             if ($cart->items->isEmpty()) {
                 DB::rollBack();
@@ -91,7 +96,15 @@ class OrderService
                 (int) $request->input('selected_promotion_id') ?: null,
                 (int) $request->input('selected_gift_product_id') ?: null,
             );
-            $cart->update(['total_price' => $checkoutTotals['final_total']]);
+
+            $shippingInfo = $this->resolveShippingPrice((int) $request->input('governorate_id') ?: null);
+            $shippingPrice = $shippingInfo['price'];
+            if ($shippingInfo['free_shipping_over'] !== null && $checkoutTotals['subtotal'] > $shippingInfo['free_shipping_over']) {
+                $shippingPrice = 0;
+            }
+
+            $finalTotal = round((float) $checkoutTotals['final_total'] + $shippingPrice, 2);
+            $cart->update(['total_price' => $finalTotal]);
             DB::commit();
             return $cart->total_price;
         } catch (\InvalidArgumentException $e) {
@@ -119,7 +132,16 @@ class OrderService
             ]));
             $orderData['user_id'] = $request->user()->id;
 
-            $order = $this->orderCreationService->createOrder($orderData, $cart, $checkoutTotals);
+            $shippingInfo = $this->resolveShippingPrice((int) ($orderData['governorate_id'] ?? null));
+            $shippingPrice = $shippingInfo['price'];
+            if ($shippingInfo['free_shipping_over'] !== null && $checkoutTotals['subtotal'] > $shippingInfo['free_shipping_over']) {
+                $shippingPrice = 0;
+            }
+            $governorateId = $shippingInfo['governorate_id'];
+
+            $order = $this->orderCreationService->createOrder(
+                $orderData, $cart, $checkoutTotals, null, null, null, $shippingPrice, $governorateId,
+            );
             if (!$order) {
                 DB::rollBack();
                 return null;
@@ -153,6 +175,37 @@ class OrderService
     }
 
 
+
+    public function getGovernorateShippingInfo(?int $governorateId): array
+    {
+        return $this->resolveShippingPrice($governorateId);
+    }
+
+    private function resolveShippingPrice(?int $governorateId): array
+    {
+        if (!$governorateId) {
+            return ['price' => 0, 'free_shipping_over' => null, 'governorate_id' => null];
+        }
+
+        $governorate = Governorate::query()->where('id', $governorateId)->where('status', true)->first();
+        if (!$governorate) {
+            return ['price' => 0, 'free_shipping_over' => null, 'governorate_id' => null];
+        }
+
+        $shippingPrice = $governorate->shippingPrice()
+            ->where('status', true)
+            ->first();
+
+        if (!$shippingPrice) {
+            return ['price' => 0, 'free_shipping_over' => null, 'governorate_id' => $governorateId];
+        }
+
+        return [
+            'price' => (float) $shippingPrice->price,
+            'free_shipping_over' => $shippingPrice->free_shipping_over !== null ? (float) $shippingPrice->free_shipping_over : null,
+            'governorate_id' => $governorateId,
+        ];
+    }
 
     private function getCartUser()
     {
@@ -202,7 +255,7 @@ class OrderService
         $promotionItem = $items->first(fn($item) => !is_null($item->promotion_id));
         $promotionData = null;
         if ($promotionItem) {
-            $promotion = \Marvel\Database\Models\Promotion::query()->find((int) $promotionItem->promotion_id);
+            $promotion = Promotion::query()->find((int) $promotionItem->promotion_id);
             $promotionData = $promotion ? [
                 'id' => (int) $promotion->id,
                 'type' => $promotion->type_amount,
@@ -356,7 +409,7 @@ class OrderService
 
         $this->recordCouponUsage($order);
 
-        event(new \Marvel\Events\PaymentSuccess($order));
+        event(new \App\Events\PaymentSucceeded($order));
     }
 
     public function markCashierPaid(Order $order): void
@@ -380,7 +433,7 @@ class OrderService
 
         $this->recordCouponUsage($order);
 
-        event(new \Marvel\Events\PaymentSuccess($order));
+        event(new \App\Events\PaymentSucceeded($order));
     }
 
     private function recordCouponUsage($order): void

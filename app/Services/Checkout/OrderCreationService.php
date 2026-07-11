@@ -6,6 +6,7 @@ use App\Events\OrderCreated;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Cart;
 use Marvel\Database\Models\Order;
+use Marvel\Database\Models\PickupLocation;
 use Marvel\Database\Models\Promotion;
 
 class OrderCreationService
@@ -14,10 +15,17 @@ class OrderCreationService
         private \App\Services\General\PromotionService $promotionService,
     ) {}
 
-    public function createOrder(array $orderData, Cart $cart, array $checkoutTotals, ?string $shippingMethod = null, ?\DateTime $eta = null, ?float $fastShippingFee = null): ?Order
+    public function createOrder(array $orderData, Cart $cart, array $checkoutTotals, ?string $shippingMethod = null, ?\DateTime $eta = null, ?float $fastShippingFee = null, ?float $shippingPrice = null, ?int $governorateId = null): ?Order
     {
+        $shippingPrice = $shippingPrice ?? 0;
+        $totalPrice = round((float) $checkoutTotals['final_total'] + $shippingPrice + ($fastShippingFee ?? 0), 2);
+
+        $pickupLocationId = $orderData['pickup_location_id'] ?? null;
+        $pickupSnapshot = $this->resolvePickupLocationSnapshot($pickupLocationId);
+
         $order = Order::create([
             'user_id' => $orderData['user_id'] ?? auth()->id(),
+            'governorate_id' => $governorateId ?? $orderData['governorate_id'] ?? null,
             'name' => $orderData['name'] ?? null,
             'user_phone' => $orderData['user_phone'] ?? null,
             'user_email' => $orderData['user_email'] ?? null,
@@ -29,10 +37,14 @@ class OrderCreationService
             'fulfillment_type' => $orderData['fulfillment_type'] ?? 'delivery',
             'payment_method' => $orderData['payment_method'] ?? 'online',
             'payment_gateway' => $orderData['payment_gateway'] ?? null,
-            'pickup_location_id' => $orderData['pickup_location_id'] ?? null,
+            'pickup_location_id' => $pickupLocationId,
+            'pickup_location_name' => $pickupSnapshot['name'],
+            'pickup_location_address' => $pickupSnapshot['address'],
+            'pickup_location_phone' => $pickupSnapshot['phone'],
+            'pickup_location_coordinates' => $pickupSnapshot['coordinates'],
             'price' => $checkoutTotals['subtotal'],
-            'shipping_price' => null,
-            'total_price' => $checkoutTotals['final_total'],
+            'shipping_price' => $shippingPrice,
+            'total_price' => $totalPrice,
             'coupon' => $checkoutTotals['coupon'] ?? $cart->coupon ?? null,
             'coupon_discount' => $checkoutTotals['coupon_discount'] ?: null,
             'coupon_discount_type' => $checkoutTotals['coupon_discount_type'] ?? null,
@@ -100,6 +112,41 @@ class OrderCreationService
             }
         }
         return true;
+    }
+
+    private function resolvePickupLocationSnapshot(?int $pickupLocationId): array
+    {
+        if (!$pickupLocationId) {
+            return [
+                'name' => null,
+                'address' => null,
+                'phone' => null,
+                'coordinates' => null,
+            ];
+        }
+
+        $location = PickupLocation::query()->find($pickupLocationId);
+
+        if (!$location) {
+            return [
+                'name' => null,
+                'address' => null,
+                'phone' => null,
+                'coordinates' => null,
+            ];
+        }
+
+        $coordinates = null;
+        if ($location->latitude && $location->longitude) {
+            $coordinates = $location->latitude . ',' . $location->longitude;
+        }
+
+        return [
+            'name' => $location->store_name,
+            'address' => $location->address,
+            'phone' => $location->phone,
+            'coordinates' => $coordinates,
+        ];
     }
 
     public function finalizeOrder(Order $order, array $checkoutTotals): void

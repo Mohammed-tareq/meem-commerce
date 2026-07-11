@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Validation\Rule;
+use Marvel\Enums\FulfillmentType;
 
 class OrderCreateRequest extends FormRequest
 {
@@ -26,6 +27,8 @@ class OrderCreateRequest extends FormRequest
      */
     public function rules()
     {
+        $fulfillmentValues = [FulfillmentType::DELIVERY, FulfillmentType::PICKUP];
+
         return [
             'name' => ['required', 'string', 'max:255'],
             'user_phone' => ['required', 'string', 'max:255'],
@@ -35,18 +38,39 @@ class OrderCreateRequest extends FormRequest
             'selected_promotion_id' => ['nullable', 'integer', 'exists:promotions,id'],
             'selected_gift_product_id' => ['nullable', 'integer', 'exists:products,id'],
             'type' => ['nullable', 'in:mobile,web'],
-            'fulfillment_type' => ['nullable', 'string', 'in:delivery,pickup'],
+            'fulfillment_type' => [
+                'nullable',
+                'string',
+                Rule::in($this->input('payment_method') === 'pay_at_cashier'
+                    ? [FulfillmentType::PICKUP]
+                    : $fulfillmentValues
+                ),
+            ],
             'payment_method' => ['nullable', 'string', 'in:online,cod,pay_at_cashier'],
             'gateway' => ['nullable', 'string', 'max:50'],
-            // 'pickup_location_id' => [
-            //     'nullable',
-            //     'integer',
-            //     Rule::requiredIf(fn () => $this->input('fulfillment_type') === 'pickup'),
-            //     'exists:resources,id',
-            // ],
+            'governorate_id' => [
+                Rule::requiredIf(fn () => $this->input('fulfillment_type') === FulfillmentType::DELIVERY),
+                'integer',
+                'exists:governorates,id',
+            ],
+            'pickup_location_id' => [
+                'nullable',
+                'integer',
+                Rule::requiredIf(fn () => $this->input('fulfillment_type') === FulfillmentType::PICKUP),
+                'exists:pickup_locations,id',
+            ],
         ];
     }
 
+
+    public function messages(): array
+    {
+        $messages = [];
+        if ($this->input('payment_method') === 'pay_at_cashier') {
+            $messages['fulfillment_type.in'] = __('checkout.pay_at_cashier_requires_pickup');
+        }
+        return $messages;
+    }
 
     public function failedValidation(Validator $validator)
     {

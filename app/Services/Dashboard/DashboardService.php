@@ -740,10 +740,13 @@ class DashboardService
                 ->where('status', 'approved')
                 ->sum('amount');
 
-            $totalDiscount = (float) Order::whereNotNull('coupon_discount')
+            $couponDiscount = (float) Order::whereNotNull('coupon_discount')
                 ->sum('coupon_discount');
+            $promotionDiscount = (float) Order::where('promotion_discount', '>', 0)
+                ->sum('promotion_discount');
+            $totalDiscount = $couponDiscount + $promotionDiscount;
 
-            $netRevenue = $grossRevenue - $refundAmount - $totalDiscount;
+            $netRevenue = $grossRevenue - $refundAmount;
 
             $shippingRevenue = (float) Order::where('status', 'completed')
                 ->selectRaw('COALESCE(SUM(shipping_price), 0) + COALESCE(SUM(fast_shipping_fee), 0) as total')

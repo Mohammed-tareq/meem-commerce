@@ -18,6 +18,7 @@ class Order extends Model
 
     public $fillable = [
         'user_id',
+        'governorate_id',
         'name',
         'user_phone',
         'user_email',
@@ -30,6 +31,10 @@ class Order extends Model
         'payment_method',
         'payment_gateway',
         'pickup_location_id',
+        'pickup_location_name',
+        'pickup_location_address',
+        'pickup_location_phone',
+        'pickup_location_coordinates',
         'price',
         'shipping_price',
         'total_price',
@@ -78,7 +83,7 @@ class Order extends Model
 
     public function pickupLocation(): BelongsTo
     {
-        return $this->belongsTo(Resource::class, 'pickup_location_id');
+        return $this->belongsTo(PickupLocation::class, 'pickup_location_id');
     }
 
     public function scopeForUser(Builder $query, int $userId): Builder
