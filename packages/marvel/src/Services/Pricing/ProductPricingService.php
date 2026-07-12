@@ -9,6 +9,7 @@ use Marvel\Database\Models\Product;
 use Marvel\Database\Models\ProductVariant;
 use Marvel\Enums\DiscountType;
 use Marvel\Enums\FlashSaleType;
+use App\Services\Coupon\CouponCalculator;
 
 /**
  * Service responsible for all product pricing calculations including discounts, flash sales, and coupon pricing.
@@ -171,7 +172,8 @@ class ProductPricingService
                 return null;
             }
 
-            return $coupon->calcPrice($normalizedBasePrice);
+            $result = CouponCalculator::calculate($coupon, $normalizedBasePrice);
+            return $result['finalPrice'];
         }, null);
     }
 

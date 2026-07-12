@@ -28,10 +28,14 @@ class CouponController extends Controller
         $code = $request->get('code');
         $result = $this->couponService->addCouponToCart($code);
 
-        if (!$result) {
+        if ($result === null) {
             return $this->apiResponse(INVALID_COUPON_CODE_OR_COUPON_CANNOT_BE_APPLIED_OR_COUPON_USAGE_LIMIT_REACHED, 400, false);
         }
 
-        return $this->apiResponse(COUPON_APPLIED_SUCCESSFULLY, 200, true , $result);
+        if (isset($result['already_applied']) && $result['already_applied']) {
+            return $this->apiResponse(COUPON_ALREADY_APPLIED, 200, true, $result);
+        }
+
+        return $this->apiResponse(COUPON_APPLIED_SUCCESSFULLY, 200, true, $result);
     }
 }

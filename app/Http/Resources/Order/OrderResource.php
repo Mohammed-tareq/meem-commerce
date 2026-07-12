@@ -20,6 +20,10 @@ class OrderResource extends JsonResource
             'status' => $this->status,
             'subtotal' => $this->roundMoney($this->price),
             'discount' => $this->roundMoney(((float) ($this->coupon_discount ?? 0)) + ((float) ($this->promotion_discount ?? 0))),
+            'coupon' => $this->coupon,
+            'coupon_discount' => $this->roundMoney($this->coupon_discount),
+            'coupon_discount_type' => $this->coupon_discount_type,
+            'promotion_discount' => $this->roundMoney($this->promotion_discount),
             'total' => $this->roundMoney($this->total_price),
             'promotion' => $this->promotion_id ? [
                 'id' => $this->promotion_id,

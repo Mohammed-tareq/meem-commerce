@@ -5,6 +5,8 @@ namespace App\Services\General;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Coupon;
 use Marvel\Services\Pricing\ProductPricingService;
+use App\Services\Coupon\CouponValidator;
+use App\Services\Coupon\CouponCalculator;
 
 class CouponService
 {
@@ -38,34 +40,30 @@ class CouponService
 
     public function calcPrice(Coupon $coupon, $price)
     {
-        return $coupon->calcPrice($price);
+        $result = CouponCalculator::calculate($coupon, (float) $price);
+        return $result['finalPrice'];
     }
 
     public function calcPriceByCode(string $code, $price): ?float
     {
-        $coupon = Coupon::valid()->where('code', $code)->first();
+        $coupon = Coupon::where('code', $code)->first();
 
         if (!$coupon) {
             return null;
         }
 
-        return $coupon->calcPrice($price);
+        $result = CouponCalculator::calculate($coupon, (float) $price);
+        return $result['finalPrice'];
     }
 
     public function findByCode(string $code): ?Coupon
     {
-        return Coupon::valid()->where('code', $code)->first();
+        return Coupon::where('code', $code)->first();
     }
 
     public function addCouponToCart($code)
     {
         return DB::transaction(function () use ($code) {
-            $coupon = $this->findByCode($code);
-
-            if (!$coupon) {
-                return null;
-            }
-
             $user = auth()->user();
 
             if (!$user || !$user->cart) {
@@ -74,52 +72,21 @@ class CouponService
 
             $cart = $user->cart;
 
-            $couponUsage = $this->CheckCouponUsage($coupon->id);
+            if ($cart->coupon === $code) {
+                return ['already_applied' => true];
+            }
 
-            if ($couponUsage) {
+            $validation = CouponValidator::validateByCode($code, $user, $cart->items);
+
+            if (!$validation['valid']) {
                 return null;
             }
 
-            if (!$this->recordCouponUsage($coupon)) {
-                return null;
-            }
-
+            $coupon = $validation['coupon'];
 
             $result = $this->updateCartTotalPrice($cart, $coupon);
             return $result;
         });
-    }
-    private function CheckCouponUsage($couponId)
-    {
-        $user = auth()->user();
-
-        if (!$user) {
-            return null;
-        }
-
-        $couponUsage = $user->couponUsages()->where('coupon_id', $couponId)->first();
-
-        if ($couponUsage) {
-            return null;
-        }
-        return $couponUsage;
-    }
-
-    private function recordCouponUsage($coupon)
-    {
-        $user = auth()->user();
-
-        $couponUsage = $user->couponUsages()->firstOrCreate([
-            'coupon_id' => $coupon->id,
-        ]);
-
-        if (!$couponUsage->wasRecentlyCreated) {
-            return false;
-        }
-
-        $coupon->increment('used');
-
-        return true;
     }
 
     private function updateCartTotalPrice($cart, $coupon)

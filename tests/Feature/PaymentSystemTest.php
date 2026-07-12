@@ -301,13 +301,15 @@ class PaymentSystemTest extends TestCase
         Schema::create('coupons', function (Blueprint $table) {
             $table->id();
             $table->string('code')->unique();
+            $table->string('name')->nullable();
             $table->string('slug')->unique();
-            $table->string('type')->default('general');
             $table->string('discount_type')->nullable();
-            $table->decimal('amount', 10, 2)->nullable();
+            $table->decimal('discount', 8, 3)->nullable();
             $table->decimal('max_discount_amount', 10, 2)->nullable();
-            $table->integer('usage_limit')->nullable();
-            $table->integer('usage')->default(0);
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->integer('limiter')->nullable();
+            $table->integer('used')->default(0);
             $table->boolean('status')->default(true);
             $table->timestamps();
         });
@@ -548,9 +550,10 @@ class PaymentSystemTest extends TestCase
 
         $coupon = \Marvel\Database\Models\Coupon::create([
             'slug' => 'test10',
-            'type' => 'general',
             'discount_type' => 'fixed',
-            'amount' => 10,
+            'discount' => 10,
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->addMonth()->toDateString(),
             'status' => true,
         ]);
 

@@ -21,7 +21,8 @@ use Marvel\Database\Models\Transaction;
 use Marvel\Enums\ShippingMethod;
 use App\Events\OrderCancelled;
 use App\Events\OrderStatusChanged;
-use Marvel\Services\Pricing\ProductPricingService;
+use App\Services\Coupon\CouponCalculator;
+use App\Services\Coupon\CouponValidator;
 
 class OrderService
 {
@@ -126,6 +127,14 @@ class OrderService
             if (!$cart || $cart->items->isEmpty()) {
                 return null;
             }
+
+            if ($cart->coupon) {
+                $validation = CouponValidator::validateByCode($cart->coupon, $request->user(), $cart->items);
+                if (!$validation['valid']) {
+                    $cart->update(['coupon' => null]);
+                }
+            }
+
             $checkoutTotals = $this->getCheckoutTotalsFromCart($cart);
 
             $orderData = $request->only(array_merge($this->dataArray, [
@@ -217,25 +226,19 @@ class OrderService
             ->first();
     }
 
-    private function getCoupon($couponCode)
-    {
-        if ($couponCode) {
-            return Coupon::valid()->where('code', $couponCode)->first();
-        }
-        return null;
-    }
-
-
     private function calculatePriceByCoupon($cart, $totalPrice)
     {
-        if ($cart->coupon !== null) {
-            if (!$this->checkCouponUsage($cart->coupon)) {
-                return $totalPrice = $this->CalcPriceByCoupon($cart->coupon, $totalPrice);
-            }
+        if ($cart->coupon === null) {
             return $totalPrice;
-        } else {
-            return $totalPrice = $this->CalcPriceByCoupon($cart->coupon, $totalPrice);
         }
+
+        $coupon = Coupon::where('code', $cart->coupon)->first();
+        if (!$coupon) {
+            return $totalPrice;
+        }
+
+        $result = CouponCalculator::calculate($coupon, (float) $totalPrice);
+        return $result['finalPrice'];
     }
 
     private function getCheckoutTotalsFromCart(Cart $cart): CheckoutTotals
@@ -290,32 +293,7 @@ class OrderService
             giftItems: $promotionTotals->giftItems,
         );
     }
-    private function checkCouponUsage($couponId)
-    {
-        $coupon = Coupon::valid()->where('code', $couponId)->first();
-        if (!$coupon) {
-            return false;
-        }
-        return CouponUsage::where('coupon_id', $coupon->id)
-            ->where('user_id', auth()->id())
-            ->whereNotNull('used_at')
-            ->exists();
-    }
-    private function CalcPriceByCoupon($couponId, $price)
-    {
-        $coupon = Coupon::valid()->where('code', $couponId)->first();
-        if (!$coupon) {
-            return $price;
-        }
-        $used = $coupon->users()
-            ->wherePivot('user_id', auth()->id())
-            ->first();
 
-        if ($used && $used->pivot->used_at) {
-            return $price;
-        }
-        return app(ProductPricingService::class)->calculateCouponPrice($coupon, $price);
-    }
 
     public function clearCart(?int $userId = null)
     {
@@ -329,7 +307,11 @@ class OrderService
             return false;
         }
 
-        return (bool) $cart->items()->delete();
+        $deleted = (bool) $cart->items()->delete();
+        if ($deleted) {
+            $cart->update(['coupon' => null]);
+        }
+        return $deleted;
     }
 
     public function changeOrderStatus($invoiceId, $status, $orderId = null)
@@ -448,7 +430,7 @@ class OrderService
             return;
         }
 
-        CouponUsage::updateOrCreate(
+        $couponUsage = CouponUsage::firstOrCreate(
             [
                 'coupon_id' => $coupon->id,
                 'user_id' => $order->user_id,
@@ -458,5 +440,9 @@ class OrderService
                 'used_at' => now(),
             ]
         );
+
+        if ($couponUsage->wasRecentlyCreated) {
+            $coupon->increment('used');
+        }
     }
 }

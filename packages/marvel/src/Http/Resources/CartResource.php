@@ -2,7 +2,9 @@
 
 namespace Marvel\Http\Resources;
 
+use App\Http\Resources\Coupons\CouponResource;
 use Illuminate\Http\Request;
+use Marvel\Database\Models\Coupon;
 
 class CartResource extends Resource
 {
@@ -18,10 +20,15 @@ class CartResource extends Resource
             $fastItems = collect();
         }
 
+        $couponObject = $this->coupon
+            ? CouponResource::make(Coupon::where('code', $this->coupon)->first())
+            : null;
+
         return [
             'id' => $this->id,
             'user_id' => $this->user_id,
-            'coupon' => $this->coupon,
+            'coupon' => $couponObject,
+            'coupon_code' => $this->coupon,
             'status' => $this->status,
             'reserved_at' => $this->reserved_at,
             'expires_at' => $this->expires_at,

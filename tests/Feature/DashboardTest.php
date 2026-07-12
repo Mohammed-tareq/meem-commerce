@@ -583,7 +583,7 @@ class DashboardTest extends TestCase
                 'total_usage',
                 'top_coupons',
                 'revenue_by_coupon',
-                'total_discount',
+                'total_coupon_discount',
             ],
         ]);
         $this->assertGreaterThanOrEqual(1, $response->json('data.total_usage'));

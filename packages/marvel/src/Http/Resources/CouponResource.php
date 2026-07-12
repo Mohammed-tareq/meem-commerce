@@ -2,6 +2,7 @@
 
 namespace Marvel\Http\Resources;
 
+use App\Services\Coupon\CouponValidator;
 use Illuminate\Http\Request;
 
 class CouponResource extends Resource
@@ -32,7 +33,7 @@ class CouponResource extends Resource
             'limiter'       => $this->limiter,
             'used'          => $this->used,
             'status'        => (bool) $this->status,
-            'is_valid'      => $this->isValid(),
+            'is_valid'      => CouponValidator::validate($this)['valid'],
             'created_at'    => $this->created_at?->toIso8601String(),
         ];
     }

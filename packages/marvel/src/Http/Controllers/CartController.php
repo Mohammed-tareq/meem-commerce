@@ -124,6 +124,10 @@ class CartController extends CoreController
             return $this->apiResponse(DELETE_CART_ITEM_FAILED, 400, false);
         }
 
+        if ($cart->coupon && !$request->boolean('confirm')) {
+            return $this->apiResponse(COUPON_DELETE_CART_WARNING, 200, true);
+        }
+
         $this->inventoryService->releaseCart($cart, true);
         return $this->apiResponse(DELETE_CART_SUCCESSFULLY, 200, true);
     }

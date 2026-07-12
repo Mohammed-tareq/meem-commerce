@@ -61,14 +61,7 @@ class Coupon extends Model implements HasMedia
             $enName = $coupon->getTranslation('name', 'en');
             $coupon->code = strtolower(preg_replace('/\s+/', '_',  'coupon' . "_" . $code));
         });
-        static::updating(function ($coupon) {
-            do {
-                $code = strtoupper(Str::random(7));
-            } while (self::where('code', $code)->exists());
 
-            $enName = $coupon->getTranslation('name', 'en');
-            $coupon->code = strtolower(preg_replace('/\s+/', '_',  'coupon' . "_" . $code));
-        });
     }
 
     /**
@@ -84,7 +77,7 @@ class Coupon extends Model implements HasMedia
      */
     public function orders(): HasMany
     {
-        return $this->hasMany(Order::class, 'coupon_id');
+        return $this->hasMany(Order::class, 'coupon', 'code');
     }
 
     /**
@@ -108,6 +101,10 @@ class Coupon extends Model implements HasMedia
 
 
 
+    /**
+     * @deprecated
+     * Use CouponValidator::validate() instead. Will be removed in a future release.
+     */
     public function isValid(): bool
     {
 
@@ -184,6 +181,10 @@ class Coupon extends Model implements HasMedia
         return $map[$locale][$this->discount_type] ?? $this->discount_type;
     }
 
+    /**
+     * @deprecated
+     * Use CouponCalculator::calculate() instead. Will be removed in a future release.
+     */
     public function calcPrice($price): ?float
     {
         if ($price === null) {

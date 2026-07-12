@@ -167,7 +167,15 @@ class CartInventoryService
             }
 
             if ($deleteItem) {
-                return (bool) $item->delete();
+                $cartId = $item->cart_id;
+                $deleted = (bool) $item->delete();
+                if ($deleted) {
+                    $remaining = CartItem::where('cart_id', $cartId)->lockForUpdate()->count();
+                    if ($remaining === 0) {
+                        Cart::whereKey($cartId)->lockForUpdate()->update(['coupon' => null]);
+                    }
+                }
+                return $deleted;
             }
 
             return (bool) $item->update(['reserved_quantity' => 0]);

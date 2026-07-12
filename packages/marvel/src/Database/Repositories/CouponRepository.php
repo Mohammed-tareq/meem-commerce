@@ -3,6 +3,7 @@
 
 namespace Marvel\Database\Repositories;
 
+use App\Services\Coupon\CouponValidator;
 use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -127,24 +128,24 @@ class CouponRepository extends BaseRepository
 
     public function addCouponToCart($code)
     {
-        $coupon = $this->where('code', $code)->first();
-        if (!$coupon || !$coupon->isValid()) {
+        $user = auth()->user();
+        $cart = $user->cart->first();
+
+        $validation = CouponValidator::validateByCode($code, $user, $cart?->items);
+        if (!$validation['valid']) {
             throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_CART_NOT_VALID);
         }
 
-        $cart = auth()->user()->cart->first();
+        $coupon = $validation['coupon'];
+
         if (!$cart || !$cart->items()->exists()) {
             throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_EMPTY_CART);
         }
 
-        if (!empty($cart->coupon)) {
-            $existingCoupon = $this->where('code', $cart->coupon)->first();
-            if ($existingCoupon && $existingCoupon->isValid()) {
-                throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_CART_YOU_HAVE_ALREADY_APPLIED_A_COUPON);
-            }
-
-            return $cart->update(['coupon' => $coupon->code]);
+        if ($cart->coupon === $code) {
+            throw new MarvelBadRequestException(COULD_NOT_ADD_COUPON_TO_CART_YOU_HAVE_ALREADY_APPLIED_A_COUPON);
         }
+
         return $cart->update(['coupon' => $coupon->code]);
     }
 }
