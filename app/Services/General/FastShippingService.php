@@ -2,6 +2,7 @@
 
 namespace App\Services\General;
 
+use App\DTOs\CheckoutTotals;
 use App\Events\OrderCreated;
 use App\Services\Checkout\OrderCreationService;
 use Carbon\Carbon;
@@ -91,7 +92,7 @@ class FastShippingService
             $governorateId = (int) $request->input('governorate_id');
             $shippingInfo = $this->orderService->getGovernorateShippingInfo($governorateId);
             $shippingPrice = $shippingInfo['price'];
-            if ($shippingInfo['free_shipping_over'] !== null && $checkoutTotals['subtotal'] > $shippingInfo['free_shipping_over']) {
+            if ($shippingInfo['free_shipping_over'] !== null && $checkoutTotals->subtotal > $shippingInfo['free_shipping_over']) {
                 $shippingPrice = 0;
             }
 
@@ -99,10 +100,6 @@ class FastShippingService
                 'fulfillment_type', 'payment_method', 'payment_gateway', 'pickup_location_id',
             ]);
             $orderData['user_id'] = $user->id;
-
-            $checkoutTotals['coupon'] = $cart->coupon;
-            $checkoutTotals['coupon_discount_type'] = $checkoutTotals['coupon_discount_type'] ?? null;
-            $checkoutTotals['coupon_discount_max_amount'] = $checkoutTotals['coupon_discount_max_amount'] ?? null;
 
             $order = $this->orderCreationService->createOrder(
                 $orderData,
@@ -151,7 +148,7 @@ class FastShippingService
             ->withQueryString();
     }
 
-    private function calculateCheckoutTotals(Cart $cart, Request $request): array
+    private function calculateCheckoutTotals(Cart $cart, Request $request): CheckoutTotals
     {
         $selectedPromotionId = (int) $request->input('selected_promotion_id') ?: null;
         $selectedGiftProductId = (int) $request->input('selected_gift_product_id') ?: null;
@@ -162,22 +159,22 @@ class FastShippingService
             $selectedGiftProductId
         );
 
-        $priceAfterPromotion = $promotionTotals['final_total'];
+        $priceAfterPromotion = $promotionTotals->finalTotal;
         $couponData = $this->getCouponData($cart);
         $couponDiscount = $couponData ? $this->calculateCouponDiscount($couponData, $priceAfterPromotion) : 0;
         $finalTotal = round(max(0, (float) $priceAfterPromotion - $couponDiscount), 2);
 
-        return [
-            'subtotal' => $promotionTotals['subtotal'],
-            'promotion_discount' => $promotionTotals['discount'],
-            'coupon_discount' => $couponDiscount,
-            'final_total' => $finalTotal,
-            'promotion' => $promotionTotals['promotion'],
-            'gift_items' => $promotionTotals['gift_items'],
-            'coupon' => $cart->coupon,
-            'coupon_discount_type' => $couponData?->discount_type ?? null,
-            'coupon_discount_max_amount' => $couponData?->max_discount_amount ?? null,
-        ];
+        return new CheckoutTotals(
+            subtotal: $promotionTotals->subtotal,
+            promotionDiscount: $promotionTotals->promotionDiscount,
+            couponDiscount: $couponDiscount,
+            finalTotal: $finalTotal,
+            promotion: $promotionTotals->promotion,
+            giftItems: $promotionTotals->giftItems,
+            coupon: $cart->coupon,
+            couponDiscountType: $couponData?->discount_type ?? null,
+            couponDiscountMaxAmount: $couponData?->max_discount_amount ?? null,
+        );
     }
 
     private function getCouponData(?Cart $cart): ?\Marvel\Database\Models\Coupon

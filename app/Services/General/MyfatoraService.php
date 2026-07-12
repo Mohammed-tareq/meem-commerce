@@ -57,4 +57,9 @@ class MyfatoraService
     {
         return $this->handelRequest('GetPaymentStatus', $data);
     }
+
+    public function makeRefund(array $data): ?array
+    {
+        return $this->handelRequest('MakeRefund', $data);
+    }
 }

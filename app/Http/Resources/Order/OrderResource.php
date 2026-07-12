@@ -28,14 +28,14 @@ class OrderResource extends JsonResource
             ] : null,
             'fulfillment_type' => $this->fulfillment_type,
             'payment_method' => $this->payment_method,
-            'payment_gateway' => $this->payment_gateway,
-            'pickup_location_id' => $this->pickup_location_id,
             'shipping_price' => $this->roundMoney($this->shipping_price),
             'fast_shipping_fee' => $this->roundMoney($this->fast_shipping_fee),
             'pickup_location' => $this->when($this->fulfillment_type === 'pickup', fn() => $this->resolvePickupLocation()),
             'created_at' => $this->created_at?->toIso8601String(),
             'order_items' => OrderItemResource::collection($this->whenLoaded('orderItems')),
-            'transactions' => OrderTransactionResource::collection($this->whenLoaded('transactions')),
+            // 'pickup_location_id' => $this->pickup_location_id,
+            // 'payment_gateway' => $this->payment_gateway,
+            // 'transactions' => OrderTransactionResource::collection($this->whenLoaded('transactions')),
         ];
     }
 

@@ -108,4 +108,50 @@ class MyFatoorahGateway implements PaymentGatewayContract
     {
         return 'myfatoorah';
     }
+
+    public function refund(
+        Order $order,
+        float $amount,
+        ?string $reason = null
+    ): GatewayResult {
+        $transaction = $order->transactions()
+            ->whereNotNull('gateway_transaction_id')
+            ->latest()
+            ->first();
+
+        if (!$transaction || !$transaction->gateway_transaction_id) {
+            return new GatewayResult(
+                success: false,
+                errorMessage: 'No paid transaction found for this order',
+            );
+        }
+
+        $data = [
+            'Key' => $transaction->gateway_transaction_id,
+            'KeyType' => 'PaymentId',
+            'Amount' => $amount,
+            'Comment' => $reason ?? 'Refund for order #' . $order->id,
+        ];
+
+        $response = $this->myfatoraService->makeRefund($data);
+
+        if (!is_array($response)) {
+            return new GatewayResult(
+                success: false,
+                errorMessage: 'No response from payment gateway',
+            );
+        }
+
+        $refundId = data_get($response, 'Data.RefundId');
+        $refundStatus = data_get($response, 'Data.RefundStatus');
+
+        return new GatewayResult(
+            success: true,
+            gatewayTransactionId: $refundId ? (string) $refundId : null,
+            amount: $amount,
+            currency: 'EGP',
+            status: $refundStatus ?? 'refunded',
+            rawResponse: $response,
+        );
+    }
 }

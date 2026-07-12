@@ -234,24 +234,53 @@ class OrderController extends Controller
 
         $order = null;
         if ($transaction) {
+            $order = $transaction->order;
+
+            if ($order) {
+                $hasMismatch = false;
+
+                if ($result->amount !== null && abs((float) $result->amount - (float) $order->total_price) > 0.01) {
+                    $hasMismatch = true;
+                    \Log::warning('Payment amount mismatch - blocking order', [
+                        'order_id' => $order->id,
+                        'expected' => (float) $order->total_price,
+                        'received' => $result->amount,
+                        'currency' => $result->currency,
+                    ]);
+                }
+
+                if (!$hasMismatch && $result->currency !== null && $result->currency !== config('payment.default_currency', 'EGP')) {
+                    $hasMismatch = true;
+                    \Log::warning('Payment currency mismatch - blocking order', [
+                        'order_id' => $order->id,
+                        'expected' => config('payment.default_currency', 'EGP'),
+                        'received' => $result->currency,
+                    ]);
+                }
+
+                if ($hasMismatch) {
+                    $this->orderService->changeOrderStatus($transaction->invoice_id, 'cancelled');
+                    if ($user = User::find($order->user_id)) {
+                        $cart = $this->cartInventoryService->getActiveCartForUser($user);
+                        if ($cart) {
+                            $this->cartInventoryService->releaseCart($cart, false);
+                        }
+                    }
+                    try {
+                        event(new PaymentFailed($order));
+                    } catch (\Throwable $e) {
+                        report($e);
+                    }
+                    $errorMessage = $result->errorMessage ?? __(PAYMENT_FAILED);
+                    return redirect(config('app.app_url_frontend') . '/' . app()->getLocale() . '/payment/failed?' . http_build_query([
+                        'status' => 'failed',
+                        'message' => $errorMessage,
+                        'payment_id' => $paymentId,
+                    ]));
+                }
+            }
+
             $order = $this->orderService->changeOrderStatus($transaction->invoice_id, 'completed');
-
-            if ($order && $result->amount !== null && abs((float) $result->amount - (float) $order->total_price) > 0.01) {
-                \Log::warning('Payment amount mismatch', [
-                    'order_id' => $order->id,
-                    'expected' => (float) $order->total_price,
-                    'received' => $result->amount,
-                    'currency' => $result->currency,
-                ]);
-            }
-
-            if ($order && $result->currency !== null && $result->currency !== config('payment.default_currency', 'EGP')) {
-                \Log::warning('Payment currency mismatch', [
-                    'order_id' => $order->id,
-                    'expected' => config('payment.default_currency', 'EGP'),
-                    'received' => $result->currency,
-                ]);
-            }
 
             if ($order) {
                 if ($user = User::find($order->user_id)) {

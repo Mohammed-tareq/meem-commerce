@@ -17,5 +17,11 @@ interface PaymentGatewayContract
 
     public function verifyPayment(string $gatewayTransactionId): GatewayResult;
 
+    public function refund(
+        Order $order,
+        float $amount,
+        ?string $reason = null
+    ): GatewayResult;
+
     public function name(): string;
 }

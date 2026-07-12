@@ -2,6 +2,7 @@
 
 namespace App\Services\General;
 
+use App\DTOs\CheckoutTotals;
 use App\Events\OrderCreated;
 use App\Services\Checkout\OrderCreationService;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -99,11 +100,11 @@ class OrderService
 
             $shippingInfo = $this->resolveShippingPrice((int) $request->input('governorate_id') ?: null);
             $shippingPrice = $shippingInfo['price'];
-            if ($shippingInfo['free_shipping_over'] !== null && $checkoutTotals['subtotal'] > $shippingInfo['free_shipping_over']) {
+            if ($shippingInfo['free_shipping_over'] !== null && $checkoutTotals->subtotal > $shippingInfo['free_shipping_over']) {
                 $shippingPrice = 0;
             }
 
-            $finalTotal = round((float) $checkoutTotals['final_total'] + $shippingPrice, 2);
+            $finalTotal = round((float) $checkoutTotals->finalTotal + $shippingPrice, 2);
             $cart->update(['total_price' => $finalTotal]);
             DB::commit();
             return $cart->total_price;
@@ -134,7 +135,7 @@ class OrderService
 
             $shippingInfo = $this->resolveShippingPrice((int) ($orderData['governorate_id'] ?? null));
             $shippingPrice = $shippingInfo['price'];
-            if ($shippingInfo['free_shipping_over'] !== null && $checkoutTotals['subtotal'] > $shippingInfo['free_shipping_over']) {
+            if ($shippingInfo['free_shipping_over'] !== null && $checkoutTotals->subtotal > $shippingInfo['free_shipping_over']) {
                 $shippingPrice = 0;
             }
             $governorateId = $shippingInfo['governorate_id'];
@@ -237,7 +238,7 @@ class OrderService
         }
     }
 
-    private function getCheckoutTotalsFromCart(Cart $cart): array
+    private function getCheckoutTotalsFromCart(Cart $cart): CheckoutTotals
     {
         $items = $cart->items->reject(fn($item) => (bool) ($item->is_gift ?? false));
 
@@ -263,31 +264,31 @@ class OrderService
             ] : null;
         }
 
-        return [
-            'subtotal' => $subtotal,
-            'promotion_discount' => $promotionDiscount,
-            'coupon_discount' => round(max(0, $subtotal - $promotionDiscount - $finalTotal), 2),
-            'final_total' => $finalTotal,
-            'promotion' => $promotionData,
-            'gift_items' => [],
-        ];
+        return new CheckoutTotals(
+            subtotal: $subtotal,
+            promotionDiscount: $promotionDiscount,
+            couponDiscount: round(max(0, $subtotal - $promotionDiscount - $finalTotal), 2),
+            finalTotal: $finalTotal,
+            promotion: $promotionData,
+            giftItems: [],
+        );
     }
 
-    private function calculateCheckoutTotals(Cart $cart, ?int $selectedPromotionId, ?int $selectedGiftProductId = null): array
+    private function calculateCheckoutTotals(Cart $cart, ?int $selectedPromotionId, ?int $selectedGiftProductId = null): CheckoutTotals
     {
         $promotionTotals = $this->promotionService->applySelectedPromotion($cart, $selectedPromotionId, $selectedGiftProductId);
-        $priceAfterPromotion = $promotionTotals['final_total'];
+        $priceAfterPromotion = $promotionTotals->finalTotal;
         $priceAfterCoupon = $this->calculatePriceByCoupon($cart, $priceAfterPromotion);
         $finalTotal = round(max(0, (float) $priceAfterCoupon), 2);
 
-        return [
-            'subtotal' => $promotionTotals['subtotal'],
-            'promotion_discount' => $promotionTotals['discount'],
-            'coupon_discount' => round(max(0, (float) $priceAfterPromotion - (float) $finalTotal), 2),
-            'final_total' => $finalTotal,
-            'promotion' => $promotionTotals['promotion'],
-            'gift_items' => $promotionTotals['gift_items'],
-        ];
+        return new CheckoutTotals(
+            subtotal: $promotionTotals->subtotal,
+            promotionDiscount: $promotionTotals->promotionDiscount,
+            couponDiscount: round(max(0, (float) $priceAfterPromotion - (float) $finalTotal), 2),
+            finalTotal: $finalTotal,
+            promotion: $promotionTotals->promotion,
+            giftItems: $promotionTotals->giftItems,
+        );
     }
     private function checkCouponUsage($couponId)
     {

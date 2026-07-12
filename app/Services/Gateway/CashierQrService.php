@@ -16,7 +16,7 @@ class CashierQrService
             'transaction' => $transaction->uuid,
         ]);
 
-        $size = (int) config('payment.pay_at_cashier.size', 300);
+        $size = (int) config('payment.pay_at_cashier.size', 50);
 
         $options = new QROptions([
             'outputInterface' => QRMarkupSVG::class,

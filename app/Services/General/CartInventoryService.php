@@ -26,7 +26,7 @@ class CartInventoryService
                 : (($item?->quantity ?? 0) + $quantity);
 
             if ($desiredQuantity < 1) {
-                throw new Exception('Quantity must be at least 1.');
+                throw new Exception(__(QUANTITY_MINIMUM));
             }
 
             $stock = $this->lockInventoryRow($product, $variant);
@@ -91,7 +91,7 @@ class CartInventoryService
                         ->first();
 
                     if (!$variant) {
-                        throw new Exception('Selected gift variant is not available.');
+                        throw new Exception(__(GIFT_VARIANT_NOT_AVAILABLE));
                     }
                 }
 
@@ -116,7 +116,7 @@ class CartInventoryService
                 }
 
                 if (!$variant) {
-                    throw new Exception('No available variant stock for gift product.');
+                    throw new Exception(__(GIFT_VARIANT_NO_STOCK));
                 }
             }
 
@@ -366,7 +366,7 @@ class CartInventoryService
 
         $availableStock = $this->getAvailableStock($stock);
         if ($availableStock < $quantity) {
-            throw new Exception('Quantity exceeds available stock.');
+            throw new Exception(__(QUANTITY_EXCEEDS_STOCK));
         }
 
         $stock->reserved_quantity = (int) ($stock->reserved_quantity ?? 0) + $quantity;
@@ -394,11 +394,11 @@ class CartInventoryService
         $physicalQuantity = (int) ($stock->stock_quantity ?? 0);
 
         if ($reservedQuantity < $quantity) {
-            throw new Exception('Reserved stock is insufficient.');
+            throw new Exception(__(RESERVED_STOCK_INSUFFICIENT));
         }
 
         if ($physicalQuantity < $quantity) {
-            throw new Exception('Physical stock is insufficient.');
+            throw new Exception(__(PHYSICAL_STOCK_INSUFFICIENT));
         }
 
         $stock->stock_quantity = $physicalQuantity - $quantity;

@@ -2,8 +2,10 @@
 
 namespace Marvel\Http\Controllers;
 
-use App\Events\QuestionAnswered;
 use App\Events\RefundApproved;
+use App\Events\QuestionAnswered;
+use App\Exceptions\UnsupportedGatewayException;
+use App\Services\Payment\PaymentGatewayFactory;
 use Exception;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Collection;
@@ -51,8 +53,10 @@ class RefundController extends CoreController
 
     public $repository;
 
-    public function __construct(RefundRepository $repository)
-    {
+    public function __construct(
+        RefundRepository $repository,
+        private PaymentGatewayFactory $paymentGatewayFactory,
+    ) {
         $this->repository = $repository;
     }
 
@@ -246,6 +250,20 @@ class RefundController extends CoreController
             }
 
             if ($request->status == RefundStatus::APPROVED) {
+                // Call gateway refund BEFORE database transaction
+                if ($refund->order && $refund->order->payment_gateway) {
+                    try {
+                        $gateway = $this->paymentGatewayFactory->make($refund->order->payment_gateway);
+                        $result = $gateway->refund($refund->order, (float) $refund->amount);
+
+                        if (!$result->success) {
+                            throw new HttpException(400, $result->errorMessage ?? 'Refund failed at payment gateway');
+                        }
+                    } catch (UnsupportedGatewayException $e) {
+                        // Offline or unsupported payment method — skip gateway refund
+                    }
+                }
+
                 // Wrap entire refund approval in a transaction with proper locking
                 // to prevent race conditions and ensure data consistency
                 return DB::transaction(function () use ($request, $refund) {
@@ -284,7 +302,11 @@ class RefundController extends CoreController
                     $wallet->increment('total_points', $walletPoints);
                     $wallet->increment('available_points', $walletPoints);
 
-                    return $refund->fresh();
+                    $refreshed = $refund->fresh();
+
+                    event(new RefundApproved($refreshed));
+
+                    return $refreshed;
                 });
             }
 

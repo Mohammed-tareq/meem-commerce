@@ -105,7 +105,8 @@ class EventServiceProvider extends ServiceProvider
             SendQuestionAnsweredNotification::class
         ],
         RefundApproved::class => [
-            RatingRemoved::class
+            RatingRemoved::class,
+            \App\Listeners\RestoreInventoryOnRefund::class,
         ],
         ReviewCreated::class => [
             SendReviewNotification::class

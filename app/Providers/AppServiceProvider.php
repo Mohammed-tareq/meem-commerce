@@ -64,7 +64,6 @@ class AppServiceProvider extends ServiceProvider
         Product::observe(ProductObserver::class);
         Category::observe(CategoryObserver::class);
         Brand::observe(BrandObserver::class);
-        Category::observe(CategoryObserver::class);
         Coupon::observe(CouponObserver::class);
         FlashSale::observe(FlashSaleObserver::class);
         PickupLocation::observe(PickupLocationObserver::class);

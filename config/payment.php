@@ -14,7 +14,7 @@ return [
     ],
 
     'pay_at_cashier' => [
-        'size' => 300,
+        'size' => 50,
         'format' => 'svg',
         'storage_disk' => 'public',
         'storage_path' => 'qr-codes',

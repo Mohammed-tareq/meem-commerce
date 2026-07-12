@@ -255,6 +255,7 @@ return [
     'DASHBOARD.COUPON_ANALYTICS_FETCHED' => 'Coupon analytics fetched successfully',
     'DASHBOARD.CART_ANALYTICS_FETCHED' => 'Cart analytics fetched successfully',
     'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'Finance analytics fetched successfully',
+    'DASHBOARD.RECONCILIATION_FETCHED' => 'Payment reconciliation data fetched successfully',
     'MESSAGE.NOTIFICATIONS_FETCHED' => 'Notifications fetched successfully.',
     'MESSAGE.UNREAD_NOTIFICATIONS_FETCHED' => 'Unread notifications fetched successfully.',
     'MESSAGE.NOTIFICATION_MARKED_READ' => 'Notification marked as read.',
@@ -265,4 +266,11 @@ return [
     'MESSAGE.PICKUP_LOCATION_CREATED_SUCCESSFULLY' => 'Pickup location created successfully',
     'MESSAGE.PICKUP_LOCATION_UPDATED_SUCCESSFULLY' => 'Pickup location updated successfully',
     'MESSAGE.PICKUP_LOCATION_DELETED_SUCCESSFULLY' => 'Pickup location deleted successfully',
+
+    'cart.inventory.quantity_minimum' => 'Quantity must be at least 1.',
+    'cart.inventory.gift_variant_not_available' => 'Selected gift variant is not available.',
+    'cart.inventory.gift_variant_no_stock' => 'No available variant stock for gift product.',
+    'cart.inventory.quantity_exceeds_stock' => 'Quantity exceeds available stock.',
+    'cart.inventory.reserved_stock_insufficient' => 'Reserved stock is insufficient.',
+    'cart.inventory.physical_stock_insufficient' => 'Physical stock is insufficient.',
 ];

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\General;
 
+use App\DTOs\CheckoutTotals;
 use App\Services\General\PromotionEngine\PromotionEligibilityResolver;
 use App\Services\General\PromotionEngine\PromotionApplicator;
 use App\Services\General\PromotionEngine\Outcome\DiscountOutcome;
@@ -51,7 +52,7 @@ class PromotionService
         ];
     }
 
-    public function applySelectedPromotion(Cart $cart, ?int $promotionId, ?int $selectedGiftProductId = null): array
+    public function applySelectedPromotion(Cart $cart, ?int $promotionId, ?int $selectedGiftProductId = null): CheckoutTotals
     {
         $this->removeGiftItems($cart);
         $cart->items->load(['product', 'productVariant']);
@@ -110,22 +111,23 @@ class PromotionService
                 $cart->load(['items' => fn($q) => $q->whereIn('id', $itemIds), 'items.product', 'items.productVariant']);
             }
         }
-        return [
-            'subtotal' => round((float) $subtotal, 2),
-            'discount' => round((float) ($discountDetails['discount'] ?? 0), 2),
-            'final_total' => round(
+        return new CheckoutTotals(
+            subtotal: round((float) $subtotal, 2),
+            promotionDiscount: round((float) ($discountDetails['discount'] ?? 0), 2),
+            couponDiscount: 0,
+            finalTotal: round(
                 (float) $cart->items
                     ->reject(fn($item) => (bool) ($item->is_gift ?? false))
                     ->sum('total_price'),
                 2
             ),
-            'promotion' => $result ? [
+            promotion: $result ? [
                 'id' => $result->promotion->id,
                 'type' => $result->promotion->type_amount,
                 'code' => $result->promotion->code,
             ] : null,
-            'gift_items' => $giftDetails['gift_items'] ?? [],
-        ];
+            giftItems: $giftDetails['gift_items'] ?? [],
+        );
     }
 
     public function incrementUsage(?int $promotionId): void

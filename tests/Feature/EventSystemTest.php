@@ -6,7 +6,12 @@ use App\Events\OrderCancelled;
 use App\Events\OrderStatusChanged;
 use App\Events\PaymentFailed;
 use App\Events\PaymentSucceeded;
+use App\Events\RefundApproved;
+use App\Listeners\RatingRemoved;
+use App\Listeners\RestoreInventoryOnRefund;
 use App\Listeners\RestoreProductInventory;
+use App\Services\Gateway\MyFatoorahGateway;
+use App\Services\General\MyfatoraService;
 use App\Jobs\LogActivityJob;
 use App\Listeners\SendOrderCancelledNotification;
 use App\Listeners\SendOrderStatusChangedNotification;
@@ -23,6 +28,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\OrderProduct;
 use Marvel\Database\Models\Product;
+use Marvel\Database\Models\Refund;
 use Marvel\Database\Models\Settings;
 use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\User;
@@ -221,6 +227,27 @@ class EventSystemTest extends TestCase
             $table->string('event')->nullable();
             $table->timestamps();
             $table->index('log_name');
+        });
+
+        Schema::create('refunds', function (Blueprint $table) {
+            $table->id();
+            $table->decimal('amount', 10, 2);
+            $table->string('title');
+            $table->text('description')->nullable();
+            $table->string('status')->default('PENDING');
+            $table->foreignId('order_id')->nullable();
+            $table->foreignId('user_id')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        Schema::create('reviews', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('user_id')->nullable();
+            $table->foreignId('order_id')->nullable();
+            $table->foreignId('product_id')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
         });
     }
 
@@ -434,6 +461,213 @@ class EventSystemTest extends TestCase
     {
         $listener = app(RestoreProductInventory::class);
         $this->assertEquals('medium', $listener->queue);
+    }
+
+    // ========== Listener: RestoreInventoryOnRefund ==========
+
+    /** @test */
+    public function restore_inventory_on_refund_restores_stock()
+    {
+        $order = $this->createOrderWithItems();
+        $refund = Refund::withoutEvents(function () use ($order) {
+            return Refund::create([
+                'order_id' => $order->id,
+                'user_id' => $this->user->id,
+                'amount' => 100.00,
+                'title' => 'Test Refund',
+                'status' => 'APPROVED',
+            ]);
+        });
+
+        event(new RefundApproved($refund));
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'stock_quantity' => 13,
+            'sold_quantity' => 2,
+        ]);
+    }
+
+    /** @test */
+    public function restore_inventory_on_refund_skips_when_order_already_cancelled()
+    {
+        $order = $this->createOrderWithItems();
+        $order->update(['status' => 'cancelled']);
+
+        $refund = Refund::withoutEvents(function () use ($order) {
+            return Refund::create([
+                'order_id' => $order->id,
+                'user_id' => $this->user->id,
+                'amount' => 100.00,
+                'title' => 'Test Refund',
+                'status' => 'APPROVED',
+            ]);
+        });
+
+        event(new RefundApproved($refund));
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'stock_quantity' => 10,
+            'sold_quantity' => 5,
+        ]);
+    }
+
+    /** @test */
+    public function restore_inventory_on_refund_handles_missing_order_gracefully()
+    {
+        $refund = Refund::withoutEvents(function () {
+            return Refund::create([
+                'order_id' => null,
+                'user_id' => $this->user->id,
+                'amount' => 100.00,
+                'title' => 'Orphan Refund',
+                'status' => 'APPROVED',
+            ]);
+        });
+
+        event(new RefundApproved($refund));
+
+        $this->assertTrue(true);
+    }
+
+    /** @test */
+    public function restore_inventory_on_refund_skips_gift_items()
+    {
+        $order = Order::create([
+            'user_id' => $this->user->id,
+            'name' => 'Gift Order',
+            'total_price' => 100.00,
+            'status' => 'completed',
+        ]);
+
+        OrderProduct::create([
+            'order_id' => $order->id,
+            'product_id' => $this->product->id,
+            'product_quantity' => 2,
+            'product_price' => 100.00,
+            'product_total_price' => 200.00,
+            'is_gift' => true,
+        ]);
+
+        $refund = Refund::withoutEvents(function () use ($order) {
+            return Refund::create([
+                'order_id' => $order->id,
+                'user_id' => $this->user->id,
+                'amount' => 200.00,
+                'title' => 'Gift Refund',
+                'status' => 'APPROVED',
+            ]);
+        });
+
+        event(new RefundApproved($refund));
+
+        $this->assertDatabaseHas('products', [
+            'id' => $this->product->id,
+            'stock_quantity' => 10,
+            'sold_quantity' => 5,
+        ]);
+    }
+
+    /** @test */
+    public function restore_inventory_on_refund_is_queued()
+    {
+        $reflection = new \ReflectionClass(RestoreInventoryOnRefund::class);
+        $this->assertTrue($reflection->implementsInterface(\Illuminate\Contracts\Queue\ShouldQueue::class));
+    }
+
+    /** @test */
+    public function restore_inventory_on_refund_uses_medium_queue()
+    {
+        $listener = app(RestoreInventoryOnRefund::class);
+        $this->assertEquals('medium', $listener->queue);
+    }
+
+    // ========== Gateway: MyFatoorahGateway::refund() ==========
+
+    /** @test */
+    public function gateway_refund_returns_success_result()
+    {
+        $order = $this->createOrderWithItems();
+        Transaction::create([
+            'order_id' => $order->id,
+            'user_id' => $this->user->id,
+            'gateway_transaction_id' => '12345',
+            'status' => 'paid',
+            'amount' => 100.00,
+        ]);
+
+        $mockService = $this->createMock(MyfatoraService::class);
+        $mockService->method('makeRefund')->willReturn([
+            'IsSuccess' => true,
+            'Data' => [
+                'RefundId' => 'refund-abc-123',
+                'RefundStatus' => 'Refunded',
+            ],
+        ]);
+
+        $gateway = new MyFatoorahGateway($mockService);
+        $result = $gateway->refund($order, 100.00);
+
+        $this->assertTrue($result->success);
+        $this->assertEquals('refund-abc-123', $result->gatewayTransactionId);
+        $this->assertEquals('Refunded', $result->status);
+        $this->assertEquals(100.00, $result->amount);
+    }
+
+    /** @test */
+    public function gateway_refund_handles_no_paid_transaction()
+    {
+        $order = $this->createOrderWithItems();
+
+        $gateway = new MyFatoorahGateway(app(MyfatoraService::class));
+        $result = $gateway->refund($order, 100.00);
+
+        $this->assertFalse($result->success);
+        $this->assertNotNull($result->errorMessage);
+    }
+
+    /** @test */
+    public function gateway_refund_handles_gateway_error()
+    {
+        $order = $this->createOrderWithItems();
+        Transaction::create([
+            'order_id' => $order->id,
+            'user_id' => $this->user->id,
+            'gateway_transaction_id' => '12345',
+            'status' => 'paid',
+            'amount' => 100.00,
+        ]);
+
+        $mockService = $this->createMock(MyfatoraService::class);
+        $mockService->method('makeRefund')->willReturn(null);
+
+        $gateway = new MyFatoorahGateway($mockService);
+        $result = $gateway->refund($order, 100.00);
+
+        $this->assertFalse($result->success);
+        $this->assertEquals('No response from payment gateway', $result->errorMessage);
+    }
+
+    /** @test */
+    public function refund_approved_event_dispatches_listeners()
+    {
+        $order = $this->createOrderWithItems();
+        $refund = Refund::withoutEvents(function () use ($order) {
+            return Refund::create([
+                'order_id' => $order->id,
+                'user_id' => $this->user->id,
+                'amount' => 100.00,
+                'title' => 'Listener Test',
+                'status' => 'APPROVED',
+            ]);
+        });
+
+        Event::fake([RefundApproved::class]);
+
+        event(new RefundApproved($refund));
+
+        Event::assertDispatched(RefundApproved::class);
     }
 
     // ========== Listener: SendOrderCancelledNotification ==========

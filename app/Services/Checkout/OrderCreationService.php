@@ -2,6 +2,7 @@
 
 namespace App\Services\Checkout;
 
+use App\DTOs\CheckoutTotals;
 use App\Events\OrderCreated;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Cart;
@@ -15,10 +16,10 @@ class OrderCreationService
         private \App\Services\General\PromotionService $promotionService,
     ) {}
 
-    public function createOrder(array $orderData, Cart $cart, array $checkoutTotals, ?string $shippingMethod = null, ?\DateTime $eta = null, ?float $fastShippingFee = null, ?float $shippingPrice = null, ?int $governorateId = null): ?Order
+    public function createOrder(array $orderData, Cart $cart, CheckoutTotals $checkoutTotals, ?string $shippingMethod = null, ?\DateTime $eta = null, ?float $fastShippingFee = null, ?float $shippingPrice = null, ?int $governorateId = null): ?Order
     {
         $shippingPrice = $shippingPrice ?? 0;
-        $totalPrice = round((float) $checkoutTotals['final_total'] + $shippingPrice + ($fastShippingFee ?? 0), 2);
+        $totalPrice = round((float) $checkoutTotals->finalTotal + $shippingPrice + ($fastShippingFee ?? 0), 2);
 
         $pickupLocationId = $orderData['pickup_location_id'] ?? null;
         $pickupSnapshot = $this->resolvePickupLocationSnapshot($pickupLocationId);
@@ -42,17 +43,17 @@ class OrderCreationService
             'pickup_location_address' => $pickupSnapshot['address'],
             'pickup_location_phone' => $pickupSnapshot['phone'],
             'pickup_location_coordinates' => $pickupSnapshot['coordinates'],
-            'price' => $checkoutTotals['subtotal'],
+            'price' => $checkoutTotals->subtotal,
             'shipping_price' => $shippingPrice,
             'total_price' => $totalPrice,
-            'coupon' => $checkoutTotals['coupon'] ?? $cart->coupon ?? null,
-            'coupon_discount' => $checkoutTotals['coupon_discount'] ?: null,
-            'coupon_discount_type' => $checkoutTotals['coupon_discount_type'] ?? null,
-            'coupon_discount_max_amount' => $checkoutTotals['coupon_discount_max_amount'] ?? null,
-            'promotion_id' => $checkoutTotals['promotion']['id'] ?? null,
-            'promotion_code' => $checkoutTotals['promotion']['code'] ?? null,
-            'promotion_type' => $checkoutTotals['promotion']['type'] ?? null,
-            'promotion_discount' => $checkoutTotals['promotion_discount'] ?? 0,
+            'coupon' => $checkoutTotals->coupon ?? $cart->coupon ?? null,
+            'coupon_discount' => $checkoutTotals->couponDiscount ?: null,
+            'coupon_discount_type' => $checkoutTotals->couponDiscountType,
+            'coupon_discount_max_amount' => $checkoutTotals->couponDiscountMaxAmount,
+            'promotion_id' => $checkoutTotals->promotionId(),
+            'promotion_code' => $checkoutTotals->promotionCode(),
+            'promotion_type' => $checkoutTotals->promotionType(),
+            'promotion_discount' => $checkoutTotals->promotionDiscount,
             'status' => 'pending',
         ]);
 
@@ -149,9 +150,9 @@ class OrderCreationService
         ];
     }
 
-    public function finalizeOrder(Order $order, array $checkoutTotals): void
+    public function finalizeOrder(Order $order, CheckoutTotals $checkoutTotals): void
     {
-        $this->promotionService->incrementUsage($checkoutTotals['promotion']['id'] ?? null);
+        $this->promotionService->incrementUsage($checkoutTotals->promotionId());
 
         try {
             OrderCreated::dispatch($order);

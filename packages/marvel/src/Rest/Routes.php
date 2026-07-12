@@ -793,6 +793,7 @@ Route::group([
         Route::get('coupons', [DashboardController::class, 'couponAnalytics']);
         Route::get('cart', [DashboardController::class, 'cartAnalytics']);
         Route::get('finance', [DashboardController::class, 'financeAnalytics']);
+        Route::get('reconciliation', [DashboardController::class, 'reconciliation']);
     });
 });
 Route::middleware(['auth:sanctum', "throttle:cart"])->group(function () {

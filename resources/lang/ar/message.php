@@ -259,4 +259,11 @@ return [
     'MESSAGE.PICKUP_LOCATION_CREATED_SUCCESSFULLY' => 'تم إنشاء موقع الاستلام بنجاح',
     'MESSAGE.PICKUP_LOCATION_UPDATED_SUCCESSFULLY' => 'تم تحديث موقع الاستلام بنجاح',
     'MESSAGE.PICKUP_LOCATION_DELETED_SUCCESSFULLY' => 'تم حذف موقع الاستلام بنجاح',
+
+    'cart.inventory.quantity_minimum' => 'يجب أن تكون الكمية 1 على الأقل.',
+    'cart.inventory.gift_variant_not_available' => 'النوع المختار للهدية غير متوفر.',
+    'cart.inventory.gift_variant_no_stock' => 'لا يوجد مخزون متاح للنوع للهدية.',
+    'cart.inventory.quantity_exceeds_stock' => 'الكمية تتجاوز المخزون المتاح.',
+    'cart.inventory.reserved_stock_insufficient' => 'المخزون المحجوز غير كاف.',
+    'cart.inventory.physical_stock_insufficient' => 'المخزون الفعلي غير كاف.',
 ];

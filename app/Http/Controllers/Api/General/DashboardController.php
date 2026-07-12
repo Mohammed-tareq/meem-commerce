@@ -232,6 +232,21 @@ class DashboardController extends Controller
         }
     }
 
+    public function reconciliation(): JsonResponse
+    {
+        try {
+            $data = $this->dashboardService->getReconciliationSummary();
+
+            return response()->json([
+                'success' => true,
+                'message' => __('message.DASHBOARD.RECONCILIATION_FETCHED'),
+                'data'    => $data,
+            ]);
+        } catch (Throwable $e) {
+            return $this->errorResponse($e);
+        }
+    }
+
     public function financeAnalytics(Request $request): JsonResponse
     {
         try {

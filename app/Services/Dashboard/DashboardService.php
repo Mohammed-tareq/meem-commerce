@@ -2,12 +2,14 @@
 
 namespace App\Services\Dashboard;
 
+use App\Models\PaymentReconciliationResult;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Marvel\Database\Models\Order;
 use Marvel\Database\Models\Product;
+use Marvel\Database\Models\Transaction;
 use Marvel\Database\Models\User;
 
 class DashboardService
@@ -667,7 +669,7 @@ class DashboardService
                 'total_usage'        => $totalUsage,
                 'top_coupons'        => $topCoupons,
                 'revenue_by_coupon'  => $revenueByCoupon,
-                'total_discount'     => round($totalDiscount, 2),
+                'total_coupon_discount' => round($totalDiscount, 2),
             ];
         });
     }
@@ -760,6 +762,34 @@ class DashboardService
                 'shipping_revenue' => round($shippingRevenue, 2),
             ];
         });
+    }
+
+    // =========================================================================
+    // 9. Payment Reconciliation
+    // =========================================================================
+
+    public function getReconciliationSummary(): array
+    {
+        $totalChecked = Transaction::query()
+            ->whereNotNull('gateway_transaction_id')
+            ->where('status', '!=', 'failed')
+            ->count();
+
+        $totalMismatches = PaymentReconciliationResult::count();
+        $pendingMismatches = PaymentReconciliationResult::unresolved()->count();
+        $resolvedMismatches = PaymentReconciliationResult::resolved()->count();
+        $lastRun = PaymentReconciliationResult::query()
+            ->latest('created_at')
+            ->first()
+            ?->created_at;
+
+        return [
+            'total_checked' => $totalChecked,
+            'total_mismatches' => $totalMismatches,
+            'pending_mismatches' => $pendingMismatches,
+            'resolved_mismatches' => $resolvedMismatches,
+            'last_run' => $lastRun,
+        ];
     }
 
     // =========================================================================

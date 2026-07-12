@@ -24,5 +24,12 @@ return [
     'DASHBOARD.COUPON_ANALYTICS_FETCHED' => 'Gutscheinanalysen erfolgreich abgerufen',
     'DASHBOARD.CART_ANALYTICS_FETCHED' => 'Warenkorbanalysen erfolgreich abgerufen',
     'DASHBOARD.FINANCE_ANALYTICS_FETCHED' => 'Finanzanalysen erfolgreich abgerufen',
+
+    'cart.inventory.quantity_minimum' => 'Die Menge muss mindestens 1 betragen.',
+    'cart.inventory.gift_variant_not_available' => 'Ausgewählte Geschenkvariante ist nicht verfügbar.',
+    'cart.inventory.gift_variant_no_stock' => 'Kein verfügbarer Variantenbestand für Geschenkprodukt.',
+    'cart.inventory.quantity_exceeds_stock' => 'Die Menge übersteigt den verfügbaren Bestand.',
+    'cart.inventory.reserved_stock_insufficient' => 'Reservierter Bestand ist unzureichend.',
+    'cart.inventory.physical_stock_insufficient' => 'Physischer Bestand ist unzureichend.',
 ];
 

@@ -765,3 +765,21 @@ if (!defined('NOTIFICATION_DELETED')) {
 if (!defined('ALL_NOTIFICATIONS_DELETED')) {
     define('ALL_NOTIFICATIONS_DELETED', APP_NOTICE_DOMAIN . 'MESSAGE.ALL_NOTIFICATIONS_DELETED');
 }
+if (!defined('QUANTITY_MINIMUM')) {
+    define('QUANTITY_MINIMUM', APP_NOTICE_DOMAIN . 'cart.inventory.quantity_minimum');
+}
+if (!defined('GIFT_VARIANT_NOT_AVAILABLE')) {
+    define('GIFT_VARIANT_NOT_AVAILABLE', APP_NOTICE_DOMAIN . 'cart.inventory.gift_variant_not_available');
+}
+if (!defined('GIFT_VARIANT_NO_STOCK')) {
+    define('GIFT_VARIANT_NO_STOCK', APP_NOTICE_DOMAIN . 'cart.inventory.gift_variant_no_stock');
+}
+if (!defined('QUANTITY_EXCEEDS_STOCK')) {
+    define('QUANTITY_EXCEEDS_STOCK', APP_NOTICE_DOMAIN . 'cart.inventory.quantity_exceeds_stock');
+}
+if (!defined('RESERVED_STOCK_INSUFFICIENT')) {
+    define('RESERVED_STOCK_INSUFFICIENT', APP_NOTICE_DOMAIN . 'cart.inventory.reserved_stock_insufficient');
+}
+if (!defined('PHYSICAL_STOCK_INSUFFICIENT')) {
+    define('PHYSICAL_STOCK_INSUFFICIENT', APP_NOTICE_DOMAIN . 'cart.inventory.physical_stock_insufficient');
+}
