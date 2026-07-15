@@ -145,6 +145,7 @@ Route::prefix('general')->middleware(['api', 'check-lang'])->group(function () {
 
 
 
+
 Route::get('/enum-types', function () {
     return response()->json(
         [
